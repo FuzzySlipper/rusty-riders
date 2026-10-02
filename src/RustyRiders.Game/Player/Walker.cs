@@ -1,0 +1,128 @@
+using System.Numerics;
+using Rusty.Engine;
+using Rusty.Engine.Input;
+using RustyRiders.Game.Gallery;
+
+namespace RustyRiders.Game.Player;
+
+/// <summary>A first-person walker: Engine FpsInput and Look for controls, Engine character steps for movement.</summary>
+internal sealed class Walker : IDisposable
+{
+    private const double NearPlane = .05;
+    private const float EyeBelowTop = .15f;
+
+    private readonly IEngineContext engine;
+    private readonly GalleryScene scene;
+    private readonly WalkerTuning tuning;
+    private readonly CharacterControllerConfig config;
+    private readonly CharacterControllerConfig sprintConfig;
+    private readonly Camera camera;
+    private ulong commandSequence;
+    private bool cut = true;
+
+    internal Walker(IEngineContext engine, GalleryScene scene)
+    {
+        this.engine = engine;
+        this.scene = scene;
+        tuning = scene.Definition.Walker;
+        config = Configure(engine.Spatial.DefaultCharacterControllerConfig(), tuning.Speed);
+        sprintConfig = Configure(config, tuning.SprintSpeed);
+        engine.Spatial.ValidateCharacterControllerConfig(config);
+        engine.Spatial.ValidateCharacterControllerConfig(sprintConfig);
+        Input = new FpsInput(FpsInputConfig.Standard with
+        {
+            PointerLookConfig = FpsInputConfig.Standard.PointerLookConfig with
+            { HorizontalRadiansPerUnit = tuning.PointerRadiansPerUnit, VerticalRadiansPerUnit = tuning.PointerRadiansPerUnit }
+        });
+        Reset();
+        camera = engine.CameraView.CreateCamera(Descriptor());
+        engine.CameraView.SetActiveCamera(camera);
+    }
+
+    internal FpsInput Input { get; }
+    /// <summary>Free flight over the exhibits: the converted meshes do not collide, so walking cannot climb them.</summary>
+    internal bool Flying { get; private set; }
+    internal LookState LookState { get; private set; }
+    internal Vector3 Position { get; private set; }
+    internal CharacterMotion Motion { get; private set; }
+    internal float Height => Motion.Stance == CharacterStance.Crouched ? tuning.CrouchedHeight : tuning.Height;
+    internal Vector3 Feet => Position - Vector3.UnitY * (Height / 2);
+    private Vector3 Eye => Position + Vector3.UnitY * (Height / 2 - EyeBelowTop);
+
+    internal FpsInputFrame ReadInput(ReadOnlySpan<ProductInputEvent> events, float admittedSeconds)
+    {
+        FpsInputFrame frame = Input.Consume(events, admittedSeconds);
+        LookState = Input.IntegrateLook(LookState, frame).After;
+        return frame;
+    }
+
+    internal void ToggleFlight()
+    {
+        Flying = !Flying;
+        Motion = default; // leaving flight starts a fresh fall from where the walker hovers
+    }
+
+    internal void Step(FpsInputFrame input, bool jumpPressed, float delta)
+    {
+        if (Flying)
+        {
+            Fly(input, delta);
+            return;
+        }
+        CharacterStepReceipt receipt = engine.Spatial.ProposeCharacterStep(new CharacterStepRequest(scene.Session, Position, Motion,
+            default, ReadOnlyMemory<CharacterObstacle>.Empty, ReadOnlyMemory<CharacterMeshInstance>.Empty,
+            input.SprintHeld && !input.CrouchHeld ? sprintConfig : config,
+            new CharacterControllerCommand(input.Movement, LookState.YawRadians, jumpPressed, input.JumpHeld, input.CrouchHeld,
+                Vector3.Zero, Vector3.Zero, delta, ++commandSequence)));
+        Position = receipt.Transform.Translation;
+        Motion = receipt.Motion;
+    }
+
+    private void Fly(FpsInputFrame input, float delta)
+    {
+        Vector3 forward = Look.IntegrateClamped(new LookRequest(LookState, Vector2.Zero, Input.Config.PointerLookConfig)).Forward;
+        Vector3 right = Vector3.Normalize(Vector3.Cross(forward, Vector3.UnitY));
+        float vertical = (input.JumpHeld ? 1 : 0) - (input.CrouchHeld ? 1 : 0);
+        float speed = input.SprintHeld ? tuning.FlySprintSpeed : tuning.FlySpeed;
+        Vector3 position = Position + (forward * input.Movement.Y + right * input.Movement.X + Vector3.UnitY * vertical) * speed * delta;
+        Position = position with { Y = Math.Max(position.Y, Height / 2) };
+    }
+
+    internal void Reset()
+    {
+        Vector3 feet = GalleryDefinition.Vector(scene.Definition.Spawn);
+        Position = feet + Vector3.UnitY * (tuning.Height / 2);
+        Motion = default;
+        Flying = false;
+        LookState = new LookState(scene.Definition.SpawnYawDegrees * MathF.PI / 180, 0);
+        Input.Physical.Clear();
+        cut = true;
+    }
+
+    internal void Publish(double sampleTime)
+    {
+        engine.CameraView.UpdateCameraSample(new CameraSampleRequest(camera, Descriptor(), sampleTime, 1d / 60,
+            CameraInterpolation.Position, cut ? (byte)1 : (byte)0));
+        cut = false;
+    }
+
+    public void Dispose()
+    {
+        engine.CameraView.ClearActiveCamera(new ClearActiveCameraRequest(0));
+        camera.Dispose();
+    }
+
+    private CameraDescriptor Descriptor() => new(new CameraPose(Eye, LookState.PitchRadians * 180 / Math.PI, LookState.YawRadians * 180 / Math.PI),
+        CameraBasisMode.Derived, default,
+        new CameraProjection(CameraProjectionKind.Perspective, tuning.FieldOfViewDegrees, 0, NearPlane, tuning.FarPlane),
+        new CameraViewport(0, 0, 1, 1));
+
+    private CharacterControllerConfig Configure(CharacterControllerConfig baseline, float speed) => baseline with
+    {
+        Shape = baseline.Shape with { StandingHeight = tuning.Height, CrouchedHeight = tuning.CrouchedHeight, Radius = tuning.Radius },
+        Ground = baseline.Ground with { ForwardSpeed = speed, BackwardSpeed = speed, StrafeSpeed = speed },
+        Air = baseline.Air with { MaximumSpeed = speed, WishSpeedCap = speed },
+        Vertical = baseline.Vertical with { Gravity = tuning.Gravity, JumpSpeed = tuning.JumpSpeed },
+        Surface = baseline.Surface with { MaximumStepHeight = tuning.MaximumStepHeight, MaximumSlopeRadians = tuning.MaximumSlopeDegrees * MathF.PI / 180 }
+    };
+}

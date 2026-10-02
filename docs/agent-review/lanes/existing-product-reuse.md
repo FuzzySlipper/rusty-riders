@@ -4,7 +4,7 @@
 introduce competing state or behavior?
 
 Start with `AGENTS.md` and `docs/architecture.md`, then search the implementation
-and callers. The template's counter domain owns its value; the product entry
+and callers. The gallery scene owns layout and loaded art, the walker owns movement and camera; the product entry
 owns lifecycle composition; the DOM only displays facts. Customize those owner
 pointers as the product grows.
 

@@ -1,0 +1,137 @@
+{
+  "artRoot": "old-art",
+  "exhibitGap": 4,
+  "rowGap": 8,
+  "groundMargin": 12,
+  "spawn": [
+    -8,
+    0,
+    -8
+  ],
+  "spawnYawDegrees": 135,
+  "groundColor": [
+    0.32,
+    0.3,
+    0.27
+  ],
+  "backgroundColor": [
+    0.42,
+    0.5,
+    0.6
+  ],
+  "walker": {
+    "height": 1.8,
+    "crouchedHeight": 1.1,
+    "radius": 0.3,
+    "speed": 5,
+    "sprintSpeed": 12,
+    "jumpSpeed": 6.5,
+    "gravity": 20,
+    "maximumStepHeight": 0.3,
+    "maximumSlopeDegrees": 45,
+    "pointerRadiansPerUnit": 0.002,
+    "flySpeed": 10,
+    "flySprintSpeed": 30,
+    "fieldOfViewDegrees": 75,
+    "farPlane": 400
+  },
+  "rows": [
+    {
+      "label": "Lava",
+      "exhibits": [
+        "GameData/Combat/Tilesets/LavaMap/BlockWall",
+        "GameData/Combat/Tilesets/LavaMap/CapNeg",
+        "GameData/Combat/Tilesets/LavaMap/CapPos",
+        "GameData/Combat/Tilesets/LavaMap/CornerInside",
+        "GameData/Combat/Tilesets/LavaMap/CornerOutside"
+      ]
+    },
+    {
+      "label": "Cave",
+      "exhibits": [
+        "GameData/Combat/Tilesets/Cave/BlockWall",
+        "GameData/Combat/Tilesets/Cave/CornerInside",
+        "GameData/Combat/Tilesets/Cave/CornerOutside"
+      ]
+    },
+    {
+      "label": "Forest",
+      "exhibits": [
+        "GameData/Combat/Tilesets/Forest/BlockWall",
+        "GameData/Combat/Tilesets/Forest/CapNeg 1",
+        "GameData/Combat/Tilesets/Forest/CapPos 1",
+        "GameData/Combat/Tilesets/Forest/CornerInside",
+        "GameData/Combat/Tilesets/Forest/CornerOutside"
+      ]
+    },
+    {
+      "label": "Sad forest",
+      "exhibits": [
+        "GameData/Combat/Tilesets/SadForest/BlockWall",
+        "GameData/Combat/Tilesets/SadForest/CapNeg",
+        "GameData/Combat/Tilesets/SadForest/CapPos",
+        "GameData/Combat/Tilesets/SadForest/CornerInside",
+        "GameData/Combat/Tilesets/SadForest/CornerOutside"
+      ]
+    },
+    {
+      "label": "Palace",
+      "exhibits": [
+        "GameData/Combat/Tilesets/Palace/BlockWall",
+        "GameData/Combat/Tilesets/Palace/CornerInside",
+        "GameData/Combat/Tilesets/Palace/CornerOutside"
+      ]
+    },
+    {
+      "label": "Tube",
+      "exhibits": [
+        "GameData/Combat/Tilesets/Tube/BlockWall",
+        "GameData/Combat/Tilesets/Tube/CornerInside",
+        "GameData/Combat/Tilesets/Tube/CornerOutside"
+      ]
+    },
+    {
+      "label": "New",
+      "exhibits": [
+        "GameData/Combat/Tilesets/New/Open",
+        "GameData/Combat/Tilesets/New/FlatSpawn",
+        "GameData/Combat/Tilesets/New/FlatBonus",
+        "GameData/Combat/Tilesets/New/BlockWall",
+        "GameData/Combat/Tilesets/New/BlockHalfWall",
+        "GameData/Combat/Tilesets/New/BlockCorner",
+        "GameData/Combat/Tilesets/New/BlockCornerHalf",
+        "GameData/Combat/Tilesets/New/BlockL"
+      ]
+    },
+    {
+      "label": "OH",
+      "exhibits": [
+        "GameData/Combat/Tilesets/OH/Start",
+        "GameData/Combat/Tilesets/OH/Road",
+        "GameData/Combat/Tilesets/OH/RoadStop",
+        "GameData/Combat/Tilesets/OH/Curve",
+        "GameData/Combat/Tilesets/OH/Forked",
+        "GameData/Combat/Tilesets/OH/Cross",
+        "GameData/Combat/Tilesets/OH/Flat",
+        "GameData/Combat/Tilesets/OH/Goal",
+        "GameData/Combat/Tilesets/OH/Warp",
+        "GameData/Combat/Tilesets/OH/RoomWall",
+        "GameData/Combat/Tilesets/OH/RoomCornerA",
+        "GameData/Combat/Tilesets/OH/RoomCornerB",
+        "GameData/Combat/Tilesets/OH/RoomCornerC",
+        "GameData/Combat/Tilesets/OH/RoomGateA",
+        "GameData/Combat/Tilesets/OH/RoomGateB",
+        "GameData/Combat/Tilesets/OH/RoomGateC",
+        "GameData/Combat/Tilesets/OH/RoomGateD"
+      ]
+    },
+    {
+      "label": "Level",
+      "exhibits": [
+        "GameData/Combat/Levels/OH_Level",
+        "GameData/Combat/Levels/KG_Level",
+        "GameData/Combat/Levels/TestPrefabLevel"
+      ]
+    }
+  ]
+}
