@@ -1,6 +1,6 @@
 using Rusty.Engine;
 
-namespace RustyRiders.Game.Gallery;
+namespace RustyRiders.Game;
 
 internal static class ContentFiles
 {

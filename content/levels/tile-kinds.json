@@ -1,0 +1,146 @@
+[
+ {
+  "kind": "Start",
+  "walkable": [
+   "#.#",
+   "#.#",
+   "###"
+  ]
+ },
+ {
+  "kind": "Goal",
+  "walkable": [
+   "###",
+   "#.#",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "Road",
+  "walkable": [
+   "#.#",
+   "#.#",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "Curve",
+  "walkable": [
+   "###",
+   "..#",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "Forked",
+  "walkable": [
+   "###",
+   "...",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "Cross",
+  "walkable": [
+   "#.#",
+   "...",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "RoadStop",
+  "walkable": [
+   "###",
+   "#.#",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "RoomGateA",
+  "walkable": [
+   "...",
+   "...",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "RoomGateB",
+  "walkable": [
+   "..#",
+   "..#",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "RoomGateC",
+  "walkable": [
+   "#..",
+   "#..",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "RoomGateD",
+  "walkable": [
+   "..#",
+   "...",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "RoomWall",
+  "walkable": [
+   "...",
+   "...",
+   "###"
+  ]
+ },
+ {
+  "kind": "RoomCornerA",
+  "walkable": [
+   "#..",
+   "#..",
+   "###"
+  ]
+ },
+ {
+  "kind": "RoomCornerB",
+  "walkable": [
+   "...",
+   "...",
+   "#.."
+  ]
+ },
+ {
+  "kind": "RoomCornerC",
+  "walkable": [
+   "..#",
+   "...",
+   "#.."
+  ]
+ },
+ {
+  "kind": "RoomFlat",
+  "walkable": [
+   "...",
+   "...",
+   "..."
+  ]
+ },
+ {
+  "kind": "Warp",
+  "walkable": [
+   "###",
+   "#.#",
+   "#.#"
+  ]
+ },
+ {
+  "kind": "Door",
+  "walkable": [
+   "#.#",
+   "#.#",
+   "#.#"
+  ]
+ }
+]

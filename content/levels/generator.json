@@ -1,0 +1,6 @@
+{
+ "cellSize": 15.0,
+ "sectorSize": 8,
+ "changeCorridorDirectionChance": 0.15,
+ "maxCorridorSteps": 100
+}

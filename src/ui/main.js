@@ -19,10 +19,10 @@ export function mountProductUi(root, context) {
       .riders-gallery kbd { color:#fff; font:11px ui-monospace,monospace; background:#ffffff1c; padding:1px 4px; border-radius:3px; }
       .riders-gallery .reticle { position:absolute; left:50%; top:50%; width:4px; height:4px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px #0007; transform:translate(-50%,-50%); }
     </style>
-    <header><h1>Rusty Riders · old art gallery</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
+    <header><h1>Rusty Riders</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
     <div class="reticle"></div>
     <output class="exhibit" data-fact="exhibit" aria-live="polite"></output>
-    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>R</kbd> back to start · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
+    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>R</kbd> back to start · <kbd>N</kbd> new level · <kbd>G</kbd> level / gallery · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
   root.append(panel);
 
   const fields = [...panel.querySelectorAll('[data-fact]')];

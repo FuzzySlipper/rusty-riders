@@ -1,0 +1,272 @@
+{
+ "id": "Cybertubes",
+ "tiles": {
+  "Start": [
+   "GameData/Levels/TileSets/Cybertubes/start1_A"
+  ],
+  "Goal": [
+   "GameData/Levels/TileSets/Cybertubes/goal1_A"
+  ],
+  "Road": [
+   "GameData/Levels/TileSets/Cybertubes/road1_A"
+  ],
+  "Curve": [
+   "GameData/Levels/TileSets/Cybertubes/curve1_A"
+  ],
+  "Forked": [
+   "GameData/Levels/TileSets/Cybertubes/forked1_A"
+  ],
+  "Cross": [
+   "GameData/Levels/TileSets/Cybertubes/cross1_A"
+  ],
+  "RoadStop": [
+   "GameData/Levels/TileSets/Cybertubes/roadstop1_A",
+   "GameData/Levels/TileSets/Cybertubes/roadstop2_A"
+  ],
+  "RoomGateA": [
+   "GameData/Levels/TileSets/Cybertubes/roomgateA1_A"
+  ],
+  "RoomGateB": [
+   "GameData/Levels/TileSets/Cybertubes/roomgateB1_A"
+  ],
+  "RoomGateC": [
+   "GameData/Levels/TileSets/Cybertubes/roomgateC1_A"
+  ],
+  "RoomGateD": [
+   "GameData/Levels/TileSets/Cybertubes/roomgateD1_A"
+  ],
+  "RoomWall": [
+   "GameData/Levels/TileSets/Cybertubes/roomwall1_A"
+  ],
+  "RoomCornerA": [
+   "GameData/Levels/TileSets/Cybertubes/roomcornerA1_A"
+  ],
+  "RoomCornerB": [
+   "GameData/Levels/TileSets/Cybertubes/roomcornerB1_A"
+  ],
+  "RoomCornerC": [
+   "GameData/Levels/TileSets/Cybertubes/roomcornerC1_A"
+  ],
+  "RoomFlat": [
+   "GameData/Levels/TileSets/Cybertubes/roomflat1_A"
+  ],
+  "Warp": [
+   "GameData/Levels/TileSets/Cybertubes/warp1_A",
+   "GameData/Levels/TileSets/Cybertubes/warp2_A"
+  ],
+  "Door": [
+   "GameData/Levels/TileSets/Cybertubes/road1_A"
+  ]
+ },
+ "walkability": {
+  "GameData/Levels/TileSets/Cybertubes/start1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "#########",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/goal1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/road1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/curve1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "..#######",
+   "....#####",
+   "....#####",
+   "###..####",
+   "###..####",
+   "###..####"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/forked1_A": [
+   "#########",
+   "#########",
+   "#########",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/cross1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roadstop1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roadstop2_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomgateA1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomgateB1_A": [
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomgateC1_A": [
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomgateD1_A": [
+   "......###",
+   "......###",
+   "......###",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomwall1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomcornerA1_A": [
+   "####.....",
+   "####.....",
+   "####.....",
+   "#####....",
+   "######...",
+   "########.",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomcornerB1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "###......",
+   "###......",
+   "###......"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomcornerC1_A": [
+   "......###",
+   "......###",
+   "......###",
+   ".........",
+   ".........",
+   ".........",
+   "###......",
+   "###......",
+   "###......"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/roomflat1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "........."
+  ],
+  "GameData/Levels/TileSets/Cybertubes/warp1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/Cybertubes/warp2_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ]
+ }
+}

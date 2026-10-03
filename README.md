@@ -1,10 +1,10 @@
 # Rusty Riders
 
 A Rusty Engine game inspired by an unfinished Unity game (kept, ignored, in
-`old-game/`). It is not a port. The current slice is a first-person gallery:
-the old combat tilesets and levels, converted by asset-pipeline's
-`unity-import` producer, laid out in rows on a flat ground to walk or fly
-around.
+`old-game/`). It is not a port. The current slice walks a level generated the old game's
+way: its chunks, layouts and tilesets, translated into `content/levels/`, stamp
+a dungeon of converted tile art (see [docs/levels.md](docs/levels.md)). A
+gallery of the old combat tilesets and levels is one key away.
 
 ## Setup
 
@@ -26,18 +26,34 @@ scripts/import-old-art.sh
 rusty dev --project src/RustyRiders.Game/RustyRiders.Game.csproj --port 8787
 ```
 
-`scripts/import-old-art.sh` converts the combat tilesets and levels into the
-ignored `content/old-art/` (about 0.5 GB at the default 1024 px texture cap;
-`MAX_TEXTURE=512` halves it). It needs a sibling `../asset-pipeline` checkout
-(or `ASSET_PIPELINE=`), `old-game/` and the upgraded FBX copies in
-`old-game-fbx2013/` (see asset-pipeline `docs/unity-import.md`). Without it the
-game starts on an empty ground and says what is missing.
+`scripts/import-old-art.sh` converts the level tileset tiles and the combat
+tilesets and levels into the ignored `content/old-art/`. That is about 1 GB at
+the default 1024 px texture cap, copied again into each staged build;
+`MAX_TEXTURE=512` roughly halves it. The import takes about ten minutes. It
+needs a sibling `../asset-pipeline` checkout (or `ASSET_PIPELINE=`),
+`old-game/`, and the upgraded FBX copies in `old-game-fbx2013/` (see
+asset-pipeline `docs/unity-import.md`). Without it the game still starts and
+lists what is missing. `scripts/extract-level-data.py` regenerates the
+checked-in `content/levels/` from `old-game/`.
 
-Open the URL printed by the host and click to capture the mouse: WASD moves,
-Shift sprints, Space jumps, F toggles flight (Space/Ctrl rise and descend), R
-returns to the start and Esc releases the mouse. Only the ground collides; the
-converted meshes are drawn, not collided with, so fly to see raised floors.
-Which exhibits appear, their spacing and the walker tuning are in
+Open the URL printed by the host and click to capture the mouse:
+
+| Key | Action |
+| --- | --- |
+| WASD | Move |
+| Shift | Sprint |
+| Space | Jump |
+| F | Toggle flight (Space and Ctrl rise and descend) |
+| N | New level with the next seed |
+| G | Switch between the level and the gallery |
+| R | Return to the start |
+| Esc | Release the mouse |
+
+The level collides with its ground and walls. In the gallery only the ground
+collides, so fly to see raised floors.
+
+The level's tileset, layout and seed are set in `content/level.json`. The
+walker tuning is in `content/walker.json`, and the gallery's exhibits in
 `content/gallery.json`.
 `rusty dev` runs the pinned pair's runtime: CoreCLR loads the product, and
 changes to declared C#, UI, or content inputs rebuild and reload it. See
@@ -69,11 +85,13 @@ rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj --aot
 
 | Path | Responsibility |
 | --- | --- |
-| `src/RustyRiders.Game/` | Ordinary safe C# product: gallery layout, walker, HUD facts, product metadata |
-| `src/ui/main.js` | DOM panel: load status, nearest exhibit, controls |
-| `content/gallery.json` | Authored gallery: exhibits per row, spacing, walker tuning |
+| `src/RustyRiders.Game/` | Ordinary safe C# product: level generation and stamping, gallery, walker, HUD facts, product metadata |
+| `src/ui/main.js` | DOM panel: scene status, problems, what is underfoot, controls |
+| `content/levels/` | The old generator's chunks, layouts, styles, tilesets and tile templates as JSON |
+| `content/level.json`, `content/walker.json`, `content/gallery.json` | Which level to stamp, walker tuning, gallery exhibits |
 | `content/old-art/` | Generated, ignored: converted GLBs and placement files |
 | `scripts/import-old-art.sh` | Regenerates `content/old-art/` with asset-pipeline unity-import |
+| `scripts/extract-level-data.py` | Regenerates `content/levels/` from `old-game/` |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin |
 | `docs/architecture.md` | Current ownership and data flow |
 | `docs/ui.md` | DOM companion contract |

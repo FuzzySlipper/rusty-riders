@@ -1,0 +1,260 @@
+{
+ "id": "ForestMap",
+ "tiles": {
+  "Start": [
+   "GameData/Levels/TileSets/ForestMap/start1_A"
+  ],
+  "Goal": [
+   "GameData/Levels/TileSets/ForestMap/goal1_A"
+  ],
+  "Road": [
+   "GameData/Levels/TileSets/ForestMap/road1_A"
+  ],
+  "Curve": [
+   "GameData/Levels/TileSets/ForestMap/curve1_A"
+  ],
+  "Forked": [
+   "GameData/Levels/TileSets/ForestMap/forked1_A"
+  ],
+  "Cross": [
+   "GameData/Levels/TileSets/ForestMap/cross1_A"
+  ],
+  "RoadStop": [
+   "GameData/Levels/TileSets/ForestMap/roadstop1_A",
+   "GameData/Levels/TileSets/ForestMap/roadstop2_A"
+  ],
+  "RoomGateA": [
+   "GameData/Levels/TileSets/ForestMap/roomgateA1_A"
+  ],
+  "RoomGateB": [
+   "GameData/Levels/TileSets/ForestMap/roomgateB1_A"
+  ],
+  "RoomGateC": [
+   "GameData/Levels/TileSets/ForestMap/roomgateC1_A"
+  ],
+  "RoomGateD": [
+   "GameData/Levels/TileSets/ForestMap/roomgateD1_A"
+  ],
+  "RoomWall": [
+   "GameData/Levels/TileSets/ForestMap/roomwall1_A"
+  ],
+  "RoomCornerA": [
+   "GameData/Levels/TileSets/ForestMap/roomcornerA1_A"
+  ],
+  "RoomCornerB": [
+   "GameData/Levels/TileSets/ForestMap/roomcornerB1_A"
+  ],
+  "RoomCornerC": [
+   "GameData/Levels/TileSets/ForestMap/roomcornerC1_A"
+  ],
+  "RoomFlat": [
+   "GameData/Levels/TileSets/ForestMap/roomflat1_A"
+  ],
+  "Warp": [
+   "GameData/Levels/TileSets/ForestMap/goal1_A"
+  ],
+  "Door": [
+   "GameData/Levels/TileSets/ForestMap/door"
+  ]
+ },
+ "walkability": {
+  "GameData/Levels/TileSets/ForestMap/start1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "#########",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/ForestMap/goal1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/road1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/curve1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "..#######",
+   "....#####",
+   "....#####",
+   "###..####",
+   "###..####",
+   "###..####"
+  ],
+  "GameData/Levels/TileSets/ForestMap/forked1_A": [
+   "#########",
+   "#########",
+   "#########",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/cross1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roadstop1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roadstop2_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomgateA1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomgateB1_A": [
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomgateC1_A": [
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomgateD1_A": [
+   "......###",
+   "......###",
+   "......###",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomwall1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomcornerA1_A": [
+   "####.....",
+   "####.....",
+   "####.....",
+   "#####....",
+   "######...",
+   "########.",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomcornerB1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "###......",
+   "###......",
+   "###......"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomcornerC1_A": [
+   "......###",
+   "......###",
+   "......###",
+   ".........",
+   ".........",
+   ".........",
+   "###......",
+   "###......",
+   "###......"
+  ],
+  "GameData/Levels/TileSets/ForestMap/roomflat1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "........."
+  ],
+  "GameData/Levels/TileSets/ForestMap/door": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ]
+ }
+}

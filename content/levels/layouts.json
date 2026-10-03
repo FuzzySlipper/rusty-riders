@@ -1,0 +1,1412 @@
+[
+ {
+  "id": "Boss",
+  "special": true,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "boss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1006
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "boss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1002,
+      "locked": true
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 0,
+    "z": 3,
+    "tags": [
+     "exit",
+     "boss"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1006
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 1",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     },
+     {
+      "dir": "right",
+      "target": 1003
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1006
+     },
+     {
+      "dir": "right",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1003,
+    "x": 1,
+    "z": 0,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "exit",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "bonus"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002,
+      "locked": true
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 1,
+    "z": 1,
+    "tags": [
+     "key",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 0
+     },
+     {
+      "dir": "left",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 10",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1006
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 2,
+    "tags": [
+     "exit",
+     "boss"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": -1,
+    "z": 0,
+    "tags": [
+     "bonus"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "bonus"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1008,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "midBoss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004
+     },
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 11",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 2,
+    "tags": [
+     "exit",
+     "boss"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "bonus",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1008,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "midBoss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004
+     },
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 12",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1003
+     }
+    ]
+   },
+   {
+    "id": 1003,
+    "x": 1,
+    "z": 0,
+    "tags": [],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1008
+     },
+     {
+      "dir": "left",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 2,
+    "tags": [
+     "exit",
+     "boss"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1007
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1009
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1008,
+    "x": 1,
+    "z": 1,
+    "tags": [
+     "midBoss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1009
+     },
+     {
+      "dir": "back",
+      "target": 1003
+     }
+    ]
+   },
+   {
+    "id": 1009,
+    "x": 1,
+    "z": 2,
+    "tags": [
+     "bonus",
+     "midBoss"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1008
+     },
+     {
+      "dir": "left",
+      "target": 1007
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 2",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     },
+     {
+      "dir": "right",
+      "target": 1003
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1004,
+      "locked": true
+     }
+    ]
+   },
+   {
+    "id": 1003,
+    "x": 1,
+    "z": 0,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "exit"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 1,
+    "z": 1,
+    "tags": [
+     "key"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 3",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "exit",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 4",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004
+     },
+     {
+      "dir": "right",
+      "target": 1005
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "exit"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1005,
+    "x": 1,
+    "z": 1,
+    "tags": [
+     "bonus",
+     "midBoss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 5",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004,
+      "locked": true
+     },
+     {
+      "dir": "right",
+      "target": 1005
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": 0,
+    "z": 3,
+    "tags": [
+     "exit",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1005,
+    "x": 1,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1006
+     },
+     {
+      "dir": "left",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": 1,
+    "z": 3,
+    "tags": [
+     "key",
+     "bonus"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1005
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 6",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004,
+      "locked": true
+     },
+     {
+      "dir": "right",
+      "target": 1005
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1006
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "exit"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1005,
+    "x": 1,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "key"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 7",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004,
+      "locked": true
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1005
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "exit",
+     "boss"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1006,
+      "locked": true
+     }
+    ]
+   },
+   {
+    "id": 1005,
+    "x": -1,
+    "z": 1,
+    "tags": [],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1007
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": -2,
+    "z": 3,
+    "tags": [
+     "key",
+     "midBoss"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1004
+     },
+     {
+      "dir": "left",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": -2,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1008
+     },
+     {
+      "dir": "right",
+      "target": 1005
+     }
+    ]
+   },
+   {
+    "id": 1008,
+    "x": -2,
+    "z": 2,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1006
+     },
+     {
+      "dir": "back",
+      "target": 1007
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 8",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004,
+      "locked": true
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1007
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "exit"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1005,
+      "locked": true
+     }
+    ]
+   },
+   {
+    "id": 1005,
+    "x": -1,
+    "z": 2,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1006
+     },
+     {
+      "dir": "right",
+      "target": 1004
+     },
+     {
+      "dir": "back",
+      "target": 1007
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": -1,
+    "z": 3,
+    "tags": [
+     "key"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1005
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "midBoss"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1005
+     },
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout 9",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     },
+     {
+      "dir": "right",
+      "target": 1003
+     },
+     {
+      "dir": "left",
+      "target": 1006
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1003,
+    "x": 1,
+    "z": 0,
+    "tags": [],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 2,
+    "tags": [
+     "exit",
+     "boss"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1008
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": -1,
+    "z": 0,
+    "tags": [
+     "bonus"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "bonus",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1009
+     },
+     {
+      "dir": "back",
+      "target": 1002
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1008,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "midBoss",
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1004
+     },
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1009,
+    "x": 1,
+    "z": 2,
+    "tags": [
+     "bonus",
+     "midBoss"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1007
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "LevelLayout",
+  "special": false,
+  "nodes": [
+   {
+    "id": 1001,
+    "x": 0,
+    "z": 0,
+    "tags": [
+     "start"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1002
+     },
+     {
+      "dir": "right",
+      "target": 1003
+     }
+    ]
+   },
+   {
+    "id": 1002,
+    "x": 0,
+    "z": 1,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "forward",
+      "target": 1006
+     },
+     {
+      "dir": "right",
+      "target": 1007
+     },
+     {
+      "dir": "back",
+      "target": 1001
+     },
+     {
+      "dir": "left",
+      "target": 1004
+     }
+    ]
+   },
+   {
+    "id": 1003,
+    "x": 1,
+    "z": 0,
+    "tags": [
+     "spawner"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1001
+     }
+    ]
+   },
+   {
+    "id": 1004,
+    "x": -1,
+    "z": 1,
+    "tags": [
+     "exit"
+    ],
+    "connections": [
+     {
+      "dir": "right",
+      "target": 1002
+     }
+    ]
+   },
+   {
+    "id": 1006,
+    "x": 0,
+    "z": 2,
+    "tags": [
+     "bonus"
+    ],
+    "connections": [
+     {
+      "dir": "back",
+      "target": 1002,
+      "locked": true
+     }
+    ]
+   },
+   {
+    "id": 1007,
+    "x": 2,
+    "z": 1,
+    "tags": [
+     "key"
+    ],
+    "connections": [
+     {
+      "dir": "left",
+      "target": 1002
+     }
+    ]
+   }
+  ]
+ }
+]

@@ -1,5 +1,7 @@
 using System.Numerics;
 using Rusty.Engine;
+using RustyRiders.Game.Art;
+using RustyRiders.Game.Player;
 
 namespace RustyRiders.Game.Gallery;
 
@@ -8,7 +10,7 @@ namespace RustyRiders.Game.Gallery;
 /// arrangement and is moved as a whole so its lowest point rests on the ground. Only the ground collides: the
 /// converted meshes are drawn, not collided with.
 /// </summary>
-internal sealed class GalleryScene : IDisposable
+internal sealed class GalleryScene : IWalkScene
 {
     private const int CollisionChunkSize = 16;
     private const double CollisionVoxelSize = 0.5;
@@ -18,14 +20,16 @@ internal sealed class GalleryScene : IDisposable
     private const float GroundThickness = 0.2f;
 
     private readonly IEngineContext engine;
-    private readonly Dictionary<string, LoadedMesh?> meshes = [];
+    private readonly ConvertedArt art;
     private readonly List<AppearanceFact> facts = [];
+    private readonly List<string> problems = [];
     private readonly Appearance ground;
 
     internal GalleryScene(IEngineContext engine, GalleryDefinition definition)
     {
         this.engine = engine;
         Definition = definition;
+        art = new ConvertedArt(engine, definition.ArtRoot);
         Session = engine.Spatial.CreateSession(new SpatialSessionConfig(CollisionVoxelSize, CollisionChunkSize, VoxelSurfaceMode.GreedyCubes));
         ulong nextObject = FirstPlacementObjectId;
         float rowZ = 0;
@@ -34,11 +38,15 @@ internal sealed class GalleryScene : IDisposable
             float cursorX = 0, rowDepth = 0;
             foreach (string exhibit in row.Exhibits)
             {
-                List<(LoadedMesh Mesh, Transform Pose)>? pieces = LoadExhibit(exhibit);
-                if (pieces is null) continue;
+                List<(ArtMesh Mesh, Transform Pose)> pieces = art.Pieces(exhibit);
+                if (pieces.Count == 0)
+                {
+                    problems.Add($"{exhibit}: nothing drawable");
+                    continue;
+                }
                 (Vector3 min, Vector3 max) = Bounds(pieces);
                 Vector3 offset = new(cursorX - min.X, -min.Y, rowZ - min.Z);
-                foreach ((LoadedMesh mesh, Transform pose) in pieces)
+                foreach ((ArtMesh mesh, Transform pose) in pieces)
                     facts.Add(new AppearanceFact(nextObject++, false, 0, pose with { Translation = pose.Translation + offset },
                         mesh.Appearance, true, RenderLayer.Scene));
                 Exhibits.Add(new Exhibit($"{row.Label} / {System.IO.Path.GetFileName(exhibit)}", min + offset, max + offset));
@@ -58,78 +66,33 @@ internal sealed class GalleryScene : IDisposable
     }
 
     internal GalleryDefinition Definition { get; }
-    internal SpatialSession Session { get; }
+    public SpatialSession Session { get; }
+    public Vector3 SpawnFeet => GalleryDefinition.Vector(Definition.Spawn);
+    public float SpawnYawDegrees => Definition.SpawnYawDegrees;
     internal List<Exhibit> Exhibits { get; } = [];
-    internal List<string> Problems { get; } = [];
-    internal int MeshCount => meshes.Values.Count(mesh => mesh is not null);
-    internal int PlacementCount => facts.Count - 1;
+    public IReadOnlyList<string> Problems => [.. art.Problems, .. problems];
 
-    internal Exhibit? Nearest(Vector3 position) => Exhibits.Count == 0 ? null
-        : Exhibits.MinBy(exhibit => Vector2.Distance(new(position.X, position.Z), exhibit.CenterXZ));
+    public string Status => Exhibits.Count == 0
+        ? "Gallery: no converted art found. Run scripts/import-old-art.sh, then restart."
+        : $"Gallery: {Exhibits.Count} exhibits · {facts.Count - 1} placements · {art.MeshCount} meshes";
 
-    internal void Publish() => engine.Graphics.PublishSnapshot(facts.ToArray());
+    public string Describe(Vector3 position) => Exhibits.Count == 0 ? ""
+        : Exhibits.MinBy(exhibit => Vector2.Distance(new(position.X, position.Z), exhibit.CenterXZ))!.Label;
+
+    public void Publish() => engine.Graphics.PublishSnapshot(facts.ToArray());
 
     public void Dispose()
     {
         engine.Graphics.PublishSnapshot([]);
         ground.Dispose();
-        foreach (LoadedMesh? mesh in meshes.Values)
-        {
-            mesh?.Appearance.Dispose();
-            mesh?.Resource.Dispose();
-        }
+        art.Dispose();
         Session.Dispose();
     }
 
-    private List<(LoadedMesh Mesh, Transform Pose)>? LoadExhibit(string exhibit)
-    {
-        string path = $"{Definition.ArtRoot}/placements/{exhibit}.placements.json";
-        PlacementFile file;
-        try
-        {
-            file = PlacementFile.Load(engine, path);
-        }
-        catch (EngineCallException)
-        {
-            Problems.Add($"{exhibit}: no placement file at content/{path}");
-            return null;
-        }
-        List<(LoadedMesh, Transform)> pieces = [];
-        foreach (PlacementRow row in file.Placements.Where(row => row.Drawn))
-        {
-            if (Mesh(row.Glb!) is { } mesh) pieces.Add((mesh, row.Transform()));
-        }
-        if (pieces.Count == 0)
-        {
-            Problems.Add($"{exhibit}: nothing drawable");
-            return null;
-        }
-        return pieces;
-    }
-
-    private LoadedMesh? Mesh(string glb)
-    {
-        if (meshes.TryGetValue(glb, out LoadedMesh? cached)) return cached;
-        LoadedMesh? loaded = null;
-        try
-        {
-            RenderResource resource = engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest($"{Definition.ArtRoot}/{glb}"));
-            AnimatedMeshInfo info = engine.Animation.ReadMeshInfo(resource);
-            loaded = new LoadedMesh(resource, engine.Animation.CreateAnimatedMeshAppearance(new AnimatedMeshAppearanceRequest(resource)),
-                info.BoundsMin, info.BoundsMax);
-        }
-        catch (EngineCallException error)
-        {
-            Problems.Add($"{glb}: {error.Message}");
-        }
-        meshes[glb] = loaded;
-        return loaded;
-    }
-
-    private static (Vector3 Min, Vector3 Max) Bounds(List<(LoadedMesh Mesh, Transform Pose)> pieces)
+    private static (Vector3 Min, Vector3 Max) Bounds(List<(ArtMesh Mesh, Transform Pose)> pieces)
     {
         Vector3 min = new(float.MaxValue), max = new(float.MinValue);
-        foreach ((LoadedMesh mesh, Transform pose) in pieces)
+        foreach ((ArtMesh mesh, Transform pose) in pieces)
         {
             Matrix4x4 world = Matrix4x4.CreateScale(pose.Scale) * Matrix4x4.CreateFromQuaternion(pose.Rotation)
                 * Matrix4x4.CreateTranslation(pose.Translation);
@@ -162,8 +125,6 @@ internal sealed class GalleryScene : IDisposable
             new[] { new StaticMeshAsset(GroundCollisionAsset, 0, (uint)corners.Length, 0, (uint)triangles.Length) },
             corners, triangles, new[] { new StaticMeshInstance(GroundObjectId, GroundCollisionAsset, new Transform(Vector3.Zero, Quaternion.Identity, Vector3.One)) }));
     }
-
-    private sealed record LoadedMesh(RenderResource Resource, Appearance Appearance, Vector3 BoundsMin, Vector3 BoundsMax);
 }
 
 internal sealed record Exhibit(string Label, Vector3 Min, Vector3 Max)

@@ -1,7 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
 using Rusty.Engine.Input;
-using RustyRiders.Game.Gallery;
 
 namespace RustyRiders.Game.Player;
 
@@ -12,19 +11,19 @@ internal sealed class Walker : IDisposable
     private const float EyeBelowTop = .15f;
 
     private readonly IEngineContext engine;
-    private readonly GalleryScene scene;
     private readonly WalkerTuning tuning;
     private readonly CharacterControllerConfig config;
     private readonly CharacterControllerConfig sprintConfig;
     private readonly Camera camera;
+    private IWalkScene scene;
     private ulong commandSequence;
     private bool cut = true;
 
-    internal Walker(IEngineContext engine, GalleryScene scene)
+    internal Walker(IEngineContext engine, WalkerTuning tuning, IWalkScene scene)
     {
         this.engine = engine;
+        this.tuning = tuning;
         this.scene = scene;
-        tuning = scene.Definition.Walker;
         config = Configure(engine.Spatial.DefaultCharacterControllerConfig(), tuning.Speed);
         sprintConfig = Configure(config, tuning.SprintSpeed);
         engine.Spatial.ValidateCharacterControllerConfig(config);
@@ -40,7 +39,7 @@ internal sealed class Walker : IDisposable
     }
 
     internal FpsInput Input { get; }
-    /// <summary>Free flight over the exhibits: the converted meshes do not collide, so walking cannot climb them.</summary>
+    /// <summary>Free flight: converted meshes do not collide, so walking cannot climb them.</summary>
     internal bool Flying { get; private set; }
     internal LookState LookState { get; private set; }
     internal Vector3 Position { get; private set; }
@@ -88,13 +87,19 @@ internal sealed class Walker : IDisposable
         Position = position with { Y = Math.Max(position.Y, Height / 2) };
     }
 
+    /// <summary>Moves the walker into another scene's collision, at that scene's spawn.</summary>
+    internal void Enter(IWalkScene next)
+    {
+        scene = next;
+        Reset();
+    }
+
     internal void Reset()
     {
-        Vector3 feet = GalleryDefinition.Vector(scene.Definition.Spawn);
-        Position = feet + Vector3.UnitY * (tuning.Height / 2);
+        Position = scene.SpawnFeet + Vector3.UnitY * (tuning.Height / 2);
         Motion = default;
         Flying = false;
-        LookState = new LookState(scene.Definition.SpawnYawDegrees * MathF.PI / 180, 0);
+        LookState = new LookState(scene.SpawnYawDegrees * MathF.PI / 180, 0);
         Input.Physical.Clear();
         cut = true;
     }

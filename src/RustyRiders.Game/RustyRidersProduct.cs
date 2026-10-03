@@ -1,6 +1,7 @@
 using Rusty.Engine;
 using Rusty.Engine.Input;
 using RustyRiders.Game.Gallery;
+using RustyRiders.Game.Levels;
 using RustyRiders.Game.Player;
 using RustyRiders.Game.Ui;
 
@@ -12,9 +13,12 @@ public sealed class RustyRidersProduct : IEngineProduct
     private const string UiContract = "rusty.riders.gallery";
 
     private readonly IEngineContext engine;
-    private readonly GalleryScene scene;
+    private readonly LevelSettings levelSettings;
     private readonly Walker walker;
     private readonly UiStream hud;
+    private IWalkScene scene;
+    private bool showingLevel = true;
+    private int levelSeed;
     private ulong uiSequence;
     private double sampleTime;
     private bool started;
@@ -26,8 +30,10 @@ public sealed class RustyRidersProduct : IEngineProduct
     {
         ArgumentNullException.ThrowIfNull(context);
         engine = context.Engine;
-        scene = new GalleryScene(engine, GalleryDefinition.Load(engine));
-        walker = new Walker(engine, scene);
+        levelSettings = LevelSettings.Load(engine);
+        levelSeed = levelSettings.Seed;
+        scene = BuildScene();
+        walker = new Walker(engine, WalkerTuning.Load(engine), scene);
         hud = engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
     }
 
@@ -53,6 +59,12 @@ public sealed class RustyRidersProduct : IEngineProduct
         {
             Restart();
             return ProductUpdateResult.None;
+        }
+        if (walker.Input.Physical.Pressed(KeyboardControl.KeyG)) SwitchScene(!showingLevel);
+        else if (walker.Input.Physical.Pressed(KeyboardControl.KeyN) && showingLevel)
+        {
+            levelSeed++;
+            SwitchScene(true);
         }
         if (walker.Input.Physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();
         jumpPending |= frame.JumpPressed;
@@ -100,9 +112,29 @@ public sealed class RustyRidersProduct : IEngineProduct
         hud.Dispose();
     }
 
+    /// <summary>Replaces the current scene (its art, facts and collision) and moves the walker to the new spawn.</summary>
+    private void SwitchScene(bool level)
+    {
+        scene.Dispose();
+        showingLevel = level;
+        scene = BuildScene();
+        scene.Publish();
+        walker.Enter(scene);
+        jumpPending = false;
+    }
+
+    private IWalkScene BuildScene()
+    {
+        if (!showingLevel) return new GalleryScene(engine, GalleryDefinition.Load(engine));
+        LevelData data = LevelData.Load(engine, levelSettings.Tileset);
+        LayoutDefinition layout = data.Layouts.FirstOrDefault(layout => layout.Id == levelSettings.Layout)
+            ?? throw new InvalidOperationException($"content/levels/layouts.json has no layout '{levelSettings.Layout}'.");
+        return new LevelScene(engine, levelSettings, data, layout, levelSeed);
+    }
+
     private void Publish()
     {
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, GalleryHud.Create(scene, walker)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker)));
     }
 }

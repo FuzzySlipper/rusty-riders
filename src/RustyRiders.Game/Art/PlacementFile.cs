@@ -3,11 +3,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
 
-namespace RustyRiders.Game.Gallery;
+namespace RustyRiders.Game.Art;
 
 /// <summary>
 /// One asset-pipeline unity-import placement file: where the old game's prefab put each converted GLB, in glTF
-/// space. Rows without a GLB (nested prefab markers, built-in meshes) or with an error are not drawn.
+/// space. Rows without a GLB (nested prefab markers, built-in meshes), with an error, or past LOD0 are not drawn.
 /// </summary>
 internal sealed record PlacementFile(string Prefab, PlacementRow[] Placements, string[] Notes)
 {
@@ -17,9 +17,10 @@ internal sealed record PlacementFile(string Prefab, PlacementRow[] Placements, s
 }
 
 internal sealed record PlacementRow(string Kind, string? Glb, string? Error, float[] Matrix,
-    float[]? Translation, float[]? Rotation, float[]? Scale)
+    float[]? Translation, float[]? Rotation, float[]? Scale, int? Lod)
 {
-    internal bool Drawn => Glb is not null && Error is null;
+    /// <summary>Has a GLB, no error, and is the full-detail level of any Unity LODGroup it belongs to.</summary>
+    internal bool Drawn => Glb is not null && Error is null && Lod is null or 0;
 
     /// <summary>The row's transform; a shearing matrix (no TRS in the file) keeps its closest decomposition.</summary>
     internal Transform Transform()

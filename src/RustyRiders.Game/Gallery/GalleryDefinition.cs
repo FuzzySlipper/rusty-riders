@@ -7,8 +7,7 @@ namespace RustyRiders.Game.Gallery;
 
 /// <summary>The authored gallery: which converted placement files to show, in rows, and how to walk them.</summary>
 internal sealed record GalleryDefinition(string ArtRoot, float ExhibitGap, float RowGap, float GroundMargin,
-    float[] Spawn, float SpawnYawDegrees, float[] GroundColor, float[] BackgroundColor,
-    WalkerTuning Walker, GalleryRow[] Rows)
+    float[] Spawn, float SpawnYawDegrees, float[] GroundColor, float[] BackgroundColor, GalleryRow[] Rows)
 {
     internal const string Path = "gallery.json";
 
@@ -26,10 +25,6 @@ internal sealed record GalleryDefinition(string ArtRoot, float ExhibitGap, float
 }
 
 internal sealed record GalleryRow(string Label, string[] Exhibits);
-
-internal sealed record WalkerTuning(float Height, float CrouchedHeight, float Radius, float Speed, float SprintSpeed,
-    float JumpSpeed, float Gravity, float MaximumStepHeight, float MaximumSlopeDegrees, float PointerRadiansPerUnit,
-    float FlySpeed, float FlySprintSpeed, float FieldOfViewDegrees, float FarPlane);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(GalleryDefinition))]

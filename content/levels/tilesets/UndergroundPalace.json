@@ -1,0 +1,238 @@
+{
+ "id": "UndergroundPalace",
+ "tiles": {
+  "Start": [
+   "GameData/Levels/TileSets/UndergroundPalace/entrance1_parts",
+   "GameData/Levels/TileSets/UndergroundPalace/entrance2_parts"
+  ],
+  "Goal": [
+   "GameData/Levels/TileSets/UndergroundPalace/stop1_parts"
+  ],
+  "Road": [
+   "GameData/Levels/TileSets/UndergroundPalace/straight1_parts"
+  ],
+  "Curve": [
+   "GameData/Levels/TileSets/UndergroundPalace/curve1_parts"
+  ],
+  "Forked": [
+   "GameData/Levels/TileSets/UndergroundPalace/forked1_parts"
+  ],
+  "Cross": [
+   "GameData/Levels/TileSets/UndergroundPalace/cross1_parts"
+  ],
+  "RoadStop": [
+   "GameData/Levels/TileSets/UndergroundPalace/stop1_parts"
+  ],
+  "RoomGateA": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomgateA1_parts"
+  ],
+  "RoomGateB": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomgateB1_parts"
+  ],
+  "RoomGateC": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomgateC1_parts"
+  ],
+  "RoomGateD": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomgateD1_parts"
+  ],
+  "RoomWall": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomwall1_parts"
+  ],
+  "RoomCornerA": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomcornerA1_parts"
+  ],
+  "RoomCornerB": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomcornerB1_parts"
+  ],
+  "RoomCornerC": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomcornerC1_parts"
+  ],
+  "RoomFlat": [
+   "GameData/Levels/TileSets/UndergroundPalace/roomflat1_parts"
+  ],
+  "Warp": [
+   "GameData/Levels/TileSets/UndergroundPalace/warp1_parts"
+  ],
+  "Door": [
+   "GameData/Levels/TileSets/UndergroundPalace/Door Variant"
+  ]
+ },
+ "walkability": {
+  "GameData/Levels/TileSets/UndergroundPalace/entrance1_parts": [
+   "#.......#",
+   "#.#...#.#",
+   "#.......#",
+   "#.#...#.#",
+   "#.......#",
+   "###...###",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/stop1_parts": [
+   "#########",
+   "#########",
+   "#########",
+   "#.#####.#",
+   "#.......#",
+   "#.#...#.#",
+   "#.......#",
+   "#.......#",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/straight1_parts": [
+   "#.#...#.#",
+   "#.......#",
+   "#.......#",
+   "#.#...#.#",
+   "#.......#",
+   "#.#...#.#",
+   "#.......#",
+   "#.......#",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/curve1_parts": [
+   "#########",
+   "........#",
+   "#.#...#.#",
+   "........#",
+   "........#",
+   "........#",
+   "#.#...#.#",
+   "........#",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/forked1_parts": [
+   "#########",
+   ".........",
+   "#.#...#.#",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#.#",
+   ".........",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/cross1_parts": [
+   "###...###",
+   "#...#...#",
+   "#.#...#.#",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#.#",
+   "#.......#",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomgateA1_parts": [
+   ".........",
+   ".........",
+   "..#...#..",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#.#",
+   ".........",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomgateB1_parts": [
+   "......#.#",
+   "........#",
+   "..#...#.#",
+   "........#",
+   "........#",
+   "........#",
+   "#.#...#.#",
+   "........#",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomgateC1_parts": [
+   "#.#......",
+   "#........",
+   "#.#...#..",
+   "#........",
+   "#........",
+   "#........",
+   "#.#...#.#",
+   "#........",
+   "#.#...#.."
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomgateD1_parts": [
+   "......#.#",
+   ".........",
+   "..#...#.#",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#.#",
+   ".........",
+   "#.#...#.#"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomwall1_parts": [
+   ".........",
+   ".........",
+   "..#...#..",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#.#",
+   ".........",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomcornerA1_parts": [
+   "#.#......",
+   "#........",
+   "#.#...#..",
+   "#........",
+   "#........",
+   "#........",
+   "#.#...#.#",
+   "#........",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomcornerB1_parts": [
+   ".........",
+   ".........",
+   "..#...#..",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#..",
+   ".........",
+   "#.#......"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomcornerC1_parts": [
+   "......#.#",
+   ".........",
+   "..#...#.#",
+   ".........",
+   ".........",
+   ".........",
+   "#.#...#..",
+   ".........",
+   "#.#......"
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/roomflat1_parts": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "........."
+  ],
+  "GameData/Levels/TileSets/UndergroundPalace/warp1_parts": [
+   "#########",
+   "#########",
+   "#.#####.#",
+   "#.......#",
+   "#.......#",
+   "#.#...#.#",
+   "#.......#",
+   "#.......#",
+   "#.#...#.#"
+  ]
+ }
+}

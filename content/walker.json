@@ -1,0 +1,16 @@
+{
+  "height": 1.8,
+  "crouchedHeight": 1.1,
+  "radius": 0.3,
+  "speed": 5,
+  "sprintSpeed": 12,
+  "jumpSpeed": 6.5,
+  "gravity": 20,
+  "maximumStepHeight": 0.3,
+  "maximumSlopeDegrees": 45,
+  "pointerRadiansPerUnit": 0.002,
+  "flySpeed": 10,
+  "flySprintSpeed": 30,
+  "fieldOfViewDegrees": 75,
+  "farPlane": 400
+}

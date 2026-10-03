@@ -1,0 +1,8 @@
+{
+  "artRoot": "old-art",
+  "tileset": "LavaMap",
+  "layout": "LevelLayout 3",
+  "seed": 1,
+  "wallHeight": 8,
+  "backgroundColor": [0.18, 0.12, 0.1]
+}

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "AM_Cybertubes",
+  "faction": "Maelstrom",
+  "tilesets": [
+   "Cybertubes"
+  ]
+ },
+ {
+  "id": "AM_Lava",
+  "faction": "AstralMandate",
+  "tilesets": [
+   "LavaMap"
+  ]
+ },
+ {
+  "id": "AM_Palace",
+  "faction": "AstralMandate",
+  "tilesets": [
+   "UndergroundPalace"
+  ]
+ },
+ {
+  "id": "HC_Cave",
+  "faction": "HermeticCircle",
+  "tilesets": [
+   "CaveMap"
+  ]
+ },
+ {
+  "id": "KG_ForestMap",
+  "faction": "KeeperGate",
+  "tilesets": [
+   "ForestMap"
+  ]
+ },
+ {
+  "id": "None",
+  "faction": "None",
+  "tilesets": [
+   "Cybertubes"
+  ]
+ },
+ {
+  "id": "OH_StoneRoad",
+  "faction": "OpenHand",
+  "tilesets": [
+   "StoneRoadMap"
+  ]
+ }
+]

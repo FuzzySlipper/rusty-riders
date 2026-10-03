@@ -2,7 +2,8 @@
 
 Rusty Riders is a Rusty Engine game inspired by an unfinished Unity game kept in
 the ignored `old-game/`. It is not a port: old art and data are donor material.
-Its current slice is a first-person gallery of the converted old combat art.
+Its current slice walks levels stamped the old game's way from its chunks,
+layouts and tilesets (docs/levels.md), plus a gallery of the converted combat art.
 
 > The product decides. The Engine guarantees.
 
@@ -23,7 +24,7 @@ and pause only decisions that need unavailable authority.
 
 ## Ownership and source
 
-- `src/RustyRiders.Game/` owns the gallery layout, the walker, application policy,
+- `src/RustyRiders.Game/` owns level generation and stamping, the gallery, the walker, application policy,
   semantic input interpretation, and UI facts. Organize additions by product domain;
   keep the product entry focused on explicit composition and lifecycle.
 - `Rusty.Engine` owns named Engine mechanisms: lifecycle/update admission,

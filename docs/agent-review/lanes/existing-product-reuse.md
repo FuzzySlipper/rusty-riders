@@ -4,7 +4,7 @@
 introduce competing state or behavior?
 
 Start with `AGENTS.md` and `docs/architecture.md`, then search the implementation
-and callers. The gallery scene owns layout and loaded art, the walker owns movement and camera; the product entry
+and callers. The level generator and scene own level geometry and stamping, the gallery scene owns exhibit layout, ConvertedArt owns loaded art, the walker owns movement and camera; the product entry
 owns lifecycle composition; the DOM only displays facts. Customize those owner
 pointers as the product grows.
 

@@ -1,0 +1,283 @@
+{
+ "id": "CaveMap",
+ "tiles": {
+  "Start": [
+   "GameData/Levels/TileSets/CaveMap/start1_A"
+  ],
+  "Goal": [
+   "GameData/Levels/TileSets/CaveMap/goal1_A"
+  ],
+  "Road": [
+   "GameData/Levels/TileSets/CaveMap/road1_A"
+  ],
+  "Curve": [
+   "GameData/Levels/TileSets/CaveMap/curve1_A"
+  ],
+  "Forked": [
+   "GameData/Levels/TileSets/CaveMap/forked1_A"
+  ],
+  "Cross": [
+   "GameData/Levels/TileSets/CaveMap/cross1_A"
+  ],
+  "RoadStop": [
+   "GameData/Levels/TileSets/CaveMap/roadstop1_A",
+   "GameData/Levels/TileSets/CaveMap/roadstop2_A"
+  ],
+  "RoomGateA": [
+   "GameData/Levels/TileSets/CaveMap/roomgateA1_A"
+  ],
+  "RoomGateB": [
+   "GameData/Levels/TileSets/CaveMap/roomgateB1_A"
+  ],
+  "RoomGateC": [
+   "GameData/Levels/TileSets/CaveMap/roomgateC1_A"
+  ],
+  "RoomGateD": [
+   "GameData/Levels/TileSets/CaveMap/roomgateD1_A"
+  ],
+  "RoomWall": [
+   "GameData/Levels/TileSets/CaveMap/roomwall1_A"
+  ],
+  "RoomCornerA": [
+   "GameData/Levels/TileSets/CaveMap/roomcornerA1_A"
+  ],
+  "RoomCornerB": [
+   "GameData/Levels/TileSets/CaveMap/roomcornerB1_A"
+  ],
+  "RoomCornerC": [
+   "GameData/Levels/TileSets/CaveMap/roomcornerC1_A"
+  ],
+  "RoomFlat": [
+   "GameData/Levels/TileSets/CaveMap/roomflat1_A"
+  ],
+  "Warp": [
+   "GameData/Levels/TileSets/CaveMap/warp1_A",
+   "GameData/Levels/TileSets/CaveMap/warp2_A"
+  ],
+  "Door": [
+   "GameData/Levels/TileSets/CaveMap/doorway"
+  ]
+ },
+ "walkability": {
+  "GameData/Levels/TileSets/CaveMap/start1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "#########",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/CaveMap/goal1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/road1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/curve1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "....#####",
+   ".....####",
+   ".....####",
+   "##...####",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/forked1_A": [
+   "#########",
+   "#########",
+   "#########",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/cross1_A": [
+   "###...###",
+   "###...###",
+   "###...###",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roadstop1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roadstop2_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomgateA1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomgateB1_A": [
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "......###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomgateC1_A": [
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###......",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomgateD1_A": [
+   "......###",
+   "......###",
+   "......###",
+   ".........",
+   ".........",
+   ".........",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomwall1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomcornerA1_A": [
+   "###......",
+   "###......",
+   "###......",
+   "####.....",
+   "#####....",
+   "######...",
+   "#########",
+   "#########",
+   "#########"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomcornerB1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "###......",
+   "###......",
+   "###......"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomcornerC1_A": [
+   "......###",
+   "......###",
+   "......###",
+   ".........",
+   ".........",
+   ".........",
+   "###......",
+   "###......",
+   "###......"
+  ],
+  "GameData/Levels/TileSets/CaveMap/roomflat1_A": [
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   ".........",
+   "........."
+  ],
+  "GameData/Levels/TileSets/CaveMap/warp1_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/warp2_A": [
+   "#########",
+   "#########",
+   "#########",
+   "#########",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###",
+   "###...###"
+  ],
+  "GameData/Levels/TileSets/CaveMap/doorway": [
+   "###...###",
+   "###...###",
+   "###...###",
+   "###..####",
+   "###..####",
+   "###..####",
+   "###..####",
+   "###..####",
+   "###...###"
+  ]
+ }
+}

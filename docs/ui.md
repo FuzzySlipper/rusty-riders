@@ -1,7 +1,7 @@
 # DOM companion
 
 `src/ui/main.js` exports `mountProductUi`. It shows the gallery facts C# publishes
-(what loaded, what is missing, the nearest exhibit and the walker position) and
+(the scene status, problems, what is underfoot and the walker position) and
 the controls; it submits no intents. The product project
 selects this directory and module for SDK staging.
 
