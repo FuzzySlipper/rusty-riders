@@ -108,6 +108,51 @@ Quirks of the old code worth knowing (some are fixed here, as listed under Gener
 - A few layouts link nodes that are not adjacent (`LevelLayout 5`, `7`) or to a missing node (`LevelLayout 1`).
 - The level tile art is in `Art/Models/GridMaps/`; `Art/Models/CombatEnvironment/` is only for the separate combat-arena tilesets.
 
+## Generated shells
+
+An exploration (Den #9373) of rebuilding level geometry from the same plan instead of stamping tile meshes.
+`level.json`'s `build` (`shells` or `sweeps`), or B in a level (cycling tiles, shells, sweeps), switches to it for
+tilesets with a recipe in `content/levels/shells/<tileset>.json`. Only CaveMap has one. Without a recipe the level stamps its tiles and
+lists a problem.
+
+`Levels/LevelShells.cs` treats the plan as measurements:
+1. **Open ground.** Each placed tile prefab's 9x9 walk grid, turned to its tile, marks open cells across the
+   level. Each open cell takes the room or the corridor ceiling height by its tile kind.
+2. **Air boxes.** Open cells merge greedily into rectangles, one Engine implicit box each. The boxes reach from
+   below the floor to their ceiling.
+3. **Rock.** The air boxes are smoothly blended (`blendRadius`) and displaced by seeded waves (`wallNoise`), then
+   carved out of rock. A separately displaced floor (`floorNoise`) fills the bottom.
+4. **Extraction.** The whole level is one field, so pieces never seam. `extraction` picks how it becomes meshes:
+   - `implicit` meshes the level in one adaptive pass over a cube as wide as the level's longest side, then
+     partitions it into a drawn section per tile cell. It collides as one mesh.
+   - `sampled` rasterizes the field onto a lattice over just the level's box, then meshes it in seamless blocks
+     (`blockMetres`). Each block draws and collides.
+5. **Collision.** Collision is the generated geometry itself (Engine mesh-reference collision assets), not the
+   old grid's boxes.
+
+Materials come from the converted art. `Art/HarvestedMaterials` finds a converted GLB that uses the recipe's
+Unity material (`extras.unityMaterial`). It admits that material's embedded base colour and normal textures
+through Engine Content and opens them as textures, keeping its base colour and emission. The level palette's
+`_Color` recolour applies as it does to tile art. Triplanar materials blend three planes and repeat once per
+mesh unit, so the field is extracted in units of `textureMetres` and its sections are placed at that scale.
+
+Each tile prefab's models whose file names start with one of `props` stay as placed dressing. For CaveMap
+these are stalagmites, stalactites and rocks; each tile's shell mesh (`road1`, `roomwall1`, `ground1` …) is
+dropped.
+
+The status line reports the air boxes, vertices, triangles, sections, Engine meshing time and the whole build
+time.
+
+`sweeps` (`Levels/LevelSweeps.cs`) builds ordinary UV-mapped meshes from the same open ground instead:
+1. **Walls.** Each outline of the open ground is traced and its corners rounded (`sweep.cornerRadius`). A wall is
+   swept along it: U runs in metres along the wall, so a trim sheet flows round corners without seams, and V runs
+   up it. Seeded waves can bulge the wall (`sweep.bulge`), fading out at the floor and ceiling.
+2. **Ceilings and floor.** Ceilings are the merged open rectangles at their heights, with step faces where a room
+   ceiling meets a lower corridor's. One floor plane lies under everything.
+3. **Mesh.** It all goes into one `Graphics.CreateMeshResource` mesh, drawn in tile-cell sections and colliding
+   whole. Its materials are the harvested ones without triplanar. Normal maps work without tangents, because the
+   shader derives the frame per pixel. Findings so far are in [direction.md](direction.md#generated-shells-first-trial).
+
 ## Not used yet
 
 - **Gameplay data:** objectives, chests, spawners, keys and lock colours are extracted but not placed.

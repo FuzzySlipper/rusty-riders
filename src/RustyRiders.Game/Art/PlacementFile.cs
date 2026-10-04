@@ -17,7 +17,7 @@ internal sealed record PlacementFile(string Prefab, PlacementRow[] Placements, s
 }
 
 internal sealed record PlacementRow(string Kind, string? Glb, string? Error, float[] Matrix,
-    float[]? Translation, float[]? Rotation, float[]? Scale, int? Lod)
+    float[]? Translation, float[]? Rotation, float[]? Scale, int? Lod, string? Model, string[]? Materials)
 {
     /// <summary>Has a GLB, no error, and is the full-detail level of any Unity LODGroup it belongs to.</summary>
     internal bool Drawn => Glb is not null && Error is null && Lod is null or 0;

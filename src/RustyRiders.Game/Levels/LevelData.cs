@@ -26,15 +26,72 @@ internal sealed record LevelData(GeneratorSettings Generator, TileKindTemplate[]
         ?? throw new InvalidOperationException($"content/{path} is empty.");
 }
 
-/// <summary>Which layout, tileset and seed to stamp, from content/level.json. Without a palette the seed picks one.</summary>
+/// <summary>
+/// Which layout, tileset and seed to stamp, from content/level.json. Without a palette the seed picks one. The build
+/// is <c>tiles</c> (the old tile art), <c>shells</c> (an extracted implicit field) or <c>sweeps</c> (swept UV-mapped
+/// meshes); both generated builds keep the tile art's props and follow <see cref="ShellDefinition"/>.
+/// </summary>
 internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layout, int Seed, float WallHeight,
-    float[] BackgroundColor, string? Palette)
+    float[] BackgroundColor, string? Palette, string Build = LevelSettings.TilesBuild)
 {
+    internal const string TilesBuild = "tiles";
+    internal const string ShellsBuild = "shells";
+    internal const string SweepsBuild = "sweeps";
+
+    /// <summary>The build after this one, as B cycles them.</summary>
+    internal string NextBuild => Build switch { TilesBuild => ShellsBuild, ShellsBuild => SweepsBuild, _ => TilesBuild };
+
     internal const string Path = "level.json";
 
     internal static LevelSettings Load(IEngineContext engine) =>
         JsonSerializer.Deserialize(ContentFiles.Read(engine, Path).Span, LevelJson.Default.LevelSettings)
         ?? throw new InvalidOperationException($"{Path} must contain the level settings.");
+}
+
+/// <summary>
+/// How a tileset's levels are rebuilt as generated shells (content/levels/shells/&lt;tileset&gt;.json): the old
+/// materials the floor and walls take (Assets-relative .mat paths, as palettes name them), how they are drawn, the
+/// room and corridor ceilings, the smoothing and wave displacement of the walls and floor, extraction detail, and
+/// which converted models of each tile prefab stay as props (model file names starting with one of
+/// <see cref="Props"/>). <see cref="Extraction"/> is <c>implicit</c> or <c>sampled</c> (see <see cref="LevelShells"/>);
+/// <see cref="BlockMetres"/> sizes sampled blocks, and zero limits mean the Engine defaults. Lengths are metres.
+/// </summary>
+internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial, float TextureMetres, float TriplanarSharpness,
+    float NormalScale, float Roughness, float RoomHeight, float CorridorHeight, float FloorMaterialTop, float BlendRadius,
+    ShellNoise WallNoise, ShellNoise FloorNoise, string Extraction, float SampleSpacing, float BlockMetres, uint MaxSamples,
+    float CreaseDegrees, uint MaxVertices, uint MaxTriangles, string[] Props, SweepDefinition Sweep)
+{
+    internal static ShellDefinition? Load(IEngineContext engine, string tileset)
+    {
+        string path = $"levels/shells/{tileset}.json";
+        ReadOnlyMemory<byte> bytes;
+        try
+        {
+            bytes = ContentFiles.Read(engine, path);
+        }
+        catch (EngineCallException)
+        {
+            return null;
+        }
+        return JsonSerializer.Deserialize(bytes.Span, LevelJson.Default.ShellDefinition)
+            ?? throw new InvalidOperationException($"content/{path} is empty.");
+    }
+
+    internal bool KeepsProp(string? model) => model is not null
+        && Props.Any(prefix => System.IO.Path.GetFileName(model).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+}
+
+/// <summary>
+/// The swept build (<see cref="LevelSweeps"/>): metres per texture repeat on walls and ceilings and on the floor,
+/// the corner rounding radius, the wall bulge (± metres) and its wavelength, and the wall grid's column and row spacing.
+/// </summary>
+internal sealed record SweepDefinition(float WallMetres, float FloorMetres, float CornerRadius, float Bulge, float BulgeWavelength,
+    float ColumnMetres);
+
+/// <summary>Engine wave displacement: cycles per metre across and up, peak field change, and its octaves.</summary>
+internal sealed record ShellNoise(float Frequency, float VerticalFrequency, float Amplitude, uint Octaves, float Lacunarity, float Gain)
+{
+    internal Vector3 Frequencies => new(Frequency, VerticalFrequency, Frequency);
 }
 
 internal sealed record GeneratorSettings(float CellSize, int SectorSize, double ChangeCorridorDirectionChance, int MaxCorridorSteps);
@@ -87,4 +144,5 @@ internal sealed record PaletteEntry(float[] BaseColor, float[] Emissive, string[
 [JsonSerializable(typeof(LayoutDefinition[]))]
 [JsonSerializable(typeof(TilesetDefinition))]
 [JsonSerializable(typeof(LevelSettings))]
+[JsonSerializable(typeof(ShellDefinition))]
 internal sealed partial class LevelJson : JsonSerializerContext;

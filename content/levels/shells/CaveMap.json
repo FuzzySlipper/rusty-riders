@@ -1,0 +1,50 @@
+{
+  "floorMaterial": "GameData/Levels/TileSets/CaveMap/Materials/ground01_mat.mat",
+  "wallMaterial": "GameData/Levels/TileSets/CaveMap/Materials/wall01_mat.mat",
+  "textureMetres": 6,
+  "triplanarSharpness": 4,
+  "normalScale": 1,
+  "roughness": 1,
+  "roomHeight": 10,
+  "corridorHeight": 7.5,
+  "floorMaterialTop": 0.8,
+  "blendRadius": 3,
+  "wallNoise": {
+    "frequency": 0.12,
+    "verticalFrequency": 0.2,
+    "amplitude": 1.5,
+    "octaves": 3,
+    "lacunarity": 2.2,
+    "gain": 0.5
+  },
+  "floorNoise": {
+    "frequency": 0.08,
+    "verticalFrequency": 0.01,
+    "amplitude": 0.3,
+    "octaves": 2,
+    "lacunarity": 2,
+    "gain": 0.5
+  },
+  "extraction": "sampled",
+  "sampleSpacing": 0.5,
+  "blockMetres": 15,
+  "maxSamples": 0,
+  "creaseDegrees": 50,
+  "maxVertices": 2000000,
+  "maxTriangles": 2000000,
+  "props": [
+    "stalagmite",
+    "stalactite",
+    "rock",
+    "bigrock",
+    "stage"
+  ],
+  "sweep": {
+    "wallMetres": 6,
+    "floorMetres": 6,
+    "cornerRadius": 3,
+    "bulge": 0.6,
+    "bulgeWavelength": 5,
+    "columnMetres": 0.75
+  }
+}

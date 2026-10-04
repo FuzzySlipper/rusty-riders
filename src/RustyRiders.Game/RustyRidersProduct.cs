@@ -13,7 +13,7 @@ public sealed class RustyRidersProduct : IEngineProduct
     private const string UiContract = "rusty.riders.gallery";
 
     private readonly IEngineContext engine;
-    private readonly LevelSettings levelSettings;
+    private LevelSettings levelSettings;
     private readonly Walker walker;
     private readonly UiStream hud;
     private IWalkScene scene;
@@ -64,6 +64,11 @@ public sealed class RustyRidersProduct : IEngineProduct
         else if (walker.Input.Physical.Pressed(KeyboardControl.KeyN) && showingLevel)
         {
             levelSeed++;
+            SwitchScene(true);
+        }
+        else if (walker.Input.Physical.Pressed(KeyboardControl.KeyB) && showingLevel)
+        {
+            levelSettings = levelSettings with { Build = levelSettings.NextBuild };
             SwitchScene(true);
         }
         if (walker.Input.Physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();

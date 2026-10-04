@@ -17,11 +17,15 @@ internal sealed class LevelScene : IWalkScene
     private const ulong GroundObjectId = 1;
     private const ulong FirstTileObjectId = 1000;
     private const ulong FirstPlacementObjectId = 100_000;
+    private const ulong FirstShellCollisionId = 900_000; // each shell collision mesh's asset and instance
+    private const ulong FirstShellSectionObjectId = 10_000;
     private const int WalkGrid = 9;
     private const float SpawnLift = .1f;
 
     private readonly IEngineContext engine;
     private readonly ConvertedArt art;
+    private readonly HarvestedMaterials materials;
+    private IGeneratedLevel? shells;
     private readonly List<AppearanceFact> facts = [];
     private readonly List<string> problems = [];
     private readonly Dictionary<(int X, int Z), (PlannedTile Tile, string Prefab)> tiles = [];
@@ -31,8 +35,13 @@ internal sealed class LevelScene : IWalkScene
     {
         this.engine = engine;
         PaletteDefinition? palette = ChoosePalette(settings, data.Tileset, seed);
-        art = new ConvertedArt(engine, settings.ArtRoot, palette?.Recolor());
+        MaterialRecolor? recolor = palette?.Recolor();
+        art = new ConvertedArt(engine, settings.ArtRoot, recolor);
+        materials = new HarvestedMaterials(engine, art, recolor);
         cellSize = data.Generator.CellSize;
+        ShellDefinition? shell = null;
+        if (settings.Build != LevelSettings.TilesBuild && (shell = ShellDefinition.Load(engine, data.Tileset.Id)) is null)
+            problems.Add($"no content/levels/shells/{data.Tileset.Id}.json: stamped the tiles instead");
         Session = engine.Spatial.CreateSession(new SpatialSessionConfig(CollisionVoxelSize, CollisionChunkSize, VoxelSurfaceMode.GreedyCubes));
         LevelPlan plan = LevelGenerator.Generate(data, layout, seed);
         problems.AddRange(plan.Notes);
@@ -40,7 +49,9 @@ internal sealed class LevelScene : IWalkScene
 
         CollisionBuilder collision = new();
         Dictionary<string, ulong> collisionAssets = [];
+        List<(PlannedTile Tile, string[] Walkable)> walkGrids = [];
         ulong nextPlacement = FirstPlacementObjectId, nextTile = FirstTileObjectId;
+        Func<PlacementRow, bool>? keep = shell is null ? null : row => shell.KeepsProp(row.Model);
         foreach (PlannedTile tile in plan.Tiles)
         {
             string[] prefabs = data.Tileset.Tiles.GetValueOrDefault(tile.Kind.ToString(), []);
@@ -52,33 +63,46 @@ internal sealed class LevelScene : IWalkScene
             string prefab = prefabs[variants.Next(prefabs.Length)];
             tiles[(tile.X, tile.Z)] = (tile, prefab);
             Transform cell = CellTransform(tile);
-            foreach ((ArtMesh mesh, Transform pose) in art.Pieces(prefab))
+            foreach ((ArtMesh mesh, Transform pose) in art.Pieces(prefab, keep))
             {
                 facts.Add(new AppearanceFact(nextPlacement++, false, 0, Compose(cell, pose), mesh.Appearance, true, RenderLayer.Scene));
             }
-            if (!collisionAssets.TryGetValue(prefab, out ulong asset))
+            string[] walkable = data.Tileset.Walkability.GetValueOrDefault(prefab) ?? Upsample(data.TileKinds[(int)tile.Kind].Walkable);
+            if (shell is not null)
             {
-                string[] walkable = data.Tileset.Walkability.GetValueOrDefault(prefab) ?? Upsample(data.TileKinds[(int)tile.Kind].Walkable);
-                collisionAssets[prefab] = asset = collision.AddBlockedCells(walkable, cellSize, settings.WallHeight);
+                walkGrids.Add((tile, walkable));
+                continue;
             }
+            if (!collisionAssets.TryGetValue(prefab, out ulong asset))
+                collisionAssets[prefab] = asset = collision.AddBlockedCells(walkable, cellSize, settings.WallHeight);
             collision.Place(nextTile++, asset, cell);
         }
-        (Vector3 min, Vector3 max) = Extent(plan);
-        collision.AddGround(GroundObjectId, min, max);
+        string built = "tiles";
+        float spawnLift = SpawnLift;
+        if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
+        {
+            built = summary;
+            spawnLift += shell.FloorNoise.Amplitude;
+        }
+        else
+        {
+            (Vector3 min, Vector3 max) = Extent(plan);
+            collision.AddGround(GroundObjectId, min, max);
+        }
         engine.Spatial.ReplaceCollision(collision.Request(Session));
         engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(new Color(settings.BackgroundColor[0],
             settings.BackgroundColor[1], settings.BackgroundColor[2], 1)));
 
-        SpawnFeet = CellCenter(plan.Spawn.X, plan.Spawn.Z) + Vector3.UnitY * SpawnLift;
+        SpawnFeet = CellCenter(plan.Spawn.X, plan.Spawn.Z) + Vector3.UnitY * spawnLift;
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
-        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · palette {palette?.Id ?? "none"} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes";
+        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · palette {palette?.Id ?? "none"} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · {built}";
     }
 
     public SpatialSession Session { get; }
     public Vector3 SpawnFeet { get; }
     public float SpawnYawDegrees { get; }
     public string Status { get; }
-    public IReadOnlyList<string> Problems => [.. art.Problems, .. problems];
+    public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. problems];
 
     public string Describe(Vector3 position)
     {
@@ -93,8 +117,39 @@ internal sealed class LevelScene : IWalkScene
     public void Dispose()
     {
         engine.Graphics.PublishSnapshot([]);
+        shells?.Dispose();
+        materials.Dispose();
         art.Dispose();
         Session.Dispose();
+    }
+
+    /// <summary>
+    /// The generated shells in place of the tiles' shell meshes: drawn by sections, colliding as one mesh. Returns
+    /// what was built for the status, or null (a recorded problem) when generation fails, leaving only the props.
+    /// </summary>
+    private string? BuildShells(string build, ShellDefinition shell, TilesetDefinition tileset, List<(PlannedTile Tile, string[] Walkable)> walkGrids,
+        int seed, CollisionBuilder collision)
+    {
+        bool swept = build == LevelSettings.SweepsBuild;
+        HarvestedLook look = new(swept ? 0 : shell.TriplanarSharpness, shell.NormalScale, shell.Roughness);
+        string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
+        Material walls = materials.Get(shell.WallMaterial, prefabs, look), floor = materials.Get(shell.FloorMaterial, prefabs, look);
+        try
+        {
+            shells = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor, seed)
+                : new LevelShells(engine, shell, cellSize, walkGrids, walls, floor, seed);
+        }
+        catch (EngineCallException error)
+        {
+            problems.Add($"shells: {error.Message}");
+            return null;
+        }
+        ulong id = FirstShellSectionObjectId;
+        foreach (Appearance section in shells.Sections)
+            facts.Add(new AppearanceFact(id++, false, 0, shells.Placement, section, true, RenderLayer.Scene));
+        ulong collisionId = FirstShellCollisionId;
+        foreach (MeshResource mesh in shells.Collision) collision.AddMesh(collisionId++, mesh, shells.Placement);
+        return shells.Summary;
     }
 
     /// <summary>The named palette, or (as the old LevelFx did) one of the tileset's picked by the level's seed.</summary>
@@ -179,6 +234,13 @@ internal sealed class LevelScene : IWalkScene
         internal void Place(ulong instance, ulong asset, Transform transform)
         {
             if (asset != NoCollision) instances.Add(new StaticMeshInstance(instance, asset, transform));
+        }
+
+        /// <summary>A retained mesh as its own collision asset (the Engine copies its geometry), placed once.</summary>
+        internal void AddMesh(ulong id, MeshResource mesh, Transform transform)
+        {
+            assets.Add(new StaticMeshAsset(id, new MeshResourceReference(mesh), 0, 0, 0, 0));
+            instances.Add(new StaticMeshInstance(id, id, transform));
         }
 
         internal void AddGround(ulong instance, Vector3 min, Vector3 max)

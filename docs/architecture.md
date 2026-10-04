@@ -19,8 +19,11 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 | `src/RustyRiders.Game/Levels/LevelData.cs` | Typed `content/levels/*.json` and `content/level.json` |
 | `src/RustyRiders.Game/Levels/LevelGenerator.cs` | The old generator's geometry: chunk fitting, corridors, walls, corners, tile kind and rotation per cell |
 | `src/RustyRiders.Game/Levels/LevelScene.cs` | Stamping tile art per planned cell, wall and ground collision, spawn, level problems |
+| `src/RustyRiders.Game/Levels/WalkCells.cs` | The placed tiles' walk grids as one open-ground grid, and its merged rectangles, for the generated builds |
+| `src/RustyRiders.Game/Levels/LevelShells.cs` | The `shells` build: one Engine implicit field carved from the placed tiles' walk grids, extracted (implicit or sampled) into drawn sections and collision |
+| `src/RustyRiders.Game/Levels/LevelSweeps.cs` | The `sweeps` build: walls swept along the open ground's outlines, ceilings and floor as one UV-mapped retained mesh |
 | `src/RustyRiders.Game/Gallery/` | `gallery.json` and the gallery scene's exhibit layout and ground |
-| `src/RustyRiders.Game/Art/` | Placement files and converted GLBs: each read or opened once, problems recorded; `MaterialRecolor` turns a level palette into Engine material factor overrides for the appearances whose materials it names |
+| `src/RustyRiders.Game/Art/` | Placement files and converted GLBs: each read or opened once, problems recorded; `MaterialRecolor` turns a level palette into Engine material factor overrides for the appearances whose materials it names; `HarvestedMaterials` makes Engine materials for generated geometry from a converted Unity material's embedded textures and colours |
 | `src/RustyRiders.Game/Player/` | Walker tuning, first-person controls, character steps, free flight and camera; `IWalkScene`, what a scene gives the walker and HUD |
 | `src/RustyRiders.Game/Ui/Hud.cs` | HUD facts for the DOM panel |
 | `src/ui/main.js` | DOM panel: status, problems, what is underfoot, position, controls |

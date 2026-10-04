@@ -53,6 +53,67 @@ room-study approach, has three parts:
 
 Caves and Forest are the first trial candidates.
 
+## Generated shells: first trial
+
+CaveMap was rebuilt as generated shells: LevelLayout 3, seed 1, 37 tiles, Engine pair `0.1.0-dev.1b37097a0fa4`,
+local RX 9070 XT, on 2026-10-04. It was compared with the stamped tiles from the same spawn. How it is built is in
+[levels.md](levels.md#generated-shells).
+
+**Cost:**
+
+| Extraction | Spacing | Result | Time |
+| --- | --- | --- | --- |
+| Implicit (whole level) | 0.5 m | Did not finish | Over the runtime's 30 s product-load limit |
+| Implicit (whole level) | 1 m | 84.7k triangles | 23.4 s of meshing |
+| Sampled | 0.5 m | 187.6k triangles in 60 seamless blocks | 6–8.3 s to build, of which meshing is 0.3 s |
+
+- Implicit extraction pays for the cube grown to the level's longest side.
+- Most of the sampled time is evaluating the blended, wave-displaced field.
+- Sampled is the better fit for whole levels.
+- Either way the build is a load-time hitch, not something to redo per frame.
+
+**What it gains:**
+- Collision is the visible surface: walls stop the walker where they are drawn (at the old grid's lines here).
+- Ceilings are closed, and there are no wall backs or seams between tiles.
+- Outlines and heights come from content values rather than authored meshes. Corridors already get lower
+  ceilings than rooms.
+
+**What it loses with the current texture:**
+- The Cave's only texture (`wall01`, shared by its floor and wall materials) is a structured trim sheet, not a
+  stochastic rock.
+- On the old meshes its UVs bend with the forms. Projected triplanar onto a flat floor, its grid is plain, so
+  floor repetition is *more* obvious than in the stamped tiles.
+- The walls hold up better, but planar blending smears the pattern where faces turn.
+
+So generated shells only pay off with textures that tolerate projection: stochastic surfaces (rock, dirt,
+moss) or larger-scale patterns. Useful next steps:
+- Harvest unused source textures from `old-game/`, such as CaveMap's `ground01_alb` rock, which no converted
+  material uses (that needs a script or an asset-pipeline export mode, not the GLB route).
+- Try tilesets whose textures are already stochastic.
+- Add authored height changes per room.
+
+**Answers to the questions in #9373:**
+- **Surfaces.** Use Engine implicit recipes for authoring and sampled-volume blocks for extraction.
+  - Triplanar materials and normal maps work on retained meshes.
+  - Triplanar always repeats once per mesh unit, with no texture scale on `MaterialRequest`, so the shells are
+    extracted in texture units and placed scaled. That gives one scale for the whole shell, not one per material.
+- **Textures.** Reading the converted GLBs' embedded images needs no new pipeline. It keeps the import's
+  texture cap and the Unity material names palettes use. It cannot reach textures no converted material uses.
+- **Palettes.** Palettes still apply unchanged. Harvested materials keep their Unity material identity, so the
+  palette's `_Color` entries tint them as they tint tile art.
+
+**Swept meshes** (`sweeps`) are the same open ground built as ordinary UV-mapped meshes (see levels.md):
+- **Cost:** 35k triangles in 0.06 s, against 6–8 s for the sampled shells.
+- **Walls:** the clearest of the three builds, because the trim sheet now runs continuously along them.
+- **Floor:** unchanged; a planar trim sheet still shows its grid.
+- **Character:** the result reads as built architecture more than as a cave; bulge and rounding only soften it.
+
+None of the three builds is grid-free: a projected texture still repeats on any flat floor. That points at the
+texture, through stochastic textures or blending, rather than the geometry.
+
+Captures: crew-playtest sessions `af817b80-a918-4cbc-a914-18485bb68d9d` (tiles, shells) and
+`94395057-13a6-4930-b617-2d542f9575b5` (sweeps), retained 14 days.
+
 ## Backups of generated art
 
 `content/old-art/` stays out of git, including Git LFS. LFS still keeps every uploaded version, and each

@@ -20,6 +20,7 @@ internal sealed class MaterialRecolor
     private const string EmissionProperty = "_EmissionColor";
 
     internal const int HeaderPrefixLength = HeaderBytes + ChunkHeaderBytes;
+    internal const int ChunkHeaderLength = ChunkHeaderBytes;
 
     private readonly Dictionary<string, (Vector4 BaseColor, Vector3? Emissive)> colors = [];
 
@@ -56,6 +57,19 @@ internal sealed class MaterialRecolor
                 Clamp(linear.Z), Clamp(linear.W)), emission, emissive, strength));
         }
         return factors.ToArray();
+    }
+
+    /// <summary>
+    /// The new linear base colour for one converted glTF material, when this palette recolours its Unity material
+    /// and its base colour factor came from _Color (as <see cref="Factors"/> decides per slot); otherwise null.
+    /// </summary>
+    internal Color? BaseColor(JsonNode material)
+    {
+        JsonNode? extras = material["extras"];
+        if (extras?["unityMaterial"]?.GetValue<string>() is not { } source || !colors.TryGetValue(source, out var color)) return null;
+        if (extras["unityProperties"]?["baseColorFactor"]?.GetValue<string>() != MainColorProperty) return null;
+        return new Color(Clamp(Linear(color.BaseColor.X)), Clamp(Linear(color.BaseColor.Y)), Clamp(Linear(color.BaseColor.Z)),
+            Clamp(color.BaseColor.W));
     }
 
     /// <summary>The JSON chunk of a GLB, from its first bytes (header and JSON chunk).</summary>

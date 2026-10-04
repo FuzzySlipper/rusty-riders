@@ -46,11 +46,14 @@ internal sealed class ConvertedArt : IDisposable
         return file;
     }
 
-    /// <summary>The drawn pieces of a prefab: each LOD0 GLB that opened, with its transform inside the prefab.</summary>
-    internal List<(ArtMesh Mesh, Transform Pose)> Pieces(string prefab)
+    /// <summary>
+    /// The drawn pieces of a prefab: each LOD0 GLB that opened, with its transform inside the prefab; with
+    /// <paramref name="keep"/>, only the rows it keeps.
+    /// </summary>
+    internal List<(ArtMesh Mesh, Transform Pose)> Pieces(string prefab, Func<PlacementRow, bool>? keep = null)
     {
         List<(ArtMesh, Transform)> pieces = [];
-        foreach (PlacementRow row in Placements(prefab)?.Placements.Where(row => row.Drawn) ?? [])
+        foreach (PlacementRow row in Placements(prefab)?.Placements.Where(row => row.Drawn && (keep is null || keep(row))) ?? [])
         {
             if (Mesh(row.Glb!) is { } mesh) pieces.Add((mesh, row.Transform()));
         }
@@ -73,7 +76,7 @@ internal sealed class ConvertedArt : IDisposable
         ArtMesh? loaded = null;
         try
         {
-            string path = $"{root}/{glb}";
+            string path = PathOf(glb);
             RenderResource resource = engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest(path));
             AnimatedMeshInfo info = engine.Animation.ReadMeshInfo(resource);
             Appearance appearance = engine.Animation.CreateAnimatedMeshAppearance(new AnimatedMeshAppearanceRequest(resource));
@@ -99,13 +102,25 @@ internal sealed class ConvertedArt : IDisposable
     }
 
     /// <summary>A GLB's JSON chunk, read without its binary chunk.</summary>
-    private System.Text.Json.Nodes.JsonNode ReadJson(string path)
+    internal System.Text.Json.Nodes.JsonNode ReadJson(string path)
     {
         using ContentReference source = engine.Content.OpenReference(new ContentOpenRequest(path));
-        ReadOnlyMemory<byte> header = engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0, MaterialRecolor.HeaderPrefixLength));
         return MaterialRecolor.ReadJson(engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0,
-            (uint)MaterialRecolor.JsonPrefixLength(header.Span))).Span);
+            (uint)JsonPrefixLength(source))).Span);
     }
+
+    /// <summary>A byte range of a GLB's binary chunk (a buffer view of its only buffer).</summary>
+    internal ReadOnlyMemory<byte> ReadBinary(string path, ulong offset, uint length)
+    {
+        using ContentReference source = engine.Content.OpenReference(new ContentOpenRequest(path));
+        ulong binaryStart = (ulong)JsonPrefixLength(source) + MaterialRecolor.ChunkHeaderLength;
+        return engine.Content.ReadBytes(new ContentReadBytesRequest(source, binaryStart + offset, length));
+    }
+
+    internal string PathOf(string glb) => $"{root}/{glb}";
+
+    private int JsonPrefixLength(ContentReference source) => MaterialRecolor.JsonPrefixLength(
+        engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0, MaterialRecolor.HeaderPrefixLength)).Span);
 }
 
 internal sealed record ArtMesh(RenderResource Resource, Appearance Appearance, Vector3 BoundsMin, Vector3 BoundsMax);

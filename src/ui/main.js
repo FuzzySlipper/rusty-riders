@@ -22,7 +22,7 @@ export function mountProductUi(root, context) {
     <header><h1>Rusty Riders</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
     <div class="reticle"></div>
     <output class="exhibit" data-fact="exhibit" aria-live="polite"></output>
-    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>R</kbd> back to start · <kbd>N</kbd> new level · <kbd>G</kbd> level / gallery · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
+    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>R</kbd> back to start · <kbd>N</kbd> new level · <kbd>B</kbd> tiles / shells / sweeps · <kbd>G</kbd> level / gallery · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
   root.append(panel);
 
   const fields = [...panel.querySelectorAll('[data-fact]')];
