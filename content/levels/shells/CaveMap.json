@@ -46,5 +46,42 @@
     "bulge": 0.6,
     "bulgeWavelength": 5,
     "columnMetres": 0.75
-  }
+  },
+  "floorTextures": [
+    {
+      "id": "gpt-cells",
+      "albedo": "art/textures/cave/floor-gpt-cells.png",
+      "normal": "art/textures/cave/floor-gpt-cells-normal.png",
+      "metres": 5,
+      "source": "GPT image (codex-image-gen), wall01 as style reference"
+    },
+    {
+      "id": "gpt-rock",
+      "albedo": "art/textures/cave/floor-gpt-rock.png",
+      "normal": "art/textures/cave/floor-gpt-rock-normal.png",
+      "metres": 4,
+      "source": "GPT image (codex-image-gen), wall01 as style reference"
+    },
+    {
+      "id": "qwen-cells",
+      "albedo": "art/textures/cave/floor-qwen-cells.png",
+      "normal": "art/textures/cave/floor-qwen-cells-normal.png",
+      "metres": 6,
+      "source": "Qwen-Image 2.1 edit on the 5090 ComfyUI, wall01 as reference"
+    },
+    {
+      "id": "qwen-rock",
+      "albedo": "art/textures/cave/floor-qwen-rock.png",
+      "normal": "art/textures/cave/floor-qwen-rock-normal.png",
+      "metres": 6,
+      "source": "Qwen-Image 2.1 edit on the 5090 ComfyUI, wall01 as reference"
+    },
+    {
+      "id": "zimage-rock",
+      "albedo": "art/textures/cave/floor-zimage-rock.png",
+      "normal": "art/textures/cave/floor-zimage-rock-normal.png",
+      "metres": 3,
+      "source": "Z-Image Turbo text-to-image on the 5090 ComfyUI, no reference"
+    }
+  ]
 }

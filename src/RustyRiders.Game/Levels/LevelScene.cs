@@ -79,7 +79,7 @@ internal sealed class LevelScene : IWalkScene
         }
         string built = "tiles";
         float spawnLift = SpawnLift;
-        if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
+        if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, settings.FloorTexture, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
         {
             built = summary;
             spawnLift += shell.FloorNoise.Amplitude;
@@ -127,16 +127,20 @@ internal sealed class LevelScene : IWalkScene
     /// The generated shells in place of the tiles' shell meshes: drawn by sections, colliding as one mesh. Returns
     /// what was built for the status, or null (a recorded problem) when generation fails, leaving only the props.
     /// </summary>
-    private string? BuildShells(string build, ShellDefinition shell, TilesetDefinition tileset, List<(PlannedTile Tile, string[] Walkable)> walkGrids,
+    private string? BuildShells(string build, string? floorTextureId, ShellDefinition shell, TilesetDefinition tileset, List<(PlannedTile Tile, string[] Walkable)> walkGrids,
         int seed, CollisionBuilder collision)
     {
         bool swept = build == LevelSettings.SweepsBuild;
         HarvestedLook look = new(swept ? 0 : shell.TriplanarSharpness, shell.NormalScale, shell.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        Material walls = materials.Get(shell.WallMaterial, prefabs, look), floor = materials.Get(shell.FloorMaterial, prefabs, look);
+        FloorTexture? floorTexture = null;
+        if (floorTextureId is not null && (floorTexture = shell.FloorTextures.FirstOrDefault(t => t.Id == floorTextureId)) is null)
+            problems.Add($"{tileset.Id} shells have no floor texture '{floorTextureId}'");
+        Material walls = materials.Get(shell.WallMaterial, prefabs, look),
+            floor = materials.Get(shell.FloorMaterial, prefabs, look, floorTexture?.Replacement);
         try
         {
-            shells = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor, seed)
+            shells = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor, floorTexture?.Metres ?? shell.Sweep.FloorMetres, seed)
                 : new LevelShells(engine, shell, cellSize, walkGrids, walls, floor, seed);
         }
         catch (EngineCallException error)
@@ -149,7 +153,7 @@ internal sealed class LevelScene : IWalkScene
             facts.Add(new AppearanceFact(id++, false, 0, shells.Placement, section, true, RenderLayer.Scene));
         ulong collisionId = FirstShellCollisionId;
         foreach (MeshResource mesh in shells.Collision) collision.AddMesh(collisionId++, mesh, shells.Placement);
-        return shells.Summary;
+        return floorTexture is null ? shells.Summary : $"{shells.Summary} · floor {floorTexture.Id}";
     }
 
     /// <summary>The named palette, or (as the old LevelFx did) one of the tileset's picked by the level's seed.</summary>

@@ -30,12 +30,14 @@ internal sealed class HarvestedMaterials : IDisposable
     internal IReadOnlyList<string> Problems => problems;
 
     /// <summary>
-    /// The material made from a Unity material used by one of the prefabs. One that cannot be made is recorded as a
-    /// problem and drawn plain grey.
+    /// The material made from a Unity material used by one of the prefabs. With <paramref name="replacement"/>, its
+    /// content textures replace its own while its colour (and palette recolour) stay. One that cannot be made is
+    /// recorded as a problem and drawn plain grey.
     /// </summary>
-    internal Material Get(string unityMaterial, IEnumerable<string> prefabs, HarvestedLook look)
+    internal Material Get(string unityMaterial, IEnumerable<string> prefabs, HarvestedLook look, ReplacementTextures? replacement = null)
     {
-        if (materials.TryGetValue(unityMaterial, out Material? cached)) return cached;
+        string key = replacement is null ? unityMaterial : $"{unityMaterial}|{replacement.Albedo}";
+        if (materials.TryGetValue(key, out Material? cached)) return cached;
         Material? made = null;
         string? glb = prefabs.SelectMany(prefab => art.Placements(prefab)?.Placements ?? [])
             .FirstOrDefault(row => row.Drawn && row.Materials?.Contains(unityMaterial) == true)?.Glb;
@@ -44,7 +46,7 @@ internal sealed class HarvestedMaterials : IDisposable
         {
             try
             {
-                made = Make(art.PathOf(glb), unityMaterial, look);
+                made = Make(art.PathOf(glb), unityMaterial, look, replacement);
             }
             catch (EngineCallException error)
             {
@@ -53,7 +55,7 @@ internal sealed class HarvestedMaterials : IDisposable
         }
         made ??= engine.Graphics.CreateMaterial(new MaterialRequest(new Color(.5f, .5f, .5f, 1), default, look.Roughness,
             new Color(1, 1, 1, 1), Vector3.Zero, 0, false));
-        materials[unityMaterial] = made;
+        materials[key] = made;
         return made;
     }
 
@@ -66,7 +68,7 @@ internal sealed class HarvestedMaterials : IDisposable
         textures.Clear();
     }
 
-    private Material? Make(string glbPath, string unityMaterial, HarvestedLook look)
+    private Material? Make(string glbPath, string unityMaterial, HarvestedLook look, ReplacementTextures? replacement)
     {
         JsonNode document = art.ReadJson(glbPath);
         JsonNode? material = (document["materials"] as JsonArray ?? [])
@@ -77,8 +79,12 @@ internal sealed class HarvestedMaterials : IDisposable
             return null;
         }
         JsonNode? pbr = material["pbrMetallicRoughness"];
-        RenderResourceReference albedo = Texture(document, glbPath, pbr?["baseColorTexture"]?["index"], TextureColorSpace.Srgb);
-        RenderResourceReference normal = Texture(document, glbPath, material["normalTexture"]?["index"], TextureColorSpace.Linear);
+        RenderResourceReference albedo = replacement is null
+            ? Texture(document, glbPath, pbr?["baseColorTexture"]?["index"], TextureColorSpace.Srgb)
+            : Texture(replacement.Albedo, TextureColorSpace.Srgb);
+        RenderResourceReference normal = replacement is null
+            ? Texture(document, glbPath, material["normalTexture"]?["index"], TextureColorSpace.Linear)
+            : replacement.Normal is { } normalPath ? Texture(normalPath, TextureColorSpace.Linear) : default;
         Color color = recolor?.BaseColor(material) ?? ColorOf(pbr?["baseColorFactor"], new Color(1, 1, 1, 1));
         Color emissive = ColorOf(material["emissiveFactor"], new Color(0, 0, 0, 1));
         return engine.Graphics.CreateMaterial(new MaterialRequest(color, albedo, look.Roughness, new Color(1, 1, 1, 1),
@@ -102,6 +108,14 @@ internal sealed class HarvestedMaterials : IDisposable
         return new RenderResourceReference(texture);
     }
 
+    /// <summary>A content texture, opened repeating.</summary>
+    private RenderResourceReference Texture(string path, TextureColorSpace space)
+    {
+        RenderResource texture = engine.Graphics.OpenResource(new RenderResourceRequest(path, TextureFilter.Linear, TextureWrap.Repeat, space)).Handle;
+        textures.Add(texture);
+        return new RenderResourceReference(texture);
+    }
+
     private static Color ColorOf(JsonNode? factor, Color fallback) => factor is JsonArray values
         ? new Color(values[0]!.GetValue<float>(), values[1]!.GetValue<float>(), values[2]!.GetValue<float>(),
             values.Count > 3 ? values[3]!.GetValue<float>() : 1)
@@ -110,3 +124,6 @@ internal sealed class HarvestedMaterials : IDisposable
 
 /// <summary>How a harvested material is drawn on new geometry: triplanar sharpness (0 for the mesh's uv), normal tilt, roughness.</summary>
 internal sealed record HarvestedLook(float TriplanarSharpness, float NormalScale, float Roughness);
+
+/// <summary>Content textures (content-root paths) that replace a harvested material's own.</summary>
+internal sealed record ReplacementTextures(string Albedo, string? Normal);

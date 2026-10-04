@@ -1,0 +1,30 @@
+{
+  "about": "Generated floor texture trials for CaveMap (rusty-riders #9373). Each albedo was made tileable and given a normal map by scripts/texture-gen/make_tileable.py (Qwen-Image 2.1 seam repaint with the rolled image as reference, denoise 0.75, band 0.08, greyscale, seed 9373). The reference image is wall01.png from old-game Art/Models/GridMaps/CaveMap (the Cave's wall and floor texture), at 1024 px.",
+  "gpt-cells": {
+    "route": "codex-image-gen skill (codex exec, gpt-6-luna relay to GPT image generation)",
+    "reference": "wall01.png",
+    "spec": "Seamless tileable ground texture (albedo/base colour map) for the floor of a stylized alien cave in a first-person game. Viewed straight down, flat even lighting, no perspective, no shadows.\nStyle: the reference image is the game's existing wall trim sheet. Make a FLOOR companion in exactly that style - same bold black ink outlines, same flat grey cel-shaded oval \"cells\" with soft highlights, same organic biomechanical feel - but broken up and irregular: clusters of oval cells of varying size and orientation, flowing in loose organic swirls like a membrane or scaled hide, with random gaps of plain smooth ground between clusters. Absolutely no straight rows, no columns, no repeating stripes, no mirror symmetry.\nColour: neutral greys only (the game tints it), near-black outlines, light-grey highlights, like the reference.\nSquare, 1024x1024. Must tile seamlessly: left edge continues into right edge, top into bottom.\nNO text, NO frames, NO vignette, no lighting gradient across the image.",
+    "output": "1254x1254 PNG"
+  },
+  "gpt-rock": {
+    "route": "codex-image-gen skill (codex exec, gpt-6-luna relay to GPT image generation)",
+    "reference": "wall01.png",
+    "spec": "Seamless tileable ground texture (albedo/base colour map) for the floor of a stylized fantasy cave in a first-person game. Viewed straight down, flat even lighting, no perspective, no cast shadows, no horizon.\nStyle: match the reference image's hand-painted toon style exactly - the same bold dark ink outlines, flat cel-shaded fills with a soft inner highlight, the same alien organic \"cell and rib\" design language - but as an IRREGULAR, NON-REPEATING floor: rounded flagstone-like organic cells and pebbles of varied sizes (mostly 5-15% of the image width), packed irregularly with thin dark cracks and a few smaller filler pebbles, no rows, no columns, no grid alignment, no symmetry.\nColour: greyscale-friendly neutral grey values like the reference (mid greys with near-black outlines and light-grey highlights), because the game tints it with a palette colour.\nSquare, 1024x1024. The left edge must continue seamlessly into the right edge and the top into the bottom (it will tile).\nNO text, NO letters, NO borders or frames, NO vignette, NO single focal object, no lighting gradient across the image.",
+    "output": "1254x1254 PNG"
+  },
+  "qwen-cells": {
+    "route": "ComfyUI 0.37 on the RTX 5090 desktop: Qwen-Image 2.1 int8 (TextEncodeQwenImage21 with wall01 as image_1), 25 steps euler/simple cfg 1, 1024x1024",
+    "seed": 11,
+    "prompt": "Using exactly the art style of the reference image (bold black ink outlines, flat grey cel-shaded oval cells with soft pale highlights, alien biomechanical toon look), paint a top-down floor texture for the same cave: irregular clusters of oval cells of many sizes in a dark organic membrane, flowing in loose swirls with patches of smooth ground between clusters, evenly covering the whole frame edge to edge, flat even lighting, greyscale, no straight rows, no symmetry, no text."
+  },
+  "qwen-rock": {
+    "route": "ComfyUI 0.37 on the RTX 5090 desktop: Qwen-Image 2.1 int8 (TextEncodeQwenImage21 with wall01 as image_1), 25 steps euler/simple cfg 1, 1024x1024",
+    "seed": 11,
+    "prompt": "Using exactly the art style of the reference image (bold black ink outlines, flat grey cel-shaded fills with soft pale highlights, alien biomechanical toon look), paint a top-down floor texture for the same cave: an irregular natural scatter of rounded stones and pebbles of many sizes packed together with dark cracks, evenly covering the whole frame edge to edge, flat even lighting, greyscale, no rows, no grid, no symmetry, no text."
+  },
+  "zimage-rock": {
+    "route": "ComfyUI 0.37 on the RTX 5090 desktop: Z-Image Turbo bf16, 8 steps res_multistep cfg 1 shift 3, 1024x1024, no reference",
+    "seed": 11,
+    "prompt": "Top-down orthographic photo-flat texture of a cave floor surface filling the entire frame, even ambient lighting, hand-painted cartoon cel-shaded game art, bold black ink outlines, flat grey fills with soft pale highlights, greyscale. A chaotic natural scatter of irregular rounded stones and pebbles of many different sizes, from large boulders to tiny grit, randomly packed with dark cracks between them, organic and uneven like a riverbed seen from above."
+  }
+}

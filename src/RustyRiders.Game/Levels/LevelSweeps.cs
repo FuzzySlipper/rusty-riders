@@ -20,7 +20,7 @@ internal sealed class LevelSweeps : IGeneratedLevel
     private readonly MeshResource whole;
 
     internal LevelSweeps(IEngineContext engine, ShellDefinition shell, float cellSize, IReadOnlyList<(PlannedTile Tile, string[] Walkable)> tiles,
-        Material walls, Material floor, int seed)
+        Material walls, Material floor, float floorMetres, int seed)
     {
         long started = System.Diagnostics.Stopwatch.GetTimestamp(); // load-cost evidence only, never simulation time
         SweepDefinition sweep = shell.Sweep;
@@ -36,7 +36,7 @@ internal sealed class LevelSweeps : IGeneratedLevel
         foreach (WalkRectangle r in rectangles)
             AddCeiling(mesh, r, step, sweep);
         AddSteps(mesh, open, step);
-        Vector3 min = AddFloor(mesh, open, step, sweep);
+        Vector3 min = AddFloor(mesh, open, step, floorMetres);
 
         whole = mesh.Create(engine, [walls, floor, walls]);
         using MeshPartition partition = engine.Graphics.PartitionMesh(new MeshPartitionRequest(whole, min, new Vector3(cellSize)));
@@ -247,12 +247,12 @@ internal sealed class LevelSweeps : IGeneratedLevel
     /// One floor plane under the whole open ground and a margin, so rounded or bulged walls never leave a gap; returns
     /// its least corner, where tile-cell sections start.
     /// </summary>
-    private static Vector3 AddFloor(MeshBuilder mesh, Dictionary<(int X, int Z), float> open, float step, SweepDefinition sweep)
+    private static Vector3 AddFloor(MeshBuilder mesh, Dictionary<(int X, int Z), float> open, float step, float metres)
     {
         const int Margin = 2;
         Vector2 min = new((open.Keys.Min(c => c.X) - Margin) * step, (open.Keys.Min(c => c.Z) - Margin) * step);
         Vector2 max = new((open.Keys.Max(c => c.X) + Margin) * step, (open.Keys.Max(c => c.Z) + Margin) * step);
-        uint Corner(float x, float z) => mesh.Vertex(Gltf(new Vector2(x, z), 0), new Vector2(x, z) / sweep.FloorMetres);
+        uint Corner(float x, float z) => mesh.Vertex(Gltf(new Vector2(x, z), 0), new Vector2(x, z) / metres);
         mesh.Quad(FloorSlot, Corner(min.X, min.Y), Corner(max.X, min.Y), Corner(max.X, max.Y), Corner(min.X, max.Y), Vector3.UnitY);
         return Vector3.Min(Gltf(min, 0), Gltf(max, 0));
     }

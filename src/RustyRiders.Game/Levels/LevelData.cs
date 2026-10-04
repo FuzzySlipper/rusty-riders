@@ -29,10 +29,11 @@ internal sealed record LevelData(GeneratorSettings Generator, TileKindTemplate[]
 /// <summary>
 /// Which layout, tileset and seed to stamp, from content/level.json. Without a palette the seed picks one. The build
 /// is <c>tiles</c> (the old tile art), <c>shells</c> (an extracted implicit field) or <c>sweeps</c> (swept UV-mapped
-/// meshes); both generated builds keep the tile art's props and follow <see cref="ShellDefinition"/>.
+/// meshes); both generated builds keep the tile art's props and follow <see cref="ShellDefinition"/>, whose floor
+/// texture <see cref="FloorTexture"/> may replace by id.
 /// </summary>
 internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layout, int Seed, float WallHeight,
-    float[] BackgroundColor, string? Palette, string Build = LevelSettings.TilesBuild)
+    float[] BackgroundColor, string? Palette, string Build = LevelSettings.TilesBuild, string? FloorTexture = null)
 {
     internal const string TilesBuild = "tiles";
     internal const string ShellsBuild = "shells";
@@ -59,7 +60,7 @@ internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layo
 internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial, float TextureMetres, float TriplanarSharpness,
     float NormalScale, float Roughness, float RoomHeight, float CorridorHeight, float FloorMaterialTop, float BlendRadius,
     ShellNoise WallNoise, ShellNoise FloorNoise, string Extraction, float SampleSpacing, float BlockMetres, uint MaxSamples,
-    float CreaseDegrees, uint MaxVertices, uint MaxTriangles, string[] Props, SweepDefinition Sweep)
+    float CreaseDegrees, uint MaxVertices, uint MaxTriangles, string[] Props, SweepDefinition Sweep, FloorTexture[] FloorTextures)
 {
     internal static ShellDefinition? Load(IEngineContext engine, string tileset)
     {
@@ -79,6 +80,16 @@ internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial
 
     internal bool KeepsProp(string? model) => model is not null
         && Props.Any(prefix => System.IO.Path.GetFileName(model).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+}
+
+/// <summary>
+/// A floor texture to try in place of the floor material's own (content-root paths), repeating every
+/// <see cref="Metres"/>; <see cref="Source"/> says where it came from. <c>level.json</c>'s <c>floorTexture</c>, or V,
+/// picks one by id.
+/// </summary>
+internal sealed record FloorTexture(string Id, string Albedo, string? Normal, float Metres, string Source)
+{
+    internal Art.ReplacementTextures Replacement => new(Albedo, Normal);
 }
 
 /// <summary>

@@ -46,6 +46,7 @@ Open the URL printed by the host and click to capture the mouse:
 | F | Toggle flight (Space and Ctrl rise and descend) |
 | N | New level with the next seed |
 | B | Cycle the level build: stamped tiles, generated shells, swept meshes (tilesets with a shell recipe) |
+| V | Cycle the generated builds' floor texture through the recipe's generated candidates |
 | G | Switch between the level and the gallery |
 | R | Return to the start |
 | Esc | Release the mouse |
@@ -98,6 +99,8 @@ rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj --aot
 | `content/level.json`, `content/walker.json`, `content/gallery.json` | Which level to stamp, walker tuning, gallery exhibits |
 | `content/old-art/` | Generated, ignored: converted GLBs and placement files |
 | `scripts/import-old-art.sh` | Regenerates `content/old-art/` with asset-pipeline unity-import |
+| `scripts/texture-gen/` | Makes generated textures tile (seam repaint through ComfyUI) and derives their normal maps |
+| `content/art/textures/` | Generated textures, with their sources in `sources.json` |
 | `scripts/extract-level-data.py` | Regenerates `content/levels/` from `old-game/` |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin |
 | `docs/architecture.md` | Current ownership and data flow |

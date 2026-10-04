@@ -71,6 +71,11 @@ public sealed class RustyRidersProduct : IEngineProduct
             levelSettings = levelSettings with { Build = levelSettings.NextBuild };
             SwitchScene(true);
         }
+        else if (walker.Input.Physical.Pressed(KeyboardControl.KeyV) && showingLevel)
+        {
+            levelSettings = levelSettings with { FloorTexture = NextFloorTexture() };
+            SwitchScene(true);
+        }
         if (walker.Input.Physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();
         jumpPending |= frame.JumpPressed;
         for (uint step = 0; step < update.Facts.AdmittedStepCount; step++)
@@ -135,6 +140,14 @@ public sealed class RustyRidersProduct : IEngineProduct
         LayoutDefinition layout = data.Layouts.FirstOrDefault(layout => layout.Id == levelSettings.Layout)
             ?? throw new InvalidOperationException($"content/levels/layouts.json has no layout '{levelSettings.Layout}'.");
         return new LevelScene(engine, levelSettings, data, layout, levelSeed);
+    }
+
+    /// <summary>The tileset's next shell floor texture after the current one, then none (its own) again.</summary>
+    private string? NextFloorTexture()
+    {
+        string[] ids = ShellDefinition.Load(engine, levelSettings.Tileset)?.FloorTextures.Select(t => t.Id).ToArray() ?? [];
+        int next = Array.IndexOf(ids, levelSettings.FloorTexture) + 1;
+        return next < ids.Length ? ids[next] : null;
     }
 
     private void Publish()

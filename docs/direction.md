@@ -111,7 +111,26 @@ moss) or larger-scale patterns. Useful next steps:
 None of the three builds is grid-free: a projected texture still repeats on any flat floor. That points at the
 texture, through stochastic textures or blending, rather than the geometry.
 
-Captures: crew-playtest sessions `af817b80-a918-4cbc-a914-18485bb68d9d` (tiles, shells) and
+**Generated floor textures** fix the floor. Five candidates were made with `wall01` as the style reference
+where the route allows one, made to tile, and compared on the swept Cave floor. Every one removes the grid.
+
+| Route | Time per image | Result |
+| --- | --- | --- |
+| GPT image (`codex-image-gen` skill, reference attached) | ~5 min | Best style match and instruction following. `gpt-cells` reads as the walls' world; `gpt-rock` is a clean natural floor. |
+| Qwen-Image 2.1 edit (5090 ComfyUI, reference as `image_1`) | 6–12 s | Dense, even, irregular coverage that tiles easily. Lighter outlines than the reference; rock is bland at distance. |
+| Z-Image Turbo (5090 ComfyUI, text only) | 3 s | Generic cartoon pebbles. "Tileable" in the prompt repeats the pattern inside the image. Big shapes at the edges defeat the seam repaint. |
+
+Notes on the process:
+- Making a texture tile works by rolling it half a tile and repainting the seam cross.
+- Qwen-Image 2.1 is the better seam painter, because it sees the rolled image as its reference. Z-Image painted
+  off-style stripes along the seams.
+- `gpt-cells` at 5 m is the current pick (V cycles all five). Blending two floor textures in a product shader is
+  an optional next step: textures alone already remove the grid.
+- Qwen-Image 2.1 was installed on the 5090 for this through ComfyUI-Manager's API
+  (`Comfy-Org/Qwen-Image-2.1`: int8 model, Qwen3-VL 8B encoder, VAE, and the t2i/i2i prompt enhancers).
+
+Captures: crew-playtest sessions `af817b80-a918-4cbc-a914-18485bb68d9d` (tiles, shells),
+`dcf08c11-e5c9-4634-a624-a524ce53cf72` (floor textures) and
 `94395057-13a6-4930-b617-2d542f9575b5` (sweeps), retained 14 days.
 
 ## Backups of generated art

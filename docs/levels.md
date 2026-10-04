@@ -143,6 +143,12 @@ dropped.
 The status line reports the air boxes, vertices, triangles, sections, Engine meshing time and the whole build
 time.
 
+A recipe's `floorTextures` are generated alternatives to the floor material's own texture: content albedo and
+normal PNGs (8-bit RGBA, as Engine content textures must be) with their repeat length. `level.json`'s
+`floorTexture`, or V, picks one by id. The floor keeps its harvested colour and palette recolour.
+`scripts/texture-gen/make_tileable.py` made them tile and derived their normal maps;
+`content/art/textures/<set>/sources.json` records how each was generated.
+
 `sweeps` (`Levels/LevelSweeps.cs`) builds ordinary UV-mapped meshes from the same open ground instead:
 1. **Walls.** Each outline of the open ground is traced and its corners rounded (`sweep.cornerRadius`). A wall is
    swept along it: U runs in metres along the wall, so a trim sheet flows round corners without seams, and V runs
