@@ -55,6 +55,12 @@ collides, so fly to see raised floors.
 The level's tileset, layout, seed and optional palette are set in `content/level.json`; without a palette the seed picks one of the tileset's, as the old game did. The
 walker tuning is in `content/walker.json`, and the gallery's exhibits in
 `content/gallery.json`.
+To run it in the background instead, `rusty dev start --project
+src/RustyRiders.Game/RustyRiders.Game.csproj` (same options) returns once the
+game serves; `rusty dev status` and `rusty dev stop` report and end that
+session. Stop sessions this way rather than by killing processes: other
+products' hosts run on the same machine.
+
 `rusty dev` runs the pinned pair's runtime: CoreCLR loads the product, and
 changes to declared C#, UI, or content inputs rebuild and reload it. See
 `rusty dev --help` for `--bind-host`, `--live-debug`, and `--debugger`.
