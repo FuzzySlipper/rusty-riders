@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Numerics;
-using System.Text;
 using System.Text.Json.Nodes;
+using Rusty.Engine;
 
 namespace RustyRiders.Game.Art;
 
@@ -9,15 +9,15 @@ namespace RustyRiders.Game.Art;
 /// Unity-side recolouring of converted materials, as the old game did at run time: per Unity material, a new
 /// Material.color (the shader's _Color) and optionally a new _EmissionColor. The converter records on each glTF
 /// material which Unity material it came from and which Unity property each factor came from
-/// (<c>extras.unityMaterial</c>, <c>extras.unityProperties</c>); only factors that came from those properties change.
+/// (<c>extras.unityMaterial</c>, <c>extras.unityProperties</c>); only factors that came from those properties are
+/// overridden, per appearance, through Engine material factors, so the GLB's textures and maps stay as they are.
 /// </summary>
 internal sealed class MaterialRecolor
 {
-    private const uint GlbMagic = 0x46546C67, JsonChunk = 0x4E4F534A, GlbVersion = 2;
+    private const uint GlbMagic = 0x46546C67, JsonChunk = 0x4E4F534A;
     private const int HeaderBytes = 12, ChunkHeaderBytes = 8;
     private const string MainColorProperty = "_Color";
     private const string EmissionProperty = "_EmissionColor";
-    private const string EmissiveStrength = "KHR_materials_emissive_strength";
 
     internal const int HeaderPrefixLength = HeaderBytes + ChunkHeaderBytes;
 
@@ -30,64 +30,54 @@ internal sealed class MaterialRecolor
     /// <summary>Recolours a Unity material (Assets-relative .mat path). Colours are Unity's stored, gamma-encoded values.</summary>
     internal void Set(string unityMaterial, Vector4 baseColor, Vector3? emissive) => colors[unityMaterial] = (baseColor, emissive);
 
-    /// <summary>Whether a GLB's JSON chunk names any recoloured material.</summary>
-    internal bool Touches(JsonNode document) => document["materials"] is JsonArray materials
-        && materials.Any(material => material?["extras"]?["unityMaterial"]?.GetValue<string>() is { } source && colors.ContainsKey(source));
-
-    /// <summary>The GLB with its recoloured factors; the binary chunk (geometry, textures) is copied unchanged.</summary>
-    internal byte[] Apply(ReadOnlySpan<byte> glb)
+    /// <summary>
+    /// The Engine factor overrides for one GLB, from its JSON chunk. The Engine numbers a GLB's material slots by
+    /// the glTF material indices its primitives use, in ascending order; that is how slots are matched here.
+    /// </summary>
+    internal MeshMaterialFactors[] Factors(JsonNode document)
     {
-        (JsonNode document, int jsonEnd) = ReadJson(glb);
-        foreach (JsonNode? material in document["materials"]!.AsArray())
+        if (document["materials"] is not JsonArray materials) return [];
+        int[] used = (document["meshes"] as JsonArray ?? [])
+            .SelectMany(mesh => mesh?["primitives"] as JsonArray ?? [])
+            .Select(primitive => primitive?["material"]?.GetValue<int>())
+            .OfType<int>().Where(index => index < materials.Count).Distinct().Order().ToArray();
+        List<MeshMaterialFactors> factors = [];
+        for (int slot = 0; slot < used.Length; slot++)
         {
-            if (material?["extras"] is not JsonNode extras || extras["unityMaterial"]?.GetValue<string>() is not { } source
-                || !colors.TryGetValue(source, out var color)) continue;
+            JsonNode? extras = materials[used[slot]]?["extras"];
+            if (extras?["unityMaterial"]?.GetValue<string>() is not { } source || !colors.TryGetValue(source, out var color)) continue;
             JsonNode? properties = extras["unityProperties"];
-            if (properties?["baseColorFactor"]?.GetValue<string>() == MainColorProperty)
-            {
-                JsonObject pbr = material["pbrMetallicRoughness"] as JsonObject ?? [];
-                material["pbrMetallicRoughness"] = pbr;
-                pbr["baseColorFactor"] = new JsonArray(Linear(color.BaseColor.X), Linear(color.BaseColor.Y), Linear(color.BaseColor.Z), color.BaseColor.W);
-            }
-            if (color.Emissive is { } emissive && properties?["emissiveFactor"]?.GetValue<string>() == EmissionProperty)
-            {
-                SetEmissive(document, material.AsObject(), new Vector3(Linear(emissive.X), Linear(emissive.Y), Linear(emissive.Z)));
-            }
+            bool baseColor = properties?["baseColorFactor"]?.GetValue<string>() == MainColorProperty;
+            bool emission = color.Emissive is not null && properties?["emissiveFactor"]?.GetValue<string>() == EmissionProperty;
+            if (!baseColor && !emission) continue;
+            Vector4 linear = new(Linear(color.BaseColor.X), Linear(color.BaseColor.Y), Linear(color.BaseColor.Z), color.BaseColor.W);
+            (Vector3 emissive, float strength) = emission ? Emissive(color.Emissive!.Value) : (Vector3.Zero, 0);
+            factors.Add(new MeshMaterialFactors((uint)slot, baseColor, new Color(Clamp(linear.X), Clamp(linear.Y),
+                Clamp(linear.Z), Clamp(linear.W)), emission, emissive, strength));
         }
-        return Write(glb, document, jsonEnd);
+        return factors.ToArray();
     }
 
     /// <summary>The JSON chunk of a GLB, from its first bytes (header and JSON chunk).</summary>
-    internal static (JsonNode Document, int JsonEnd) ReadJson(ReadOnlySpan<byte> glb)
+    internal static JsonNode ReadJson(ReadOnlySpan<byte> glb)
     {
         if (BinaryPrimitives.ReadUInt32LittleEndian(glb) != GlbMagic
             || BinaryPrimitives.ReadUInt32LittleEndian(glb[(HeaderBytes + 4)..]) != JsonChunk)
             throw new InvalidOperationException("Not a GLB with a leading JSON chunk.");
         int length = (int)BinaryPrimitives.ReadUInt32LittleEndian(glb[HeaderBytes..]);
-        int start = HeaderBytes + ChunkHeaderBytes;
-        return (JsonNode.Parse(glb.Slice(start, length)) ?? throw new InvalidOperationException("Empty GLB JSON chunk."), start + length);
+        return JsonNode.Parse(glb.Slice(HeaderPrefixLength, length)) ?? throw new InvalidOperationException("Empty GLB JSON chunk.");
     }
 
     /// <summary>Bytes needed to read a GLB's JSON chunk, from its first <see cref="HeaderPrefixLength"/> bytes.</summary>
     internal static int JsonPrefixLength(ReadOnlySpan<byte> header) =>
         HeaderPrefixLength + (int)BinaryPrimitives.ReadUInt32LittleEndian(header[HeaderBytes..]);
 
-    private static void SetEmissive(JsonNode document, JsonObject material, Vector3 emissive)
+    /// <summary>A linear HDR emission as a 0..1 factor and a strength, the split glTF and the Engine use.</summary>
+    private static (Vector3 Factor, float Strength) Emissive(Vector3 gamma)
     {
-        float peak = MathF.Max(emissive.X, MathF.Max(emissive.Y, emissive.Z));
-        JsonObject extensions = material["extensions"] as JsonObject ?? [];
-        material["extensions"] = extensions;
-        extensions.Remove(EmissiveStrength);
-        if (peak > 1)
-        {
-            extensions[EmissiveStrength] = new JsonObject { ["emissiveStrength"] = peak };
-            emissive /= peak;
-            JsonArray used = document["extensionsUsed"] as JsonArray ?? [];
-            document.AsObject()["extensionsUsed"] = used;
-            if (!used.Any(name => name?.GetValue<string>() == EmissiveStrength)) used.Add(EmissiveStrength);
-        }
-        if (extensions.Count == 0) material.Remove("extensions");
-        material["emissiveFactor"] = new JsonArray(emissive.X, emissive.Y, emissive.Z);
+        Vector3 linear = new(Linear(gamma.X), Linear(gamma.Y), Linear(gamma.Z));
+        float peak = MathF.Max(linear.X, MathF.Max(linear.Y, linear.Z));
+        return peak > 1 ? (linear / peak, peak) : (linear, 1);
     }
 
     /// <summary>Unity's gamma-encoded colour channel to linear; HDR channels above 1 follow the same power curve.</summary>
@@ -95,20 +85,5 @@ internal sealed class MaterialRecolor
         : value <= 1 ? MathF.Pow((value + .055f) / 1.055f, 2.4f)
         : MathF.Pow(value, 2.2f);
 
-    private static byte[] Write(ReadOnlySpan<byte> glb, JsonNode document, int jsonEnd)
-    {
-        byte[] json = Encoding.UTF8.GetBytes(document.ToJsonString());
-        int padded = (json.Length + 3) & ~3;
-        ReadOnlySpan<byte> rest = glb[jsonEnd..];
-        byte[] output = new byte[HeaderBytes + ChunkHeaderBytes + padded + rest.Length];
-        BinaryPrimitives.WriteUInt32LittleEndian(output, GlbMagic);
-        BinaryPrimitives.WriteUInt32LittleEndian(output.AsSpan(4), GlbVersion);
-        BinaryPrimitives.WriteUInt32LittleEndian(output.AsSpan(8), (uint)output.Length);
-        BinaryPrimitives.WriteUInt32LittleEndian(output.AsSpan(HeaderBytes), (uint)padded);
-        BinaryPrimitives.WriteUInt32LittleEndian(output.AsSpan(HeaderBytes + 4), JsonChunk);
-        json.CopyTo(output.AsSpan(HeaderBytes + ChunkHeaderBytes));
-        output.AsSpan(HeaderBytes + ChunkHeaderBytes + json.Length, padded - json.Length).Fill((byte)' ');
-        rest.CopyTo(output.AsSpan(HeaderBytes + ChunkHeaderBytes + padded));
-        return output;
-    }
+    private static float Clamp(float value) => Math.Clamp(value, 0, 1);
 }

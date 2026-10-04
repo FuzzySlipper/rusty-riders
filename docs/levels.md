@@ -72,16 +72,18 @@ The level scene does the same at load time, using the palette named in `level.js
 by the seed:
 1. asset-pipeline records on every converted glTF material which Unity material and properties its factors
    came from (`extras.unityMaterial`, `extras.unityProperties`);
-2. `Art/MaterialRecolor` rewrites only the matching factors: `baseColorFactor` when it came from `_Color`, and
-   `emissiveFactor` when it came from `_EmissionColor`. Colours are converted to linear as the converter does;
-3. the affected GLBs are admitted from memory, with their geometry and textures unchanged.
+2. `Art/MaterialRecolor` reads each GLB's JSON chunk (not its binary chunk) and builds Engine material factor
+   overrides for the matching slots: base colour when the factor came from `_Color`, emissive factor and
+   strength when it came from `_EmissionColor`. Colours are converted to linear as the converter does. The
+   Engine numbers a GLB's slots by the glTF material indices its primitives use, in ascending order;
+3. `Animation.UpdateAnimatedMeshMaterialFactors` applies them to that appearance. The GLB opens once, and its
+   textures, maps and texture transforms still multiply the new factors.
 
 The toon shaders most tilesets use name their emission property `Color_EC47A898`, not `_EmissionColor`. So,
 as in Unity, palette emission only changes materials whose shader really has `_EmissionColor`.
 
-Each recoloured GLB is a second in-memory copy for that level. The Engine has no per-appearance colour
-override for embedded GLB materials. Replacing a slot with an Engine material
-(`UpdateAnimatedMeshMaterials`) would drop the GLB's textures.
+Factors are per appearance (rusty-engine #9367), so one resource could carry several palettes at once. A level
+uses one palette, so each level scene opens each GLB once with one appearance.
 
 ## Not used yet
 

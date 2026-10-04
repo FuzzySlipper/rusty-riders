@@ -20,7 +20,7 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 | `src/RustyRiders.Game/Levels/LevelGenerator.cs` | The old generator's geometry: chunk fitting, corridors, walls, corners, tile kind and rotation per cell |
 | `src/RustyRiders.Game/Levels/LevelScene.cs` | Stamping tile art per planned cell, wall and ground collision, spawn, level problems |
 | `src/RustyRiders.Game/Gallery/` | `gallery.json` and the gallery scene's exhibit layout and ground |
-| `src/RustyRiders.Game/Art/` | Placement files and converted GLBs: each read or opened once, problems recorded; `MaterialRecolor` applies a level palette to the GLBs whose materials it names |
+| `src/RustyRiders.Game/Art/` | Placement files and converted GLBs: each read or opened once, problems recorded; `MaterialRecolor` turns a level palette into Engine material factor overrides for the appearances whose materials it names |
 | `src/RustyRiders.Game/Player/` | Walker tuning, first-person controls, character steps, free flight and camera; `IWalkScene`, what a scene gives the walker and HUD |
 | `src/RustyRiders.Game/Ui/Hud.cs` | HUD facts for the DOM panel |
 | `src/ui/main.js` | DOM panel: status, problems, what is underfoot, position, controls |

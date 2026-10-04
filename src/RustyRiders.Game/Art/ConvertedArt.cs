@@ -6,8 +6,8 @@ namespace RustyRiders.Game.Art;
 /// <summary>
 /// The converted old-game art under content/&lt;root&gt;/ (scripts/import-old-art.sh): placement files read once and
 /// each GLB opened once, with one appearance shared by every placement of it. Missing files and refused GLBs are
-/// recorded as problems instead of stopping the scene. With a <see cref="MaterialRecolor"/>, a GLB whose materials it
-/// names is read, recoloured and admitted from memory; every other GLB still opens from its content path.
+/// recorded as problems instead of stopping the scene. With a <see cref="MaterialRecolor"/>, each appearance gets
+/// Engine material factor overrides for the slots whose Unity materials it recolours; the GLB opens once either way.
 /// </summary>
 internal sealed class ConvertedArt : IDisposable
 {
@@ -73,10 +73,22 @@ internal sealed class ConvertedArt : IDisposable
         ArtMesh? loaded = null;
         try
         {
-            RenderResource resource = Open(glb);
+            string path = $"{root}/{glb}";
+            RenderResource resource = engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest(path));
             AnimatedMeshInfo info = engine.Animation.ReadMeshInfo(resource);
-            loaded = new ArtMesh(resource, engine.Animation.CreateAnimatedMeshAppearance(new AnimatedMeshAppearanceRequest(resource)),
-                info.BoundsMin, info.BoundsMax);
+            Appearance appearance = engine.Animation.CreateAnimatedMeshAppearance(new AnimatedMeshAppearanceRequest(resource));
+            try
+            {
+                if (recolor is not null && recolor.Factors(ReadJson(path)) is { Length: > 0 } factors)
+                    engine.Animation.UpdateAnimatedMeshMaterialFactors(new AnimatedMeshMaterialFactorsRequest(appearance, factors));
+            }
+            catch (EngineCallException)
+            {
+                appearance.Dispose();
+                resource.Dispose();
+                throw;
+            }
+            loaded = new ArtMesh(resource, appearance, info.BoundsMin, info.BoundsMax);
         }
         catch (EngineCallException error)
         {
@@ -86,25 +98,13 @@ internal sealed class ConvertedArt : IDisposable
         return loaded;
     }
 
-    private RenderResource Open(string glb)
+    /// <summary>A GLB's JSON chunk, read without its binary chunk.</summary>
+    private System.Text.Json.Nodes.JsonNode ReadJson(string path)
     {
-        string path = $"{root}/{glb}";
-        if (recolor is null) return engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest(path));
-        byte[]? recoloured;
-        using (ContentReference source = engine.Content.OpenReference(new ContentOpenRequest(path)))
-        {
-            ReadOnlyMemory<byte> header = engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0, MaterialRecolor.HeaderPrefixLength));
-            ReadOnlyMemory<byte> prefix = engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0,
-                (uint)MaterialRecolor.JsonPrefixLength(header.Span)));
-            recoloured = recolor.Touches(MaterialRecolor.ReadJson(prefix.Span).Document)
-                ? recolor.Apply(engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0,
-                    checked((uint)ContentFiles.Length(engine, source)))).Span)
-                : null;
-        }
-        if (recoloured is null) return engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest(path));
-        using ContentReference admitted = engine.Content.AdmitReference(new ContentAdmissionRequest(
-            $"recolor/{recolor.Id}/{glb}", recoloured, ReadOnlyMemory<ContentSourceFile>.Empty));
-        return engine.Animation.OpenAnimatedMeshFromContent(new AnimationContentRequest(admitted));
+        using ContentReference source = engine.Content.OpenReference(new ContentOpenRequest(path));
+        ReadOnlyMemory<byte> header = engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0, MaterialRecolor.HeaderPrefixLength));
+        return MaterialRecolor.ReadJson(engine.Content.ReadBytes(new ContentReadBytesRequest(source, 0,
+            (uint)MaterialRecolor.JsonPrefixLength(header.Span))).Span);
     }
 }
 
