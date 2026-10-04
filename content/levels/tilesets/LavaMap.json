@@ -268,5 +268,33 @@
    "###..####",
    "###...###"
   ]
- }
+ },
+ "palettes": [
+  {
+   "id": "_Colors",
+   "entries": [
+    {
+     "baseColor": [
+      0.9150943,
+      0.9150943,
+      0.9150943,
+      1.0
+     ],
+     "emissive": [
+      2.1185474,
+      1.2201058,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/LavaMap/Materials/LavaMap_gateway_mat.mat",
+      "GameData/Levels/TileSets/LavaMap/Materials/ScifiDoor_Frame_Lava.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor.mat",
+      "GameData/Combat/Tilesets/LavaMap/CT_LavaMap_Mat_Env.mat",
+      "GameData/Combat/Tilesets/LavaMap/CT_LavaMap_Mat_Wall.mat"
+     ]
+    }
+   ]
+  }
+ ]
 }

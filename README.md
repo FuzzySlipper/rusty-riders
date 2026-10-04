@@ -52,7 +52,7 @@ Open the URL printed by the host and click to capture the mouse:
 The level collides with its ground and walls. In the gallery only the ground
 collides, so fly to see raised floors.
 
-The level's tileset, layout and seed are set in `content/level.json`. The
+The level's tileset, layout, seed and optional palette are set in `content/level.json`; without a palette the seed picks one of the tileset's, as the old game did. The
 walker tuning is in `content/walker.json`, and the gallery's exhibits in
 `content/gallery.json`.
 `rusty dev` runs the pinned pair's runtime: CoreCLR loads the product, and

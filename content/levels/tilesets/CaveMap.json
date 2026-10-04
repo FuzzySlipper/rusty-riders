@@ -279,5 +279,46 @@
    "###..####",
    "###...###"
   ]
- }
+ },
+ "palettes": [
+  {
+   "id": "_Colors",
+   "entries": [
+    {
+     "baseColor": [
+      0.47450984,
+      0.59607846,
+      0.56078434,
+      1.0
+     ],
+     "emissive": [
+      0.1811643,
+      0.21586053,
+      0.1811643,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/CaveMap/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.4745098,
+      0.59607846,
+      0.56078434,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Combat/Tilesets/Cave/CT_CaveMap_wall01.mat"
+     ]
+    }
+   ]
+  }
+ ]
 }

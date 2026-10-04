@@ -8,7 +8,9 @@ internal static class ContentFiles
     internal static ReadOnlyMemory<byte> Read(IEngineContext engine, string path)
     {
         using ContentReference content = engine.Content.OpenReference(new ContentOpenRequest(path));
-        ulong length = engine.Content.ReadReferenceInfo(content).Span[0].ByteLength;
-        return engine.Content.ReadBytes(new ContentReadBytesRequest(content, 0, checked((uint)length)));
+        return engine.Content.ReadBytes(new ContentReadBytesRequest(content, 0, checked((uint)Length(engine, content))));
     }
+
+    internal static ulong Length(IEngineContext engine, ContentReference content) =>
+        engine.Content.ReadReferenceInfo(content).Span[0].ByteLength;
 }

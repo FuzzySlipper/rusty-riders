@@ -30,7 +30,8 @@ internal sealed class LevelScene : IWalkScene
     internal LevelScene(IEngineContext engine, LevelSettings settings, LevelData data, LayoutDefinition layout, int seed)
     {
         this.engine = engine;
-        art = new ConvertedArt(engine, settings.ArtRoot);
+        PaletteDefinition? palette = ChoosePalette(settings, data.Tileset, seed);
+        art = new ConvertedArt(engine, settings.ArtRoot, palette?.Recolor());
         cellSize = data.Generator.CellSize;
         Session = engine.Spatial.CreateSession(new SpatialSessionConfig(CollisionVoxelSize, CollisionChunkSize, VoxelSurfaceMode.GreedyCubes));
         LevelPlan plan = LevelGenerator.Generate(data, layout, seed);
@@ -70,7 +71,7 @@ internal sealed class LevelScene : IWalkScene
 
         SpawnFeet = CellCenter(plan.Spawn.X, plan.Spawn.Z) + Vector3.UnitY * SpawnLift;
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
-        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes";
+        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · palette {palette?.Id ?? "none"} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes";
     }
 
     public SpatialSession Session { get; }
@@ -94,6 +95,18 @@ internal sealed class LevelScene : IWalkScene
         engine.Graphics.PublishSnapshot([]);
         art.Dispose();
         Session.Dispose();
+    }
+
+    /// <summary>The named palette, or (as the old LevelFx did) one of the tileset's picked by the level's seed.</summary>
+    private PaletteDefinition? ChoosePalette(LevelSettings settings, TilesetDefinition tileset, int seed)
+    {
+        if (settings.Palette is { } id)
+        {
+            PaletteDefinition? named = tileset.Palettes.FirstOrDefault(palette => palette.Id == id);
+            if (named is null) problems.Add($"{tileset.Id} has no palette '{id}'");
+            return named;
+        }
+        return tileset.Palettes.Length == 0 ? null : tileset.Palettes[new Random(seed).Next(tileset.Palettes.Length)];
     }
 
     /// <summary>The old game's cell placement, in glTF space: Unity is the X mirror, so x flips and the turn reverses.</summary>

@@ -12,8 +12,8 @@ Riders keeps those pieces as content and stamps levels from them the same way.
 | `content/levels/chunks.json` | 29 chunks: sparse room cells and door cells (`door` = the side the door opens away from the room), objectives (`primary`, `secondary`, `chest`) | `Levels/Chunks/*.asset` |
 | `content/levels/layouts.json` | 14 layout graphs: nodes on a sector grid with tags (`start`, `exit`, `key`, `bonus`, `spawner`, `boss`…) and links (`locked` where set) | `Levels/Layouts/*.asset` |
 | `content/levels/styles.json` | Styles: faction and tileset | `Levels/Styles/*.asset` |
-| `content/levels/tilesets/<id>.json` | Tile prefabs per tile kind (variants are equally likely) and each prefab's 9x9 walkability grid | `Levels/TileSets/*.asset` and each tile prefab's `CombatPrefabPathfinding` |
-| `content/level.json` | Which tileset, layout and seed to stamp, wall collision height, background | authored here |
+| `content/levels/tilesets/<id>.json` | Tile prefabs per tile kind (variants are equally likely), each prefab's 9x9 walkability grid, and the tileset's colour palettes | `Levels/TileSets/*.asset`, each tile prefab's `CombatPrefabPathfinding`, `Levels/TileSets/*/_Colors*.asset` |
+| `content/level.json` | Which tileset, layout, seed and (optionally) palette to stamp, wall collision height, background | authored here |
 | `content/old-art/placements/GameData/Levels/TileSets/...` | Each tile prefab's converted art: GLB placements inside the 15 m tile | generated, `scripts/import-old-art.sh` |
 
 `scripts/extract-level-data.py` regenerates everything under
@@ -56,10 +56,36 @@ walls stop the walker roughly where the art is. It is the old game's coarse
 grid (1.67 m cells), not the art's real shape. Tiles without a grid use their
 tile kind's 3x3 template.
 
+## Palettes
+
+The old game gave each level one of its tileset's palettes (`PrefabMaterialsColors`), picked by the level
+seed, and recoloured the materials it lists after the level was built:
+- each listed material's main colour (`Material.color`, which is the shader's `_Color`) was set to the entry's `baseColor`;
+- its `_EmissionColor` was set to the entry's `emissive` when that colour's alpha is above 0.
+
+The palettes are kept under `palettes` in each tileset file as Unity stored them: gamma-encoded rgba, with
+materials named by their Assets-relative `.mat` paths. Entries naming a material that does not exist are kept
+under `missingMaterials`. The old loader resolved those names by path, so they recoloured nothing. That
+covers all of Cybertubes' entries and a few ForestMap and UndergroundPalace ones.
+
+The level scene does the same at load time, using the palette named in `level.json`, or otherwise one picked
+by the seed:
+1. asset-pipeline records on every converted glTF material which Unity material and properties its factors
+   came from (`extras.unityMaterial`, `extras.unityProperties`);
+2. `Art/MaterialRecolor` rewrites only the matching factors: `baseColorFactor` when it came from `_Color`, and
+   `emissiveFactor` when it came from `_EmissionColor`. Colours are converted to linear as the converter does;
+3. the affected GLBs are admitted from memory, with their geometry and textures unchanged.
+
+The toon shaders most tilesets use name their emission property `Color_EC47A898`, not `_EmissionColor`. So,
+as in Unity, palette emission only changes materials whose shader really has `_EmissionColor`.
+
+Each recoloured GLB is a second in-memory copy for that level. The Engine has no per-appearance colour
+override for embedded GLB materials. Replacing a slot with an Engine material
+(`UpdateAnimatedMeshMaterials`) would drop the GLB's textures.
+
 ## Not used yet
 
 - **Gameplay data:** objectives, chests, spawners, keys and lock colours are extracted but not placed.
 - **Tile kinds:** `Start`, `Goal`, `Warp` and `Door` tiles are never chosen, as in the old game.
-- **Palettes:** each tileset's colour palettes (`_Colors*.asset`) are not extracted. The old game recoloured materials per level with them.
 - **Unused old data:** the object database (lights, clutter, bonuses) and fog are not translated.
 - **Refused art:** a few tile models fail Engine admission and are listed as problems. They include ForestMap `goal1`, `roadstop1` and `roadstop2`, and CyberTube `roomcornerC1`.

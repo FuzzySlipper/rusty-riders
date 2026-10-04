@@ -234,5 +234,313 @@
    "#.......#",
    "#.#...#.#"
   ]
- }
+ },
+ "palettes": [
+  {
+   "id": "_Colors",
+   "entries": [
+    {
+     "baseColor": [
+      0.2784314,
+      0.21176472,
+      0.050980397,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/arch01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/corner01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.3647059,
+      0.49803925,
+      0.85098046,
+      1.0
+     ],
+     "emissive": [
+      0.45641106,
+      0.25015837,
+      0.051269468,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ceilingarch01_mat.mat"
+     ],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/marblefloor01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.2270826,
+      0.32839474,
+      0.5943396,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/pillar01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/pillarstand01_mat.mat"
+     ],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ground01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.29803923,
+      0.40000004,
+      0.654902,
+      1.0
+     ],
+     "emissive": [
+      0.45641106,
+      0.25015837,
+      0.051269468,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/wall01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor_Frame_Palace.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoorGate.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor.mat",
+      "GameData/Combat/Tilesets/Palace/CT_Palace.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.1254902,
+      0.1254902,
+      0.1254902,
+      1.0
+     ],
+     "emissive": [
+      0.45641106,
+      0.25015837,
+      0.051269468,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/wallmark01_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 1",
+   "entries": [
+    {
+     "baseColor": [
+      0.6117647,
+      0.28627452,
+      0.050980397,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/arch01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/corner01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.5176471,
+      0.32156864,
+      0.09411766,
+      1.0
+     ],
+     "emissive": [
+      0.44520125,
+      0.3515327,
+      0.10224175,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ceilingarch01_mat.mat"
+     ],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/marblefloor01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.26477394,
+      0.34098554,
+      0.4716981,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/pillar01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/pillarstand01_mat.mat"
+     ],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ground01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.5176471,
+      0.32156864,
+      0.09411766,
+      1.0
+     ],
+     "emissive": [
+      0.39157256,
+      0.31854683,
+      0.12213881,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/wall01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor_Frame_Palace.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoorGate.mat",
+      "GameData/Combat/Tilesets/Palace/CT_Palace.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.2761659,
+      0.37053046,
+      0.5471698,
+      1.0
+     ],
+     "emissive": [
+      0.8879232,
+      0.70837605,
+      0.20507877,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/wallmark01_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 2",
+   "entries": [
+    {
+     "baseColor": [
+      0.15859737,
+      0.2842232,
+      0.41509432,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/arch01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/corner01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.3647059,
+      0.49803925,
+      0.85098046,
+      1.0
+     ],
+     "emissive": [
+      0.45641106,
+      0.25015837,
+      0.051269468,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ceilingarch01_mat.mat"
+     ],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/marblefloor01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.29803923,
+      0.40000004,
+      0.654902,
+      1.0
+     ],
+     "emissive": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/pillar01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/pillarstand01_mat.mat"
+     ],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ground01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.21106265,
+      0.40476477,
+      0.4811321,
+      1.0
+     ],
+     "emissive": [
+      0.45641106,
+      0.25015837,
+      0.051269468,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/wall01_mat.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoor_Frame_Palace.mat",
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/ScifiDoorGate.mat",
+      "GameData/Combat/Tilesets/Palace/CT_Palace.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.21244211,
+      0.31988358,
+      0.5849056,
+      1.0
+     ],
+     "emissive": [
+      0.79910296,
+      0.6444799,
+      0.20507877,
+      1.0
+     ],
+     "materials": [
+      "GameData/Levels/TileSets/UndergroundPalace/Materials/wallmark01_mat.mat"
+     ]
+    }
+   ]
+  }
+ ]
 }

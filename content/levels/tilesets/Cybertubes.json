@@ -268,5 +268,511 @@
    "###...###",
    "###...###"
   ]
- }
+ },
+ "palettes": [
+  {
+   "id": "_Colors 1",
+   "entries": [
+    {
+     "baseColor": [
+      0.12941177,
+      0.47450984,
+      0.3803922,
+      1.0
+     ],
+     "emissive": [
+      0.05448028,
+      0.21223079,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.56078434,
+      0.4784314,
+      0.39607847,
+      1.0
+     ],
+     "emissive": [
+      0.05448028,
+      0.21223079,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.56078434,
+      0.4784314,
+      0.39607847,
+      1.0
+     ],
+     "emissive": [
+      0.05448028,
+      0.21223079,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 2",
+   "entries": [
+    {
+     "baseColor": [
+      0.65882355,
+      0.62352943,
+      0.7294118,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.72156864,
+      0.5019608,
+      0.79215693,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.72156864,
+      0.5019608,
+      0.79215693,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 3",
+   "entries": [
+    {
+     "baseColor": [
+      0.65882355,
+      0.62352943,
+      0.7294118,
+      1.0
+     ],
+     "emissive": [
+      0.21223079,
+      0.44520125,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.64705884,
+      0.4431373,
+      0.6156863,
+      1.0
+     ],
+     "emissive": [
+      0.21223079,
+      0.44520125,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.64705884,
+      0.4431373,
+      0.6156863,
+      1.0
+     ],
+     "emissive": [
+      0.21223079,
+      0.44520125,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 4",
+   "entries": [
+    {
+     "baseColor": [
+      0.3372549,
+      0.40784317,
+      0.21176472,
+      1.0
+     ],
+     "emissive": [
+      0.9473069,
+      0.5457247,
+      0.46778384,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.3372549,
+      0.40784317,
+      0.21176472,
+      1.0
+     ],
+     "emissive": [
+      0.9473069,
+      0.5457247,
+      0.46778384,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.3372549,
+      0.454902,
+      0.21568629,
+      1.0
+     ],
+     "emissive": [
+      0.9473069,
+      0.5457247,
+      0.46778384,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 5",
+   "entries": [
+    {
+     "baseColor": [
+      0.3372549,
+      0.40784317,
+      0.21176472,
+      1.0
+     ],
+     "emissive": [
+      0.9473069,
+      0.5457247,
+      0.46778384,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.3372549,
+      0.40784317,
+      0.21176472,
+      1.0
+     ],
+     "emissive": [
+      0.9473069,
+      0.5457247,
+      0.46778384,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.69411767,
+      0.5137255,
+      0.76470596,
+      1.0
+     ],
+     "emissive": [
+      0.9473069,
+      0.5457247,
+      0.46778384,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 6",
+   "entries": [
+    {
+     "baseColor": [
+      0.21176472,
+      0.16862746,
+      0.32156864,
+      1.0
+     ],
+     "emissive": [
+      0.27889434,
+      0.39157256,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.21176472,
+      0.16862746,
+      0.32156864,
+      1.0
+     ],
+     "emissive": [
+      0.87136734,
+      0.70110214,
+      0.9473069,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.29803923,
+      0.43921572,
+      0.2392157,
+      1.0
+     ],
+     "emissive": [
+      0.27889434,
+      0.39157256,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors 7",
+   "entries": [
+    {
+     "baseColor": [
+      0.34901962,
+      0.34509805,
+      0.1764706,
+      1.0
+     ],
+     "emissive": [
+      0.05448028,
+      0.21223079,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.34901962,
+      0.34509805,
+      0.1764706,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.25882354,
+      0.45882356,
+      0.2901961,
+      1.0
+     ],
+     "emissive": [
+      0.05448028,
+      0.21223079,
+      0.051269468,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "_Colors",
+   "entries": [
+    {
+     "baseColor": [
+      0.83921576,
+      0.49411768,
+      0.67058825,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/cover01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/ground01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/wall01_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.39607847,
+      0.31764707,
+      0.5254902,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/groundslope01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube02_mat.mat"
+     ]
+    },
+    {
+     "baseColor": [
+      0.65882355,
+      0.62352943,
+      0.7294118,
+      1.0
+     ],
+     "emissive": [
+      0.8307701,
+      0.31854683,
+      0.5583406,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube01_mat.mat",
+      "GameData/Levels/TileSets/Cybertubes/Materials/tube03_mat.mat"
+     ]
+    }
+   ]
+  }
+ ]
 }

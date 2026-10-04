@@ -1,6 +1,8 @@
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
+using RustyRiders.Game.Art;
 
 namespace RustyRiders.Game.Levels;
 
@@ -24,9 +26,9 @@ internal sealed record LevelData(GeneratorSettings Generator, TileKindTemplate[]
         ?? throw new InvalidOperationException($"content/{path} is empty.");
 }
 
-/// <summary>Which layout, tileset and seed to stamp, from content/level.json.</summary>
+/// <summary>Which layout, tileset and seed to stamp, from content/level.json. Without a palette the seed picks one.</summary>
 internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layout, int Seed, float WallHeight,
-    float[] BackgroundColor)
+    float[] BackgroundColor, string? Palette)
 {
     internal const string Path = "level.json";
 
@@ -54,7 +56,29 @@ internal sealed record LayoutNode(int Id, int X, int Z, string[] Tags, LayoutCon
 internal sealed record LayoutConnection(string Dir, int Target, bool Locked);
 
 /// <summary>Tile prefabs per tile kind (old-game prefab paths, the names of their placement files) and their 9x9 walkability.</summary>
-internal sealed record TilesetDefinition(string Id, Dictionary<string, string[]> Tiles, Dictionary<string, string[]> Walkability);
+internal sealed record TilesetDefinition(string Id, Dictionary<string, string[]> Tiles, Dictionary<string, string[]> Walkability,
+    PaletteDefinition[] Palettes);
+
+/// <summary>An old PrefabMaterialsColors palette; the old game recoloured a level's materials with one of its tileset's.</summary>
+internal sealed record PaletteDefinition(string Id, PaletteEntry[] Entries)
+{
+    /// <summary>The old PaintLevel: each listed material gets Material.color, and _EmissionColor when its alpha is above 0.</summary>
+    internal MaterialRecolor Recolor()
+    {
+        MaterialRecolor recolor = new(Id);
+        foreach (PaletteEntry entry in Entries)
+        {
+            float[] e = entry.Emissive;
+            foreach (string material in entry.Materials)
+                recolor.Set(material, new Vector4(entry.BaseColor[0], entry.BaseColor[1], entry.BaseColor[2], entry.BaseColor[3]),
+                    e[3] > 0 ? new Vector3(e[0], e[1], e[2]) : null);
+        }
+        return recolor;
+    }
+}
+
+/// <summary>Colours as Unity stored them (gamma-encoded rgba) and the Assets-relative materials they recolour.</summary>
+internal sealed record PaletteEntry(float[] BaseColor, float[] Emissive, string[] Materials);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(GeneratorSettings))]

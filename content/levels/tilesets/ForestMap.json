@@ -256,5 +256,30 @@
    "###...###",
    "###...###"
   ]
- }
+ },
+ "palettes": [
+  {
+   "id": "_Colors",
+   "entries": [
+    {
+     "baseColor": [
+      0.654902,
+      0.67058825,
+      0.6666667,
+      1.0
+     ],
+     "emissive": [
+      0.23839766,
+      0.46207705,
+      0.23455065,
+      1.0
+     ],
+     "materials": [],
+     "missingMaterials": [
+      "GameData/Levels/TileSets/ForestMap/Materials/distantview01_m.mat"
+     ]
+    }
+   ]
+  }
+ ]
 }

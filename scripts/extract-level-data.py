@@ -69,7 +69,28 @@ def generator() -> dict:
             "maxCorridorSteps": 100}
 
 
-def tileset(path: Path) -> dict:
+def color(body: str, key: str) -> list[float]:
+    values = dict(re.findall(r"(\w): ([-\d.eE]+)", re.search(rf"{key}: \{{([^}}]*)\}}", body).group(1)))
+    return [float(values[c]) for c in "rgba"]
+
+
+def palette(path: Path) -> dict:
+    """A PrefabMaterialsColors asset: colours as Unity stored them (gamma-encoded, rgba) and the materials whose
+    Material.color (and _EmissionColor, when the emissive alpha is above 0) each entry set."""
+    entries = []
+    for block in re.split(r"\n  - BaseColor:", "\n" + path.read_text().split("\n  _colors:", 1)[1])[1:]:
+        block = "BaseColor:" + block
+        materials, missing = [], []
+        for name in (n.strip() for n in re.findall(r"AssetName: (.*)", block)):
+            material = ASSETS / "GameData" / f"{name}.mat"
+            # The old loader resolved names by path; a name with no material there recoloured nothing.
+            (materials if material.is_file() else missing).append(material.relative_to(ASSETS).as_posix())
+        entries.append({"baseColor": color(block, "BaseColor"), "emissive": color(block, "Emissive"), "materials": materials,
+                        **({"missingMaterials": missing} if missing else {})})
+    return {"id": path.stem, "entries": entries}
+
+
+def tileset(path: Path, guids: dict[str, Path]) -> dict:
     text = path.read_text()
     tiles, walkability = {}, {}
     for kind, block in zip(TILE_KINDS, re.split(r"\n  - Objects:", text.split("\n  Tiles:", 1)[1])[1:]):
@@ -85,7 +106,9 @@ def tileset(path: Path) -> dict:
             if walkable and len(walkable) == 162:
                 walkability[asset_name(prefab)] = grid_rows(hex_bools(walkable), 9)
         tiles[kind] = prefabs
-    return {"id": path.stem, "tiles": tiles, "walkability": walkability}
+    block = re.search(r"\n  _colors:\n((?:  - \{[^\n]*\}\n)+)", text)
+    palettes = [palette(guids[g]) for g in re.findall(r"guid: (\w+)", block.group(1) if block else "") if g in guids]
+    return {"id": path.stem, "tiles": tiles, "walkability": walkability, "palettes": palettes}
 
 
 def chunk(path: Path) -> dict:
@@ -171,7 +194,7 @@ def main() -> None:
     write(OUT / "chunks.json", [chunk(p) for p in sorted((LEVELS / "Chunks").glob("*.asset"))])
     write(OUT / "layouts.json", [layout(p) for p in sorted((LEVELS / "Layouts").glob("*.asset"))])
     for path in sorted((LEVELS / "TileSets").glob("*.asset")):
-        set_ = tileset(path)
+        set_ = tileset(path, guids)
         if any(set_["tiles"].values()):
             write(OUT / "tilesets" / f"{path.stem}.json", set_)
     print(f"wrote {OUT.relative_to(ROOT)}")
