@@ -85,6 +85,29 @@ as in Unity, palette emission only changes materials whose shader really has `_E
 Factors are per appearance (rusty-engine #9367), so one resource could carry several palettes at once. A level
 uses one palette, so each level scene opens each GLB once with one appearance.
 
+## The old source
+
+All of the old generator lives in `old-game/Assets/Scripts_Main/` (namespace `PixelPhantasm`; an identical copy
+is in `old-game/Submodules/RpgCodebase/Scripts_Main/`):
+
+| Concern | Old code |
+| --- | --- |
+| Build entry point, chunk fitting, corridors | `Level/Procedural/ProceduralLevelBuilder.cs` |
+| Walls, corners, tile kind and rotation | `Level/LevelCellMap.cs`, `Level/Structure/SimpleTiles/SimpleTileset.cs`, `SimpleTiles.cs` |
+| Tile templates | `Level/Json/DetailGridConfig.cs`, `GameData/Levels/DetailGrid.asset` |
+| Placement passes (detail map, objectives, combat grid) | `Level/PostProcess/{DetailMapProcess,LevelFeaturesProcess,CombatMapProcess}.cs`, `Level/Components/CombatPrefabPathfinding.cs` |
+| Palettes | `Level/Structure/PrefabMaterialsColors.cs` (`PaintLevel`) |
+| Registries the generator saw | `GameData/Resources/{LevelChunkFactory,LevelLayoutFactory,LevelStyleFactory,LevelPainterData,LazyDb}.asset` |
+
+Quirks of the old code worth knowing (some are fixed here, as listed under Generation):
+- Corridor ends may leave a one-cell stub.
+- Side pockets could never start (`MinExpansionStart` exceeds any corridor).
+- Lights were never placed (`FindLightType` is private and unused).
+- `DetailGrid5.asset` and the Empty tileset are unused.
+- Locks are one-sided in the data.
+- A few layouts link nodes that are not adjacent (`LevelLayout 5`, `7`) or to a missing node (`LevelLayout 1`).
+- The level tile art is in `Art/Models/GridMaps/`; `Art/Models/CombatEnvironment/` is only for the separate combat-arena tilesets.
+
 ## Not used yet
 
 - **Gameplay data:** objectives, chests, spawners, keys and lock colours are extracted but not placed.

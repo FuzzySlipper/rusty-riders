@@ -9,8 +9,9 @@ layouts and tilesets (docs/levels.md), plus a gallery of the converted combat ar
 
 ## Start here
 
-Read [README.md](README.md) for setup and commands and
-[docs/architecture.md](docs/architecture.md) for the current owners. Before
+Read [README.md](README.md) for setup and commands,
+[docs/architecture.md](docs/architecture.md) for the current owners and
+[docs/direction.md](docs/direction.md) for the game direction and how the old art is used. Before
 changing the Engine boundary, read the Engine's
 [C# SDK guide](https://github.com/FuzzySlipper/rusty-engine/blob/main/docs/csharp-sdk.md)
 and architecture. `rusty --help` is the workflow reference. Ordinary builds

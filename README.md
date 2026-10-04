@@ -100,6 +100,8 @@ rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj --aot
 | `scripts/extract-level-data.py` | Regenerates `content/levels/` from `old-game/` |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin |
 | `docs/architecture.md` | Current ownership and data flow |
+| `docs/direction.md` | Game direction, scale of the old kit, what the old art is worth, backups |
+| `docs/levels.md` | Level data, generation, palettes and the old source |
 | `docs/ui.md` | DOM companion contract |
 | `docs/agent-review/` | Reusable review workflow and lane packets |
 
