@@ -99,7 +99,8 @@ rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj --aot
 | `content/level.json`, `content/walker.json`, `content/gallery.json` | Which level to stamp, walker tuning, gallery exhibits |
 | `content/old-art/` | Generated, ignored: converted GLBs and placement files |
 | `scripts/import-old-art.sh` | Regenerates `content/old-art/` with asset-pipeline unity-import |
-| `scripts/texture-gen/` | Makes generated textures tile (seam repaint through ComfyUI) and derives their normal maps |
+| `scripts/texture-gen/` | Generated textures: tiling and normal maps, checks, contact sheets and judge merging, LoRA dataset, captions and training through ComfyUI |
+| `docs/texture-style.md`, `.claude/skills/texture-batch/` | House texture style, judging rubric, and the generate–filter–judge workflow |
 | `content/art/textures/` | Generated textures, with their sources in `sources.json` |
 | `scripts/extract-level-data.py` | Regenerates `content/levels/` from `old-game/` |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin |
