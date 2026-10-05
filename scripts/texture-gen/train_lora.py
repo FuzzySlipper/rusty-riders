@@ -10,8 +10,11 @@ it with comfy.upload_folder). The LoRA is saved as models/loras/<name>_<steps>_s
 ComfyUI host.
 
 Defaults suit a ~40-image style set on Z-Image base: rank 16, AdamW at 1e-4, batch 1, the model's own dtype,
-gradient checkpointing, about 35 passes over the set. A 1024 px set with training dtype bf16 and no offloading
-asked for 58 GB and ran out of the 5090's 32 GB; use 768 px images, --offload, or both.
+gradient checkpointing, about 35 passes over the set. On the 5090 (32 GB, 64 GB RAM):
+- At 1024 px, training dtype bf16 and no offloading, it asked for 58 GB and ran out of memory.
+- At 768 px with --offload it fitted, but streamed weights through system RAM. That took 83 s per step (32 h
+  for 1500 steps) and left the desktop with 2 GB of RAM, so it was stopped.
+Probe a configuration with a few --steps before a full run.
 """
 import argparse
 import json
@@ -59,7 +62,8 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=9420)
     parser.add_argument("--training-dtype", choices=["none", "bf16", "fp32"], default="none",
                         help="none keeps the model's own dtype; bf16 at 1024 px ran out of the 5090's 32 GB")
-    parser.add_argument("--offload", action="store_true", help="offload model weights to system RAM while training")
+    parser.add_argument("--offload", action="store_true",
+                        help="offload model weights to system RAM while training (very slow on the 5090: 83 s per step)")
     parser.add_argument("--submit", action="store_true", help="queue the run (only with the GPU owner's agreement)")
     args = parser.parse_args()
     g = graph(args.dataset, args.name, args.model, args.steps, args.rank, args.learning_rate, args.seed,
