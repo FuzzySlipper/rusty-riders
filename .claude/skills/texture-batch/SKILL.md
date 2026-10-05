@@ -19,9 +19,13 @@ greyscale values for palette tinting. Attach a style reference; the Cave's is `w
 | --- | --- | --- |
 | GPT image | Quality: hero textures, gold examples | `codex-image-gen` skill with the reference image attached. About 5 min each, so run several in the background with distinct output paths. |
 | Qwen-Image 2.1 edit (5090) | Volume with a reference, 6–12 s each | API graph as in `content/art/textures/cave/sources.json` (`TextEncodeQwenImage21` with the reference as `images.image_1`), several seeds |
+| Z-Image base + house LoRA | Volume in the ink-toon style, about 18 s each on the 5090 (110 s on a Strix Halo) | `generate.py --model zimage-base --lora rrink_zimage_v2_seg4_2000_steps_00001_.safetensors`, prompt starting "rrink style, top-down view of …" |
 | Z-Image Turbo (5090) | Fast text-only drafts, 3 s each | 8 steps, `res_multistep`, shift 3 |
 
-Never write "seamless" or "tileable" in a prompt. Z-Image then repeats the pattern inside the image.
+`scripts/texture-gen/generate.py` runs Z-Image (turbo or base, with or without a LoRA) and Qwen edit batches over
+seeds and records provenance; point `COMFY_URL` at the 5090 (fastest when free), den-nimo (192.168.1.23) or
+den-m5 (192.168.1.24). Never write "seamless" or "tileable" in a prompt; "tiling surface" also makes Z-Image
+draw panel grids, while leaving it out drifts toward perspective photos, so prefer "top-down view of". 
 
 ## 2. Make them tile
 

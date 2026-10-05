@@ -50,3 +50,18 @@ The judge replies with JSON:
 ```
 
 The judges' rankings are merged by mean rank across shuffled orders. Calibration results are in Den #9420.
+
+## House style LoRA
+
+`rrink_zimage_v2_seg4_2000_steps_00001_.safetensors` is a Z-Image base LoRA for the ink-toon family:
+- **Trained on:** 43 crops of the old Cave, Lava, Forest and combat textures, plus the GPT gold floors, at
+  768 px. The Palace, StoneRoad and CyberTube textures are a different style and were left out.
+- **Settings:** rank 32, learning rate 3e-4, 2000 steps, on den-nimo.
+- **Trigger:** "rrink style".
+- **Copies:** den-nimo, den-m5 and the 5090.
+
+It turns cave rock and cells, lava and forest ground into flat cel fills with ink outlines. Sonnet judges rank
+its best Cave floors just behind the GPT gold textures, at 18 s an image. A weaker first run (rank 16, learning
+rate 1e-4, 1500 steps) barely moved anything but stone. The comparisons are in Den #9420, and the tools are in
+`scripts/texture-gen/` (`lora_dataset.py`, `caption.py`, `train_lora.py`).
+
