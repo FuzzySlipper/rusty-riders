@@ -73,6 +73,8 @@ def main() -> None:
                         help="offload model weights to system RAM while training (very slow on the 5090: 83 s per step)")
     parser.add_argument("--existing-lora", help="a LoRA file on the host to continue training (checkpointed runs)")
     parser.add_argument("--wait", action="store_true", help="after submitting, wait and print the saved LoRA's file name")
+    parser.add_argument("--segments", type=int, default=1,
+                        help="train --steps in this many chained runs, keeping each run's LoRA as a checkpoint (implies --wait)")
     parser.add_argument("--submit", action="store_true", help="queue the run (only with the GPU owner's agreement)")
     args = parser.parse_args()
     g = graph(args.dataset, args.name, args.model, args.steps, args.rank, args.learning_rate, args.seed,
@@ -80,12 +82,23 @@ def main() -> None:
     if not args.submit:
         print(json.dumps(g, indent=1))
         return
-    pid = comfy.post("/prompt", {"prompt": g, "client_id": "riders-lora"})["prompt_id"]
-    print(json.dumps({"prompt_id": pid, "queued": True}), flush=True)
-    if args.wait:
+    existing = args.existing_lora
+    for segment in range(1, args.segments + 1):
+        name = args.name if args.segments == 1 else f"{args.name}_seg{segment}"
+        steps = args.steps // args.segments
+        g = graph(args.dataset, name, args.model, steps, args.rank, args.learning_rate, args.seed + segment - 1,
+                  args.training_dtype, args.offload, existing)
         before = set(loras())
+        pid = comfy.post("/prompt", {"prompt": g, "client_id": "riders-lora"})["prompt_id"]
+        print(json.dumps({"segment": segment, "prompt_id": pid, "from": existing, "queued": True}), flush=True)
+        if not (args.wait or args.segments > 1):
+            return
         comfy.wait(pid, timeout=24 * 3600)
-        print(json.dumps({"prompt_id": pid, "saved": sorted(set(loras()) - before)}))
+        saved = sorted(set(loras()) - before)
+        print(json.dumps({"segment": segment, "prompt_id": pid, "saved": saved}), flush=True)
+        if not saved:
+            raise SystemExit(f"segment {segment} saved no LoRA")
+        existing = saved[0]
 
 
 def loras() -> list[str]:
