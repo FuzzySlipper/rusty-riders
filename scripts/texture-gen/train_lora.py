@@ -14,6 +14,9 @@ gradient checkpointing, about 35 passes over the set. On the 5090 (32 GB, 64 GB 
 - At 1024 px, training dtype bf16 and no offloading, it asked for 58 GB and ran out of memory.
 - At 768 px with --offload it fitted, but streamed weights through system RAM. That took 83 s per step (32 h
   for 1500 steps) and left the desktop with 2 GB of RAM, so it was stopped.
+- At 768 px without --offload, a 20-step probe ran and saved its LoRA, but at 38 s per step (16 h for 1500
+  steps), with free RAM again near 1.4 GB. The model plus training state does not stay resident beside the
+  desktop's other GPU use, so ComfyUI still streams weights.
 Probe a configuration with a few --steps before a full run.
 """
 import argparse
