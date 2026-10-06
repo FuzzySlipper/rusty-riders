@@ -53,15 +53,24 @@ The judges' rankings are merged by mean rank across shuffled orders. Calibration
 
 ## House style LoRA
 
-`rrink_zimage_v2_seg4_2000_steps_00001_.safetensors` is a Z-Image base LoRA for the ink-toon family:
-- **Trained on:** 43 crops of the old Cave, Lava, Forest and combat textures, plus the GPT gold floors, at
-  768 px. The Palace, StoneRoad and CyberTube textures are a different style and were left out.
-- **Settings:** rank 32, learning rate 3e-4, 2000 steps, on den-nimo.
+`rrink_zimage_v3_seg6_3000_steps_00001_.safetensors` is the house Z-Image base LoRA for the ink-toon family:
+- **Trained on:** 43 crops of the old Cave, Lava, Forest and combat textures, plus six GPT gold examples (two
+  Cave floors, a Lava floor, a forest floor, a ribbed cave wall and an eerie forest clearing), each whole and
+  zoomed. The Palace, StoneRoad and CyberTube textures are a different style and were left out.
+- **Settings:** 1024 px, rank 32, learning rate 3e-4, 3000 steps, on den-nimo (about 11.5 h).
 - **Trigger:** "rrink style".
 - **Copies:** den-nimo, den-m5 and the 5090.
 
-It turns cave rock and cells, lava and forest ground into flat cel fills with ink outlines. Sonnet judges rank
-its best Cave floors just behind the GPT gold textures, at 18 s an image. A weaker first run (rank 16, learning
-rate 1e-4, 1500 steps) barely moved anything but stone. The comparisons are in Den #9420, and the tools are in
-`scripts/texture-gen/` (`lora_dataset.py`, `caption.py`, `train_lora.py`).
+It gives consistent flat cel fills with ink outlines on cave rock and cells, lava and forest ground. Sonnet
+judges tied its best Cave rock floor with the GPT gold rock and placed it above the GPT cells, at 18 s an image.
 
+Earlier runs:
+
+| Run | Settings | Result |
+| --- | --- | --- |
+| v1 | rank 16, learning rate 1e-4, 1500 steps | Barely moved anything but stone |
+| v2 | 768 px, two golds, 2000 steps | Worked, but its best floors now rank last against v3 |
+| v3 at 1500–2000 steps | as above | Uneven: sepia casts, and a forest that slid back toward photos |
+
+The comparisons are in Den #9420, and the tools are in `scripts/texture-gen/` (`lora_dataset.py`, `caption.py`,
+`train_lora.py`).
