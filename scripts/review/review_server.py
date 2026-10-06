@@ -22,7 +22,7 @@ scripts/texture-gen/checks.py --json writes, matched to images by file name. The
 --order takes a text file of image paths or names, best first (such as merge_rankings.py output), to sort by.
 
 The server serves only images found under <image-dir> (png, jpg, jpeg, webp, gif) and writes only review.json.
-Thumbnails are cached in <image-dir>/.review-thumbs. Needs Pillow.
+Thumbnails are made in the background at start-up and cached in <image-dir>/.review-thumbs. Needs Pillow.
 """
 import argparse
 import html
@@ -94,6 +94,16 @@ class Review:
             os.replace(temp, self.state_path)
             return entry
 
+    def warm(self) -> None:
+        """Make every missing thumbnail in the background, so the first page opens from the cache."""
+        def run():
+            for index in range(len(self.images)):
+                try:
+                    self.thumbnail(index)
+                except OSError:
+                    pass  # an unreadable image shows as a broken thumbnail; the page still works
+        threading.Thread(target=run, daemon=True).start()
+
     def file(self, index: int) -> str:
         return os.path.join(self.root, self.images[index])
 
@@ -103,7 +113,8 @@ class Review:
         if not os.path.exists(cached) or os.path.getmtime(cached) < os.path.getmtime(source):
             os.makedirs(self.thumbs, exist_ok=True)
             image = Image.open(source)
-            image.thumbnail((THUMB, THUMB))
+            image.draft("RGB", (THUMB, THUMB))  # JPEGs decode at a reduced size
+            image.thumbnail((THUMB, THUMB), Image.BILINEAR)
             if image.mode not in ("RGB", "L"):
                 background = Image.new("RGB", image.size, (128, 128, 128))
                 background.paste(image.convert("RGBA"), mask=image.convert("RGBA").split()[-1])
@@ -323,6 +334,7 @@ def main() -> None:
     parser.add_argument("--order", help="text file of image paths or names, best first")
     args = parser.parse_args()
     review = Review(args.directory, args.info, args.order, args.title or os.path.basename(os.path.abspath(args.directory)))
+    review.warm()
     server = http.server.ThreadingHTTPServer((args.bind, args.port), handler(review))
     print(f"reviewing {len(review.images)} images in {review.root} at http://{args.bind}:{args.port}/ "
           f"(saving to {review.state_path})", flush=True)
