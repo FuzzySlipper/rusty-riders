@@ -1,6 +1,6 @@
 ---
 name: texture-batch
-description: Generate a batch of tiling textures in the Rusty Riders house style and pick the best automatically. Generate with GPT image (best quality) or ComfyUI on the user's 5090 (fast batches), make them tile, filter them with deterministic checks, rank the survivors with parallel Sonnet vision judges, then show the user the top few. Use when a level, tileset or prop needs a new texture, or to compare generators or LoRAs.
+description: Generate a batch of tiling textures in the Rusty Riders house style and pick the best automatically. Generate with GPT image (best quality) or ComfyUI on the user's 5090 (fast batches), make them tile, filter them with deterministic checks, rank the survivors with parallel Sonnet vision judges, then give the user a quick click-through pass in the review web app. Use when a level, tileset or prop needs a new texture, or to compare generators or LoRAs.
 ---
 
 # Texture batch: generate, filter, judge, pick
@@ -72,7 +72,24 @@ scripts/texture-gen/merge_rankings.py <out>/order1=<judge1.json> <out>/order2=<j
 
 With more than one sheet, take each sheet's top three into a final sheet and judge that the same way.
 
-## 5. Pick and land
+## 5. Human pass
+
+Put the candidates (or just the judges' top third) in one folder and start the review app on den-agents:
+
+```bash
+scripts/review/review_server.py <dir> --title "<what this is>" --info checks.json --order ranking.txt
+```
+
+The user opens `http://192.168.1.10:8790/` and clicks through pages of thumbnails:
+- click or `x` to reject, `k` to keep;
+- space for full size, `t` to see it tiled 2x2;
+- drag to mark crops (several per image for sprite sheets).
+
+Marks save to `<dir>/review.json` as they are made. `scripts/review/apply_review.py <dir> [--keep-only] --out <set>
+--copy` lists the survivors and cuts out the crops. Use the same app to pick and crop source art before training
+a LoRA. Stop the server when the pass is done.
+
+## 6. Pick and land
 
 Look at the top three yourself, in a contact sheet and, for a level surface, in game (the generated builds'
 `floorTextures` and V key). Show the user the finalists. Add the winner under `content/art/textures/<set>/`,

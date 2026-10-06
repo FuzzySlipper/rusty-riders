@@ -100,6 +100,7 @@ rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj --aot
 | `content/old-art/` | Generated, ignored: converted GLBs and placement files |
 | `scripts/import-old-art.sh` | Regenerates `content/old-art/` with asset-pipeline unity-import |
 | `scripts/texture-gen/` | Generated textures: tiling and normal maps, checks, contact sheets and judge merging, LoRA dataset, captions and training through ComfyUI |
+| `scripts/review/` | A LAN web app for a human pass over an image folder (flag, keep, note, crop), and applying its results |
 | `docs/texture-style.md`, `.claude/skills/texture-batch/` | House texture style, judging rubric, and the generate–filter–judge workflow |
 | `content/art/textures/` | Generated textures, with their sources in `sources.json` |
 | `scripts/extract-level-data.py` | Regenerates `content/levels/` from `old-game/` |
