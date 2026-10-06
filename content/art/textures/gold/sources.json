@@ -1,0 +1,23 @@
+{
+  "about": "GPT image gold examples (codex-image-gen skill, gpt-6-luna relay), each with an old-game texture under Art/Models/GridMaps as its style reference. Raw generations resized to 1024 px RGBA, not yet made tileable. Used as on-target training examples for the house style LoRA (Den #9420) and as candidate textures.",
+  "lava": {
+    "route": "codex-image-gen skill",
+    "reference": "LavaMap/Model/Materials/lavarock01_alb.png",
+    "spec": "Seamless tileable ground texture for a stylized volcanic cave floor in a first-person game: cracked dark basalt plates of varied sizes with narrow glowing orange-yellow lava running in the cracks between them. Style: match the reference image's hand-painted toon style exactly - bold dark ink outlines, flat cel-shaded fills with a soft pale inner highlight, clean graphic shapes. Square 1024x1024. Even density edge to edge with no focal point, no rows or grid, no symmetry, flat even lighting, viewed straight down with no perspective. The left edge must continue into the right edge and the top into the bottom. NO text, NO frames or borders, NO vignette. Colours: near-black and charcoal rock, hot orange and yellow lava."
+  },
+  "forest": {
+    "route": "codex-image-gen skill",
+    "reference": "ForestMap/Model/NewTextures/ground01.png",
+    "spec": "Seamless tileable ground texture for a stylized forest floor in a first-person game: packed earth with patches of moss, small leafy plants and thin tangled roots, all as flat graphic shapes. Style: match the reference image's hand-painted toon style exactly - bold dark ink outlines, flat cel-shaded fills with a soft pale inner highlight, clean graphic shapes. Square 1024x1024. Even density edge to edge with no focal point, no rows or grid, no symmetry, flat even lighting, viewed straight down with no perspective. The left edge must continue into the right edge and the top into the bottom. NO text, NO frames or borders, NO vignette. Colours: olive and moss greens, muted earth browns."
+  },
+  "cavewall": {
+    "route": "codex-image-gen skill",
+    "reference": "CaveMap/Model/Materials/wall01.png",
+    "spec": "Seamless tileable wall texture for a stylized alien cave: irregular vertical organic ribs, folds and blister cells of varied sizes, flowing like biomechanical rock. Style: match the reference image's hand-painted toon style exactly - bold dark ink outlines, flat cel-shaded fills with a soft pale inner highlight, clean graphic shapes. Square 1024x1024. Even density edge to edge with no focal point, no rows or grid, no symmetry, flat even lighting, viewed straight down with no perspective. The left edge must continue into the right edge and the top into the bottom. NO text, NO frames or borders, NO vignette. Colours: neutral greys only (the game tints it), near-black outlines, light-grey highlights."
+  },
+  "sadforest": {
+    "route": "codex-image-gen skill",
+    "reference": "SadForest/Model/Materials/ground01_alb.png",
+    "spec": "Seamless tileable ground texture for a stylized eerie forest clearing: dense spiky round flower-like tufts and grass clumps of varied sizes scattered over dark earth. Style: match the reference image's hand-painted toon style exactly - bold dark ink outlines, flat cel-shaded fills with a soft pale inner highlight, clean graphic shapes. Square 1024x1024. Even density edge to edge with no focal point, no rows or grid, no symmetry, flat even lighting, viewed straight down with no perspective. The left edge must continue into the right edge and the top into the bottom. NO text, NO frames or borders, NO vignette. Colours: muted olive greens, mustard and dull pink accents."
+  }
+}

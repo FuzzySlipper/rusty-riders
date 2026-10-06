@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build a style-LoRA training set from the old game's textures (ignored output; old-game/ is the source).
 
-    scripts/texture-gen/lora_dataset.py <out-dir> [--size 1024] [--seed 1]
+    scripts/texture-gen/lora_dataset.py <out-dir> [--size 1024] [--seed 1] [--gold IMAGE=CAPTION ...] [--trigger "rrink style"]
 
 Sources are the old level and combat textures in the hand-painted ink-toon style (bold dark outlines, flat
 cel fills): the Cave wall, Lava rock and lava, both Forest sets, and the combat tile atlases and cube maps.
@@ -9,7 +9,9 @@ The Palace marble, StoneRoad photo-stone and CyberTube sci-fi textures are a dif
 so the LoRA learns one look.
 
 Each source gives square crops: a tiling texture its whole image (or four quadrants when it is 2048 px or
-more); an atlas or cube map random crops, rejecting any with more than a little flat, unpainted background. Crops are resized to --size and saved as PNGs named after their source, ready for captioning.
+more); an atlas or cube map random crops, rejecting any with more than a little flat, unpainted background. Crops are resized to --size and saved as PNGs named after their source, ready for captioning
+(scripts/texture-gen/caption.py). Each --gold is a curated on-target example (a chosen generated texture):
+it is added whole and as a zoomed quadrant, already captioned "<trigger>, <caption>".
 """
 import argparse
 import json
@@ -85,6 +87,8 @@ def main() -> None:
     parser.add_argument("out_dir")
     parser.add_argument("--size", type=int, default=1024)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--gold", action="append", default=[], metavar="IMAGE=CAPTION")
+    parser.add_argument("--trigger", default="rrink style")
     args = parser.parse_args()
     rng = random.Random(args.seed)
     os.makedirs(args.out_dir, exist_ok=True)
@@ -99,6 +103,16 @@ def main() -> None:
             manifest.append({"image": name, "source": path, "kind": kind})
         if len(crops) < count:
             print(f"{path}: only {len(crops)} of {count} crops were mostly painted")
+    for gold in args.gold:
+        path, caption = gold.split("=", 1)
+        image = Image.open(path).convert("RGB")
+        stem = "gold_" + os.path.splitext(os.path.basename(path))[0]
+        half = image.crop((0, 0, image.width // 2, image.height // 2))
+        for name, crop, text in ((stem, image, caption), (stem + "_zoom", half, "close-up of " + caption)):
+            crop.resize((args.size, args.size), Image.LANCZOS).save(os.path.join(args.out_dir, name + ".png"))
+            with open(os.path.join(args.out_dir, name + ".txt"), "w") as out:
+                out.write(f"{args.trigger}, {text}\n")
+            manifest.append({"image": name + ".png", "source": path, "kind": "gold"})
     json.dump(manifest, open(os.path.join(args.out_dir, "manifest.json"), "w"), indent=1)
     print(f"{len(manifest)} images in {args.out_dir}")
 
