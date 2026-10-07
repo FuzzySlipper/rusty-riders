@@ -3,6 +3,7 @@ using Rusty.Engine.Input;
 using RustyRiders.Game.Gallery;
 using RustyRiders.Game.Levels;
 using RustyRiders.Game.Player;
+using RustyRiders.Game.Time;
 using RustyRiders.Game.Ui;
 
 namespace RustyRiders.Game;
@@ -15,6 +16,7 @@ public sealed class RustyRidersProduct : IEngineProduct
     private readonly IEngineContext engine;
     private LevelSettings levelSettings;
     private readonly Walker walker;
+    private readonly TimeFlow time;
     private readonly UiStream hud;
     private IWalkScene scene;
     private bool showingLevel = true;
@@ -34,6 +36,7 @@ public sealed class RustyRidersProduct : IEngineProduct
         levelSeed = levelSettings.Seed;
         scene = BuildScene();
         walker = new Walker(engine, WalkerTuning.Load(engine), scene);
+        time = new TimeFlow(engine, TimeTuning.Load(engine));
         hud = engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
     }
 
@@ -53,8 +56,10 @@ public sealed class RustyRidersProduct : IEngineProduct
         {
             if (input.Kind == InputEventKind.Clear) jumpPending = false;
         }
+        time.Observe(update.Facts);
         float delta = (float)update.Facts.FixedDeltaSeconds;
-        FpsInputFrame frame = walker.ReadInput(update.Input, delta * update.Facts.AdmittedStepCount);
+        // Look and controls in host time, so they stay live while the world holds; the body per admitted step.
+        FpsInputFrame frame = walker.ReadInput(update.Input, (float)update.Facts.HostElapsedSeconds);
         if (walker.Input.Physical.Pressed(KeyboardControl.KeyR))
         {
             Restart();
@@ -83,7 +88,9 @@ public sealed class RustyRidersProduct : IEngineProduct
             walker.Step(frame, jumpPending, delta);
             jumpPending = false;
         }
-        sampleTime = (update.Facts.SimulationStep + update.Facts.AdmittedStepCount) * update.Facts.FixedDeltaSeconds;
+        sampleTime = time.WorldSeconds;
+        time.Choose(new TimeDemand(!showingLevel || walker.Flying, frame.Movement.Length(), frame.SprintHeld && !frame.CrouchHeld,
+            walker.Airborne || jumpPending, walker.Input.Physical.Pressed(KeyboardControl.KeyT)));
         Publish();
         return ProductUpdateResult.None;
     }
@@ -106,6 +113,7 @@ public sealed class RustyRidersProduct : IEngineProduct
         if (disposed) return;
         walker.Reset();
         jumpPending = false;
+        time.Hold(); // a restart returns the Engine to realtime
         started = true;
         paused = false;
         Publish();
@@ -153,6 +161,6 @@ public sealed class RustyRidersProduct : IEngineProduct
     private void Publish()
     {
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time)));
     }
 }

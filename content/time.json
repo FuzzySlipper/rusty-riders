@@ -1,0 +1,7 @@
+{
+  "heldRate": 0,
+  "walkRate": 1,
+  "sprintRate": 1,
+  "airborneRate": 1,
+  "waitSeconds": 0.5
+}

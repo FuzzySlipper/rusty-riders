@@ -42,15 +42,19 @@ internal sealed class Walker : IDisposable
     /// <summary>Free flight: converted meshes do not collide, so walking cannot climb them.</summary>
     internal bool Flying { get; private set; }
     internal LookState LookState { get; private set; }
+    /// <summary>Walking off the ground: in a jump or a fall.</summary>
+    internal bool Airborne => !Flying && !Motion.Grounded;
     internal Vector3 Position { get; private set; }
     internal CharacterMotion Motion { get; private set; }
     internal float Height => Motion.Stance == CharacterStance.Crouched ? tuning.CrouchedHeight : tuning.Height;
     internal Vector3 Feet => Position - Vector3.UnitY * (Height / 2);
     private Vector3 Eye => Position + Vector3.UnitY * (Height / 2 - EyeBelowTop);
 
-    internal FpsInputFrame ReadInput(ReadOnlySpan<ProductInputEvent> events, float admittedSeconds)
+    /// <param name="hostSeconds">Unscaled host seconds since the last update, so controller look keeps its speed
+    /// while gameplay time holds or slows the world.</param>
+    internal FpsInputFrame ReadInput(ReadOnlySpan<ProductInputEvent> events, float hostSeconds)
     {
-        FpsInputFrame frame = Input.Consume(events, admittedSeconds);
+        FpsInputFrame frame = Input.Consume(events, hostSeconds);
         LookState = Input.IntegrateLook(LookState, frame).After;
         return frame;
     }

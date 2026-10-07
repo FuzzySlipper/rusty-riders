@@ -26,8 +26,9 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 | `src/RustyRiders.Game/Gallery/` | `gallery.json` and the gallery scene's exhibit layout and ground |
 | `src/RustyRiders.Game/Art/` | Placement files and converted GLBs: each read or opened once, problems recorded; `MaterialRecolor` turns a level palette into Engine material factor overrides for the appearances whose materials it names; `HarvestedMaterials` makes Engine materials for generated geometry from a converted Unity material's embedded textures and colours |
 | `src/RustyRiders.Game/Player/` | Walker tuning, first-person controls, character steps, free flight and camera; `IWalkScene`, what a scene gives the walker and HUD |
+| `src/RustyRiders.Game/Time/` | The gameplay-time policy over Engine `GameplayTime`, the one world clock: `TimeTuning` (`content/time.json`, with `heldRate` the single value for standing still) and `TimeFlow`, which holds the world while the player stands still, runs it while they move, jump or fall, and advances it for a wait or an action's cost. The gallery and free flight run realtime |
 | `src/RustyRiders.Game/Ui/Hud.cs` | HUD facts for the DOM panel |
-| `src/ui/main.js` | DOM panel: status, problems, what is underfoot, position, controls |
+| `src/ui/main.js` | DOM panel: status, problems, what is underfoot, position, controls, the world's time state and clock |
 | `scripts/extract-level-data.py` | Regenerating `content/levels/` from `old-game/` |
 | `scripts/import-old-art.sh`, `scripts/prune-old-art.py` | Regenerating `content/old-art/` from `old-game/` with asset-pipeline `unity-import` |
 | Engine SDK/runtime | Generated interop, admitted updates/input, GLB admission and drawing, collision and character steps, camera, UI transport, host and browser shell |
@@ -61,7 +62,11 @@ skipped, so the game starts without converted art.
 
 Each admitted update, `Walker` reads Engine `FpsInput` and `Look`, then
 proposes one Engine character step per admitted fixed step against the current
-scene's session (or moves freely when flying), and samples its camera. The
+scene's session (or moves freely when flying), and samples its camera. Every
+host observation delivers an update once gameplay time is selected: look and
+controls read host time (so they stay live while the world holds), the body and
+everything else in the world advance only per admitted step, and `TimeFlow`
+then chooses the next rate from what the player did. The
 product publishes HUD facts; the DOM shows them and holds no state.
 
 Engine owns pause/resume/restart/shutdown admission. Restart returns the walker

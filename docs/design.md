@@ -69,8 +69,14 @@ Time runs only while you move or act, as in *SUPERHOT*. The Engine provides this
 - **Held by default.** While you stand still, the world is frozen: enemies, projectiles, effects, spawn
   timers and the chase timer.
 - **Looking is free.** Turning the camera uses host time and never advances the world.
-- **Movement sets the rate.** The world runs at a rate proportional to how much you move (walk ≈ partial
-  rate, sprint = full rate). Exact mapping is tuning.
+- **Movement runs the world.** Moving (walking, sprinting, a jump or fall in progress) runs it at realtime, and
+  partial stick input runs it proportionally slower. The player's body is on the same world clock as everything
+  else, so a rate below 1 does not move you faster than the world. It only slows everything down together
+  (bullet time), which may later become a deliberate "focus" mode.
+- **One knob for standing still.** `content/time.json` `heldRate` is the rate while still. 0 is a true freeze;
+  a tiny positive crawl is the global fallback if a freeze ever misbehaves. The move rates and the wait length
+  live beside it.
+- **Waiting.** A wait control lets a moment of world time pass while you stand still.
 - **Actions buy time.** Swinging, firing, casting, reloading and using an item advance the world by that
   action's own duration (windup + commit + recovery) through `Advance`. A slow heavy swing costs more time
   than a quick pistol shot, and that cost is part of a weapon's identity.
@@ -80,8 +86,7 @@ Time runs only while you move or act, as in *SUPERHOT*. The Engine provides this
 - **Feedback.** The HUD shows whether the world is running, held or advancing (rate meter or tint), so
   the player always knows if time is moving.
 
-Open: whether a tiny idle trickle (e.g. 2% rate) keeps the world readable, or whether a true freeze is
-better. Start with a true freeze.
+Standing still is a true freeze. A tiny crawl is a fallback (`heldRate`), not the design.
 
 ## Levels and rifts
 
@@ -247,7 +252,6 @@ games beyond a banked total.
 
 ## Open questions
 
-- A true freeze versus an idle trickle while standing still.
 - How much a death keeps (nothing, a fraction, or banked-at-checkpoint).
 - Whether residents count toward the chase or only the waves do.
 - How informative rift previews should be: tileset only, or also a danger or reward sign.

@@ -1,15 +1,16 @@
 using System.Text;
 using Rusty.Engine;
 using RustyRiders.Game.Player;
+using RustyRiders.Game.Time;
 
 namespace RustyRiders.Game.Ui;
 
-/// <summary>The DOM panel's facts: the scene's status and problems, what is under the walker, and where it is.</summary>
+/// <summary>The DOM panel's facts: the scene's status and problems, what is under the walker, where it is, and the world's time.</summary>
 internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time)
     {
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
@@ -20,6 +21,8 @@ internal static class Hud
             ("problems", problems),
             ("exhibit", scene.Describe(walker.Position)),
             ("position", FormattableString.Invariant($"{(walker.Flying ? "flying" : "walking")} · {walker.Feet.X:0.0}, {walker.Feet.Y:0.0}, {walker.Feet.Z:0.0}")),
+            ("time", time.State.Describe(time.Tuning.HeldRate)),
+            ("worldTime", FormattableString.Invariant($"{time.WorldSeconds:0.0} s")),
         ];
         List<byte> utf8 = [];
         List<StructuredValueNode> nodes = [new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, (uint)fields.Length)];
