@@ -1,5 +1,15 @@
 {
-  "carried": ["laser-flintlock", "rift-blade", "maul", "ember-wand", "frost-sigil"],
+  "carried": [
+    "laser-flintlock",
+    "rift-blade"
+  ],
   "mainHand": "laser-flintlock",
-  "offHand": "rift-blade"
+  "offHand": "rift-blade",
+  "items": [
+    {
+      "item": "medkit",
+      "count": 1
+    }
+  ],
+  "slots": 10
 }

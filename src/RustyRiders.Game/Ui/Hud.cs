@@ -3,6 +3,7 @@ using Rusty.Engine;
 using RustyRiders.Game.Combat;
 using RustyRiders.Game.Content;
 using RustyRiders.Game.Enemies;
+using RustyRiders.Game.Items;
 using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
 using RustyRiders.Game.Time;
@@ -14,7 +15,7 @@ internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat, EnemyDirector enemies)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat, EnemyDirector enemies, Inventory inventory, Pickups pickups)
     {
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
@@ -38,6 +39,9 @@ internal static class Hud
             ("notice", notice),
             ("chase", chase),
             ("hostiles", hostiles),
+            ("haul", Template.Fill(pickups.Text.Haul, ("value", inventory.Haul))),
+            ("ready", inventory.Ready is { } ready ? Template.Fill(pickups.Text.Consumable, ("item", ready.Item.Name), ("count", ready.Count)) : ""),
+            ("prompt", pickups.Prompt(walker.Feet)),
         ];
         List<byte> utf8 = [];
         List<StructuredValueNode> nodes = [new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, (uint)fields.Length)];

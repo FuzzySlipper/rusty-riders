@@ -1,0 +1,11 @@
+{
+  "found": "Found {items}",
+  "took": "Took {item}",
+  "full": "No room for {item}",
+  "used": "Used {item}",
+  "cache": "Open cache",
+  "pickUp": "Take {item}",
+  "haul": "Haul {value}",
+  "consumable": "{item} ×{count}",
+  "nothing": "nothing that fits"
+}

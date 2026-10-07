@@ -1,0 +1,41 @@
+{
+  "tables": [
+    {
+      "id": "cache", "rolls": 3,
+      "entries": [
+        { "item": "scrap", "weight": 6, "minimum": 2, "maximum": 5 },
+        { "item": "rift-shard", "weight": 2, "minimum": 1, "maximum": 1 },
+        { "item": "tech-cell", "weight": 4, "minimum": 1, "maximum": 2 },
+        { "item": "charge-crystal", "weight": 3, "minimum": 1, "maximum": 1 },
+        { "item": "medkit", "weight": 3, "minimum": 1, "maximum": 1 },
+        { "item": "regen-tonic", "weight": 2, "minimum": 1, "maximum": 1 },
+        { "item": "shield-cell", "weight": 1, "minimum": 1, "maximum": 1 },
+        { "item": "plated-coat", "weight": 1, "minimum": 1, "maximum": 1 },
+        { "item": "maul", "weight": 1, "minimum": 1, "maximum": 1 },
+        { "item": "ember-wand", "weight": 1, "minimum": 1, "maximum": 1 },
+        { "item": "frost-sigil", "weight": 1, "minimum": 1, "maximum": 1 }
+      ]
+    },
+    { "id": "cache.LavaMap", "base": "cache", "rolls": 3,
+      "entries": [ { "item": "maul", "weight": 3, "minimum": 1, "maximum": 1 }, { "item": "ember-charm", "weight": 3, "minimum": 1, "maximum": 1 }, { "item": "ember-wand", "weight": 2, "minimum": 1, "maximum": 1 } ] },
+    { "id": "cache.UndergroundPalace", "base": "cache", "rolls": 3,
+      "entries": [ { "item": "frost-sigil", "weight": 3, "minimum": 1, "maximum": 1 }, { "item": "focus-ring", "weight": 3, "minimum": 1, "maximum": 1 }, { "item": "charge-crystal", "weight": 4, "minimum": 1, "maximum": 2 } ] },
+    { "id": "cache.StoneRoadMap", "base": "cache", "rolls": 3,
+      "entries": [ { "item": "maul", "weight": 3, "minimum": 1, "maximum": 1 }, { "item": "plated-coat", "weight": 3, "minimum": 1, "maximum": 1 } ] },
+    { "id": "cache.CaveMap", "base": "cache", "rolls": 4,
+      "entries": [ { "item": "scrap", "weight": 8, "minimum": 3, "maximum": 6 }, { "item": "rift-shard", "weight": 3, "minimum": 1, "maximum": 2 } ] },
+    { "id": "cache.ForestMap", "base": "cache", "rolls": 3,
+      "entries": [ { "item": "medkit", "weight": 4, "minimum": 1, "maximum": 2 }, { "item": "regen-tonic", "weight": 4, "minimum": 1, "maximum": 1 } ] },
+    { "id": "cache.Cybertubes", "base": "cache", "rolls": 3,
+      "entries": [ { "item": "tech-cell", "weight": 6, "minimum": 1, "maximum": 3 }, { "item": "insulated-boots", "weight": 3, "minimum": 1, "maximum": 1 }, { "item": "shield-cell", "weight": 3, "minimum": 1, "maximum": 1 } ] },
+    {
+      "id": "drop", "rolls": 1,
+      "entries": [
+        { "item": "scrap", "weight": 5, "minimum": 1, "maximum": 2 },
+        { "item": "tech-cell", "weight": 3, "minimum": 1, "maximum": 1 },
+        { "item": "charge-crystal", "weight": 2, "minimum": 1, "maximum": 1 },
+        { "item": "medkit", "weight": 1, "minimum": 1, "maximum": 1 }
+      ]
+    }
+  ]
+}

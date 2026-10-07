@@ -9,7 +9,7 @@ using RustyRiders.Game.Player;
 namespace RustyRiders.Game.Combat;
 
 /// <summary>
-/// The player's fighting: two hands holding carried weapons, one action at a time through the shared pipeline, costs
+/// The player's fighting: two hands holding weapons the inventory carries, one action at a time through the shared pipeline, costs
 /// (charge, ammunition, rounds in a magazine) and reloads, training dummies to hit, and what it all looks like (held
 /// weapons on the viewmodel layer, projectiles, impact bursts) and says on the HUD. A use returns the world seconds it
 /// costs; the caller buys them from gameplay time. Hits resolve in the current scene's spatial session.
@@ -28,7 +28,7 @@ internal sealed class PlayerCombat : IDisposable
     private readonly PlayerActor actor;
     private readonly ActionUser user = new();
     private readonly Hand[] hands = new Hand[2];
-    private readonly ItemDefinition[] carried;
+    private readonly Inventory inventory;
     private readonly Dictionary<string, int> loaded = [];
     private readonly List<TrainingDummy> dummies = [];
     private readonly List<Appearance> appearances = [];
@@ -40,16 +40,17 @@ internal sealed class PlayerCombat : IDisposable
     private string notice = "";
     private double noticeLeft;
 
-    internal PlayerCombat(IEngineContext engine, CombatDefinition definition, MechanicsDefinition mechanics, PlayerVitals vitals, Walker walker, float radius)
+    internal PlayerCombat(IEngineContext engine, CombatDefinition definition, MechanicsDefinition mechanics, PlayerVitals vitals, Walker walker,
+        float radius, Inventory inventory)
     {
+        this.inventory = inventory;
         this.engine = engine;
         this.definition = definition;
         this.mechanics = mechanics;
         this.vitals = vitals;
         this.walker = walker;
         actor = new PlayerActor(walker, vitals, radius);
-        carried = definition.Kit.Carried.Select(id => definition.Items.Item(id)!).ToArray();
-        foreach (ItemDefinition item in carried)
+        foreach (ItemDefinition item in definition.Items.Items.Where(i => i.Weapon is not null))
             held[item.Id] = Primitive(PrimitiveGeometry.Cube, item.Weapon!.Look.Color);
         projectile = Primitive(PrimitiveGeometry.Sphere, [1f, .7f, .35f]);
         dummy = Primitive(PrimitiveGeometry.Cube, definition.Dummy.Color);
@@ -75,16 +76,15 @@ internal sealed class PlayerCombat : IDisposable
         resolution?.Clear();
         hands[MainHand] = new Hand(definition.Items.Item(definition.Kit.MainHand)!);
         hands[OffHand] = new Hand(definition.Items.Item(definition.Kit.OffHand)!);
-        foreach (ItemDefinition item in carried)
-            if (item.Weapon!.Magazine is { } magazine) loaded[item.Id] = magazine.Size;
+        loaded.Clear();
         notice = "";
     }
 
     /// <summary>Takes carried weapon <paramref name="index"/> into the main hand (swapping hands if it is in the off hand).</summary>
     internal void Select(int index)
     {
-        if (index < 0 || index >= carried.Length || user.Busy) return;
-        ItemDefinition item = carried[index];
+        if (index < 0 || index >= inventory.Weapons.Count || user.Busy) return;
+        ItemDefinition item = inventory.Weapons[index];
         if (hands[OffHand].Item == item) hands[OffHand] = hands[MainHand];
         hands[MainHand] = new Hand(item);
     }
@@ -188,7 +188,9 @@ internal sealed class PlayerCombat : IDisposable
         foreach (Appearance appearance in appearances) appearance.Dispose();
     }
 
-    private int Loaded(ItemDefinition item) => loaded.GetValueOrDefault(item.Id);
+    // A gun comes with a full magazine the first time it is held.
+    private int Loaded(ItemDefinition item) =>
+        loaded.TryGetValue(item.Id, out int rounds) ? rounds : loaded[item.Id] = item.Weapon!.Magazine?.Size ?? 0;
 
     private float Begin(ActionDefinition action, int hand)
     {
@@ -205,6 +207,9 @@ internal sealed class PlayerCombat : IDisposable
         ammunition.Spend(rounds);
         loaded[item.Id] = Loaded(item) + rounds;
     }
+
+    /// <summary>Shows a notice (an item found or used) in the hit notice's place.</summary>
+    internal void Announce(string text) => Notice(text);
 
     private float? Notice(string text)
     {

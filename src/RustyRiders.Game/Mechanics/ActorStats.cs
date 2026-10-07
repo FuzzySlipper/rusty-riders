@@ -101,7 +101,7 @@ internal sealed class ActorStats
     /// </summary>
     internal void ApplyEffectSources()
     {
-        // Effect sources are rebuilt by their owner, never saved.
+        // Equipment and effect sources are rebuilt by their owners, never saved.
         foreach (AttributeDefinition a in mechanics.Attributes) Stats.GetStat(StatOf(a.Id)).SetSources(StatOf(a.Id), EffectSources(a.Id));
         foreach (DamageKindDefinition k in mechanics.DamageKinds)
             Stats.GetStat(ResistanceOf(k.Id)).SetSources(ResistanceOf(k.Id), EffectSources(ResistanceStat(k.Id)));
@@ -124,7 +124,16 @@ internal sealed class ActorStats
     }
 
     private IEnumerable<StatSource> EffectSources(string stat) =>
-        (Effects?.Sources ?? []).Where(s => s.Contributions.Any(c => c.Stat.Value == stat));
+        (Effects?.Sources ?? []).Concat(equipment).Where(s => s.Contributions.Any(c => c.Stat.Value == stat));
+
+    private StatSource[] equipment = [];
+
+    /// <summary>Replaces the sources worn equipment holds (see <see cref="Items.Inventory.Sources"/>) and re-evaluates.</summary>
+    internal void SetEquipmentSources(StatSource[] sources)
+    {
+        equipment = sources;
+        ApplyEffectSources();
+    }
 
     /// <summary>The block's starting values: bases as authored and tracks at their initial points.</summary>
     internal void Reset()

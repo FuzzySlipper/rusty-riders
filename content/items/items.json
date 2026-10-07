@@ -1,30 +1,371 @@
 {
   "items": [
     {
-      "id": "rift-blade", "name": "Rift blade", "kind": "Weapon",
-      "weapon": { "action": "blade-slash",
-        "look": { "size": [0.05, 0.05, 0.75], "color": [0.75, 0.85, 1.0], "offset": [0, 0.05, -0.3], "muzzle": [0, 0.05, -0.7] } }
+      "id": "rift-blade",
+      "name": "Rift blade",
+      "kind": "Weapon",
+      "color": [
+        0.75,
+        0.85,
+        1.0
+      ],
+      "weapon": {
+        "action": "blade-slash",
+        "look": {
+          "size": [
+            0.05,
+            0.05,
+            0.75
+          ],
+          "color": [
+            0.75,
+            0.85,
+            1.0
+          ],
+          "offset": [
+            0,
+            0.05,
+            -0.3
+          ],
+          "muzzle": [
+            0,
+            0.05,
+            -0.7
+          ]
+        }
+      }
     },
     {
-      "id": "maul", "name": "Maul", "kind": "Weapon",
-      "weapon": { "action": "maul-smash",
-        "look": { "size": [0.22, 0.22, 0.55], "color": [0.45, 0.38, 0.3], "offset": [0, 0.05, -0.3], "muzzle": [0, 0.05, -0.6] } }
+      "id": "maul",
+      "name": "Maul",
+      "kind": "Weapon",
+      "color": [
+        0.45,
+        0.38,
+        0.3
+      ],
+      "weapon": {
+        "action": "maul-smash",
+        "look": {
+          "size": [
+            0.22,
+            0.22,
+            0.55
+          ],
+          "color": [
+            0.45,
+            0.38,
+            0.3
+          ],
+          "offset": [
+            0,
+            0.05,
+            -0.3
+          ],
+          "muzzle": [
+            0,
+            0.05,
+            -0.6
+          ]
+        }
+      }
     },
     {
-      "id": "laser-flintlock", "name": "Laser flintlock", "kind": "Weapon",
-      "weapon": { "action": "flintlock-shot", "reload": "flintlock-reload",
-        "magazine": { "size": 6, "track": "tech-ammo" },
-        "look": { "size": [0.08, 0.14, 0.4], "color": [0.55, 0.42, 0.25], "offset": [0, 0, -0.15], "muzzle": [0, 0.03, -0.38] } }
+      "id": "laser-flintlock",
+      "name": "Laser flintlock",
+      "kind": "Weapon",
+      "color": [
+        0.55,
+        0.42,
+        0.25
+      ],
+      "weapon": {
+        "action": "flintlock-shot",
+        "reload": "flintlock-reload",
+        "magazine": {
+          "size": 6,
+          "track": "tech-ammo"
+        },
+        "look": {
+          "size": [
+            0.08,
+            0.14,
+            0.4
+          ],
+          "color": [
+            0.55,
+            0.42,
+            0.25
+          ],
+          "offset": [
+            0,
+            0,
+            -0.15
+          ],
+          "muzzle": [
+            0,
+            0.03,
+            -0.38
+          ]
+        }
+      }
     },
     {
-      "id": "ember-wand", "name": "Ember wand", "kind": "Weapon",
-      "weapon": { "action": "ember-bolt",
-        "look": { "size": [0.04, 0.04, 0.45], "color": [1.0, 0.45, 0.15], "offset": [0, 0, -0.2], "muzzle": [0, 0, -0.45] } }
+      "id": "ember-wand",
+      "name": "Ember wand",
+      "kind": "Weapon",
+      "color": [
+        1.0,
+        0.45,
+        0.15
+      ],
+      "weapon": {
+        "action": "ember-bolt",
+        "look": {
+          "size": [
+            0.04,
+            0.04,
+            0.45
+          ],
+          "color": [
+            1.0,
+            0.45,
+            0.15
+          ],
+          "offset": [
+            0,
+            0,
+            -0.2
+          ],
+          "muzzle": [
+            0,
+            0,
+            -0.45
+          ]
+        }
+      }
     },
     {
-      "id": "frost-sigil", "name": "Frost sigil", "kind": "Weapon",
-      "weapon": { "action": "frost-nova",
-        "look": { "size": [0.16, 0.16, 0.04], "color": [0.55, 0.85, 1.0], "offset": [0, 0.02, -0.1], "muzzle": [0, 0.02, -0.12] } }
+      "id": "frost-sigil",
+      "name": "Frost sigil",
+      "kind": "Weapon",
+      "color": [
+        0.55,
+        0.85,
+        1.0
+      ],
+      "weapon": {
+        "action": "frost-nova",
+        "look": {
+          "size": [
+            0.16,
+            0.16,
+            0.04
+          ],
+          "color": [
+            0.55,
+            0.85,
+            1.0
+          ],
+          "offset": [
+            0,
+            0.02,
+            -0.1
+          ],
+          "muzzle": [
+            0,
+            0.02,
+            -0.12
+          ]
+        }
+      }
+    },
+    {
+      "id": "plated-coat",
+      "name": "Plated coat",
+      "kind": "Armour",
+      "color": [
+        0.55,
+        0.55,
+        0.6
+      ],
+      "armour": {
+        "slot": "Body",
+        "adds": [
+          {
+            "stat": "grit",
+            "amount": 3
+          },
+          {
+            "stat": "resistance.physical",
+            "amount": 0.15
+          }
+        ]
+      }
+    },
+    {
+      "id": "ember-charm",
+      "name": "Ember charm",
+      "kind": "Armour",
+      "color": [
+        1.0,
+        0.5,
+        0.2
+      ],
+      "armour": {
+        "slot": "Accessory",
+        "adds": [
+          {
+            "stat": "resistance.burn",
+            "amount": 0.3
+          }
+        ]
+      }
+    },
+    {
+      "id": "focus-ring",
+      "name": "Focus ring",
+      "kind": "Armour",
+      "color": [
+        0.6,
+        0.5,
+        1.0
+      ],
+      "armour": {
+        "slot": "Accessory",
+        "adds": [
+          {
+            "stat": "focus",
+            "amount": 4
+          }
+        ]
+      }
+    },
+    {
+      "id": "insulated-boots",
+      "name": "Insulated boots",
+      "kind": "Armour",
+      "color": [
+        0.3,
+        0.75,
+        0.9
+      ],
+      "armour": {
+        "slot": "Accessory",
+        "adds": [
+          {
+            "stat": "resistance.lightning",
+            "amount": 0.3
+          },
+          {
+            "stat": "agility",
+            "amount": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "medkit",
+      "name": "Medkit",
+      "kind": "Consumable",
+      "color": [
+        0.9,
+        0.25,
+        0.3
+      ],
+      "consumable": {
+        "seconds": 0.8,
+        "restore": {
+          "track": "health",
+          "amount": 35
+        }
+      }
+    },
+    {
+      "id": "regen-tonic",
+      "name": "Regen tonic",
+      "kind": "Consumable",
+      "color": [
+        0.4,
+        0.9,
+        0.5
+      ],
+      "consumable": {
+        "seconds": 0.4,
+        "effects": [
+          "mending"
+        ]
+      }
+    },
+    {
+      "id": "shield-cell",
+      "name": "Shield cell",
+      "kind": "Consumable",
+      "color": [
+        0.5,
+        0.8,
+        1.0
+      ],
+      "consumable": {
+        "seconds": 0.5,
+        "effects": [
+          "shielded"
+        ]
+      }
+    },
+    {
+      "id": "tech-cell",
+      "name": "Tech cell",
+      "kind": "Ammo",
+      "color": [
+        0.95,
+        0.85,
+        0.3
+      ],
+      "ammo": {
+        "track": "tech-ammo",
+        "amount": 12
+      }
+    },
+    {
+      "id": "charge-crystal",
+      "name": "Charge crystal",
+      "kind": "Ammo",
+      "color": [
+        0.7,
+        0.4,
+        1.0
+      ],
+      "ammo": {
+        "track": "charge",
+        "amount": 10
+      }
+    },
+    {
+      "id": "scrap",
+      "name": "Scrap",
+      "kind": "Supply",
+      "color": [
+        0.6,
+        0.6,
+        0.55
+      ],
+      "supply": {
+        "value": 1
+      }
+    },
+    {
+      "id": "rift-shard",
+      "name": "Rift shard",
+      "kind": "Supply",
+      "color": [
+        0.9,
+        0.4,
+        0.95
+      ],
+      "supply": {
+        "value": 5
+      }
     }
   ]
 }

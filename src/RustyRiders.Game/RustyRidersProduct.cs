@@ -2,8 +2,10 @@ using Rusty.Engine;
 using Rusty.Engine.Debugging;
 using Rusty.Engine.Input;
 using RustyRiders.Game.Combat;
+using RustyRiders.Game.Content;
 using RustyRiders.Game.Developer;
 using RustyRiders.Game.Enemies;
+using RustyRiders.Game.Items;
 using RustyRiders.Game.Gallery;
 using RustyRiders.Game.Levels;
 using RustyRiders.Game.Mechanics;
@@ -27,6 +29,11 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly MechanicsMessages mechanicsText;
     private readonly PlayerCombat combat;
     private readonly EnemyDirector enemies;
+    private readonly Inventory inventory;
+    private readonly Pickups pickups;
+    private readonly MechanicsDefinition mechanics;
+    private readonly LootTables loot;
+    private readonly ItemCatalog itemCatalog;
     private readonly UiStream hud;
     private IWalkScene scene;
     private bool showingLevel = true;
@@ -45,14 +52,22 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         levelSettings = LevelSettings.Load(engine);
         levelSeed = levelSettings.Seed;
         levelRules = LevelRules.Load(engine);
-        MechanicsDefinition mechanics = MechanicsDefinition.Load(engine);
+        mechanics = MechanicsDefinition.Load(engine);
         mechanicsText = mechanics.Text;
         vitals = new PlayerVitals(mechanics, ActorStatFile.Load(engine, PlayerVitals.Path, mechanics));
         scene = BuildScene();
         WalkerTuning walking = WalkerTuning.Load(engine);
         walker = new Walker(engine, walking, scene);
         CombatDefinition combatDefinition = CombatDefinition.Load(engine, mechanics);
-        combat = new PlayerCombat(engine, combatDefinition, mechanics, vitals, walker, walking.Radius);
+        itemCatalog = combatDefinition.Items;
+        inventory = new Inventory(combatDefinition.Items, combatDefinition.Kit, vitals.Stats);
+        combat = new PlayerCombat(engine, combatDefinition, mechanics, vitals, walker, walking.Radius, inventory);
+        loot = LootTables.Load(engine, combatDefinition.Items);
+        PickupTuning pickupTuning = Authored.Read(engine, PickupTuning.Path, PickupJson.Default.PickupTuning);
+        pickupTuning.Validate();
+        PickupMessages pickupText = Authored.Read(engine, PickupMessages.Path, PickupJson.Default.PickupMessages);
+        pickupText.Validate();
+        pickups = new Pickups(engine, combatDefinition.Items, loot, pickupTuning, pickupText);
         enemies = new EnemyDirector(engine, EnemyCatalog.Load(engine, mechanics, combatDefinition.Actions), combatDefinition.Actions, mechanics);
         EnterScene();
         time = new TimeFlow(engine, TimeTuning.Load(engine));
@@ -112,6 +127,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
             if (vitals.Defeated) break;
         }
         if (vitals.Defeated) Defeated(); // a hit can land while the world holds, as well as in a step
+        foreach (Enemy fallen in enemies.TakeFallen()) pickups.Drop(fallen.Feet);
+        if (pickups.WalkOver(walker.Feet, inventory) is { } took) combat.Announce(took);
         if (update.Facts.AdmittedStepCount > 0) scene.Animate(time.WorldSeconds);
         if (scene is LevelScene level && level.RiftAt(walker.Feet) is { } rift)
         {
@@ -144,6 +161,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         if (disposed) return;
         vitals.Reset();
+        inventory.Reset();
         combat.Reset();
         walker.Reset();
         jumpPending = false;
@@ -161,6 +179,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         registrar.Register(new PlayerDebugCommands(vitals, walker, Publish));
         registrar.Register(new CombatDebugCommands(combat, walker));
         registrar.Register(new EnemyDebugCommands(enemies, walker));
+        registrar.Register(new ItemDebugCommands(inventory, pickups, loot, itemCatalog, walker));
     }
 
     /// <summary>Builds and enters a level (developer override); returns why it could not, or null.</summary>
@@ -191,6 +210,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         walker.Dispose();
         combat.Dispose();
         enemies.Dispose();
+        pickups.Dispose();
         scene.Dispose();
         hud.Dispose();
     }
@@ -240,6 +260,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private void Defeated()
     {
         vitals.Reset();
+        inventory.Reset();
         combat.Reset();
         walker.Reset();
         EnterScene();
@@ -273,8 +294,16 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private void EnterScene()
     {
         combat.Enter(scene.Session);
-        if (scene is LevelScene level) enemies.Enter(level, 0, levelSeed);
-        else enemies.Leave();
+        if (scene is LevelScene level)
+        {
+            enemies.Enter(level, 0, levelSeed);
+            pickups.Enter(level.Points.Caches, levelSettings.Tileset, levelSeed, 1);
+        }
+        else
+        {
+            enemies.Leave();
+            pickups.Leave();
+        }
     }
 
     /// <summary>
@@ -289,7 +318,17 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
             KeyboardControl.Digit5, KeyboardControl.Digit6, KeyboardControl.Digit7, KeyboardControl.Digit8, KeyboardControl.Digit9];
         for (int i = 0; i < slots.Length; i++)
             if (physical.Pressed(slots[i])) combat.Select(i);
-        if (!showingLevel || walker.Flying || vitals.Stats.Effects.Stunned) return 0;
+        if (!showingLevel || walker.Flying || vitals.Stats.Effects.Stunned || combat.Busy) return 0;
+        if (physical.Pressed(KeyboardControl.KeyE) && pickups.Use(walker.Feet, inventory) is { } taken)
+        {
+            combat.Announce(taken.Notice);
+            return taken.Seconds;
+        }
+        if (physical.Pressed(KeyboardControl.KeyQ) && inventory.Use(mechanics) is { } used)
+        {
+            combat.Announce(Template.Fill(pickups.Text.Used, ("item", used.Name)));
+            return used.Consumable!.Seconds;
+        }
         float? cost = physical.Pressed(PointerButton.Primary) ? combat.Use(PlayerCombat.MainHand)
             : physical.Pressed(PointerButton.Secondary) ? combat.Use(PlayerCombat.OffHand)
             : physical.Pressed(KeyboardControl.KeyR) ? combat.Reload(PlayerCombat.MainHand)
@@ -299,8 +338,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
 
     private void Publish()
     {
-        engine.Graphics.PublishSnapshot([.. scene.Facts, .. enemies.Facts(), .. combat.Facts()]);
+        engine.Graphics.PublishSnapshot([.. scene.Facts, .. pickups.Facts(), .. enemies.Facts(), .. combat.Facts()]);
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText, combat, enemies)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText, combat, enemies, inventory, pickups)));
     }
 }

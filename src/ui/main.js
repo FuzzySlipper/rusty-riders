@@ -30,6 +30,12 @@ export function mountProductUi(root, context) {
       .riders-gallery .arms { position:absolute; right:24px; bottom:88px; text-align:right; text-shadow:0 1px 3px #000; }
       .riders-gallery .arms .hands { font-size:14px; font-weight:600; color:#f1e6d2; }
       .riders-gallery .arms .supplies { font:12px ui-monospace,monospace; color:#c9d6e6; margin-top:2px; }
+      .riders-gallery .arms .haul { font-size:13px; color:#e9c7f2; margin-top:2px; }
+      .riders-gallery .arms .ready { font-size:12px; color:#f4d6cf; }
+      .riders-gallery .arms .ready:not(:empty)::before { content:'Q '; color:#fff; font:11px ui-monospace,monospace; background:#ffffff1c; padding:0 3px; border-radius:3px; margin-right:4px; }
+      .riders-gallery .prompt { position:absolute; left:50%; top:calc(50% + 44px); transform:translateX(-50%); font-size:14px; color:#fff; background:#121922cc; border-radius:5px; padding:3px 10px; }
+      .riders-gallery .prompt:not(:empty)::before { content:'E '; font:11px ui-monospace,monospace; background:#ffffff2c; padding:0 3px; border-radius:3px; margin-right:6px; }
+      .riders-gallery .prompt:empty { display:none; }
       .riders-gallery .action { position:absolute; left:50%; top:calc(50% + 22px); transform:translateX(-50%); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#ffe2a8; text-shadow:0 1px 3px #000; }
       .riders-gallery .notice { position:absolute; left:50%; top:calc(50% - 46px); transform:translateX(-50%); font-size:15px; font-weight:600; color:#fff4e0; text-shadow:0 1px 4px #000; white-space:nowrap; }
       .riders-gallery .action:empty, .riders-gallery .notice:empty { display:none; }
@@ -42,13 +48,14 @@ export function mountProductUi(root, context) {
     <header><h1>Rusty Riders</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
     <div class="clock"><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
     <div class="vitals"><div class="bar"><div class="fill"></div></div><div class="value" data-fact="health"></div><div class="effects" data-fact="effects"></div></div>
-    <div class="arms"><div class="hands" data-fact="hands"></div><div class="supplies" data-fact="supplies"></div></div>
+    <div class="arms"><div class="hands" data-fact="hands"></div><div class="supplies" data-fact="supplies"></div><div class="haul" data-fact="haul"></div><div class="ready" data-fact="ready"></div></div>
+    <div class="prompt" data-fact="prompt"></div>
     <div class="threat"><div class="chase" data-fact="chase"></div><div class="hostiles" data-fact="hostiles"></div></div>
     <div class="notice" data-fact="notice"></div>
     <div class="action" data-fact="action"></div>
     <div class="reticle"></div>
     <output class="exhibit" data-fact="exhibit" aria-live="polite"></output>
-    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>T</kbd> wait · <kbd>Click</kbd>/<kbd>Right-click</kbd> main/off hand · <kbd>R</kbd> reload · <kbd>1</kbd>–<kbd>5</kbd> weapon · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>H</kbd> back to start · <kbd>N</kbd> new level · <kbd>B</kbd> tiles / shells / sweeps · <kbd>V</kbd> floor texture · <kbd>G</kbd> level / gallery · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
+    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>T</kbd> wait · <kbd>Click</kbd>/<kbd>Right-click</kbd> main/off hand · <kbd>R</kbd> reload · <kbd>E</kbd> open/take · <kbd>Q</kbd> use item · <kbd>1</kbd>–<kbd>5</kbd> weapon · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>H</kbd> back to start · <kbd>N</kbd> new level · <kbd>B</kbd> tiles / shells / sweeps · <kbd>V</kbd> floor texture · <kbd>G</kbd> level / gallery · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
   root.append(panel);
 
   const fields = [...panel.querySelectorAll('[data-fact]')];

@@ -1,0 +1,11 @@
+{
+  "reach": 2.5,
+  "walkOverRadius": 1.2,
+  "openSeconds": 0.6,
+  "itemSize": 0.35,
+  "cacheSize": [1.0, 0.7, 0.7],
+  "cacheColor": [0.75, 0.55, 0.25],
+  "openedColor": [0.35, 0.28, 0.2],
+  "dropChance": 0.6,
+  "dropSpread": 1.0
+}

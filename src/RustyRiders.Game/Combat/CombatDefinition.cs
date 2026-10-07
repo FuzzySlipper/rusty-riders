@@ -20,9 +20,12 @@ internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items
         ItemCatalog items = ItemCatalog.Load(engine, mechanics, actions);
         Kit kit = Authored.Read(engine, Kit.Path, CombatJson.Default.Kit);
         items.Require(Kit.Path, "carried", kit.Carried);
-        Authored.Require(kit.Carried.All(id => items.Item(id)!.Weapon is not null), Kit.Path, "carried", "the kit carries weapons only for now.");
+        Authored.Require(kit.Carried.All(id => items.Item(id)!.Weapon is not null), Kit.Path, "carried", "carried lists weapons; other starting items go in items.");
         Authored.Require(kit.Carried.Contains(kit.MainHand) && kit.Carried.Contains(kit.OffHand) && kit.MainHand != kit.OffHand,
             Kit.Path, "mainHand", "both hands hold different carried weapons.");
+        items.Require(Kit.Path, "items", kit.Items.Select(s => s.Item).ToArray());
+        Authored.Require(kit.Items.All(s => s.Count >= 1), Kit.Path, "items", "counts are at least 1.");
+        Authored.Require(kit.Slots >= kit.Carried.Length + kit.Items.Length, Kit.Path, "slots", "must hold the kit's weapons and items.");
         CombatPresentation presentation = Authored.Read(engine, CombatPresentation.Path, CombatJson.Default.CombatPresentation);
         presentation.Validate();
         CombatMessages text = Authored.Read(engine, CombatMessages.Path, CombatJson.Default.CombatMessages);
@@ -35,11 +38,16 @@ internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items
     }
 }
 
-/// <summary>The player's starting weapons and which two are in hand (content/player/kit.json).</summary>
-internal sealed record Kit(string[] Carried, string MainHand, string OffHand)
+/// <summary>
+/// The player's starting weapons and which two are in hand, the other items they start with, and how many slots they can
+/// carry (content/player/kit.json).
+/// </summary>
+internal sealed record Kit(string[] Carried, string MainHand, string OffHand, KitStack[] Items, int Slots)
 {
     internal const string Path = "player/kit.json";
 }
+
+internal sealed record KitStack(string Item, int Count);
 
 /// <summary>
 /// Hands and hits on screen (content/combat/presentation.json): each hand's rest point in camera space (right, up,
