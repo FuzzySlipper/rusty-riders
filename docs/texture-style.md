@@ -97,3 +97,34 @@ The user's review pass (2026-10-06, review app) is the ground truth the judges a
 So the judges over-rewarded flatness, and the house style above now says so. Recheck the judges against these
 marks before trusting their rankings again.
 
+## House prompt
+
+For Z-Image base with the house LoRA (v2 at 1.0 or v3 at 0.75), the user's second review (2026-10-07, 24 images)
+kept every image with the Moebius wording (12/12) and fewer than half of the plain ones (5/12):
+
+| Prompt | v2 at 1.0 | v3 at 0.75 |
+| --- | --- | --- |
+| Moebius wording | 6/6 kept | 6/6 kept |
+| Plain | 3/6 kept | 2/6 kept |
+
+Use this template:
+
+```text
+rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration,
+clean ink linework with fine hatching and painted cel tones, flat top-down view of <subject>, filling the whole image
+```
+
+with this negative prompt (`generate.py --negative`):
+
+```text
+text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective,
+landscape, photograph, photorealistic, 3d render
+```
+
+What the wording does:
+- **Moebius / Jean Giraud** is known to Z-Image's Qwen3 text encoder and pulls toward hand-inked hatching and
+  painted tones.
+- **Generic eras** ("1970s pulp", "book cover") also enrich the image, but paint titles and lettering.
+- **The negative prompt** removes text and signatures. Comic-panel frames (3 of 12) and perspective views
+  (seed-dependent) still slip through: crop frames, and drop perspective views before tiling.
+

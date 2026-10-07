@@ -22,6 +22,9 @@ greyscale values for palette tinting. Attach a style reference; the Cave's is `w
 | Z-Image base + house LoRA | Volume in the ink-toon style, about 18 s each on the 5090 (110 s on a Strix Halo) | `generate.py --model zimage-base --lora rrink_zimage_v3_seg6_3000_steps_00001_.safetensors`, prompt starting "rrink style, top-down view of …" |
 | Z-Image Turbo (5090) | Fast text-only drafts, 3 s each | 8 steps, `res_multistep`, shift 3 |
 
+For Z-Image base with the house LoRA, use the house prompt and negative in `docs/texture-style.md` ("House
+prompt": Moebius-inked wording). In review it beat plain prompts 12/12 to 5/12.
+
 `scripts/texture-gen/generate.py` runs Z-Image (turbo or base, with or without a LoRA) and Qwen edit batches over
 seeds and records provenance; point `COMFY_URL` at the 5090 (fastest when free), den-nimo (192.168.1.23) or
 den-m5 (192.168.1.24). Never write "seamless" or "tileable" in a prompt; "tiling surface" also makes Z-Image
