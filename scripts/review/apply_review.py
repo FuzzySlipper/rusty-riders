@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Apply a review_server.py pass: list what survived, and cut out the marked crops.
 
-    scripts/review/apply_review.py <image-dir> [--out DIR] [--keep-only] [--copy]
+    scripts/review/apply_review.py <image-dir> [--out DIR] [--keep-only] [--copy] [--reviewer NAME]
 
-Reads <image-dir>/review.json. Prints the surviving images, one path per line: every image not rejected, or with
+Reads <image-dir>/review.json (review-<NAME>.json with --reviewer). Prints the surviving images, one path per line: every image not rejected, or with
 --keep-only only those marked keep. With --out, writes each crop box as <stem>_crop<N>.png there. With --copy as
 well, it also copies the surviving images that have no crops, so --out holds the reviewed set.
 """
@@ -25,9 +25,10 @@ def main() -> None:
     parser.add_argument("--out")
     parser.add_argument("--keep-only", action="store_true", help="survivors are only images marked keep")
     parser.add_argument("--copy", action="store_true", help="with --out, also copy survivors that have no crops")
+    parser.add_argument("--reviewer", help="read review-<name>.json instead of review.json")
     args = parser.parse_args()
     root = os.path.abspath(args.directory)
-    state = json.load(open(os.path.join(root, "review.json")))["items"]
+    state = json.load(open(os.path.join(root, f"review-{args.reviewer}.json" if args.reviewer else "review.json")))["items"]
     images = sorted(os.path.relpath(os.path.join(d, n), root) for d, dirs, names in os.walk(root)
                     if not os.path.basename(d).startswith(".") for n in names if n.lower().endswith(EXTENSIONS))
     if args.out:

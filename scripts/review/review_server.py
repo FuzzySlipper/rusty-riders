@@ -12,7 +12,8 @@ Open http://<this host>:<port>/ and work through pages of thumbnails:
   Backspace removes the last one.
 - **Filter.** Show all, unmarked, rejected, kept or cropped images.
 
-Every change is saved at once to <image-dir>/review.json:
+Every change is saved at once to <image-dir>/review.json (or review-<name>.json with --reviewer <name>, so several
+people can review the same set separately):
 `{"items": {"<relative path>": {"mark": "reject"|"keep"|null, "note": str, "crops": [[x, y, w, h], ...]}}}`, with crops
 in source-image pixels. scripts/review/apply_review.py turns that into a filtered set and cut-out crops.
 
@@ -43,10 +44,10 @@ THUMB = 384
 class Review:
     """The image set, its facts, and the review state, saved after every change."""
 
-    def __init__(self, root: str, info_paths: list[str], order_path: str | None, title: str):
+    def __init__(self, root: str, info_paths: list[str], order_path: str | None, title: str, reviewer: str | None = None):
         self.root = os.path.abspath(root)
         self.title = title
-        self.state_path = os.path.join(self.root, "review.json")
+        self.state_path = os.path.join(self.root, f"review-{reviewer}.json" if reviewer else "review.json")
         self.thumbs = os.path.join(self.root, ".review-thumbs")
         self.lock = threading.Lock()
         self.images = sorted(
@@ -334,8 +335,12 @@ def main() -> None:
     parser.add_argument("--title", default=None)
     parser.add_argument("--info", action="append", default=[], help="JSON list of per-image facts to show as badges")
     parser.add_argument("--order", help="text file of image paths or names, best first")
+    parser.add_argument("--reviewer", help="save this person's marks to review-<name>.json, separately from others'")
     args = parser.parse_args()
-    review = Review(args.directory, args.info, args.order, args.title or os.path.basename(os.path.abspath(args.directory)))
+    if args.reviewer and not re.fullmatch(r"[A-Za-z0-9_-]+", args.reviewer):
+        parser.error("--reviewer takes letters, digits, _ and -")
+    title = args.title or os.path.basename(os.path.abspath(args.directory))
+    review = Review(args.directory, args.info, args.order, title + (f" · {args.reviewer}" if args.reviewer else ""), args.reviewer)
     review.warm()
     server = http.server.ThreadingHTTPServer((args.bind, args.port), handler(review))
     print(f"reviewing {len(review.images)} images in {review.root} at http://{args.bind}:{args.port}/ "

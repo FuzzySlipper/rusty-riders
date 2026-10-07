@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Score keep/reject judges against a human review pass.
 
-    scripts/review/agreement.py <sheet-dir> <verdict-dir> <reviewed-image-dir>...
+    scripts/review/agreement.py <sheet-dir> <verdict-dir> <reviewed-image-dir>... [--reviewer NAME]
 
+With --reviewer NAME it reads each folder's review-NAME.json instead of review.json.
 <sheet-dir> is a contact_sheet.py output (key.json maps sheet -> letter -> image path). <verdict-dir> holds one
 judge reply per sheet, sheet-N.json = {"A": "keep" or "reject", ...}. Each reviewed image dir has the review_server.py
 review.json for its images; an image not marked reject counts as a keep. Prints the agreement, how many human
@@ -15,10 +16,16 @@ import sys
 
 
 def main() -> None:
-    sheet_dir, verdict_dir, *reviewed = sys.argv[1:]
+    args = sys.argv[1:]
+    reviewer = None
+    if "--reviewer" in args:
+        at = args.index("--reviewer")
+        reviewer = args[at + 1]
+        del args[at:at + 2]
+    sheet_dir, verdict_dir, *reviewed = args
     truth = {}
     for directory in reviewed:
-        marks = json.load(open(os.path.join(directory, "review.json")))["items"]
+        marks = json.load(open(os.path.join(directory, f"review-{reviewer}.json" if reviewer else "review.json")))["items"]
         for name in os.listdir(directory):
             if name.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
                 truth[os.path.abspath(os.path.join(directory, name))] = "reject" if marks.get(name, {}).get("mark") == "reject" else "keep"
