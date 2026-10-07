@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "id": "rift-blade", "name": "Rift blade", "kind": "Weapon",
+      "weapon": { "action": "blade-slash",
+        "look": { "size": [0.05, 0.05, 0.75], "color": [0.75, 0.85, 1.0], "offset": [0, 0.05, -0.3], "muzzle": [0, 0.05, -0.7] } }
+    },
+    {
+      "id": "maul", "name": "Maul", "kind": "Weapon",
+      "weapon": { "action": "maul-smash",
+        "look": { "size": [0.22, 0.22, 0.55], "color": [0.45, 0.38, 0.3], "offset": [0, 0.05, -0.3], "muzzle": [0, 0.05, -0.6] } }
+    },
+    {
+      "id": "laser-flintlock", "name": "Laser flintlock", "kind": "Weapon",
+      "weapon": { "action": "flintlock-shot", "reload": "flintlock-reload",
+        "magazine": { "size": 6, "track": "tech-ammo" },
+        "look": { "size": [0.08, 0.14, 0.4], "color": [0.55, 0.42, 0.25], "offset": [0, 0, -0.15], "muzzle": [0, 0.03, -0.38] } }
+    },
+    {
+      "id": "ember-wand", "name": "Ember wand", "kind": "Weapon",
+      "weapon": { "action": "ember-bolt",
+        "look": { "size": [0.04, 0.04, 0.45], "color": [1.0, 0.45, 0.15], "offset": [0, 0, -0.2], "muzzle": [0, 0, -0.45] } }
+    },
+    {
+      "id": "frost-sigil", "name": "Frost sigil", "kind": "Weapon",
+      "weapon": { "action": "frost-nova",
+        "look": { "size": [0.16, 0.16, 0.04], "color": [0.55, 0.85, 1.0], "offset": [0, 0.02, -0.1], "muzzle": [0, 0.02, -0.12] } }
+    }
+  ]
+}

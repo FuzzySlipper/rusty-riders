@@ -1,0 +1,11 @@
+{
+  "name": "Training dummy",
+  "size": [0.8, 1.8, 0.8],
+  "color": [0.7, 0.6, 0.45],
+  "stats": {
+    "attributes": { "might": 1, "agility": 1, "focus": 1, "grit": 10 },
+    "bases": {},
+    "resistances": {},
+    "initial": {}
+  }
+}

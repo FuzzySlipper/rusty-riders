@@ -49,6 +49,9 @@ internal sealed class Walker : IDisposable
     internal float Height => Motion.Stance == CharacterStance.Crouched ? tuning.CrouchedHeight : tuning.Height;
     internal Vector3 Feet => Position - Vector3.UnitY * (Height / 2);
     private Vector3 Eye => Position + Vector3.UnitY * (Height / 2 - EyeBelowTop);
+    internal Vector3 EyePosition => Eye;
+    /// <summary>Where the walker looks, as a unit vector (pitch included): the aim of its actions.</summary>
+    internal Vector3 Forward => Look.IntegrateClamped(new LookRequest(LookState, Vector2.Zero, Input.Config.PointerLookConfig)).Forward;
 
     /// <param name="hostSeconds">Unscaled host seconds since the last update, so controller look keeps its speed
     /// while gameplay time holds or slows the world.</param>

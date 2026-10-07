@@ -127,12 +127,8 @@ internal sealed class LevelScene : IWalkScene
     /// <summary>The rift the walker's feet stand in, if any.</summary>
     internal RiftPoint? RiftAt(Vector3 feet) => Portals.Entered(Points, portalLook, feet);
 
-    /// <summary>Moves the level's world-time presentation (the portals) to <paramref name="seconds"/> and republishes it.</summary>
-    public void Animate(double seconds)
-    {
-        worldSeconds = seconds;
-        Publish();
-    }
+    /// <summary>Moves the level's world-time presentation (the portals) to <paramref name="seconds"/>.</summary>
+    public void Animate(double seconds) => worldSeconds = seconds;
 
     public string Describe(Vector3 position)
     {
@@ -144,7 +140,7 @@ internal sealed class LevelScene : IWalkScene
             : "";
     }
 
-    public void Publish() => engine.Graphics.PublishSnapshot([.. facts, .. portals.Facts(worldSeconds)]);
+    public IEnumerable<AppearanceFact> Facts => [.. facts, .. portals.Facts(worldSeconds)];
 
     public void Dispose()
     {

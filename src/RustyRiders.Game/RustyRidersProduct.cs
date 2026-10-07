@@ -1,6 +1,7 @@
 using Rusty.Engine;
 using Rusty.Engine.Debugging;
 using Rusty.Engine.Input;
+using RustyRiders.Game.Combat;
 using RustyRiders.Game.Developer;
 using RustyRiders.Game.Gallery;
 using RustyRiders.Game.Levels;
@@ -23,6 +24,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly LevelRules levelRules;
     private readonly PlayerVitals vitals;
     private readonly MechanicsMessages mechanicsText;
+    private readonly PlayerCombat combat;
     private readonly UiStream hud;
     private IWalkScene scene;
     private bool showingLevel = true;
@@ -45,7 +47,10 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         mechanicsText = mechanics.Text;
         vitals = new PlayerVitals(mechanics, ActorStatFile.Load(engine, PlayerVitals.Path, mechanics));
         scene = BuildScene();
-        walker = new Walker(engine, WalkerTuning.Load(engine), scene);
+        WalkerTuning walking = WalkerTuning.Load(engine);
+        walker = new Walker(engine, walking, scene);
+        combat = new PlayerCombat(engine, CombatDefinition.Load(engine, mechanics), mechanics, vitals, walker, walking.Radius);
+        combat.Enter(scene.Session);
         time = new TimeFlow(engine, TimeTuning.Load(engine));
         hud = engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
     }
@@ -55,7 +60,6 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         if (disposed) return;
         started = true;
         paused = false;
-        scene.Publish();
         Publish();
     }
 
@@ -70,7 +74,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         float delta = (float)update.Facts.FixedDeltaSeconds;
         // Look and controls in host time, so they stay live while the world holds; the body per admitted step.
         FpsInputFrame frame = walker.ReadInput(update.Input, (float)update.Facts.HostElapsedSeconds);
-        if (walker.Input.Physical.Pressed(KeyboardControl.KeyR))
+        if (walker.Input.Physical.Pressed(KeyboardControl.KeyH))
         {
             Restart();
             return ProductUpdateResult.None;
@@ -93,9 +97,11 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         }
         if (walker.Input.Physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();
         jumpPending |= frame.JumpPressed;
+        float actionSeconds = Act();
         for (uint step = 0; step < update.Facts.AdmittedStepCount; step++)
         {
             vitals.Step(delta);
+            combat.Step(delta, []);
             walker.Step(frame, jumpPending, delta, vitals.MovementScale, vitals.Knockback(walker.Feet));
             jumpPending = false;
             if (vitals.Defeated) break;
@@ -110,7 +116,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         }
         sampleTime = time.WorldSeconds;
         time.Choose(new TimeDemand(!showingLevel || walker.Flying, frame.Movement.Length(), frame.SprintHeld && !frame.CrouchHeld,
-            walker.Airborne || jumpPending, walker.Input.Physical.Pressed(KeyboardControl.KeyT)));
+            walker.Airborne || jumpPending, walker.Input.Physical.Pressed(KeyboardControl.KeyT), actionSeconds));
+        combat.Present(update.Facts.HostElapsedSeconds);
         Publish();
         return ProductUpdateResult.None;
     }
@@ -132,6 +139,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         if (disposed) return;
         vitals.Reset();
+        combat.Reset();
         walker.Reset();
         jumpPending = false;
         time.Hold(); // a restart returns the Engine to realtime
@@ -146,6 +154,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         registrar.Register(new LevelDebugCommands(() => scene, walker, EnterLevel));
         registrar.Register(new PlayerDebugCommands(vitals, walker, Publish));
+        registrar.Register(new CombatDebugCommands(combat, walker));
     }
 
     /// <summary>Builds and enters a level (developer override); returns why it could not, or null.</summary>
@@ -195,7 +204,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         }
         scene.Dispose();
         scene = next;
-        scene.Publish();
+        combat.Enter(scene.Session);
         walker.Enter(scene);
         jumpPending = false;
     }
@@ -223,6 +232,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private void Defeated()
     {
         vitals.Reset();
+        combat.Reset();
         walker.Reset();
         jumpPending = false;
         time.Hold();
@@ -250,9 +260,30 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         return next < ids.Length ? ids[next] : null;
     }
 
+    /// <summary>
+    /// The player's combat controls this update: number keys take a carried weapon into the main hand, the primary and
+    /// secondary buttons use the main and off hands, R reloads the main hand. A stunned player cannot act. Returns the
+    /// world seconds an action begun now costs.
+    /// </summary>
+    private float Act()
+    {
+        PhysicalInputState physical = walker.Input.Physical;
+        KeyboardControl[] slots = [KeyboardControl.Digit1, KeyboardControl.Digit2, KeyboardControl.Digit3, KeyboardControl.Digit4,
+            KeyboardControl.Digit5, KeyboardControl.Digit6, KeyboardControl.Digit7, KeyboardControl.Digit8, KeyboardControl.Digit9];
+        for (int i = 0; i < slots.Length; i++)
+            if (physical.Pressed(slots[i])) combat.Select(i);
+        if (!showingLevel || walker.Flying || vitals.Stats.Effects.Stunned) return 0;
+        float? cost = physical.Pressed(PointerButton.Primary) ? combat.Use(PlayerCombat.MainHand)
+            : physical.Pressed(PointerButton.Secondary) ? combat.Use(PlayerCombat.OffHand)
+            : physical.Pressed(KeyboardControl.KeyR) ? combat.Reload(PlayerCombat.MainHand)
+            : null;
+        return cost ?? 0;
+    }
+
     private void Publish()
     {
+        engine.Graphics.PublishSnapshot([.. scene.Facts, .. combat.Facts()]);
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText, combat)));
     }
 }

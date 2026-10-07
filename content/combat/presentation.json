@@ -1,0 +1,12 @@
+{
+  "mainHand": [0.3, -0.3, -0.8],
+  "offHand": [-0.3, -0.32, -0.8],
+  "windup": [0, 0.06, 0.1],
+  "commit": [0, 0.02, -0.2],
+  "recoveryDrop": 0.08,
+  "projectileSize": 0.2,
+  "impactBurst": 10,
+  "impactSize": 0.25,
+  "impactSeconds": 0.35,
+  "noticeSeconds": 1.6
+}

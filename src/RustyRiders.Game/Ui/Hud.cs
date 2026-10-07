@@ -1,5 +1,6 @@
 using System.Text;
 using Rusty.Engine;
+using RustyRiders.Game.Combat;
 using RustyRiders.Game.Content;
 using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
@@ -12,11 +13,12 @@ internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat)
     {
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
               + (scene.Problems.Count > ProblemsShown ? $"\n… and {scene.Problems.Count - ProblemsShown} more" : "");
+        (string hands, string supplies, string action, string notice) = combat.Hud();
         (string Key, string Text)[] fields =
         [
             ("status", scene.Status),
@@ -28,6 +30,10 @@ internal static class Hud
             ("health", FormattableString.Invariant($"{vitals.Health.ValueInt} / {vitals.Health.MaximumValue:0}")),
             ("healthShare", FormattableString.Invariant($"{vitals.Health.Value / Math.Max(1, vitals.Health.MaximumValue):0.###}")),
             ("effects", string.Join("  ", vitals.Stats.Effects.Active.Select(e => Effect(e, messages)))),
+            ("hands", hands),
+            ("supplies", supplies),
+            ("action", action),
+            ("notice", notice),
         ];
         List<byte> utf8 = [];
         List<StructuredValueNode> nodes = [new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, (uint)fields.Length)];

@@ -1,21 +1,156 @@
 {
   "attributes": [
-    { "id": "might", "name": "Might", "minimum": 1, "maximum": 99 },
-    { "id": "agility", "name": "Agility", "minimum": 1, "maximum": 99 },
-    { "id": "focus", "name": "Focus", "minimum": 1, "maximum": 99 },
-    { "id": "grit", "name": "Grit", "minimum": 1, "maximum": 99 }
+    {
+      "id": "might",
+      "name": "Might",
+      "minimum": 1,
+      "maximum": 99
+    },
+    {
+      "id": "agility",
+      "name": "Agility",
+      "minimum": 1,
+      "maximum": 99
+    },
+    {
+      "id": "focus",
+      "name": "Focus",
+      "minimum": 1,
+      "maximum": 99
+    },
+    {
+      "id": "grit",
+      "name": "Grit",
+      "minimum": 1,
+      "maximum": 99
+    }
   ],
   "derived": [
-    { "id": "maximum-health", "name": "Health", "base": 50, "minimum": 1, "maximum": 999, "quantum": 1, "from": [ { "attribute": "grit", "perPoint": 4 }, { "attribute": "might", "perPoint": 1 } ] },
-    { "id": "maximum-charge", "name": "Charge", "base": 10, "minimum": 0, "maximum": 999, "quantum": 1, "from": [ { "attribute": "focus", "perPoint": 2 } ] },
-    { "id": "melee-power", "name": "Melee power", "base": 1, "minimum": 0, "maximum": 10, "quantum": 0, "from": [ { "attribute": "might", "perPoint": 0.05 } ] },
-    { "id": "spell-power", "name": "Spell power", "base": 1, "minimum": 0, "maximum": 10, "quantum": 0, "from": [ { "attribute": "focus", "perPoint": 0.05 } ] },
-    { "id": "action-time", "name": "Action time", "base": 1.2, "minimum": 0.25, "maximum": 4, "quantum": 0, "from": [ { "attribute": "agility", "perPoint": -0.02 } ] },
-    { "id": "carry", "name": "Carry", "base": 20, "minimum": 0, "maximum": 999, "quantum": 1, "from": [ { "attribute": "might", "perPoint": 2 } ] },
-    { "id": "pace", "name": "Pace", "base": 1, "minimum": 0.1, "maximum": 2, "quantum": 0, "from": [] }
+    {
+      "id": "maximum-health",
+      "name": "Health",
+      "base": 50,
+      "minimum": 1,
+      "maximum": 999,
+      "quantum": 1,
+      "from": [
+        {
+          "attribute": "grit",
+          "perPoint": 4
+        },
+        {
+          "attribute": "might",
+          "perPoint": 1
+        }
+      ]
+    },
+    {
+      "id": "maximum-charge",
+      "name": "Charge",
+      "base": 10,
+      "minimum": 0,
+      "maximum": 999,
+      "quantum": 1,
+      "from": [
+        {
+          "attribute": "focus",
+          "perPoint": 2
+        }
+      ]
+    },
+    {
+      "id": "maximum-tech-ammo",
+      "name": "Tech ammo",
+      "base": 36,
+      "minimum": 0,
+      "maximum": 999,
+      "quantum": 1,
+      "from": []
+    },
+    {
+      "id": "melee-power",
+      "name": "Melee power",
+      "base": 1,
+      "minimum": 0,
+      "maximum": 10,
+      "quantum": 0,
+      "from": [
+        {
+          "attribute": "might",
+          "perPoint": 0.05
+        }
+      ]
+    },
+    {
+      "id": "spell-power",
+      "name": "Spell power",
+      "base": 1,
+      "minimum": 0,
+      "maximum": 10,
+      "quantum": 0,
+      "from": [
+        {
+          "attribute": "focus",
+          "perPoint": 0.05
+        }
+      ]
+    },
+    {
+      "id": "action-time",
+      "name": "Action time",
+      "base": 1.2,
+      "minimum": 0.25,
+      "maximum": 4,
+      "quantum": 0,
+      "from": [
+        {
+          "attribute": "agility",
+          "perPoint": -0.02
+        }
+      ]
+    },
+    {
+      "id": "carry",
+      "name": "Carry",
+      "base": 20,
+      "minimum": 0,
+      "maximum": 999,
+      "quantum": 1,
+      "from": [
+        {
+          "attribute": "might",
+          "perPoint": 2
+        }
+      ]
+    },
+    {
+      "id": "pace",
+      "name": "Pace",
+      "base": 1,
+      "minimum": 0.1,
+      "maximum": 2,
+      "quantum": 0,
+      "from": []
+    }
   ],
   "tracks": [
-    { "id": "health", "name": "Health", "maximum": "maximum-health", "regeneration": 0 },
-    { "id": "charge", "name": "Charge", "maximum": "maximum-charge", "regeneration": 0.5 }
+    {
+      "id": "health",
+      "name": "Health",
+      "maximum": "maximum-health",
+      "regeneration": 0
+    },
+    {
+      "id": "charge",
+      "name": "Charge",
+      "maximum": "maximum-charge",
+      "regeneration": 0.5
+    },
+    {
+      "id": "tech-ammo",
+      "name": "Tech ammo",
+      "maximum": "maximum-tech-ammo",
+      "regeneration": 0
+    }
   ]
 }

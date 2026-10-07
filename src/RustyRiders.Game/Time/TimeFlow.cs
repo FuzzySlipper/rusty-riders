@@ -5,7 +5,8 @@ namespace RustyRiders.Game.Time;
 /// <summary>What the player is doing this update that decides how fast the world runs.</summary>
 /// <param name="Realtime">A mode outside play (the gallery, free flight) that runs the world at realtime.</param>
 /// <param name="Movement">Movement input magnitude, 0 to 1.</param>
-internal readonly record struct TimeDemand(bool Realtime, float Movement, bool Sprinting, bool Airborne, bool Wait);
+/// <param name="ActionSeconds">World seconds an action the player just began costs, bought now.</param>
+internal readonly record struct TimeDemand(bool Realtime, float Movement, bool Sprinting, bool Airborne, bool Wait, float ActionSeconds = 0);
 
 /// <summary>
 /// The product's gameplay-time policy over the Engine's <see cref="IGameplayTimeService"/>, the one world clock:
@@ -45,6 +46,11 @@ internal sealed class TimeFlow
         if (demand.Realtime)
         {
             engine.GameplayTime.RunRealtime();
+            return;
+        }
+        if (demand.ActionSeconds > 0)
+        {
+            Spend(demand.ActionSeconds);
             return;
         }
         if (State.AdvanceSeconds > 0) return; // a wait or an action is still being paid for

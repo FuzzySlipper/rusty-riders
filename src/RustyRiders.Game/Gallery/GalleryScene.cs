@@ -82,7 +82,7 @@ internal sealed class GalleryScene : IWalkScene
 
     public void Animate(double worldSeconds) { }
 
-    public void Publish() => engine.Graphics.PublishSnapshot(facts.ToArray());
+    public IEnumerable<AppearanceFact> Facts => facts;
 
     public void Dispose()
     {

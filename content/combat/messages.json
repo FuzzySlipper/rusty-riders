@@ -1,0 +1,10 @@
+{
+  "hit": "{target} · {damage}",
+  "defeated": "{target} falls",
+  "turnedAside": "{target} turns it aside",
+  "missed": "Missed",
+  "empty": "Empty: reload",
+  "short": "Not enough {track}",
+  "loaded": "{loaded}/{size}",
+  "carried": "{name} {value}"
+}
