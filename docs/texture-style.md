@@ -8,12 +8,15 @@ were made are in `content/art/textures/` (`sources.json` per set). The batch wor
 
 ## House style
 
-- **Hand-painted toon.** Bold dark ink outlines around every form, flat cel-shaded fills, and a soft pale inner
-  highlight on rounded forms. No photographic detail, film grain or realistic noise.
-- **Biomechanical and organic.** Rounded cells, ribs, blisters and membranes rather than square masonry or
-  geometric tiles. Rock reads as smooth rounded stones in the same ink style.
+- **Hand-painted ink, not vector clip art.** Dark ink outlines around forms with cel-shaded fills, but painted
+  rather than flat: tone varies inside a form, and crack lines, hatching and ink detail carry texture. A user
+  review (2026-10-06, below) rejected clean flat vector-like fills even where the judges ranked them first.
+  Avoid photographic detail, film grain and realistic noise too.
+- **Organic forms.** Rounded stones, cracks, ribs and roots rather than square masonry or geometric tiles.
+  Busy fields of oval "cells" were rejected in every version, so treat that motif as off-style for floors.
 - **Neutral values for tinting.** Mid greys, near-black lines and light-grey highlights. Level palettes tint
-  materials, so a texture should carry value and form, not hue.
+  materials, so a texture should carry value and form, not hue. Coloured subjects such as lava and moss keep
+  their colour.
 - **Readable at a walking distance.** Forms about 0.3–1.5 m across at the texture's intended repeat length (one
   tile is 4–6 m). Detail much finer than that turns to noise in first person.
 
@@ -37,8 +40,8 @@ a visible repaired band.
 
 **Judges rank style and appeal.** A judge sees one contact sheet of candidates, each shown once and lettered,
 next to the style reference. It ranks them best to worst as a floor for that place, by:
-- **Style:** how unmistakably the house style it is (ink outlines, cel fills, soft highlights, organic or
-  biomechanical forms).
+- **Style:** how unmistakably the house style it is (hand-painted ink outlines and detail over cel fills,
+  organic forms). Clean flat vector fills are a fault, not a strength.
 - **Fit:** whether it would sit well with the reference as the same world's floor.
 - **Scale:** whether its forms read at a 4–6 m repeat seen from eye height (1.7 m).
 - **Appeal:** whether you would want to walk on it.
@@ -74,3 +77,23 @@ Earlier runs:
 
 The comparisons are in Den #9420, and the tools are in `scripts/texture-gen/` (`lora_dataset.py`, `caption.py`,
 `train_lora.py`).
+
+## Human review calibration
+
+The user's review pass (2026-10-06, review app) is the ground truth the judges are checked against. It covered
+48 floors: v2-2000 and v3 at 1500, 2000 and 3000 steps, over cave cells, cave rock, lava and forest.
+
+| Set | Rejected |
+| --- | --- |
+| v2-2000 | 4/12 |
+| v3-1500 | 10/12 |
+| v3-2000 | 8/12 |
+| v3-3000 | 10/12 |
+| Cave cells, all versions | 12/12 |
+
+- **Kept:** all three v2 cave rocks; the painterly v2, v3-1500 and v3-2000 lava; most forest grounds.
+- **Rejected:** v3-3000's clean flat rock and lava, which Sonnet judges had ranked level with the GPT golds.
+
+So the judges over-rewarded flatness, and the house style above now says so. Recheck the judges against these
+marks before trusting their rankings again.
+
