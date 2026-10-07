@@ -16,6 +16,7 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 | Path or service | Responsibility |
 | --- | --- |
 | `src/RustyRiders.Game/RustyRidersProduct.cs` | Lifecycle callbacks, per-update composition (input, walker steps, HUD publication) and which scene is current |
+| `src/RustyRiders.Game/Content/` | `Authored`: reading one content file through Engine Content into its domain's typed record, with errors naming the file and field, and validation helpers; `Template`: authored text with `{name}` placeholders |
 | `src/RustyRiders.Game/Levels/LevelData.cs` | Typed `content/levels/*.json` and `content/level.json` |
 | `src/RustyRiders.Game/Levels/LevelGenerator.cs` | The old generator's geometry: chunk fitting, corridors, walls, corners, tile kind and rotation per cell |
 | `src/RustyRiders.Game/Levels/LevelScene.cs` | Stamping tile art per planned cell, wall and ground collision, spawn, level problems |

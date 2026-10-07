@@ -1,5 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
+using RustyRiders.Game.Content;
 using RustyRiders.Game.Art;
 using RustyRiders.Game.Player;
 
@@ -56,18 +57,18 @@ internal sealed class GalleryScene : IWalkScene
             rowZ += rowDepth + definition.RowGap;
         }
         ground = engine.Graphics.CreatePrimitive(new PrimitiveAppearanceRequest(PrimitiveGeometry.Cube, false,
-            GalleryDefinition.Color(definition.GroundColor)));
+            Authored.Color(definition.GroundColor)));
         (Vector3 groundMin, Vector3 groundMax) = GroundExtent();
         facts.Add(new AppearanceFact(GroundObjectId, false, 0, new Transform(
             new Vector3((groundMin.X + groundMax.X) / 2, -GroundThickness / 2, (groundMin.Z + groundMax.Z) / 2), Quaternion.Identity,
             new Vector3(groundMax.X - groundMin.X, GroundThickness, groundMax.Z - groundMin.Z)), ground, true, RenderLayer.Scene));
         AdmitGroundCollision(groundMin, groundMax);
-        engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(GalleryDefinition.Color(definition.BackgroundColor)));
+        engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(Authored.Color(definition.BackgroundColor)));
     }
 
     internal GalleryDefinition Definition { get; }
     public SpatialSession Session { get; }
-    public Vector3 SpawnFeet => GalleryDefinition.Vector(Definition.Spawn);
+    public Vector3 SpawnFeet => Authored.Vector(Definition.Spawn);
     public float SpawnYawDegrees => Definition.SpawnYawDegrees;
     internal List<Exhibit> Exhibits { get; } = [];
     public IReadOnlyList<string> Problems => [.. art.Problems, .. problems];
@@ -111,7 +112,7 @@ internal sealed class GalleryScene : IWalkScene
     private (Vector3 Min, Vector3 Max) GroundExtent()
     {
         Vector3 margin = new(Definition.GroundMargin, 0, Definition.GroundMargin);
-        Vector3 spawn = GalleryDefinition.Vector(Definition.Spawn);
+        Vector3 spawn = Authored.Vector(Definition.Spawn);
         Vector3 min = Exhibits.Aggregate(spawn, (current, exhibit) => Vector3.Min(current, exhibit.Min));
         Vector3 max = Exhibits.Aggregate(spawn, (current, exhibit) => Vector3.Max(current, exhibit.Max));
         return (min - margin, max + margin);

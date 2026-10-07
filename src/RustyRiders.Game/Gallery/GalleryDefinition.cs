@@ -1,7 +1,6 @@
-using System.Numerics;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
+using RustyRiders.Game.Content;
 
 namespace RustyRiders.Game.Gallery;
 
@@ -11,21 +10,14 @@ internal sealed record GalleryDefinition(string ArtRoot, float ExhibitGap, float
 {
     internal const string Path = "gallery.json";
 
-    internal static GalleryDefinition Load(IEngineContext engine) =>
-        JsonSerializer.Deserialize(ContentFiles.Read(engine, Path).Span, GalleryJson.Default.GalleryDefinition)
-        ?? throw new InvalidOperationException($"{Path} must contain the gallery definition.");
-
-    internal static Vector3 Vector(float[] xyz) => xyz.Length == 3
-        ? new Vector3(xyz[0], xyz[1], xyz[2])
-        : throw new InvalidOperationException("Gallery coordinates must have three components.");
-
-    internal static Color Color(float[] rgb) => rgb.Length == 3
-        ? new Color(rgb[0], rgb[1], rgb[2], 1)
-        : throw new InvalidOperationException("Gallery colours must have three components.");
+    internal static GalleryDefinition Load(IEngineContext engine) => Authored.Read(engine, Path, GalleryJson.Default.GalleryDefinition);
 }
 
 internal sealed record GalleryRow(string Label, string[] Exhibits);
 
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+// Authored: missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    RespectRequiredConstructorParameters = true, RespectNullableAnnotations = true,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(GalleryDefinition))]
 internal sealed partial class GalleryJson : JsonSerializerContext;

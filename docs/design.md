@@ -64,7 +64,7 @@ Escalation comes from the run. A level's tileset decides *which* enemies and rew
 ## Time model
 
 Time runs only while you move or act, as in *SUPERHOT*. The Engine provides this as **gameplay time**
-(`engine.GameplayTime`: `Hold`, `SetRate`, `Advance`). It arrived after the current Engine pin (Den #9635 adopts it).
+(`engine.GameplayTime`: `Hold`, `SetRate`, `Advance`).
 
 - **Held by default.** While you stand still, the world is frozen: enemies, projectiles, effects, spawn
   timers and the chase timer.

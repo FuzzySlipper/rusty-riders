@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
+using RustyRiders.Game.Content;
 using RustyRiders.Game.Art;
 
 namespace RustyRiders.Game.Levels;
@@ -15,15 +16,11 @@ internal sealed record LevelData(GeneratorSettings Generator, TileKindTemplate[]
     LayoutDefinition[] Layouts, TilesetDefinition Tileset)
 {
     internal static LevelData Load(IEngineContext engine, string tileset) => new(
-        Read(engine, "levels/generator.json", LevelJson.Default.GeneratorSettings),
-        Read(engine, "levels/tile-kinds.json", LevelJson.Default.TileKindTemplateArray),
-        Read(engine, "levels/chunks.json", LevelJson.Default.ChunkDefinitionArray),
-        Read(engine, "levels/layouts.json", LevelJson.Default.LayoutDefinitionArray),
-        Read(engine, $"levels/tilesets/{tileset}.json", LevelJson.Default.TilesetDefinition));
-
-    private static T Read<T>(IEngineContext engine, string path, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type) =>
-        JsonSerializer.Deserialize(ContentFiles.Read(engine, path).Span, type)
-        ?? throw new InvalidOperationException($"content/{path} is empty.");
+        Authored.Read(engine, "levels/generator.json", LevelJson.Default.GeneratorSettings),
+        Authored.Read(engine, "levels/tile-kinds.json", LevelJson.Default.TileKindTemplateArray),
+        Authored.Read(engine, "levels/chunks.json", LevelJson.Default.ChunkDefinitionArray),
+        Authored.Read(engine, "levels/layouts.json", LevelJson.Default.LayoutDefinitionArray),
+        Authored.Read(engine, $"levels/tilesets/{tileset}.json", LevelJson.Default.TilesetDefinition));
 }
 
 /// <summary>
@@ -33,7 +30,7 @@ internal sealed record LevelData(GeneratorSettings Generator, TileKindTemplate[]
 /// texture <see cref="FloorTexture"/> may replace by id.
 /// </summary>
 internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layout, int Seed, float WallHeight,
-    float[] BackgroundColor, string? Palette, string Build = LevelSettings.TilesBuild, string? FloorTexture = null)
+    float[] BackgroundColor, string? Palette = null, string Build = LevelSettings.TilesBuild, string? FloorTexture = null)
 {
     internal const string TilesBuild = "tiles";
     internal const string ShellsBuild = "shells";
@@ -44,9 +41,7 @@ internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layo
 
     internal const string Path = "level.json";
 
-    internal static LevelSettings Load(IEngineContext engine) =>
-        JsonSerializer.Deserialize(ContentFiles.Read(engine, Path).Span, LevelJson.Default.LevelSettings)
-        ?? throw new InvalidOperationException($"{Path} must contain the level settings.");
+    internal static LevelSettings Load(IEngineContext engine) => Authored.Read(engine, Path, LevelJson.Default.LevelSettings);
 }
 
 /// <summary>
@@ -62,21 +57,8 @@ internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial
     ShellNoise WallNoise, ShellNoise FloorNoise, string Extraction, float SampleSpacing, float BlockMetres, uint MaxSamples,
     float CreaseDegrees, uint MaxVertices, uint MaxTriangles, string[] Props, SweepDefinition Sweep, FloorTexture[] FloorTextures)
 {
-    internal static ShellDefinition? Load(IEngineContext engine, string tileset)
-    {
-        string path = $"levels/shells/{tileset}.json";
-        ReadOnlyMemory<byte> bytes;
-        try
-        {
-            bytes = ContentFiles.Read(engine, path);
-        }
-        catch (EngineCallException)
-        {
-            return null;
-        }
-        return JsonSerializer.Deserialize(bytes.Span, LevelJson.Default.ShellDefinition)
-            ?? throw new InvalidOperationException($"content/{path} is empty.");
-    }
+    internal static ShellDefinition? Load(IEngineContext engine, string tileset) =>
+        Authored.ReadOptional(engine, $"levels/shells/{tileset}.json", LevelJson.Default.ShellDefinition);
 
     internal bool KeepsProp(string? model) => model is not null
         && Props.Any(prefix => System.IO.Path.GetFileName(model).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
@@ -112,7 +94,7 @@ internal sealed record TileKindTemplate(string Kind, string[] Walkable);
 internal sealed record ChunkDefinition(string Id, ChunkCell[] Cells);
 
 /// <summary>A chunk cell: a room cell, or a door cell (<see cref="Door"/> = the side it opens away from the room).</summary>
-internal sealed record ChunkCell(int X, int Z, string? Door, string? Objective);
+internal sealed record ChunkCell(int X, int Z, string? Door = null, string? Objective = null);
 
 internal sealed record LayoutDefinition(string Id, bool Special, LayoutNode[] Nodes);
 
@@ -121,7 +103,7 @@ internal sealed record LayoutNode(int Id, int X, int Z, string[] Tags, LayoutCon
     internal bool Has(string tag) => Tags.Contains(tag);
 }
 
-internal sealed record LayoutConnection(string Dir, int Target, bool Locked);
+internal sealed record LayoutConnection(string Dir, int Target, bool Locked = false);
 
 /// <summary>Tile prefabs per tile kind (old-game prefab paths, the names of their placement files) and their 9x9 walkability.</summary>
 internal sealed record TilesetDefinition(string Id, Dictionary<string, string[]> Tiles, Dictionary<string, string[]> Walkability,
@@ -145,10 +127,17 @@ internal sealed record PaletteDefinition(string Id, PaletteEntry[] Entries)
     }
 }
 
-/// <summary>Colours as Unity stored them (gamma-encoded rgba) and the Assets-relative materials they recolour.</summary>
-internal sealed record PaletteEntry(float[] BaseColor, float[] Emissive, string[] Materials);
+/// <summary>
+/// Colours as Unity stored them (gamma-encoded rgba) and the Assets-relative materials they recolour.
+/// <see cref="MissingMaterials"/> keeps the names the old palette listed that no material has; they recolour nothing.
+/// </summary>
+internal sealed record PaletteEntry(float[] BaseColor, float[] Emissive, string[] Materials, string[]? MissingMaterials = null);
 
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+// Generated by scripts/extract-level-data.py and then authored here.
+// Authored: missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    RespectRequiredConstructorParameters = true, RespectNullableAnnotations = true,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(GeneratorSettings))]
 [JsonSerializable(typeof(TileKindTemplate[]))]
 [JsonSerializable(typeof(ChunkDefinition[]))]

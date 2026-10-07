@@ -55,9 +55,68 @@ reflection discovery, generic bus, or service locator for hypothetical needs.
 
 Use nullable types, file-scoped namespaces, and `internal`/`sealed` defaults
 where the public product contract does not require otherwise. Keep structural
-constants beside their algorithm; give meaningful identities names. Put
-adjustable gameplay values and authored definitions in domain-owned content
-when the product needs tuning, rather than hiding them in call sites.
+constants beside their algorithm; give meaningful identities names. Gameplay
+values and authored definitions live in domain-owned content, not call sites;
+see the next section.
+
+## Content and code organization
+
+Rusty Riders is content-heavy: many weapons, spells, items, enemies, effects
+and worlds. Build gameplay so that a new one is mostly a content edit composed
+from existing typed parts, not new code. Organize ahead of need: agents and
+people extend the shape they find, so an ad hoc catch-all becomes the pattern
+every later change follows. Put an addition where its future siblings will
+live. If the file, class or module you are extending is already a catch-all,
+split it along domain lines first, as its own change. Organization means
+folders, files, typed records and named owners, not a framework, generic
+registry, rule engine or plugin system.
+
+- **Compose from typed parts.** Gameplay definitions are built from small
+  typed records that their owning domain dispatches: an action is timing, a
+  delivery (melee sweep, hitscan, projectile, area, self), a cost and payloads
+  (damage by kind, effects); an enemy kind is a look, stats, senses, movement
+  and action choices; an item grants actions, stat contributions or a
+  consumable effect. A weapon is an item that grants actions; input never
+  names a weapon. Player and enemies share one action pipeline and one stat
+  model. A new kind from existing parts is a content edit; a genuinely new
+  behaviour adds one new typed part to its owner's vocabulary.
+- **Timed conditions are effects.** A burn, slow, stun, heal over time or buff
+  is an effect definition advanced on Engine-admitted gameplay time, not a
+  separate timer. Resources (health, ammo, charges) are stats or tracks on
+  their owner, not loose numbers beside it.
+- **Authored data is a domain-organized tree.** `content/` has directories and
+  files named for what they hold (levels, mechanics, actions, items, enemies,
+  run tuning). A product-named or catch-all file (`riders.json`, `data.json`,
+  `config.json`) is a smell. Keep reusable definitions (an item, weapon,
+  enemy kind) apart from where a level or table places them, and geometry
+  apart from tuning. Each domain loads its own typed records with its own JSON
+  context through `Content/Authored`; do not funnel all content through one
+  record every owner reads.
+- **Authored files are strict.** Their JSON contexts reject missing required
+  values, nulls in non-nullable fields and unknown members; an optional field
+  has a default in its record. References between files and value ranges that
+  parse but are wrong fail through `Authored.Require` (and its helpers) naming
+  the file and field. No silent defaults. Generated files from other tools
+  (asset-pipeline placements) may ignore unknown members.
+- **No gameplay prose in C# or JS.** Names, prompts, notices, refusal reasons
+  and labels belong in their domain's content as templates (`Content/Template`)
+  filled from definition values. Code composes text; it does not author it. A
+  screen's fixed chrome and developer output may live in its markup or code.
+- **Gameplay values are tuning.** Timings, ranges, damage, costs, spawn
+  curves and limits go in content. A C# `const` is not tuning support.
+- **Variants are typed.** A behaviour, kind or mode is an enum or typed record
+  in its definition, dispatched by the owning domain. Do not compare strings
+  in views.
+- **One table per vocabulary.** Key bindings and their labels, damage kinds,
+  HUD facts and saved fields each have one declaration that every consumer
+  (C# input, HUD, UI, playtest actions) reads.
+- **Size signals prompt a split.** A C# owner growing past roughly 300 lines,
+  a method interleaving several domains, a JS module holding more than one
+  screen, or a JSON file spanning several domains is the cue to divide it
+  before extending. These are prompts to look, not gates.
+
+Sibling Rusty repositories are one-time code donors, never build or content
+dependencies. Follow [docs/reuse.md](docs/reuse.md) and record what was copied.
 
 Trust first-party runtime state and Engine-admitted data. Preserve concrete
 eligibility rules, current-data errors, and resource lifetime/disposal. Do not
