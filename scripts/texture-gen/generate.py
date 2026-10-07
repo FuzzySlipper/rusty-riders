@@ -23,14 +23,15 @@ sys.path.insert(0, os.path.dirname(__file__))
 import comfy  # noqa: E402
 
 
-def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str, lora: str | None, strength: float) -> dict:
+def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str, lora: str | None, strength: float,
+           negative: str = "") -> dict:
     g = {
         "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": unet, "weight_dtype": "default"}},
         "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}},
         "vae": {"class_type": "VAELoader", "inputs": {"vae_name": "ae.safetensors"}},
         "sampling": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["unet", 0], "shift": 3}},
         "text": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": prompt}},
-        "negative": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": ""}},
+        "negative": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": negative}},
         "latent": {"class_type": "EmptySD3LatentImage", "inputs": {"width": size, "height": size, "batch_size": 1}},
         "sample": {"class_type": "KSampler", "inputs": {"model": ["sampling", 0], "positive": ["text", 0], "negative": ["negative", 0],
                    "latent_image": ["latent", 0], "seed": seed, "steps": steps, "cfg": cfg, "sampler_name": "res_multistep",
@@ -74,6 +75,7 @@ def main() -> None:
     parser.add_argument("out_dir")
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--model", choices=["zimage-turbo", "zimage-base", "qwen-edit"], default="zimage-base")
+    parser.add_argument("--negative", default="", help="negative prompt (zimage-base only; turbo runs at cfg 1 and ignores it)")
     parser.add_argument("--lora")
     parser.add_argument("--lora-strength", type=float, default=1.0)
     parser.add_argument("--seeds", default="1-4")
@@ -92,13 +94,13 @@ def main() -> None:
         elif args.model == "zimage-turbo":
             g = zimage(args.prompt, seed, args.size, 8, 1, "z_image_turbo_bf16.safetensors", args.lora, args.lora_strength)
         else:
-            g = zimage(args.prompt, seed, args.size, 25, 4, "z_image_bf16.safetensors", args.lora, args.lora_strength)
+            g = zimage(args.prompt, seed, args.size, 25, 4, "z_image_bf16.safetensors", args.lora, args.lora_strength, args.negative)
         with tempfile.TemporaryDirectory() as work:
             out = comfy.run(g, os.path.join(work, "out"))
             path = os.path.join(args.out_dir, f"{args.tag}-{seed}.png")
             shutil.copy(out[0], path)
         record = {"image": path, "model": args.model, "lora": args.lora, "lora_strength": args.lora_strength if args.lora else None,
-                  "reference": args.reference, "prompt": args.prompt, "seed": seed, "size": args.size}
+                  "reference": args.reference, "prompt": args.prompt, "negative": args.negative, "seed": seed, "size": args.size}
         with open(os.path.join(args.out_dir, "runs.jsonl"), "a") as runs:
             runs.write(json.dumps(record) + "\n")
 
