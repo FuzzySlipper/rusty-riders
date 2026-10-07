@@ -31,7 +31,8 @@ def main() -> None:
             human, judge = truth[os.path.abspath(path)], verdicts[letter]
             counts[(human, judge)] += 1
             if human != judge:
-                errors.append(f"judge {judge}ed a human {human}: {os.path.basename(path)}".replace("rejected a human", "rejected a human"))
+                verb = "kept" if judge == "keep" else "rejected"
+                errors.append(f"judge {verb} a human {human}: {os.path.basename(path)}")
     total = sum(counts.values())
     agree = counts[("keep", "keep")] + counts[("reject", "reject")]
     rejects = counts[("reject", "reject")] + counts[("reject", "keep")]
