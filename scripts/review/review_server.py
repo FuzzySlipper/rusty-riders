@@ -75,7 +75,9 @@ class Review:
         out = []
         for index, path in enumerate(self.images):
             entry = self.state["items"].get(path, {})
-            out.append({"id": index, "path": path, "mark": entry.get("mark"), "note": entry.get("note", ""),
+            # The version names the file and its age, so a browser never reuses a cached picture from another set.
+            version = f"{os.path.getmtime(self.file(index)):.0f}-{abs(hash(path)) % 10**8}"
+            out.append({"id": index, "path": path, "version": version, "mark": entry.get("mark"), "note": entry.get("note", ""),
                         "crops": entry.get("crops", []), "info": self.info.get(os.path.basename(path), {})})
         return out
 
@@ -248,7 +250,7 @@ function render() {
   selected = Math.min(selected, Math.max(0, shown.length - 1));
   $('grid').style.setProperty('--size', $('size').value + 'px');
   $('grid').innerHTML = shown.map((i, n) => `<div class="card ${i.mark || ''} ${n === selected ? 'sel' : ''}" data-n="${n}">
-      <img loading="lazy" src="/thumb/${i.id}" alt=""><div class="badges">${badgeHtml(i)}</div><div class="name" title="${i.path}\n${escapeAttr(JSON.stringify(i.info))}">${i.path}</div></div>`).join('');
+      <img loading="lazy" src="/thumb/${i.id}?v=${i.version}" alt=""><div class="badges">${badgeHtml(i)}</div><div class="name" title="${i.path}\n${escapeAttr(JSON.stringify(i.info))}">${i.path}</div></div>`).join('');
   const c = k => items.filter(i => i.mark === k).length;
   $('counts').textContent = `${items.length} images · ${c('reject')} rejected · ${c('keep')} kept · ${items.filter(i => !i.mark).length} unmarked`;
   $('page').textContent = `page ${page + 1} / ${pages}`;
@@ -267,7 +269,7 @@ $('next').onclick = () => { page++; selected = 0; render(); scrollTo(0, 0); };
 function openView() {
   const item = window.current[selected]; if (!item) return;
   $('view').classList.add('open'); $('vname').textContent = item.path; $('vnote').value = item.note || '';
-  viewImage = new Image(); viewImage.onload = draw; viewImage.src = '/image/' + item.id;
+  viewImage = new Image(); viewImage.onload = draw; viewImage.src = '/image/' + item.id + '?v=' + item.version;
 }
 function closeView() { $('view').classList.remove('open'); viewImage = null; render(); }
 function draw() {
