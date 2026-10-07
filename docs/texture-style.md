@@ -128,3 +128,17 @@ What the wording does:
 - **The negative prompt** removes text and signatures. Comic-panel frames (3 of 12) and perspective views
   (seed-dependent) still slip through: crop frames, and drop perspective views before tiling.
 
+## Keep-or-reject judge
+
+Sonnet judges pre-screen batches with `scripts/review/prompts/keep-reject-judge.txt`, one judge per contact
+sheet of 12 (`contact_sheet.py --tile 1 --cell 400 --per-sheet 12`), replacing SHEET with the sheet's path.
+`scripts/review/agreement.py` scores their verdicts against a human review pass.
+
+On the 72 images of the two reviews above, the first version agreed with the user on 81% (58/72):
+- it caught 30 of 39 rejects (all 12 cave-cells images);
+- it wrongly rejected 5 of 33 keeps;
+- it missed rejects mostly among lava and forest.
+
+The rubric was written from these same reviews, so validate it on the next fresh batch before relying on it.
+As a pre-filter, the judges drop the obvious rejects, and the user's pass decides.
+
