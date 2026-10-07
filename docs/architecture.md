@@ -19,13 +19,19 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 | `src/RustyRiders.Game/Content/` | `Authored`: reading one content file through Engine Content into its domain's typed record, with errors naming the file and field, and validation helpers; `Template`: authored text with `{name}` placeholders |
 | `src/RustyRiders.Game/Levels/LevelData.cs` | Typed `content/levels/*.json` and `content/level.json` |
 | `src/RustyRiders.Game/Levels/LevelGenerator.cs` | The old generator's geometry: chunk fitting, corridors, walls, corners, tile kind and rotation per cell |
-| `src/RustyRiders.Game/Levels/LevelScene.cs` | Stamping tile art per planned cell, wall and ground collision, spawn, level problems |
+| `src/RustyRiders.Game/Levels/LevelScene.cs` | Stamping tile art per planned cell, wall and ground collision, the level's navigation and gameplay points, spawn at the arrival point, level problems, and whether the level is playable |
+| `src/RustyRiders.Game/Levels/LevelRules.cs` | `points.json`, `navigation.json` and `worlds.json`: where a level's points go, how its navigation is derived, and the worlds rifts lead to |
+| `src/RustyRiders.Game/Levels/LevelNavigation.cs` | Engine navigation derived from the level's collision (`ReplaceCollisionNavigation`) for the body enemies walk with; step, nearest-support and route queries |
+| `src/RustyRiders.Game/Levels/LevelPoints.cs` | The level's gameplay points from the plan's rooms: entry portal and arrival, rifts with destination worlds, caches and resident spots, each snapped to floor the arrival can walk to |
+| `src/RustyRiders.Game/Levels/Portals.cs` | Placeholder portal and marker primitives animated on world time, and which rift the walker's feet stand in |
 | `src/RustyRiders.Game/Levels/WalkCells.cs` | The placed tiles' walk grids as one open-ground grid, and its merged rectangles, for the generated builds |
 | `src/RustyRiders.Game/Levels/LevelShells.cs` | The `shells` build: one Engine implicit field carved from the placed tiles' walk grids, extracted (implicit or sampled) into drawn sections and collision |
 | `src/RustyRiders.Game/Levels/LevelSweeps.cs` | The `sweeps` build: walls swept along the open ground's outlines, ceilings and floor as one UV-mapped retained mesh |
 | `src/RustyRiders.Game/Gallery/` | `gallery.json` and the gallery scene's exhibit layout and ground |
 | `src/RustyRiders.Game/Art/` | Placement files and converted GLBs: each read or opened once, problems recorded; `MaterialRecolor` turns a level palette into Engine material factor overrides for the appearances whose materials it names; `HarvestedMaterials` makes Engine materials for generated geometry from a converted Unity material's embedded textures and colours |
-| `src/RustyRiders.Game/Player/` | Walker tuning, first-person controls, character steps, free flight and camera; `IWalkScene`, what a scene gives the walker and HUD |
+| `src/RustyRiders.Game/Player/` | Walker tuning, first-person controls, character steps, free flight and camera; `IWalkScene`, what a scene gives the walker and HUD; `PlayerVitals`, the player's stats, health and effects and what they do to the body (stun, slow, knockback) |
+| `src/RustyRiders.Game/Mechanics/` | The stat vocabulary (`content/mechanics/`: attributes, derived stats, tracks, damage kinds, effects) and each actor's live Engine stats (`ActorStats`) and effects (`ActorEffects`), shared by the player and enemies |
+| `src/RustyRiders.Game/Developer/` | Live-debug commands over the Engine command catalog (`rusty dev --live-debug`): `riders.level.*` and `riders.player.*` read state; `riders.dev.*` are developer overrides (build a level, stand somewhere, hurt or affect the player) |
 | `src/RustyRiders.Game/Time/` | The gameplay-time policy over Engine `GameplayTime`, the one world clock: `TimeTuning` (`content/time.json`, with `heldRate` the single value for standing still) and `TimeFlow`, which holds the world while the player stands still, runs it while they move, jump or fall, and advances it for a wait or an action's cost. The gallery and free flight run realtime |
 | `src/RustyRiders.Game/Ui/Hud.cs` | HUD facts for the DOM panel |
 | `src/ui/main.js` | DOM panel: status, problems, what is underfoot, position, controls, the world's time state and clock |

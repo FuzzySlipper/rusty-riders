@@ -9,6 +9,8 @@ namespace RustyRiders.Game.Levels;
 /// Stamps a generated level: each planned cell places one of its tile kind's tile prefabs (converted old-game art)
 /// at the cell, turned by the planned rotation. Collision is the ground plus a box over each blocked cell of the
 /// tile prefab's 9x9 walkability grid (the old combat grid), so walls stop the walker where the old game's did.
+/// Engine navigation is derived from that collision, and the level's gameplay points (<see cref="LevelPoints"/>) stand
+/// on it: the entry portal the walker arrives in front of, the rifts out, caches and resident spots.
 /// </summary>
 internal sealed class LevelScene : IWalkScene
 {
@@ -21,17 +23,21 @@ internal sealed class LevelScene : IWalkScene
     private const ulong FirstShellSectionObjectId = 10_000;
     private const int WalkGrid = 9;
     private const float SpawnLift = .1f;
+    private const float RiftLabelMetres = 8;
 
     private readonly IEngineContext engine;
     private readonly ConvertedArt art;
     private readonly HarvestedMaterials materials;
     private IGeneratedLevel? shells;
+    private readonly Portals portals;
+    private readonly PortalLook portalLook;
+    private double worldSeconds;
     private readonly List<AppearanceFact> facts = [];
     private readonly List<string> problems = [];
     private readonly Dictionary<(int X, int Z), (PlannedTile Tile, string Prefab)> tiles = [];
     private readonly float cellSize;
 
-    internal LevelScene(IEngineContext engine, LevelSettings settings, LevelData data, LayoutDefinition layout, int seed)
+    internal LevelScene(IEngineContext engine, LevelSettings settings, LevelData data, LayoutDefinition layout, int seed, LevelRules rules)
     {
         this.engine = engine;
         PaletteDefinition? palette = ChoosePalette(settings, data.Tileset, seed);
@@ -79,6 +85,7 @@ internal sealed class LevelScene : IWalkScene
         }
         string built = "tiles";
         float spawnLift = SpawnLift;
+        (Vector3 floorMin, Vector3 floorMax) = Extent(plan);
         if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, settings.FloorTexture, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
         {
             built = summary;
@@ -86,16 +93,23 @@ internal sealed class LevelScene : IWalkScene
         }
         else
         {
-            (Vector3 min, Vector3 max) = Extent(plan);
-            collision.AddGround(GroundObjectId, min, max);
+            collision.AddGround(GroundObjectId, floorMin, floorMax);
         }
         engine.Spatial.ReplaceCollision(collision.Request(Session));
+        Navigation = new LevelNavigation(engine, Session, rules.Navigation, floorMin, floorMax);
+        Points = LevelPoints.Place(plan, rules.Points, rules.Worlds, data.Tileset.Id, seed, cell => CellCenter(cell.X, cell.Z), Navigation);
+        problems.AddRange(Points.Problems);
+        portalLook = rules.Points.Portal;
+        portals = new Portals(engine, rules.Points, Points);
+        Playable = Points.Rifts.Count >= rules.Points.MinimumRifts;
+        TravelLayouts = data.Layouts.Where(l => !l.Special).Select(l => l.Id).ToArray();
         engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(new Color(settings.BackgroundColor[0],
             settings.BackgroundColor[1], settings.BackgroundColor[2], 1)));
 
-        SpawnFeet = CellCenter(plan.Spawn.X, plan.Spawn.Z) + Vector3.UnitY * spawnLift;
+        SpawnFeet = Points.Arrival + Vector3.UnitY * spawnLift;
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
-        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · palette {palette?.Id ?? "none"} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · {built}";
+        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · palette {palette?.Id ?? "none"} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · {built}"
+            + $"\n{Points.Rifts.Count} rifts · {Points.Caches.Count} caches · {Points.Residents.Count} resident spots · {Navigation.Summary}";
     }
 
     public SpatialSession Session { get; }
@@ -103,21 +117,40 @@ internal sealed class LevelScene : IWalkScene
     public float SpawnYawDegrees { get; }
     public string Status { get; }
     public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. problems];
+    internal LevelNavigation Navigation { get; }
+    /// <summary>Whether the arrival can walk to at least the minimum number of rifts; a level that cannot is rejected.</summary>
+    internal bool Playable { get; }
+    internal LevelPoints Points { get; }
+    /// <summary>The layouts a rift can lead to (the non-special ones).</summary>
+    internal string[] TravelLayouts { get; }
+
+    /// <summary>The rift the walker's feet stand in, if any.</summary>
+    internal RiftPoint? RiftAt(Vector3 feet) => Portals.Entered(Points, portalLook, feet);
+
+    /// <summary>Moves the level's world-time presentation (the portals) to <paramref name="seconds"/> and republishes it.</summary>
+    public void Animate(double seconds)
+    {
+        worldSeconds = seconds;
+        Publish();
+    }
 
     public string Describe(Vector3 position)
     {
+        RiftPoint? near = Points.Rifts.MinBy(rift => Vector3.Distance(rift.Feet, position));
+        if (near is not null && Vector3.Distance(near.Feet, position) <= RiftLabelMetres) return $"Rift → {near.Destination.Name}";
         (int x, int z) = ((int)MathF.Round(-position.X / cellSize), (int)MathF.Round(position.Z / cellSize));
         return tiles.TryGetValue((x, z), out var placed)
             ? $"{placed.Tile.Kind} ({x}, {z}) turned {placed.Tile.Rotation * 90}° · {System.IO.Path.GetFileName(placed.Prefab)}"
             : "";
     }
 
-    public void Publish() => engine.Graphics.PublishSnapshot(facts.ToArray());
+    public void Publish() => engine.Graphics.PublishSnapshot([.. facts, .. portals.Facts(worldSeconds)]);
 
     public void Dispose()
     {
         engine.Graphics.PublishSnapshot([]);
         shells?.Dispose();
+        portals.Dispose();
         materials.Dispose();
         art.Dispose();
         Session.Dispose();

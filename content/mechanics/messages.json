@@ -1,0 +1,5 @@
+{
+  "effectSeconds": "{seconds}s",
+  "effectStacks": "×{stacks}",
+  "effectWard": "{ward} left"
+}

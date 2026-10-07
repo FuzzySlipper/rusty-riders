@@ -65,7 +65,9 @@ internal sealed class Walker : IDisposable
         Motion = default; // leaving flight starts a fresh fall from where the walker hovers
     }
 
-    internal void Step(FpsInputFrame input, bool jumpPressed, float delta)
+    /// <param name="movementScale">How much of the movement input moves the body (stuns and slows).</param>
+    /// <param name="externalVelocity">A velocity driving the body regardless of input (a knockback).</param>
+    internal void Step(FpsInputFrame input, bool jumpPressed, float delta, float movementScale, Vector3 externalVelocity)
     {
         if (Flying)
         {
@@ -75,8 +77,8 @@ internal sealed class Walker : IDisposable
         CharacterStepReceipt receipt = engine.Spatial.ProposeCharacterStep(new CharacterStepRequest(scene.Session, Position, Motion,
             default, ReadOnlyMemory<CharacterObstacle>.Empty, ReadOnlyMemory<CharacterMeshInstance>.Empty,
             input.SprintHeld && !input.CrouchHeld ? sprintConfig : config,
-            new CharacterControllerCommand(input.Movement, LookState.YawRadians, jumpPressed, input.JumpHeld, input.CrouchHeld,
-                Vector3.Zero, Vector3.Zero, delta, ++commandSequence)));
+            new CharacterControllerCommand(input.Movement * movementScale, LookState.YawRadians, jumpPressed && movementScale > 0,
+                input.JumpHeld, input.CrouchHeld, externalVelocity, Vector3.Zero, delta, ++commandSequence)));
         Position = receipt.Transform.Translation;
         Motion = receipt.Motion;
     }
@@ -97,6 +99,18 @@ internal sealed class Walker : IDisposable
         scene = next;
         Reset();
     }
+
+    /// <summary>Stands the walker at <paramref name="feet"/> facing a yaw (developer overrides).</summary>
+    internal void Place(Vector3 feet, float yawDegrees)
+    {
+        Position = feet + Vector3.UnitY * (Height / 2);
+        Motion = default;
+        LookState = new LookState(yawDegrees * MathF.PI / 180, 0);
+        cut = true;
+    }
+
+    /// <summary>The walker yaw that faces from one point to another (positive yaw turns right; 0 faces -Z).</summary>
+    internal static float YawDegreesToward(Vector3 from, Vector3 to) => MathF.Atan2(to.X - from.X, -(to.Z - from.Z)) * 180 / MathF.PI;
 
     internal void Reset()
     {

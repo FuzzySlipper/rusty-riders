@@ -1,0 +1,10 @@
+{
+  "worlds": [
+    { "tileset": "LavaMap", "name": "Ember Wastes", "riftColor": [1.0, 0.38, 0.08] },
+    { "tileset": "UndergroundPalace", "name": "Sunken Palace", "riftColor": [0.35, 0.5, 1.0] },
+    { "tileset": "StoneRoadMap", "name": "Old Road", "riftColor": [0.78, 0.72, 0.6] },
+    { "tileset": "CaveMap", "name": "Hollow Deep", "riftColor": [0.4, 0.78, 0.55] },
+    { "tileset": "ForestMap", "name": "Wildwood", "riftColor": [0.4, 0.9, 0.25] },
+    { "tileset": "Cybertubes", "name": "Conduit", "riftColor": [0.2, 0.95, 0.95] }
+  ]
+}

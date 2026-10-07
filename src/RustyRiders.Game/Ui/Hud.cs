@@ -1,5 +1,7 @@
 using System.Text;
 using Rusty.Engine;
+using RustyRiders.Game.Content;
+using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
 using RustyRiders.Game.Time;
 
@@ -10,7 +12,7 @@ internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages)
     {
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
@@ -23,6 +25,9 @@ internal static class Hud
             ("position", FormattableString.Invariant($"{(walker.Flying ? "flying" : "walking")} · {walker.Feet.X:0.0}, {walker.Feet.Y:0.0}, {walker.Feet.Z:0.0}")),
             ("time", time.State.Describe(time.Tuning.HeldRate)),
             ("worldTime", FormattableString.Invariant($"{time.WorldSeconds:0.0} s")),
+            ("health", FormattableString.Invariant($"{vitals.Health.ValueInt} / {vitals.Health.MaximumValue:0}")),
+            ("healthShare", FormattableString.Invariant($"{vitals.Health.Value / Math.Max(1, vitals.Health.MaximumValue):0.###}")),
+            ("effects", string.Join("  ", vitals.Stats.Effects.Active.Select(e => Effect(e, messages)))),
         ];
         List<byte> utf8 = [];
         List<StructuredValueNode> nodes = [new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, (uint)fields.Length)];
@@ -36,5 +41,14 @@ internal static class Hud
             nodes.Add(new StructuredValueNode(StructuredValueKind.String, 0, 0, keyOffset, (uint)keyBytes.Length, textOffset, (uint)textBytes.Length, 0, 0));
         }
         return new UiValue(nodes.ToArray(), Enumerable.Range(1, fields.Length).Select(index => (uint)index).ToArray(), 0, utf8.ToArray());
+    }
+
+    /// <summary>An effect's mark and name with its stacks, time left and any ward left, from the authored templates.</summary>
+    private static string Effect(LiveEffect effect, MechanicsMessages text)
+    {
+        string line = $"{effect.Definition.Mark} {effect.Definition.Name}";
+        if (effect.Stacks > 1) line += " " + Template.Fill(text.EffectStacks, ("stacks", effect.Stacks));
+        if (effect.Definition.Ward is not null) line += " " + Template.Fill(text.EffectWard, ("ward", effect.WardLeft));
+        return line + " " + Template.Fill(text.EffectSeconds, ("seconds", MathF.Ceiling(effect.Remaining)));
     }
 }

@@ -159,9 +159,43 @@ normal PNGs (8-bit RGBA, as Engine content textures must be) with their repeat l
    whole. Its materials are the harvested ones without triplanar. Normal maps work without tangents, because the
    shader derives the frame per pixel. Findings so far are in [direction.md](direction.md#generated-shells-first-trial).
 
+## Gameplay points and navigation
+
+After its collision is admitted, a level derives Engine navigation from it (`Levels/LevelNavigation.cs`,
+`content/levels/navigation.json`). It is a planar grid for the body enemies walk with, at 0.75 m cells. The old
+grid's narrowest gaps are 1.67 m, so a 0.35 m body always has a cell centre that fits through them (at 1 m cells
+some doorways had none).
+
+The plan keeps each layout node's room cells and chunk objectives, and `Levels/LevelPoints.cs` places the
+level's points from them by `content/levels/points.json`:
+
+| Point | Where |
+| --- | --- |
+| Entry portal | The start room's primary objective. The player arrives `arrivalMetres` in front of it, facing into the level. Chasing enemies will come through it. |
+| Rifts | The primary objective of rooms tagged with `riftTags`, in that order (never the start room), up to `maximumRifts`. Other rooms' objectives make up `minimumRifts` when too few rooms carry the tags. Each leads to another world (`content/levels/worlds.json`) and shows its colour. |
+| Caches | Objectives named in `cacheObjectives`, plus the primary objective of rooms tagged `cacheTags` |
+| Resident spots | The cell nearest the middle of rooms tagged `residentTags` |
+
+Every point stands on navigation:
+- A point is snapped to the nearest support. If the arrival cannot walk there, it moves to the nearest floor the
+  arrival can reach, up to `reachSlackMetres` away.
+- A spot that still cannot be reached is left out and listed as a level problem.
+- A level whose arrival reaches fewer than `minimumRifts` rifts is rejected. The next seed is tried, up to
+  `levelAttempts` levels.
+
+Portals are placeholder primitives that pulse and spin on world time. Cache and resident spots show as small
+cubes while `markers.show` is on. Walking into a rift builds a level of its destination world, on a layout and seed
+drawn from the current seed.
+
+Live-debug (`rusty dev --live-debug`, then `rusty-live-debug --origin URL --command "…"`) reads and drives this:
+- `riders.level.inspect` lists the points and problems.
+- `riders.level.route <rift>` explains a route from the arrival.
+- `riders.dev.level <tileset> "<layout>" <seed>` builds a level.
+- `riders.dev.rift <index>`, `riders.dev.entry` and `riders.dev.goto <x> <z> <yaw>` stand the walker somewhere.
+
 ## Not used yet
 
-- **Gameplay data:** objectives, chests, spawners, keys and lock colours are extracted but not placed.
+- **Gameplay data:** keys and lock colours are extracted but not used; locked links are open corridors.
 - **Tile kinds:** `Start`, `Goal`, `Warp` and `Door` tiles are never chosen, as in the old game.
 - **Unused old data:** the object database (lights, clutter, bonuses) and fog are not translated.
 - **Refused art:** a few tile models fail Engine admission and are listed as problems. They include ForestMap `goal1`, `roadstop1` and `roadstop2`, and CyberTube `roomcornerC1`.

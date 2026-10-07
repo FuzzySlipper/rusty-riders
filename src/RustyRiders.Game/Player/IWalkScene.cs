@@ -16,4 +16,7 @@ internal interface IWalkScene : IDisposable
     string Describe(Vector3 position);
 
     void Publish();
+
+    /// <summary>Moves what the scene animates on world time to <paramref name="worldSeconds"/> and publishes it.</summary>
+    void Animate(double worldSeconds);
 }

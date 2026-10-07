@@ -1,0 +1,34 @@
+{
+  "effects": [
+    {
+      "id": "burning", "name": "Burning", "mark": "≈", "group": "burning",
+      "stacking": "Independent", "maximumStacks": 1, "maximumInstances": 3, "duration": 3,
+      "damage": { "damageKind": "burn", "amount": 2, "interval": 0.5 }
+    },
+    {
+      "id": "chilled", "name": "Chilled", "mark": "❄", "group": "chilled",
+      "stacking": "Refresh", "maximumStacks": 3, "maximumInstances": 1, "duration": 4,
+      "slow": { "factor": 0.6 }
+    },
+    {
+      "id": "stunned", "name": "Stunned", "mark": "✶", "group": "stunned",
+      "stacking": "Replace", "maximumStacks": 1, "maximumInstances": 1, "duration": 1,
+      "stun": {}
+    },
+    {
+      "id": "knocked-back", "name": "Knocked back", "mark": "↤", "group": "knockback",
+      "stacking": "Replace", "maximumStacks": 1, "maximumInstances": 1, "duration": 0.3,
+      "knockback": { "speed": 10 }
+    },
+    {
+      "id": "mending", "name": "Mending", "mark": "+", "group": "mending",
+      "stacking": "Refresh", "maximumStacks": 2, "maximumInstances": 1, "duration": 6,
+      "restore": { "track": "health", "amount": 3, "interval": 1 }
+    },
+    {
+      "id": "shielded", "name": "Shielded", "mark": "◇", "group": "ward",
+      "stacking": "Replace", "maximumStacks": 1, "maximumInstances": 1, "duration": 20,
+      "ward": { "absorb": 20, "damageKinds": ["physical", "burn", "freeze", "lightning", "spirit"] }
+    }
+  ]
+}

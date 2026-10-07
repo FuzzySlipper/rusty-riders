@@ -1,0 +1,12 @@
+{
+  "cellSize": 0.75,
+  "maximumCells": 524288,
+  "diagonalNeighbors": true,
+  "agentRadius": 0.35,
+  "agentHeight": 1.8,
+  "maximumStepHeight": 0.4,
+  "snapAcrossMetres": 4,
+  "belowFloorMetres": 1,
+  "aboveFloorMetres": 4,
+  "queryVisitedCells": 40000
+}

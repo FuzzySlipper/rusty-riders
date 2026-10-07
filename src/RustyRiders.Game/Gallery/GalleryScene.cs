@@ -80,6 +80,8 @@ internal sealed class GalleryScene : IWalkScene
     public string Describe(Vector3 position) => Exhibits.Count == 0 ? ""
         : Exhibits.MinBy(exhibit => Vector2.Distance(new(position.X, position.Z), exhibit.CenterXZ))!.Label;
 
+    public void Animate(double worldSeconds) { }
+
     public void Publish() => engine.Graphics.PublishSnapshot(facts.ToArray());
 
     public void Dispose()

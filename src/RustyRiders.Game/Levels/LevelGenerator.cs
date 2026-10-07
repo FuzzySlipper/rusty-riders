@@ -33,7 +33,14 @@ internal enum TileKind
 
 internal sealed record PlannedTile(int X, int Z, TileKind Kind, int Rotation);
 
-internal sealed record LevelPlan(IReadOnlyList<PlannedTile> Tiles, (int X, int Z) Spawn, int SpawnFacing, IReadOnlyList<string> Notes);
+/// <summary>A layout node's room: its tags, its room cells and its chunk's objective cells (cell, objective name).</summary>
+internal sealed record PlannedRoom(int Node, string[] Tags, IReadOnlyList<(int X, int Z)> Cells, IReadOnlyList<((int X, int Z) Cell, string Objective)> Objectives)
+{
+    internal bool Has(string tag) => Tags.Contains(tag);
+}
+
+internal sealed record LevelPlan(IReadOnlyList<PlannedTile> Tiles, IReadOnlyList<PlannedRoom> Rooms, (int X, int Z) Spawn, int SpawnFacing,
+    IReadOnlyList<string> Notes);
 
 /// <summary>
 /// The old ProceduralLevelBuilder, reduced to its geometry: one chunk per layout node (rotated so its doors face the
@@ -60,6 +67,7 @@ internal sealed class LevelGenerator
     private readonly Random random;
     private readonly Dictionary<(int X, int Z), Cell> cells = [];
     private readonly List<string> notes = [];
+    private readonly List<PlannedRoom> rooms = [];
 
     private LevelGenerator(LevelData data, int seed)
     {
@@ -103,6 +111,8 @@ internal sealed class LevelGenerator
             (ChunkDefinition chunk, int rotation) = fit;
             (int X, int Z) pivot = (node.X * data.Generator.SectorSize, node.Z * data.Generator.SectorSize);
             List<(int X, int Z)>[] zones = Enumerable.Range(0, GridDirection.Count).Select(_ => new List<(int X, int Z)>()).ToArray();
+            List<(int X, int Z)> roomCells = [];
+            List<((int X, int Z) Cell, string Objective)> objectives = [];
             foreach (ChunkCell cell in chunk.Cells)
             {
                 (int x, int z) = GridDirection.Rotate((cell.X, cell.Z), rotation);
@@ -113,9 +123,12 @@ internal sealed class LevelGenerator
                     continue;
                 }
                 cells[world] = new Cell(world, RoomType);
+                roomCells.Add(world);
+                if (cell.Objective is { } objective) objectives.Add((world, objective));
                 if (node.Has("start") && (cell.Objective == "primary" || spawn is null)) spawn = world;
             }
             doorZones[node.Id] = zones;
+            rooms.Add(new PlannedRoom(node.Id, node.Tags, roomCells, objectives));
             if (node.Has("start")) spawnFacing = Array.FindIndex(links[node.Id], link => link is not null) is var facing and >= 0 ? facing : 0;
         }
 
@@ -150,7 +163,7 @@ internal sealed class LevelGenerator
         }
         if (tiles.Count == 0) throw new InvalidOperationException($"Layout {layout.Id} produced no cells.");
         if (spawn is null) notes.Add("no start node was built; spawning at the first cell");
-        return new LevelPlan(tiles, spawn ?? (tiles[0].X, tiles[0].Z), spawnFacing, notes);
+        return new LevelPlan(tiles, rooms, spawn ?? (tiles[0].X, tiles[0].Z), spawnFacing, notes);
     }
 
     private (ChunkDefinition Chunk, int Rotation)? Fit(LayoutNode node, int?[] neighbors)

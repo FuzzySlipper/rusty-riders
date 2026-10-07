@@ -21,6 +21,12 @@ internal static partial class Template
                 $"unknown placeholder '{match.Value}'; this text can use {(allowed.Length == 0 ? "none" : string.Join(", ", allowed.Select(a => "{" + a + "}")))}.");
     }
 
+    /// <summary>Rejects any placeholder in fields that are shown exactly as written.</summary>
+    internal static void Plain(string path, params (string Field, string Text)[] fields)
+    {
+        foreach (var (field, text) in fields) Check(path, field, text);
+    }
+
     private static string Format(object value) => value switch
     {
         float number => number.ToString("0.##", CultureInfo.InvariantCulture),

@@ -1,14 +1,17 @@
 using Rusty.Engine;
+using Rusty.Engine.Debugging;
 using Rusty.Engine.Input;
+using RustyRiders.Game.Developer;
 using RustyRiders.Game.Gallery;
 using RustyRiders.Game.Levels;
+using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
 using RustyRiders.Game.Time;
 using RustyRiders.Game.Ui;
 
 namespace RustyRiders.Game;
 
-public sealed class RustyRidersProduct : IEngineProduct
+public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSource
 {
     private const string UiStreamId = "rusty-riders";
     private const string UiContract = "rusty.riders.gallery";
@@ -17,6 +20,9 @@ public sealed class RustyRidersProduct : IEngineProduct
     private LevelSettings levelSettings;
     private readonly Walker walker;
     private readonly TimeFlow time;
+    private readonly LevelRules levelRules;
+    private readonly PlayerVitals vitals;
+    private readonly MechanicsMessages mechanicsText;
     private readonly UiStream hud;
     private IWalkScene scene;
     private bool showingLevel = true;
@@ -34,6 +40,10 @@ public sealed class RustyRidersProduct : IEngineProduct
         engine = context.Engine;
         levelSettings = LevelSettings.Load(engine);
         levelSeed = levelSettings.Seed;
+        levelRules = LevelRules.Load(engine);
+        MechanicsDefinition mechanics = MechanicsDefinition.Load(engine);
+        mechanicsText = mechanics.Text;
+        vitals = new PlayerVitals(mechanics, ActorStatFile.Load(engine, PlayerVitals.Path, mechanics));
         scene = BuildScene();
         walker = new Walker(engine, WalkerTuning.Load(engine), scene);
         time = new TimeFlow(engine, TimeTuning.Load(engine));
@@ -85,8 +95,18 @@ public sealed class RustyRidersProduct : IEngineProduct
         jumpPending |= frame.JumpPressed;
         for (uint step = 0; step < update.Facts.AdmittedStepCount; step++)
         {
-            walker.Step(frame, jumpPending, delta);
+            vitals.Step(delta);
+            walker.Step(frame, jumpPending, delta, vitals.MovementScale, vitals.Knockback(walker.Feet));
             jumpPending = false;
+            if (vitals.Defeated) break;
+        }
+        if (vitals.Defeated) Defeated(); // a hit can land while the world holds, as well as in a step
+        if (update.Facts.AdmittedStepCount > 0) scene.Animate(time.WorldSeconds);
+        if (scene is LevelScene level && level.RiftAt(walker.Feet) is { } rift)
+        {
+            Travel(level, rift);
+            Publish();
+            return ProductUpdateResult.None;
         }
         sampleTime = time.WorldSeconds;
         time.Choose(new TimeDemand(!showingLevel || walker.Flying, frame.Movement.Length(), frame.SprintHeld && !frame.CrouchHeld,
@@ -111,6 +131,7 @@ public sealed class RustyRidersProduct : IEngineProduct
     public void Restart()
     {
         if (disposed) return;
+        vitals.Reset();
         walker.Reset();
         jumpPending = false;
         time.Hold(); // a restart returns the Engine to realtime
@@ -120,6 +141,33 @@ public sealed class RustyRidersProduct : IEngineProduct
     }
 
     public void Shutdown() => Dispose();
+
+    public void RegisterDebugCommands(IDebugCommandModuleRegistrar registrar)
+    {
+        registrar.Register(new LevelDebugCommands(() => scene, walker, EnterLevel));
+        registrar.Register(new PlayerDebugCommands(vitals, walker, Publish));
+    }
+
+    /// <summary>Builds and enters a level (developer override); returns why it could not, or null.</summary>
+    private string? EnterLevel(string tileset, string layout, int seed)
+    {
+        LevelSettings previous = levelSettings;
+        int previousSeed = levelSeed;
+        try
+        {
+            levelSettings = levelSettings with { Tileset = tileset, Layout = layout, Palette = null };
+            levelSeed = seed;
+            SwitchScene(true);
+            Publish();
+            return null;
+        }
+        catch (Exception error) when (error is InvalidOperationException or EngineCallException)
+        {
+            levelSettings = previous;
+            levelSeed = previousSeed;
+            return error.Message;
+        }
+    }
 
     public void Dispose()
     {
@@ -133,9 +181,20 @@ public sealed class RustyRidersProduct : IEngineProduct
     /// <summary>Replaces the current scene (its art, facts and collision) and moves the walker to the new spawn.</summary>
     private void SwitchScene(bool level)
     {
-        scene.Dispose();
+        bool wasLevel = showingLevel;
         showingLevel = level;
-        scene = BuildScene();
+        IWalkScene next;
+        try
+        {
+            next = BuildScene(); // the current scene stays whole until the next one is built
+        }
+        catch
+        {
+            showingLevel = wasLevel;
+            throw;
+        }
+        scene.Dispose();
+        scene = next;
         scene.Publish();
         walker.Enter(scene);
         jumpPending = false;
@@ -147,7 +206,40 @@ public sealed class RustyRidersProduct : IEngineProduct
         LevelData data = LevelData.Load(engine, levelSettings.Tileset);
         LayoutDefinition layout = data.Layouts.FirstOrDefault(layout => layout.Id == levelSettings.Layout)
             ?? throw new InvalidOperationException($"content/levels/layouts.json has no layout '{levelSettings.Layout}'.");
-        return new LevelScene(engine, levelSettings, data, layout, levelSeed);
+        // A level whose arrival cannot reach enough rifts is rejected; the next seed is tried, and the last kept.
+        for (int attempt = 1; ; attempt++)
+        {
+            LevelScene level = new(engine, levelSettings, data, layout, levelSeed, levelRules);
+            if (level.Playable || attempt >= levelRules.Points.LevelAttempts) return level;
+            level.Dispose();
+            levelSeed++;
+        }
+    }
+
+    /// <summary>
+    /// The player has fallen. The run loop will decide what that costs; for now they stand up whole at the level's arrival
+    /// and the world holds.
+    /// </summary>
+    private void Defeated()
+    {
+        vitals.Reset();
+        walker.Reset();
+        jumpPending = false;
+        time.Hold();
+    }
+
+    /// <summary>Goes through a rift: a level of its destination world, on a layout and seed drawn from this level's seed.</summary>
+    private void Travel(LevelScene from, RiftPoint rift)
+    {
+        Random random = new(unchecked(levelSeed * 31 + rift.Index + 1));
+        levelSettings = levelSettings with
+        {
+            Tileset = rift.Destination.Tileset,
+            Layout = from.TravelLayouts[random.Next(from.TravelLayouts.Length)],
+            Palette = null,
+        };
+        levelSeed = random.Next();
+        SwitchScene(true);
     }
 
     /// <summary>The tileset's next shell floor texture after the current one, then none (its own) again.</summary>
@@ -161,6 +253,6 @@ public sealed class RustyRidersProduct : IEngineProduct
     private void Publish()
     {
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText)));
     }
 }
