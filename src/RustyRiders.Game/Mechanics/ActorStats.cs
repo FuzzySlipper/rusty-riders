@@ -17,6 +17,8 @@ internal sealed class ActorStats
     private const double WholePoints = 1;
     /// <summary>The track hits land on, and the derived stat movement is scaled by, by vocabulary id.</summary>
     internal const string HealthTrack = "health", PaceStat = "pace";
+    /// <summary>The derived stat an actor's action phases are scaled by.</summary>
+    internal const string ActionTimeStat = "action-time";
     private readonly MechanicsDefinition mechanics;
     private readonly ActorStatBlock block;
     private readonly EntityId? owner;

@@ -19,7 +19,6 @@ internal sealed class PlayerCombat : IDisposable
     internal const int MainHand = 0, OffHand = 1;
     private const ulong FirstDummyEntity = 10_000;
     private const ulong FirstObjectId = 3_000_000;
-    private const string ActionTimeStat = "action-time";
 
     private readonly IEngineContext engine;
     private readonly CombatDefinition definition;
@@ -194,7 +193,7 @@ internal sealed class PlayerCombat : IDisposable
     private float Begin(ActionDefinition action, int hand)
     {
         actingHand = hand;
-        float scale = (float)vitals.Stats.Stat(ActionTimeStat).Value;
+        float scale = (float)vitals.Stats.Stat(ActorStats.ActionTimeStat).Value;
         return user.Begin(action, walker.Forward, scale);
     }
 

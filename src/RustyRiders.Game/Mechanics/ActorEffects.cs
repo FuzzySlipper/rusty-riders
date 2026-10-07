@@ -65,6 +65,15 @@ internal sealed class ActorEffects
     internal bool Stunned => live.Values.Any(e => e.Definition.Stun is not null);
     /// <summary>A knockback in force, if any: the most recent one moves its bearer.</summary>
     internal LiveEffect? Knockback => Active.LastOrDefault(e => e.Definition.Knockback is not null);
+
+    /// <summary>The velocity a knockback in force drives a body at <paramref name="feet"/> with, away from its origin across the ground.</summary>
+    internal System.Numerics.Vector3 KnockbackVelocity(System.Numerics.Vector3 feet)
+    {
+        if (Knockback is not { } effect) return System.Numerics.Vector3.Zero;
+        System.Numerics.Vector3 away = feet - effect.Origin with { Y = feet.Y };
+        return away.LengthSquared() < 1e-6f ? System.Numerics.Vector3.Zero
+            : System.Numerics.Vector3.Normalize(away) * effect.Definition.Knockback!.Speed;
+    }
     /// <summary>The hit contributions guards in force bring; a defeating one ends its effect when used.</summary>
     internal IEnumerable<ActiveContribution> HitContributions => Active.Where(e => e.Definition.Guard is not null)
         .Select(e => new ActiveContribution(e.Definition.Guard!, () => End(e, EffectEnd.Spent)));

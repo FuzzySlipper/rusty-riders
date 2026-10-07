@@ -18,7 +18,7 @@
     {
       "id": "knocked-back", "name": "Knocked back", "mark": "↤", "group": "knockback",
       "stacking": "Replace", "maximumStacks": 1, "maximumInstances": 1, "duration": 0.3,
-      "knockback": { "speed": 10 }
+      "knockback": { "speed": 6 }
     },
     {
       "id": "mending", "name": "Mending", "mark": "+", "group": "mending",

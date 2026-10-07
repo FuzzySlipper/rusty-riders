@@ -1,0 +1,15 @@
+{
+  "chaseSeconds": { "base": 30, "perDepth": -3, "minimum": 8 },
+  "waveSize": { "base": 2, "perDepth": 1, "minimum": 1 },
+  "waveGrowth": 1,
+  "waveSeconds": { "base": 12, "perDepth": -1, "minimum": 4 },
+  "waveShrink": 1,
+  "maximumAlive": 24,
+  "waveKinds": [ { "kind": "ripper", "weight": 5 }, { "kind": "gunner", "weight": 3 }, { "kind": "brute", "weight": 1 } ],
+  "residentsPerSpot": 2,
+  "residentKinds": [ { "kind": "ripper", "weight": 3 }, { "kind": "gunner", "weight": 2 }, { "kind": "brute", "weight": 1 } ],
+  "spawnSpread": 2.5,
+  "repathSeconds": 0.3,
+  "separation": 1.2,
+  "warningSeconds": 5
+}

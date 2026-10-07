@@ -1,57 +1,277 @@
 {
   "actions": [
     {
-      "id": "blade-slash", "name": "Slash",
-      "delivery": { "kind": "Melee", "range": 2.2, "width": 0.7 },
-      "cost": { "tracks": {} },
-      "timing": { "windup": 0.12, "commit": 0.08, "recovery": 0.25, "cooldown": 0 },
-      "damage": [ { "kind": "physical", "amount": 12, "scaling": [], "power": "melee-power" } ],
-      "effects": [], "selfEffects": [],
-      "windupLabel": "Drawing", "commitLabel": "Slash"
+      "id": "blade-slash",
+      "name": "Slash",
+      "delivery": {
+        "kind": "Melee",
+        "range": 2.2,
+        "width": 0.7
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 0.12,
+        "commit": 0.08,
+        "recovery": 0.25,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "physical",
+          "amount": 12,
+          "scaling": [],
+          "power": "melee-power"
+        }
+      ],
+      "effects": [],
+      "selfEffects": [],
+      "windupLabel": "Drawing",
+      "commitLabel": "Slash"
     },
     {
-      "id": "maul-smash", "name": "Smash",
-      "delivery": { "kind": "Melee", "range": 2.4, "width": 1.0 },
-      "cost": { "tracks": {} },
-      "timing": { "windup": 0.55, "commit": 0.15, "recovery": 0.7, "cooldown": 0 },
-      "damage": [ { "kind": "physical", "amount": 34, "scaling": [], "power": "melee-power" } ],
-      "effects": ["knocked-back", "stunned"], "selfEffects": [],
-      "windupLabel": "Heaving", "commitLabel": "Smash"
+      "id": "maul-smash",
+      "name": "Smash",
+      "delivery": {
+        "kind": "Melee",
+        "range": 2.4,
+        "width": 1.0
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 0.55,
+        "commit": 0.15,
+        "recovery": 0.7,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "physical",
+          "amount": 34,
+          "scaling": [],
+          "power": "melee-power"
+        }
+      ],
+      "effects": [
+        "knocked-back",
+        "stunned"
+      ],
+      "selfEffects": [],
+      "windupLabel": "Heaving",
+      "commitLabel": "Smash"
     },
     {
-      "id": "flintlock-shot", "name": "Shoot",
-      "delivery": { "kind": "Hitscan", "range": 60 },
-      "cost": { "tracks": {}, "rounds": 1 },
-      "timing": { "windup": 0.06, "commit": 0.05, "recovery": 0.2, "cooldown": 0 },
-      "damage": [ { "kind": "lightning", "amount": 22, "scaling": [] } ],
-      "effects": [], "selfEffects": [],
-      "windupLabel": "Aiming", "commitLabel": "Fired"
+      "id": "flintlock-shot",
+      "name": "Shoot",
+      "delivery": {
+        "kind": "Hitscan",
+        "range": 60
+      },
+      "cost": {
+        "tracks": {},
+        "rounds": 1
+      },
+      "timing": {
+        "windup": 0.06,
+        "commit": 0.05,
+        "recovery": 0.2,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "lightning",
+          "amount": 22,
+          "scaling": []
+        }
+      ],
+      "effects": [],
+      "selfEffects": [],
+      "windupLabel": "Aiming",
+      "commitLabel": "Fired"
     },
     {
-      "id": "flintlock-reload", "name": "Reload",
-      "delivery": { "kind": "Self" },
-      "cost": { "tracks": {} },
-      "timing": { "windup": 0.9, "commit": 0.1, "recovery": 0.2, "cooldown": 0 },
-      "damage": [], "effects": [], "selfEffects": [],
-      "windupLabel": "Reloading", "commitLabel": "Loaded", "reloads": true
+      "id": "flintlock-reload",
+      "name": "Reload",
+      "delivery": {
+        "kind": "Self"
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 0.9,
+        "commit": 0.1,
+        "recovery": 0.2,
+        "cooldown": 0
+      },
+      "damage": [],
+      "effects": [],
+      "selfEffects": [],
+      "windupLabel": "Reloading",
+      "commitLabel": "Loaded",
+      "reloads": true
     },
     {
-      "id": "ember-bolt", "name": "Ember bolt",
-      "delivery": { "kind": "Projectile", "range": 40, "width": 0.3, "speed": 18 },
-      "cost": { "tracks": { "charge": 4 } },
-      "timing": { "windup": 0.25, "commit": 0.1, "recovery": 0.3, "cooldown": 0 },
-      "damage": [ { "kind": "burn", "amount": 14, "scaling": [], "power": "spell-power" } ],
-      "effects": ["burning"], "selfEffects": [],
-      "windupLabel": "Kindling", "commitLabel": "Loosed"
+      "id": "ember-bolt",
+      "name": "Ember bolt",
+      "delivery": {
+        "kind": "Projectile",
+        "range": 40,
+        "width": 0.3,
+        "speed": 18
+      },
+      "cost": {
+        "tracks": {
+          "charge": 4
+        }
+      },
+      "timing": {
+        "windup": 0.25,
+        "commit": 0.1,
+        "recovery": 0.3,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "burn",
+          "amount": 14,
+          "scaling": [],
+          "power": "spell-power"
+        }
+      ],
+      "effects": [
+        "burning"
+      ],
+      "selfEffects": [],
+      "windupLabel": "Kindling",
+      "commitLabel": "Loosed"
     },
     {
-      "id": "frost-nova", "name": "Frost nova",
-      "delivery": { "kind": "Area", "range": 0, "radius": 5 },
-      "cost": { "tracks": { "charge": 10 } },
-      "timing": { "windup": 0.4, "commit": 0.15, "recovery": 0.45, "cooldown": 2 },
-      "damage": [ { "kind": "freeze", "amount": 10, "scaling": [], "power": "spell-power" } ],
-      "effects": ["chilled"], "selfEffects": [],
-      "windupLabel": "Gathering frost", "commitLabel": "Nova"
+      "id": "frost-nova",
+      "name": "Frost nova",
+      "delivery": {
+        "kind": "Area",
+        "range": 0,
+        "radius": 5
+      },
+      "cost": {
+        "tracks": {
+          "charge": 10
+        }
+      },
+      "timing": {
+        "windup": 0.4,
+        "commit": 0.15,
+        "recovery": 0.45,
+        "cooldown": 2
+      },
+      "damage": [
+        {
+          "kind": "freeze",
+          "amount": 10,
+          "scaling": [],
+          "power": "spell-power"
+        }
+      ],
+      "effects": [
+        "chilled"
+      ],
+      "selfEffects": [],
+      "windupLabel": "Gathering frost",
+      "commitLabel": "Nova"
+    },
+    {
+      "id": "ripper-claw",
+      "name": "Claw",
+      "delivery": {
+        "kind": "Melee",
+        "range": 1.8,
+        "width": 0.6
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 0.35,
+        "commit": 0.1,
+        "recovery": 0.45,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "physical",
+          "amount": 7,
+          "scaling": []
+        }
+      ],
+      "effects": [],
+      "selfEffects": [],
+      "windupLabel": "Coiling",
+      "commitLabel": "Claw"
+    },
+    {
+      "id": "gunner-bolt",
+      "name": "Bolt",
+      "delivery": {
+        "kind": "Projectile",
+        "range": 35,
+        "width": 0.3,
+        "speed": 11
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 0.6,
+        "commit": 0.1,
+        "recovery": 0.9,
+        "cooldown": 0.8
+      },
+      "damage": [
+        {
+          "kind": "lightning",
+          "amount": 9,
+          "scaling": []
+        }
+      ],
+      "effects": [],
+      "selfEffects": [],
+      "windupLabel": "Charging",
+      "commitLabel": "Bolt"
+    },
+    {
+      "id": "brute-slam",
+      "name": "Slam",
+      "delivery": {
+        "kind": "Melee",
+        "range": 2.6,
+        "width": 1.2
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 0.9,
+        "commit": 0.15,
+        "recovery": 1.0,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "physical",
+          "amount": 18,
+          "scaling": []
+        }
+      ],
+      "effects": [
+        "knocked-back"
+      ],
+      "selfEffects": [],
+      "windupLabel": "Raising",
+      "commitLabel": "Slam"
     }
   ]
 }

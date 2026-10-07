@@ -73,6 +73,8 @@ internal sealed record MechanicsDefinition(AttributeDefinition[] Attributes, Der
         }
         Authored.Require(Derived.Any(d => d.Id == ActorStats.PaceStat), StatsPath, "derived",
             $"needs the '{ActorStats.PaceStat}' stat that movement is scaled by.");
+        Authored.Require(Derived.Any(d => d.Id == ActorStats.ActionTimeStat), StatsPath, "derived",
+            $"needs the '{ActorStats.ActionTimeStat}' stat that action phases are scaled by.");
         Unique(EffectDefinition.Path, "effects", Effects.Select(e => e.Id));
         for (int i = 0; i < Effects.Length; i++) Effects[i].Validate($"effects[{i}]", this, ActorStats.PaceStat);
         // One group, one stacking rule: the Engine compares a new application with the group's entries by it.

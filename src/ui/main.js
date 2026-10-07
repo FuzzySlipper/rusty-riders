@@ -33,12 +33,17 @@ export function mountProductUi(root, context) {
       .riders-gallery .action { position:absolute; left:50%; top:calc(50% + 22px); transform:translateX(-50%); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#ffe2a8; text-shadow:0 1px 3px #000; }
       .riders-gallery .notice { position:absolute; left:50%; top:calc(50% - 46px); transform:translateX(-50%); font-size:15px; font-weight:600; color:#fff4e0; text-shadow:0 1px 4px #000; white-space:nowrap; }
       .riders-gallery .action:empty, .riders-gallery .notice:empty { display:none; }
+      .riders-gallery .threat { position:absolute; top:20px; left:50%; transform:translateX(-50%); text-align:center; text-shadow:0 1px 3px #000; }
+      .riders-gallery .threat .chase { font-size:16px; font-weight:600; color:#ffb38a; letter-spacing:.03em; }
+      .riders-gallery .threat .hostiles { font-size:12px; color:#f0c8b8; }
+      .riders-gallery .threat div:empty { display:none; }
       .riders-gallery .reticle { position:absolute; left:50%; top:50%; width:4px; height:4px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px #0007; transform:translate(-50%,-50%); }
     </style>
     <header><h1>Rusty Riders</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
     <div class="clock"><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
     <div class="vitals"><div class="bar"><div class="fill"></div></div><div class="value" data-fact="health"></div><div class="effects" data-fact="effects"></div></div>
     <div class="arms"><div class="hands" data-fact="hands"></div><div class="supplies" data-fact="supplies"></div></div>
+    <div class="threat"><div class="chase" data-fact="chase"></div><div class="hostiles" data-fact="hostiles"></div></div>
     <div class="notice" data-fact="notice"></div>
     <div class="action" data-fact="action"></div>
     <div class="reticle"></div>

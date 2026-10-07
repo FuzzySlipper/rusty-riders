@@ -3,6 +3,7 @@ using Rusty.Engine.Debugging;
 using Rusty.Engine.Input;
 using RustyRiders.Game.Combat;
 using RustyRiders.Game.Developer;
+using RustyRiders.Game.Enemies;
 using RustyRiders.Game.Gallery;
 using RustyRiders.Game.Levels;
 using RustyRiders.Game.Mechanics;
@@ -25,6 +26,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly PlayerVitals vitals;
     private readonly MechanicsMessages mechanicsText;
     private readonly PlayerCombat combat;
+    private readonly EnemyDirector enemies;
     private readonly UiStream hud;
     private IWalkScene scene;
     private bool showingLevel = true;
@@ -49,8 +51,10 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         scene = BuildScene();
         WalkerTuning walking = WalkerTuning.Load(engine);
         walker = new Walker(engine, walking, scene);
-        combat = new PlayerCombat(engine, CombatDefinition.Load(engine, mechanics), mechanics, vitals, walker, walking.Radius);
-        combat.Enter(scene.Session);
+        CombatDefinition combatDefinition = CombatDefinition.Load(engine, mechanics);
+        combat = new PlayerCombat(engine, combatDefinition, mechanics, vitals, walker, walking.Radius);
+        enemies = new EnemyDirector(engine, EnemyCatalog.Load(engine, mechanics, combatDefinition.Actions), combatDefinition.Actions, mechanics);
+        EnterScene();
         time = new TimeFlow(engine, TimeTuning.Load(engine));
         hud = engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
     }
@@ -101,7 +105,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         for (uint step = 0; step < update.Facts.AdmittedStepCount; step++)
         {
             vitals.Step(delta);
-            combat.Step(delta, []);
+            enemies.Step(delta, combat.Actor);
+            combat.Step(delta, enemies.Living);
             walker.Step(frame, jumpPending, delta, vitals.MovementScale, vitals.Knockback(walker.Feet));
             jumpPending = false;
             if (vitals.Defeated) break;
@@ -155,6 +160,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         registrar.Register(new LevelDebugCommands(() => scene, walker, EnterLevel));
         registrar.Register(new PlayerDebugCommands(vitals, walker, Publish));
         registrar.Register(new CombatDebugCommands(combat, walker));
+        registrar.Register(new EnemyDebugCommands(enemies, walker));
     }
 
     /// <summary>Builds and enters a level (developer override); returns why it could not, or null.</summary>
@@ -183,6 +189,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         if (disposed) return;
         disposed = true;
         walker.Dispose();
+        combat.Dispose();
+        enemies.Dispose();
         scene.Dispose();
         hud.Dispose();
     }
@@ -204,7 +212,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         }
         scene.Dispose();
         scene = next;
-        combat.Enter(scene.Session);
+        EnterScene();
         walker.Enter(scene);
         jumpPending = false;
     }
@@ -234,6 +242,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         vitals.Reset();
         combat.Reset();
         walker.Reset();
+        EnterScene();
         jumpPending = false;
         time.Hold();
     }
@@ -260,6 +269,14 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         return next < ids.Length ? ids[next] : null;
     }
 
+    /// <summary>Combat and the enemies take up the current scene: a level's chase starts afresh; the gallery has none.</summary>
+    private void EnterScene()
+    {
+        combat.Enter(scene.Session);
+        if (scene is LevelScene level) enemies.Enter(level, 0, levelSeed);
+        else enemies.Leave();
+    }
+
     /// <summary>
     /// The player's combat controls this update: number keys take a carried weapon into the main hand, the primary and
     /// secondary buttons use the main and off hands, R reloads the main hand. A stunned player cannot act. Returns the
@@ -282,8 +299,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
 
     private void Publish()
     {
-        engine.Graphics.PublishSnapshot([.. scene.Facts, .. combat.Facts()]);
+        engine.Graphics.PublishSnapshot([.. scene.Facts, .. enemies.Facts(), .. combat.Facts()]);
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText, combat)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scene, walker, time, vitals, mechanicsText, combat, enemies)));
     }
 }

@@ -30,12 +30,7 @@ internal sealed class PlayerVitals
     }
 
     /// <summary>The velocity a knockback in force drives the body with, away from its origin across the ground.</summary>
-    internal Vector3 Knockback(Vector3 feet)
-    {
-        if (Stats.Effects.Knockback is not { } effect) return Vector3.Zero;
-        Vector3 away = feet - effect.Origin with { Y = feet.Y };
-        return away.LengthSquared() < 1e-6f ? Vector3.Zero : Vector3.Normalize(away) * effect.Definition.Knockback!.Speed;
-    }
+    internal Vector3 Knockback(Vector3 feet) => Stats.Effects.KnockbackVelocity(feet);
 
     /// <summary>Back to the block's starting values, with no effects.</summary>
     internal void Reset() => Stats.Reset();

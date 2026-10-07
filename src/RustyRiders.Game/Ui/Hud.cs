@@ -2,6 +2,7 @@ using System.Text;
 using Rusty.Engine;
 using RustyRiders.Game.Combat;
 using RustyRiders.Game.Content;
+using RustyRiders.Game.Enemies;
 using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
 using RustyRiders.Game.Time;
@@ -13,12 +14,13 @@ internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat, EnemyDirector enemies)
     {
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
               + (scene.Problems.Count > ProblemsShown ? $"\n… and {scene.Problems.Count - ProblemsShown} more" : "");
         (string hands, string supplies, string action, string notice) = combat.Hud();
+        (string chase, string hostiles) = enemies.Hud();
         (string Key, string Text)[] fields =
         [
             ("status", scene.Status),
@@ -34,6 +36,8 @@ internal static class Hud
             ("supplies", supplies),
             ("action", action),
             ("notice", notice),
+            ("chase", chase),
+            ("hostiles", hostiles),
         ];
         List<byte> utf8 = [];
         List<StructuredValueNode> nodes = [new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, (uint)fields.Length)];

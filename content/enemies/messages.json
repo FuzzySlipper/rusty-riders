@@ -1,0 +1,6 @@
+{
+  "chase": "Chase in {seconds}s",
+  "wave": "Wave {wave} in {seconds}s",
+  "warning": "They are coming",
+  "alive": "{count} hostile"
+}
