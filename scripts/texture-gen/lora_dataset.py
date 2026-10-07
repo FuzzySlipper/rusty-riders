@@ -11,7 +11,8 @@ so the LoRA learns one look.
 Each source gives square crops: a tiling texture its whole image (or four quadrants when it is 2048 px or
 more); an atlas or cube map random crops, rejecting any with more than a little flat, unpainted background. Crops are resized to --size and saved as PNGs named after their source, ready for captioning
 (scripts/texture-gen/caption.py). Each --gold is a curated on-target example (a chosen generated texture):
-it is added whole and as a zoomed quadrant, already captioned "<trigger>, <caption>".
+it is added whole and as a zoomed quadrant, already captioned "<trigger>, <caption>", with any flat frame
+trimmed off first (checks.frame_box).
 """
 import argparse
 import json
@@ -20,6 +21,8 @@ import random
 
 import numpy as np
 from PIL import Image
+
+from checks import frame_box
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "old-game", "Assets", "Art", "Models")
 
@@ -106,6 +109,8 @@ def main() -> None:
     for gold in args.gold:
         path, caption = gold.split("=", 1)
         image = Image.open(path).convert("RGB")
+        if (box := frame_box(image)) is not None:
+            image = image.crop(box)  # a comic-panel frame would teach the LoRA to draw frames
         stem = "gold_" + os.path.splitext(os.path.basename(path))[0]
         half = image.crop((0, 0, image.width // 2, image.height // 2))
         for name, crop, text in ((stem, image, caption), (stem + "_zoom", half, "close-up of " + caption)):

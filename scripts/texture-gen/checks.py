@@ -12,6 +12,12 @@ Per image (luminance at 512 px):
   luminance, in 0..1 luminance. A lit-from-one-side image shows as stripes when tiled.
 - value: the luminance mean and 2..98% spread, and the mean saturation; palettes tint greyscale-ish
   textures, so strong colour fights the tint.
+- frame: how far a flat border (a comic-panel frame or margin) reaches in from each edge, in pixels of the
+  512 px copy; flagged when all four sides have one. frame_box() gives the crop that removes it.
+- perspective: the trend of feature size across four bands, top to bottom and left to right (log of the mean
+  gap between edges, per band). A top-down texture keeps its size; a perspective view shrinks toward a horizon.
+  Calibrated on 24 reviewed images (2026-10-07): |slope| > 0.13 caught 6 of 7 oblique views with one false
+  alarm (a lava floor, on its left-right trend); the miss was framed, and the frame check catches it.
 
 Flags use the thresholds below; they are filters for obvious failures, not a taste verdict.
 """
@@ -26,6 +32,8 @@ SEAM_LIMIT = 2.0
 REPEAT_LIMIT = .45
 GRADIENT_LIMIT = .12
 SATURATION_LIMIT = .25
+FRAME_DEVIATION = .04
+PERSPECTIVE_LIMIT = .13
 
 
 def luminance(image: Image.Image) -> np.ndarray:
@@ -62,7 +70,49 @@ def saturation(image: Image.Image) -> float:
     return float(hsv[..., 1].mean())
 
 
-def check(path: str) -> dict:
+def frame(lum: np.ndarray) -> list[int]:
+    """Flat rows or columns reaching in from the top, bottom, left and right edges (up to a quarter of the size)."""
+    def run(stds: np.ndarray) -> int:
+        k = 0
+        while k < len(stds) // 4 and stds[k] < FRAME_DEVIATION:
+            k += 1
+        return k
+    rows, columns = lum.std(axis=1), lum.std(axis=0)
+    return [run(rows), run(rows[::-1]), run(columns), run(columns[::-1])]
+
+
+def frame_box(image: Image.Image, margin: float = .015) -> tuple[int, int, int, int] | None:
+    """The crop (left, top, right, bottom) that removes a frame on all four sides plus a small margin for its inner
+    rule, or None when there is no frame."""
+    top, bottom, left, right = frame(luminance(image))
+    if min(top, bottom, left, right) == 0:
+        return None
+    scale_x, scale_y = image.width / SIZE, image.height / SIZE
+    extra_x, extra_y = image.width * margin, image.height * margin
+    return (round(left * scale_x + extra_x), round(top * scale_y + extra_y),
+            round(image.width - right * scale_x - extra_x), round(image.height - bottom * scale_y - extra_y))
+
+
+def perspective(image: Image.Image) -> float:
+    """The steeper of the vertical and horizontal trends in log feature size across four bands."""
+    lum = np.asarray(image.convert("L").resize((SIZE, SIZE), Image.LANCZOS).filter(ImageFilter.GaussianBlur(1)),
+                     dtype=np.float32) / 255
+    gy, gx = np.gradient(lum)
+    edges = np.hypot(gx, gy) > np.percentile(np.hypot(gx, gy), 80)
+
+    def slope(mask: np.ndarray) -> float:
+        sizes = []
+        for band in np.array_split(mask, 4):
+            gaps = []
+            for row in ~band:
+                bounds = np.flatnonzero(np.diff(np.concatenate(([0], row.astype(np.int8), [0]))))
+                gaps.extend(bounds[1::2] - bounds[::2])
+            sizes.append(np.mean(gaps) if gaps else 1.0)
+        return float(np.polyfit(range(4), np.log(sizes), 1)[0])
+    return max(abs(slope(edges)), abs(slope(edges.T)), key=abs)
+
+
+def check(path: str, colour_ok: bool = False) -> dict:
     image = Image.open(path)
     lum = luminance(image)
     result = {
@@ -73,13 +123,17 @@ def check(path: str) -> dict:
         "mean": round(float(lum.mean()), 3),
         "spread": round(float(np.percentile(lum, 98) - np.percentile(lum, 2)), 3),
         "saturation": round(saturation(image), 3),
+        "frame": frame(lum),
+        "perspective": round(perspective(image), 3),
     }
     flags = []
     if result["seam"] > SEAM_LIMIT: flags.append("seam")
     if result["repeat"] > REPEAT_LIMIT: flags.append("repeats")
     if result["gradient"] > GRADIENT_LIMIT: flags.append("gradient")
-    if result["saturation"] > SATURATION_LIMIT: flags.append("colour")
+    if result["saturation"] > SATURATION_LIMIT and not colour_ok: flags.append("colour")
     if result["spread"] < .2: flags.append("flat")
+    if min(result["frame"]) > 0: flags.append("framed")
+    if result["perspective"] > PERSPECTIVE_LIMIT: flags.append("perspective")
     result["flags"] = flags
     return result
 
@@ -88,11 +142,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("images", nargs="+")
     parser.add_argument("--json", help="also write the results here")
+    parser.add_argument("--colour-ok", action="store_true", help="the subject is meant to be coloured (lava, moss): no colour flag")
     args = parser.parse_args()
-    results = [check(path) for path in args.images]
+    results = [check(path, args.colour_ok) for path in args.images]
     for r in results:
         print(f"{r['path']}: seam {r['seam']} repeat {r['repeat']} gradient {r['gradient']} mean {r['mean']} "
-              f"spread {r['spread']} saturation {r['saturation']} {' '.join(r['flags']) or 'ok'}")
+              f"spread {r['spread']} saturation {r['saturation']} frame {r['frame']} perspective {r['perspective']} "
+              f"{' '.join(r['flags']) or 'ok'}")
     if args.json:
         json.dump(results, open(args.json, "w"), indent=1)
 
