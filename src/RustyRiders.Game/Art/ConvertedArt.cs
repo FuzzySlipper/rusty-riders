@@ -70,6 +70,9 @@ internal sealed class ConvertedArt : IDisposable
         meshes.Clear();
     }
 
+    /// <summary>One converted GLB (a path under the root), opened once; null and a recorded problem when it cannot be.</summary>
+    internal ArtMesh? Model(string glb) => Mesh(glb);
+
     private ArtMesh? Mesh(string glb)
     {
         if (meshes.TryGetValue(glb, out ArtMesh? cached)) return cached;

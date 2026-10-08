@@ -51,8 +51,17 @@ internal sealed record WeaponDefinition(string Action, HeldLook Look, string? Re
 /// <summary>A magazine of <see cref="Size"/> rounds, refilled from a track (the ammunition carried) by the reload action.</summary>
 internal sealed record MagazineDefinition(int Size, string Track);
 
-/// <summary>A held weapon's placeholder: a box of a size and colour, offset in the hand, with its muzzle (or tip) where effects start.</summary>
-internal sealed record HeldLook(float[] Size, float[] Color, float[] Offset, float[] Muzzle);
+/// <summary>
+/// How a held weapon is drawn: its converted model when there is one (and it opened), else a placeholder box of a size
+/// and colour; offset in the hand, with its muzzle (or tip) where effects start.
+/// </summary>
+internal sealed record HeldLook(float[] Size, float[] Color, float[] Offset, float[] Muzzle, HeldModel? Model = null);
+
+/// <summary>
+/// A weapon's converted model (a GLB under content/old-art): centred on its bounds and scaled so its longest side is
+/// <see cref="Length"/> metres, then turned by <see cref="Rotation"/> (degrees about x, y, z) to point down the view.
+/// </summary>
+internal sealed record HeldModel(string Glb, float Length, float[] Rotation);
 
 internal sealed record ItemCatalog(ItemDefinition[] Items)
 {
@@ -92,6 +101,12 @@ internal sealed record ItemCatalog(ItemDefinition[] Items)
             Authored.Colour(Path, $"{at}.weapon.look.color", weapon.Look.Color);
             Authored.Point(Path, $"{at}.weapon.look.offset", weapon.Look.Offset);
             Authored.Point(Path, $"{at}.weapon.look.muzzle", weapon.Look.Muzzle);
+            if (weapon.Look.Model is { } model)
+            {
+                Authored.Require(model.Glb.EndsWith(".glb", StringComparison.Ordinal), Path, $"{at}.weapon.look.model.glb", "names a .glb file.");
+                Authored.Positive(Path, $"{at}.weapon.look.model.length", model.Length);
+                Authored.Point(Path, $"{at}.weapon.look.model.rotation", model.Rotation);
+            }
         }
         return catalog;
     }

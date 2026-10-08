@@ -16,7 +16,7 @@ namespace RustyRiders.Game.Enemies;
 internal sealed class EnemyDirector : IDisposable
 {
     private const ulong FirstEntity = 20_000;
-    private const ulong FirstObjectId = 4_000_000;
+    private const ulong FirstObjectId = 4_900_000; // shots; bodies are EnemyView's
     private const float FaceTurn = MathF.PI * 4; // radians a second an enemy turns to face its target
     private const float WaypointReached = .6f;
 
@@ -25,10 +25,13 @@ internal sealed class EnemyDirector : IDisposable
     private readonly ActionCatalog actions;
     private readonly MechanicsDefinition mechanics;
     private readonly Dictionary<string, CharacterControllerConfig> bodies = [];
-    private readonly Dictionary<string, (Appearance Normal, Appearance Windup)> looks = [];
+    private readonly EnemyView view;
     private readonly Appearance bolt;
     private readonly List<Enemy> enemies = [];
     private readonly List<Enemy> fallen = [];
+    private readonly List<Enemy> corpses = [];
+    private const int CorpsesKept = 16;
+    private const float Flinch = .4f; // world seconds an enemy flinches when hurt
     private ActionResolution? resolution;
     private LevelNavigation? navigation;
     private SpatialSession? session;
@@ -56,8 +59,8 @@ internal sealed class EnemyDirector : IDisposable
             };
             engine.Spatial.ValidateCharacterControllerConfig(body);
             bodies[kind.Id] = body;
-            looks[kind.Id] = (Primitive(kind.Look.Color), Primitive(kind.Look.WindupColor));
         }
+        view = new EnemyView(engine, catalog);
         bolt = engine.Graphics.CreatePrimitive(new PrimitiveAppearanceRequest(PrimitiveGeometry.Sphere, false, new Color(.6f, .9f, 1, 1)));
     }
 
@@ -123,6 +126,7 @@ internal sealed class EnemyDirector : IDisposable
         foreach (Enemy enemy in enemies.ToArray())
         {
             enemy.Stats.Effects.Advance(seconds);
+            enemy.HurtFor = MathF.Max(0, enemy.HurtFor - seconds);
             if (!enemy.Alive) continue;
             Sense(enemy, player);
             ActionDefinition action = actions.Action(enemy.Kind.Action)!;
@@ -141,22 +145,25 @@ internal sealed class EnemyDirector : IDisposable
         {
             enemies.Remove(enemy);
             fallen.Add(enemy);
+            corpses.Add(enemy);
         }
+        if (corpses.Count > CorpsesKept) corpses.RemoveRange(0, corpses.Count - CorpsesKept);
     }
 
-    /// <summary>Enemies (a windup shows in the kind's warning colour) and their shots, as they stand now.</summary>
+    /// <summary>Enemies (as their models, or boxes) and the fallen, and their shots, as they stand now.</summary>
     internal IEnumerable<AppearanceFact> Facts()
     {
         ulong id = FirstObjectId;
-        foreach (Enemy enemy in enemies)
-        {
-            (Appearance normal, Appearance windup) = looks[enemy.Kind.Id];
-            Appearance shown = enemy.User.Phase == ActionPhase.Windup ? windup : normal;
-            yield return new AppearanceFact(id++, false, 0, enemy.Transform, shown, true, RenderLayer.Scene);
-        }
+        foreach (AppearanceFact body in view.Facts(enemies, corpses)) yield return body;
         foreach (Projectile shot in resolution?.Projectiles ?? [])
             yield return new AppearanceFact(id++, false, 0, new Transform(shot.Position, Quaternion.Identity, new Vector3(.25f)), bolt, true, RenderLayer.Scene);
     }
+
+    /// <summary>Sets the models' clips; call after the snapshot holding their bodies is published.</summary>
+    internal void Animate() => view.Animate(enemies, corpses);
+
+    /// <summary>Models or clips that did not open (those kinds are drawn as boxes).</summary>
+    internal IReadOnlyList<string> Problems => view.Problems;
 
     /// <summary>The chase line (time to the chase or the next wave, or the warning) and how many enemies are about.</summary>
     internal (string Chase, string Hostiles) Hud()
@@ -171,11 +178,7 @@ internal sealed class EnemyDirector : IDisposable
 
     public void Dispose()
     {
-        foreach ((Appearance normal, Appearance windup) in looks.Values)
-        {
-            normal.Dispose();
-            windup.Dispose();
-        }
+        view.Dispose();
         bolt.Dispose();
     }
 
@@ -210,7 +213,11 @@ internal sealed class EnemyDirector : IDisposable
     private void Sense(Enemy enemy, IActionActor player)
     {
         int health = enemy.Stats.Track(ActorStats.HealthTrack).ValueInt;
-        if (health < enemy.LastHealth && enemy.LastHealth != int.MaxValue) enemy.Aware = true;
+        if (health < enemy.LastHealth && enemy.LastHealth != int.MaxValue)
+        {
+            enemy.Aware = true;
+            enemy.HurtFor = Flinch;
+        }
         enemy.LastHealth = health;
         if (enemy.Aware) return;
         Vector3 to = player.Position - enemy.Position;
@@ -288,11 +295,10 @@ internal sealed class EnemyDirector : IDisposable
     {
         enemies.Clear();
         fallen.Clear();
+        corpses.Clear();
+        view.Clear();
         resolution?.Clear();
     }
-
-    private Appearance Primitive(float[] rgb) =>
-        engine.Graphics.CreatePrimitive(new PrimitiveAppearanceRequest(PrimitiveGeometry.Cube, false, Authored.Color(rgb)));
 
     private static Vector3 Planar(Vector3 v) => v with { Y = 0 };
 }

@@ -204,6 +204,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private void Publish()
     {
         engine.Graphics.PublishSnapshot([.. scenes.Current.Facts, .. play.Facts()]);
+        play.Enemies.Animate(); // animation instances bind to bodies in the published snapshot
         walker.Publish(sampleTime);
         engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scenes.Current, walker, time, play, run, fonts)));
     }

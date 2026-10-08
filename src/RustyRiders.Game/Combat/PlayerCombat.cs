@@ -1,6 +1,7 @@
 using System.Numerics;
 using Rusty.Engine;
 using RustyRiders.Game.Actions;
+using RustyRiders.Game.Art;
 using RustyRiders.Game.Content;
 using RustyRiders.Game.Items;
 using RustyRiders.Game.Mechanics;
@@ -19,6 +20,7 @@ internal sealed class PlayerCombat : IDisposable
     internal const int MainHand = 0, OffHand = 1;
     private const ulong FirstDummyEntity = 10_000;
     private const ulong FirstObjectId = 3_000_000;
+    private const string OldArtRoot = "old-art";
 
     private readonly IEngineContext engine;
     private readonly CombatDefinition definition;
@@ -33,6 +35,8 @@ internal sealed class PlayerCombat : IDisposable
     private readonly List<TrainingDummy> dummies = [];
     private readonly List<Appearance> appearances = [];
     private readonly Dictionary<string, Appearance> held = [];
+    private readonly ConvertedArt art;
+    private readonly Dictionary<string, (Appearance Appearance, Transform Pose)> models = [];
     private readonly Appearance projectile, dummy;
     private ActionResolution? resolution;
     private int actingHand = MainHand;
@@ -50,8 +54,12 @@ internal sealed class PlayerCombat : IDisposable
         this.vitals = vitals;
         this.walker = walker;
         actor = new PlayerActor(walker, vitals, radius);
+        art = new ConvertedArt(engine, OldArtRoot);
         foreach (ItemDefinition item in definition.Items.Items.Where(i => i.Weapon is not null))
+        {
             held[item.Id] = Primitive(PrimitiveGeometry.Cube, item.Weapon!.Look.Color);
+            if (item.Weapon.Look.Model is { } model && art.Model(model.Glb) is { } mesh) models[item.Id] = (mesh.Appearance, Fit(mesh, model));
+        }
         projectile = Primitive(PrimitiveGeometry.Sphere, [1f, .7f, .35f]);
         dummy = Primitive(PrimitiveGeometry.Cube, definition.Dummy.Color);
         Reset();
@@ -181,8 +189,12 @@ internal sealed class PlayerCombat : IDisposable
                     ActionPhase.Recovery => Authored.Vector(p.Commit) * (1 - user.PhaseProgress) - Vector3.UnitY * p.RecoveryDrop * (1 - user.PhaseProgress),
                     _ => Vector3.Zero,
                 };
-            yield return new AppearanceFact(id++, false, 0, new Transform(at, Quaternion.Identity, Authored.Vector(look.Size)),
-                held[hands[h].Item.Id], walker.Flying is false, RenderLayer.Viewmodel);
+            if (models.TryGetValue(hands[h].Item.Id, out var model))
+                yield return new AppearanceFact(id++, false, 0, new Transform(at + model.Pose.Translation, model.Pose.Rotation, model.Pose.Scale),
+                    model.Appearance, walker.Flying is false, RenderLayer.Viewmodel);
+            else
+                yield return new AppearanceFact(id++, false, 0, new Transform(at, Quaternion.Identity, Authored.Vector(look.Size)),
+                    held[hands[h].Item.Id], walker.Flying is false, RenderLayer.Viewmodel);
         }
         foreach (Projectile shot in resolution?.Projectiles ?? [])
             yield return new AppearanceFact(id++, false, 0, new Transform(shot.Position, Quaternion.Identity, new Vector3(p.ProjectileSize)),
@@ -204,12 +216,27 @@ internal sealed class PlayerCombat : IDisposable
         return ($"{Describe(hands[MainHand])}  ·  {Describe(hands[OffHand])}", supplies, action, noticeLeft > 0 ? notice : "");
     }
 
+    /// <summary>Converted weapon models that could not be opened (they fall back to their boxes).</summary>
+    internal IReadOnlyList<string> Problems => art.Problems;
+
     public void Dispose()
     {
+        art.Dispose();
         foreach (Appearance appearance in appearances) appearance.Dispose();
     }
 
     // A gun comes with a full magazine the first time it is held.
+    // A model centred on its bounds, scaled so its longest side is the authored length and turned by the authored rotation:
+    // the pose relative to the hand's point.
+    private static Transform Fit(ArtMesh mesh, HeldModel model)
+    {
+        Vector3 extent = mesh.BoundsMax - mesh.BoundsMin, centre = (mesh.BoundsMax + mesh.BoundsMin) / 2;
+        float scale = model.Length / MathF.Max(1e-4f, MathF.Max(extent.X, MathF.Max(extent.Y, extent.Z)));
+        Vector3 turn = Authored.Vector(model.Rotation) * (MathF.PI / 180);
+        Quaternion rotation = Quaternion.CreateFromYawPitchRoll(turn.Y, turn.X, turn.Z);
+        return new Transform(Vector3.Transform(-centre * scale, rotation), rotation, new Vector3(scale));
+    }
+
     private int Loaded(ItemDefinition item) =>
         loaded.TryGetValue(item.Id, out int rounds) ? rounds : loaded[item.Id] = item.Weapon!.Magazine?.Size ?? 0;
 

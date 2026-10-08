@@ -46,6 +46,12 @@ internal sealed record EnemyKind(string Id, string Name, EnemyLook Look, ActorSt
         Authored.Point(path, $"{at}.look.size", Look.Size);
         Authored.Colour(path, $"{at}.look.color", Look.Color);
         Authored.Colour(path, $"{at}.look.windupColor", Look.WindupColor);
+        if (Look.Model is { } model)
+        {
+            Authored.Positive(path, $"{at}.look.model.height", model.Height);
+            Authored.Finite(path, $"{at}.look.model.yawDegrees", model.YawDegrees);
+            Authored.Within(path, $"{at}.look.model.strikeAt", model.StrikeAt, 0, 1);
+        }
         mechanics.Validate(path, $"{at}.stats", Stats);
         actions.Require(path, $"{at}.action", Action);
         Authored.Positive(path, $"{at}.attackRange", AttackRange);
@@ -57,7 +63,19 @@ internal sealed record EnemyKind(string Id, string Name, EnemyLook Look, ActorSt
     }
 }
 
-internal sealed record EnemyLook(float[] Size, float[] Color, float[] WindupColor);
+/// <summary>
+/// How an enemy is drawn: its body box (the size also sets its capsule and hitbox) and colours, used when it has no
+/// converted model or the model did not open, and its <see cref="Model"/>.
+/// </summary>
+internal sealed record EnemyLook(float[] Size, float[] Color, float[] WindupColor, EnemyModel? Model = null);
+
+/// <summary>
+/// A kind's converted, animated model (a GLB under content/old-art): scaled to <see cref="Height"/> metres by its rest
+/// bounds, turned by <see cref="YawDegrees"/> so it faces where the enemy faces, and the clips it plays for each state.
+/// The attack clip is sampled at the action's progress, its strike at <see cref="StrikeAt"/> of the clip.
+/// </summary>
+internal sealed record EnemyModel(string Glb, float Height, float YawDegrees, EnemyClips Clips, float StrikeAt);
+internal sealed record EnemyClips(string Idle, string Walk, string Attack, string Hit, string Death);
 
 internal sealed record EnemyKindFile(EnemyKind[] Kinds);
 

@@ -32,6 +32,8 @@ internal sealed class Enemy(ulong entity, EnemyKind kind, MechanicsDefinition me
     /// <summary>How its last route query ended, for inspection.</summary>
     internal NavigationPathOutcome Route { get; set; }
     internal int LastHealth { get; set; } = int.MaxValue;
+    /// <summary>World seconds left of the flinch after it was hurt (its hit clip plays meanwhile).</summary>
+    internal float HurtFor { get; set; }
     internal Vector3 Feet => Centre - Vector3.UnitY * half.Y;
 
     public string Name => Kind.Name;

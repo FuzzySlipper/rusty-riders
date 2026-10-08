@@ -32,7 +32,16 @@
             0,
             0.05,
             -0.7
-          ]
+          ],
+          "model": {
+            "glb": "parts/Art/Models/Weapons/Prefabs/1H_sword_C/1H_Sword_C01-c550c662.glb",
+            "length": 0.7,
+            "rotation": [
+              160,
+              0,
+              0
+            ]
+          }
         }
       }
     },
@@ -68,7 +77,16 @@
             0,
             0.05,
             -0.6
-          ]
+          ],
+          "model": {
+            "glb": "parts/Art/Models/Weapons/Prefabs/BattleHammer/Battle_hammer-b2842784.glb",
+            "length": 0.75,
+            "rotation": [
+              -25,
+              0,
+              0
+            ]
+          }
         }
       }
     },
@@ -109,7 +127,16 @@
             0,
             0.03,
             -0.38
-          ]
+          ],
+          "model": {
+            "glb": "parts/Art/Models/Weapons/Prefabs/Flintlock/polySurface122-0e0f03ea.glb",
+            "length": 0.38,
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
         }
       }
     },
@@ -145,7 +172,16 @@
             0,
             0,
             -0.45
-          ]
+          ],
+          "model": {
+            "glb": "parts/Art/Models/Weapons/Prefabs/Mandragora/Mandragora-5d1fade9.glb",
+            "length": 0.6,
+            "rotation": [
+              -70,
+              0,
+              0
+            ]
+          }
         }
       }
     },
@@ -181,7 +217,16 @@
             0,
             0.02,
             -0.12
-          ]
+          ],
+          "model": {
+            "glb": "parts/Art/Models/Weapons/Ravenwood/crystal-98430252.glb",
+            "length": 0.26,
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          }
         }
       }
     },
