@@ -89,6 +89,27 @@ internal sealed class PlayerCombat : IDisposable
         hands[MainHand] = new Hand(item);
     }
 
+    /// <summary>Puts carried weapon <paramref name="index"/> in a hand (the hands swap when it is in the other).</summary>
+    internal void Hold(int index, int hand)
+    {
+        if (index < 0 || index >= inventory.Weapons.Count || user.Busy || hand is not (MainHand or OffHand)) return;
+        ItemDefinition item = inventory.Weapons[index];
+        int other = 1 - hand;
+        if (hands[other].Item == item) hands[other] = hands[hand];
+        hands[hand] = new Hand(item);
+    }
+
+    /// <summary>Which hand holds carried weapon <paramref name="item"/>, or -1.</summary>
+    internal int HandOf(ItemDefinition item) => hands[MainHand].Item == item ? MainHand : hands[OffHand].Item == item ? OffHand : -1;
+
+    /// <summary>A hand's weapon and, for a gun, its rounds loaded and magazine size.</summary>
+    internal (ItemDefinition Item, int Loaded, int Size) Held(int hand) =>
+        (hands[hand].Item, Loaded(hands[hand].Item), hands[hand].Item.Weapon!.Magazine?.Size ?? 0);
+
+    /// <summary>The hand whose action is under way, its phase label and how far through it is (0 to 1), or none.</summary>
+    internal (int Hand, string Label, float Progress)? Acting => user.Current is { } current
+        ? (actingHand, user.Phase == ActionPhase.Windup ? current.WindupLabel : current.CommitLabel, user.PhaseProgress) : null;
+
     /// <summary>Uses a hand's weapon. Returns the world seconds the action costs, or null when it could not start.</summary>
     internal float? Use(int hand)
     {

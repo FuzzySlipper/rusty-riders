@@ -1,9 +1,39 @@
 {
   "kinds": [
-    { "id": "physical", "name": "Physical", "minimumResistance": -1, "maximumResistance": 0.9 },
-    { "id": "burn", "name": "Burn", "minimumResistance": -1, "maximumResistance": 0.9 },
-    { "id": "freeze", "name": "Freeze", "minimumResistance": -1, "maximumResistance": 0.9 },
-    { "id": "lightning", "name": "Lightning", "minimumResistance": -1, "maximumResistance": 0.9 },
-    { "id": "spirit", "name": "Spirit", "minimumResistance": -1, "maximumResistance": 0.9 }
+    {
+      "id": "physical",
+      "name": "Physical",
+      "minimumResistance": -1,
+      "maximumResistance": 0.9,
+      "icon": "physical"
+    },
+    {
+      "id": "burn",
+      "name": "Burn",
+      "minimumResistance": -1,
+      "maximumResistance": 0.9,
+      "icon": "burn"
+    },
+    {
+      "id": "freeze",
+      "name": "Freeze",
+      "minimumResistance": -1,
+      "maximumResistance": 0.9,
+      "icon": "freeze"
+    },
+    {
+      "id": "lightning",
+      "name": "Lightning",
+      "minimumResistance": -1,
+      "maximumResistance": 0.9,
+      "icon": "lightning"
+    },
+    {
+      "id": "spirit",
+      "name": "Spirit",
+      "minimumResistance": -1,
+      "maximumResistance": 0.9,
+      "icon": "spirit"
+    }
   ]
 }

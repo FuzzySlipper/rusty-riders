@@ -18,9 +18,10 @@ internal enum WearSlot { Body, Accessory }
 /// One reusable item (content/items/items.json): its name, its kind and exactly that kind's settings, and the colour
 /// it shows as on the ground. A weapon (melee, gun or spell focus) is an item that grants a hand its actions; input
 /// names a hand, never a weapon. Armour is worn for stat and resistance contributions; a consumable is carried and used;
-/// ammunition refills a track when walked over; a supply is the run's haul, counted by value.
+/// ammunition refills a track when walked over; a supply is the run's haul, counted by value. <see cref="Icon"/> names
+/// its picture in the DOM UI's art (src/ui/art/icons/&lt;icon&gt;.png).
 /// </summary>
-internal sealed record ItemDefinition(string Id, string Name, ItemKind Kind, float[] Color, WeaponDefinition? Weapon = null,
+internal sealed record ItemDefinition(string Id, string Name, ItemKind Kind, float[] Color, string Icon, WeaponDefinition? Weapon = null,
     ArmourDefinition? Armour = null, ConsumableDefinition? Consumable = null, AmmoDefinition? Ammo = null, SupplyDefinition? Supply = null)
 {
     /// <summary>Whether walking over it takes it (ammunition and supplies); other items are taken with the use control.</summary>
@@ -68,6 +69,8 @@ internal sealed record ItemCatalog(ItemDefinition[] Items)
             string at = $"items[{i}]";
             Template.Plain(Path, ($"{at}.name", item.Name));
             Authored.Colour(Path, $"{at}.color", item.Color);
+            Authored.Require(item.Icon.Length > 0 && item.Icon.All(c => char.IsAsciiLetterOrDigit(c) || c == '-'), Path, $"{at}.icon",
+                "names an icon file (letters, digits and dashes).");
             object?[] settings = [item.Weapon, item.Armour, item.Consumable, item.Ammo, item.Supply];
             Authored.Require(settings.Count(s => s is not null) == 1 && settings[(int)item.Kind] is not null, Path, at,
                 $"a {item.Kind} sets {item.Kind.ToString().ToLowerInvariant()} and no other kind's settings.");

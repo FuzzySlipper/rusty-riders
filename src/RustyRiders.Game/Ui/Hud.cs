@@ -1,9 +1,6 @@
-using System.Text;
 using Rusty.Engine;
 using RustyRiders.Game.Combat;
 using RustyRiders.Game.Content;
-using RustyRiders.Game.Enemies;
-using RustyRiders.Game.Items;
 using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
 using RustyRiders.Game.Run;
@@ -11,61 +8,79 @@ using RustyRiders.Game.Time;
 
 namespace RustyRiders.Game.Ui;
 
-/// <summary>The DOM panel's facts: the scene's status and problems, what is under the walker, where it is, and the world's time.</summary>
+/// <summary>
+/// The DOM companion's facts, one projection per update: the scene's status, the walker's place, the world's time,
+/// the player's vitals, effects and hands, the run and the chase, the latest notice and prompt, and the inventory and
+/// character sheet the screens show. The UI draws them and holds no state of its own.
+/// </summary>
 internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat, EnemyDirector enemies, Inventory inventory, Pickups pickups, Expedition run)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, Play play, Expedition run, UiFonts fonts)
     {
+        UiValueWriter w = new();
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
               + (scene.Problems.Count > ProblemsShown ? $"\n… and {scene.Problems.Count - ProblemsShown} more" : "");
-        (string hands, string supplies, string action, string notice) = combat.Hud();
-        (string chase, string hostiles) = enemies.Hud();
+        (string _, string _, string action, string notice) = play.Combat.Hud();
+        (string chase, string hostiles) = play.Enemies.Hud();
         (string depth, string bank, string? rift) = run.Hud(walker.Feet);
-        (string Key, string Text)[] fields =
+        PlayerVitals vitals = play.Vitals;
+        List<uint> fields =
         [
-            ("status", scene.Status),
-            ("problems", problems),
-            ("exhibit", rift ?? scene.Describe(walker.Position)),
-            ("depth", depth),
-            ("bank", bank),
-            ("summary", run.Summary),
-            ("position", FormattableString.Invariant($"{(walker.Flying ? "flying" : "walking")} · {walker.Feet.X:0.0}, {walker.Feet.Y:0.0}, {walker.Feet.Z:0.0}")),
-            ("time", time.State.Describe(time.Tuning.HeldRate)),
-            ("worldTime", FormattableString.Invariant($"{time.WorldSeconds:0.0} s")),
-            ("health", FormattableString.Invariant($"{vitals.Health.ValueInt} / {vitals.Health.MaximumValue:0}")),
-            ("healthShare", FormattableString.Invariant($"{vitals.Health.Value / Math.Max(1, vitals.Health.MaximumValue):0.###}")),
-            ("effects", string.Join("  ", vitals.Stats.Effects.Active.Select(e => Effect(e, messages)))),
-            ("hands", hands),
-            ("supplies", supplies),
-            ("action", action),
-            ("notice", notice),
-            ("chase", chase),
-            ("hostiles", hostiles),
-            ("haul", Template.Fill(pickups.Text.Haul, ("value", inventory.Haul))),
-            ("ready", inventory.Ready is { } ready ? Template.Fill(pickups.Text.Consumable, ("item", ready.Item.Name), ("count", ready.Count)) : ""),
-            ("prompt", pickups.Prompt(walker.Feet)),
+            w.Text("titleFont", fonts.TitleUrl),
+            w.Text("status", scene.Status),
+            w.Text("problems", problems),
+            w.Text("exhibit", rift ?? scene.Describe(walker.Position)),
+            w.Text("position", FormattableString.Invariant($"{(walker.Flying ? "flying" : "walking")} · {walker.Feet.X:0.0}, {walker.Feet.Y:0.0}, {walker.Feet.Z:0.0}")),
+            w.Text("time", time.State.Describe(time.Tuning.HeldRate)),
+            w.Flag("held", time.State.Rate <= time.Tuning.HeldRate && time.State.AdvanceSeconds <= 0),
+            w.Text("worldTime", FormattableString.Invariant($"{time.WorldSeconds:0.0} s")),
+            w.Number("health", vitals.Health.ValueInt),
+            w.Number("healthMax", vitals.Health.MaximumValue),
+            Tracks(w, vitals.Stats),
+            w.Array("effects", vitals.Stats.Effects.Active.Select(e => w.Object("", w.Text("mark", e.Definition.Mark),
+                w.Text("text", Effect(e, play.MechanicsText)))).ToArray()),
+            Hands(w, play.Combat),
+            w.Text("action", action),
+            w.Number("actionProgress", play.Combat.Acting?.Progress ?? 0),
+            w.Text("notice", notice),
+            w.Text("prompt", play.Pickups.Prompt(walker.Feet)),
+            w.Text("chase", chase),
+            w.Text("hostiles", hostiles),
+            w.Text("depth", depth),
+            w.Text("bank", bank),
+            w.Text("haul", Template.Fill(play.Pickups.Text.Haul, ("value", play.Inventory.Haul))),
+            w.Text("ready", play.Inventory.Ready is { } ready
+                ? Template.Fill(play.Pickups.Text.Consumable, ("item", ready.Item.Name), ("count", ready.Count)) : ""),
+            w.Text("readyIcon", play.Inventory.Ready?.Item.Icon ?? ""),
+            w.Text("summary", run.Summary),
+            InventoryFacts.Write(w, play.Inventory, play.Combat),
+            SheetFacts.Write(w, vitals.Stats),
         ];
-        List<byte> utf8 = [];
-        List<StructuredValueNode> nodes = [new(StructuredValueKind.Object, 0, 0, 0, 0, 0, 0, 0, (uint)fields.Length)];
-        foreach ((string key, string text) in fields)
-        {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(key), textBytes = Encoding.UTF8.GetBytes(text);
-            uint keyOffset = (uint)utf8.Count;
-            utf8.AddRange(keyBytes);
-            uint textOffset = (uint)utf8.Count;
-            utf8.AddRange(textBytes);
-            nodes.Add(new StructuredValueNode(StructuredValueKind.String, 0, 0, keyOffset, (uint)keyBytes.Length, textOffset, (uint)textBytes.Length, 0, 0));
-        }
-        return new UiValue(nodes.ToArray(), Enumerable.Range(1, fields.Length).Select(index => (uint)index).ToArray(), 0, utf8.ToArray());
+        return w.Finish([.. fields]);
     }
 
-    /// <summary>An effect's mark and name with its stacks, time left and any ward left, from the authored templates.</summary>
+    // The tracks other than health (charge, ammunition), with their maximums.
+    private static uint Tracks(UiValueWriter w, ActorStats stats) => w.Array("tracks", stats.Mechanics.Tracks
+        .Where(t => t.Id != ActorStats.HealthTrack)
+        .Select(t => w.Object("", w.Text("name", t.Name), w.Number("value", stats.Track(t.Id).ValueInt), w.Number("max", stats.Track(t.Id).MaximumValue)))
+        .ToArray());
+
+    // Each hand's weapon, its load and whether its action is under way.
+    private static uint Hands(UiValueWriter w, PlayerCombat combat) => w.Array("hands", new[] { PlayerCombat.MainHand, PlayerCombat.OffHand }
+        .Select(hand =>
+        {
+            (Items.ItemDefinition item, int loaded, int size) = combat.Held(hand);
+            return w.Object("", w.Text("name", item.Name), w.Text("icon", item.Icon), w.Number("loaded", loaded), w.Number("size", size),
+                w.Flag("acting", combat.Acting?.Hand == hand));
+        }).ToArray());
+
+    /// <summary>An effect's name with its stacks, time left and any ward left, from the authored templates.</summary>
     private static string Effect(LiveEffect effect, MechanicsMessages text)
     {
-        string line = $"{effect.Definition.Mark} {effect.Definition.Name}";
+        string line = effect.Definition.Name;
         if (effect.Stacks > 1) line += " " + Template.Fill(text.EffectStacks, ("stacks", effect.Stacks));
         if (effect.Definition.Ward is not null) line += " " + Template.Fill(text.EffectWard, ("ward", effect.WardLeft));
         return line + " " + Template.Fill(text.EffectSeconds, ("seconds", MathF.Ceiling(effect.Remaining)));

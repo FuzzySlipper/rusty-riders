@@ -51,4 +51,15 @@ Do not change or clean donor repositories to make them easier to copy.
 | rusty-hotel | `82451c5dfb7b457654940c5822d832a19be9eef8` | `src/Hotel.Game/Mechanics/` (`MechanicsDefinition.cs`, `ActorStats.cs`, `ActorEffects.cs`, `EffectDefinition.cs`, `DamageContribution.cs`) | `Mechanics/`: the stat vocabulary and validation, Engine-backed actor stats with explainable derived sources, tracks and resistances, effects over the Engine effects component with stacking, ticks, wards and guards, and damage contributions. Renamed hold to stun and push to knockback. Dropped reveal, light and lure, growth and equipment sources, and checkpoint capture/validate/restore. Own JSON context (`MechanicsJson`). |
 | rusty-hotel | `89ffa8fa869916d1f9a38099c0eadc6cde13204a` | `src/Hotel.Game/Actions/` (`ActionDefinition.cs`, `ActionUser.cs`, `ActionResolution.cs`) | `Actions/`: the action catalog and validation, per-actor timing, and resolution by Engine spatial queries. Added a power stat that multiplies a packet, magazine rounds as a cost and reloading actions, a time scale per use and a float-residue tolerance on phase ends. Dropped item-classification costs. Own JSON context (`ActionJson`). |
 | rusty-hotel | `82451c5dfb7b457654940c5822d832a19be9eef8` | `content/mechanics/messages.json` | `content/mechanics/messages.json`, as written |
+| rusty-hotel | `4485dfd4dc0190f4547aae1874cc9e4687828681` | `src/Hotel.Game/Interface/UiValueWriter.cs` | `Ui/UiValueWriter.cs`, as written |
+| rusty-hotel | `4485dfd4dc0190f4547aae1874cc9e4687828681` | `src/ui/pause.js` | `src/ui/pause.js`, with the error text made about the game, not the hotel |
 | rusty-hotel | `82451c5dfb7b457654940c5822d832a19be9eef8` | `src/Hotel.Game/Content/Template.cs` | `Content/Template.cs`: `Fill`, `Check` and `Plain`, as written |
+
+## Old game art in the UI
+
+The DOM UI uses Rift Riders' own UI art (`old-game/Assets/Art/Sprites/UI/RiftRiders`, `GameData/Icons`,
+`Art/Sprites/UI/Fonts`), copied by `scripts/import-ui-art.py`, which lists every source. The `OH_`-prefixed frames
+(hotbar, banner, button, fill) share a prefix with a third-party asset pack the old game used, so confirm their
+licence before any public release. The unprefixed `UI SLICE BOX`, `UI INVENTORY` and `int_sphere` pieces, the icons
+and Alagard are the old game's own or carry their own licence terms.
+

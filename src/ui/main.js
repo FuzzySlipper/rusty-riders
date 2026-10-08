@@ -1,83 +1,92 @@
-/**
- * DOM-only product UI. Engine owns the canvas, pointer lock, input delivery and projection
- * transport; this module only shows the facts C# publishes.
- */
-export function mountProductUi(root, context) {
-  const panel = document.createElement('div');
-  panel.className = 'riders-gallery';
-  panel.innerHTML = `
-    <style>
-      .riders-gallery { position:fixed; inset:0; pointer-events:none; color:#eef2f7; font:13px/1.5 system-ui,sans-serif; }
-      .riders-gallery header { position:absolute; top:20px; left:24px; border-left:3px solid #e0763a; padding-left:12px; text-shadow:0 1px 3px #000; }
-      .riders-gallery h1 { margin:0; font-size:20px; font-weight:600; }
-      .riders-gallery .status { color:#cfd8e3; font-size:12px; white-space:pre-line; }
-      .riders-gallery .problems { white-space:pre-line; color:#f2b48c; font:11px/1.5 ui-monospace,monospace; max-width:60ch; }
-      .riders-gallery .problems:empty { display:none; }
-      .riders-gallery .exhibit { position:absolute; bottom:64px; left:50%; transform:translateX(-50%); background:#121922cc; border-radius:6px; padding:6px 14px; font-size:15px; white-space:nowrap; }
-      .riders-gallery .exhibit:empty { display:none; }
-      .riders-gallery footer { position:absolute; bottom:20px; left:24px; right:24px; display:flex; justify-content:space-between; color:#b9c5d3; font-size:12px; text-shadow:0 1px 3px #000; }
-      .riders-gallery kbd { color:#fff; font:11px ui-monospace,monospace; background:#ffffff1c; padding:1px 4px; border-radius:3px; }
-      .riders-gallery .clock { position:absolute; top:20px; right:24px; text-align:right; text-shadow:0 1px 3px #000; }
-      .riders-gallery .clock .state { font-size:15px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:#8fd3ff; }
-      .riders-gallery .clock .state[data-held] { color:#cfd8e3; }
-      .riders-gallery .clock .world { color:#b9c5d3; font:12px ui-monospace,monospace; }
-      .riders-gallery .vitals { position:absolute; left:24px; bottom:88px; width:240px; text-shadow:0 1px 3px #000; }
-      .riders-gallery .vitals .bar { height:8px; border-radius:4px; background:#ffffff22; overflow:hidden; }
-      .riders-gallery .vitals .fill { height:100%; width:100%; background:linear-gradient(90deg,#d9473a,#f07a4a); transition:width .12s; }
-      .riders-gallery .vitals .value { font:12px ui-monospace,monospace; color:#f4d6cf; margin-top:3px; }
-      .riders-gallery .vitals .effects { font-size:12px; color:#cfe3ff; margin-top:2px; }
-      .riders-gallery .vitals .effects:empty { display:none; }
-      .riders-gallery .arms { position:absolute; right:24px; bottom:88px; text-align:right; text-shadow:0 1px 3px #000; }
-      .riders-gallery .arms .hands { font-size:14px; font-weight:600; color:#f1e6d2; }
-      .riders-gallery .arms .supplies { font:12px ui-monospace,monospace; color:#c9d6e6; margin-top:2px; }
-      .riders-gallery .arms .haul { font-size:13px; color:#e9c7f2; margin-top:2px; }
-      .riders-gallery .arms .ready { font-size:12px; color:#f4d6cf; }
-      .riders-gallery .arms .ready:not(:empty)::before { content:'Q '; color:#fff; font:11px ui-monospace,monospace; background:#ffffff1c; padding:0 3px; border-radius:3px; margin-right:4px; }
-      .riders-gallery .prompt { position:absolute; left:50%; top:calc(50% + 44px); transform:translateX(-50%); font-size:14px; color:#fff; background:#121922cc; border-radius:5px; padding:3px 10px; }
-      .riders-gallery .prompt:not(:empty)::before { content:'E '; font:11px ui-monospace,monospace; background:#ffffff2c; padding:0 3px; border-radius:3px; margin-right:6px; }
-      .riders-gallery .prompt:empty { display:none; }
-      .riders-gallery .action { position:absolute; left:50%; top:calc(50% + 22px); transform:translateX(-50%); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:#ffe2a8; text-shadow:0 1px 3px #000; }
-      .riders-gallery .notice { position:absolute; left:50%; top:calc(50% - 46px); transform:translateX(-50%); font-size:15px; font-weight:600; color:#fff4e0; text-shadow:0 1px 4px #000; white-space:nowrap; }
-      .riders-gallery .action:empty, .riders-gallery .notice:empty { display:none; }
-      .riders-gallery .threat { position:absolute; top:20px; left:50%; transform:translateX(-50%); text-align:center; text-shadow:0 1px 3px #000; }
-      .riders-gallery .threat .chase { font-size:16px; font-weight:600; color:#ffb38a; letter-spacing:.03em; }
-      .riders-gallery .threat .hostiles { font-size:12px; color:#f0c8b8; }
-      .riders-gallery .threat div:empty { display:none; }
-      .riders-gallery .threat .depth { font-size:12px; color:#d9c8ff; }
-      .riders-gallery .summary { position:absolute; left:50%; top:30%; transform:translateX(-50%); max-width:46ch; white-space:pre-line; text-align:center; background:#120c16e6; border:1px solid #6b4a7a; border-radius:8px; padding:14px 22px; font-size:16px; color:#f3e9ff; }
-      .riders-gallery .summary:empty { display:none; }
-      .riders-gallery .reticle { position:absolute; left:50%; top:50%; width:4px; height:4px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px #0007; transform:translate(-50%,-50%); }
-    </style>
-    <header><h1>Rusty Riders</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
-    <div class="clock"><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
-    <div class="vitals"><div class="bar"><div class="fill"></div></div><div class="value" data-fact="health"></div><div class="effects" data-fact="effects"></div></div>
-    <div class="arms"><div class="hands" data-fact="hands"></div><div class="supplies" data-fact="supplies"></div><div class="haul" data-fact="haul"></div><div class="haul" data-fact="bank"></div><div class="ready" data-fact="ready"></div></div>
-    <div class="prompt" data-fact="prompt"></div>
-    <div class="threat"><div class="chase" data-fact="chase"></div><div class="hostiles" data-fact="hostiles"></div><div class="depth" data-fact="depth"></div></div>
-    <div class="summary" data-fact="summary"></div>
-    <div class="notice" data-fact="notice"></div>
-    <div class="action" data-fact="action"></div>
-    <div class="reticle"></div>
-    <output class="exhibit" data-fact="exhibit" aria-live="polite"></output>
-    <footer><span>Click to capture the mouse · <kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>T</kbd> wait · <kbd>Click</kbd>/<kbd>Right-click</kbd> main/off hand · <kbd>R</kbd> reload · <kbd>E</kbd> open/take · <kbd>Q</kbd> use item · <kbd>1</kbd>–<kbd>5</kbd> weapon · <kbd>F</kbd> fly (<kbd>Space</kbd>/<kbd>Ctrl</kbd> up/down) · <kbd>H</kbd> back to start · <kbd>N</kbd> new level · <kbd>B</kbd> tiles / shells / sweeps · <kbd>V</kbd> floor texture · <kbd>G</kbd> level / gallery · <kbd>Esc</kbd> release</span><span data-fact="position"></span></footer>`;
-  root.append(panel);
+import { mountHud } from './hud.js';
+import { mountInventoryScreen } from './inventory-screen.js';
+import { mountSheetScreen } from './sheet-screen.js';
+import { createPauseFlow } from './pause.js';
 
-  const fields = [...panel.querySelectorAll('[data-fact]')];
-  const clockState = panel.querySelector('.clock .state');
-  const healthFill = panel.querySelector('.vitals .fill');
-  const unsubscribe = context?.projection?.subscribe?.((envelope) => {
+/**
+ * Composition, navigation and focus only. The HUD and each screen own their markup and drawing; the Engine owns the
+ * canvas, pointer lock, input delivery, lifecycle and projection transport, and the C# owners own all game state.
+ * A screen pauses the game while it is open and gives focus back to play when it closes.
+ */
+const SCREEN_KEYS = { KeyI: 'inventory', KeyC: 'sheet' };
+
+export function mountProductUi(root, context) {
+  const document = root.ownerDocument;
+  const layer = document.createElement('section');
+  layer.className = 'riders-ui';
+  layer.innerHTML = `<link rel="stylesheet" href="${new URL('./riders.css', import.meta.url)}">`;
+  layer.style.setProperty('--art', `url("${new URL('./art/', import.meta.url).href}")`);
+  const hud = mountHud(document);
+  const screens = Object.fromEntries([mountInventoryScreen(document, context?.intents), mountSheetScreen(document)].map(view => [view.name, view]));
+  const foreground = document.createElement('div');
+  foreground.className = 'foreground';
+  foreground.hidden = true;
+  foreground.setAttribute('data-rusty-ui-interactive', '');
+  foreground.append(...Object.values(screens).map(view => view.element));
+  layer.append(hud.element, foreground);
+  root.append(layer);
+  let screen = null;
+  let disposed = false;
+  let latest = null;
+
+  const present = next => {
+    for (const view of Object.values(screens)) view.leave();
+    screen = next;
+    foreground.hidden = next === null;
+    for (const view of Object.values(screens)) view.element.hidden = view.name !== next;
+    context?.ui?.setInteractionMode?.(next === null ? 'gameplay' : 'interface');
+    if (next === null) context?.ui?.focusGameplay?.();
+    else {
+      if (latest) screens[next].draw(latest);
+      screens[next].enter();
+    }
+  };
+  const pause = createPauseFlow(context?.lifecycle, () => {});
+  const show = async next => {
+    if (disposed || pause.snapshot().pending) return;
+    if (next === null) {
+      if (await pause.resume() && !disposed) present(null);
+    } else {
+      present(next);
+      await pause.pause();
+    }
+  };
+  const onKey = event => {
+    if (event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
+    const target = SCREEN_KEYS[event.code];
+    if (target && (screen === null || screen === target)) {
+      event.preventDefault();
+      event.stopPropagation();
+      void show(screen === target ? null : target);
+    } else if (event.code === 'Escape' && screen !== null) {
+      event.preventDefault();
+      event.stopPropagation();
+      void show(null);
+    }
+  };
+  let titleFont = '';
+  const draw = envelope => {
     const facts = envelope?.value;
-    if (facts === undefined || facts === null) return;
-    for (const field of fields) field.textContent = facts[field.dataset.fact] ?? '';
-    clockState.toggleAttribute('data-held', facts.time === 'held');
-    const share = Number(facts.healthShare);
-    healthFill.style.width = `${Number.isFinite(share) ? Math.max(0, Math.min(1, share)) * 100 : 0}%`;
-  });
+    if (disposed || facts === undefined || facts === null) return;
+    latest = facts;
+    if (facts.titleFont && facts.titleFont !== titleFont && typeof FontFace === 'function') {
+      titleFont = facts.titleFont;
+      new FontFace('Alagard', `url("${titleFont}")`).load().then(face => document.fonts.add(face), error => console.warn('title font', error));
+    }
+    hud.draw(facts);
+    if (screen !== null) screens[screen].draw(facts);
+  };
+  document.addEventListener('keydown', onKey, true);
+  const unsubscribe = context?.projection?.subscribe?.(draw);
+  draw(context?.projection?.current?.());
 
   return Object.freeze({
-    dispose: () => {
+    dispose() {
+      disposed = true;
       unsubscribe?.();
-      panel.remove();
+      pause.dispose();
+      document.removeEventListener('keydown', onKey, true);
+      layer.remove();
     },
   });
 }

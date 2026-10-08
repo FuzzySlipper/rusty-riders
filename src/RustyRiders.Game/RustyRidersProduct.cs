@@ -17,7 +17,7 @@ namespace RustyRiders.Game;
 public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSource
 {
     private const string UiStreamId = "rusty-riders";
-    private const string UiContract = "rusty.riders.gallery";
+    private const string UiContract = "rusty.riders.hud";
 
     private readonly IEngineContext engine;
     private readonly Scenes scenes;
@@ -26,6 +26,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly Play play;
     private readonly Expedition run;
     private readonly UiStream hud;
+    private readonly UiFonts fonts;
     private ulong uiSequence;
     private double sampleTime;
     private bool started;
@@ -45,6 +46,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         EnterScene();
         time = new TimeFlow(engine, TimeTuning.Load(engine));
         hud = engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
+        fonts = new UiFonts(engine);
     }
 
     public void Start()
@@ -73,6 +75,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
             return ProductUpdateResult.None;
         }
         if (DeveloperKeys(physical)) EnterScene();
+        play.HandleIntents(update.Input);
         if (physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();
         jumpPending |= frame.JumpPressed;
         if (frame.Movement != System.Numerics.Vector2.Zero) run.Dismiss();
@@ -128,6 +131,12 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
 
     public void Shutdown() => Dispose();
 
+    /// <summary>Inventory claims made while a screen holds the game paused apply at once, and the facts follow.</summary>
+    public void HandlePausedIntents(ReadOnlySpan<ProductInputEvent> intents)
+    {
+        if (!disposed && play.HandleIntents(intents)) Publish();
+    }
+
     public void RegisterDebugCommands(IDebugCommandModuleRegistrar registrar)
     {
         registrar.Register(new LevelDebugCommands(() => scenes.Current, walker, EnterLevel));
@@ -146,6 +155,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         play.Dispose();
         scenes.Dispose();
         hud.Dispose();
+        fonts.Dispose();
     }
 
     /// <summary>G toggles the gallery; in a level N takes the next seed, B the next build and V the next floor texture.</summary>
@@ -195,7 +205,6 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         engine.Graphics.PublishSnapshot([.. scenes.Current.Facts, .. play.Facts()]);
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scenes.Current, walker, time, play.Vitals,
-            play.MechanicsText, play.Combat, play.Enemies, play.Inventory, play.Pickups, run)));
+        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scenes.Current, walker, time, play, run, fonts)));
     }
 }

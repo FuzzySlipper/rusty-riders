@@ -84,16 +84,74 @@ internal sealed class Inventory
     }
 
     /// <summary>Uses one of the ready consumable: restores its track and applies its effects. Returns it, or null when none is carried.</summary>
-    internal ItemDefinition? Use(MechanicsDefinition mechanics)
+    internal ItemDefinition? Use(MechanicsDefinition mechanics) => Ready is { } ready ? UseStack(mechanics, ready) : null;
+
+    /// <summary>Uses one of the consumable stack at <paramref name="index"/>; null when that is no consumable.</summary>
+    internal ItemDefinition? UseAt(MechanicsDefinition mechanics, int index) =>
+        index >= 0 && index < stacks.Count && stacks[index].Item.Kind == ItemKind.Consumable ? UseStack(mechanics, stacks[index]) : null;
+
+    /// <summary>
+    /// Puts on the spare armour at stack <paramref name="index"/>, in its slot: what was worn there goes back to the
+    /// stacks (an accessory replaces the first accessory when both are worn). Returns false when that is no armour.
+    /// </summary>
+    internal bool Wear(int index)
     {
-        if (Ready is not { } ready) return null;
+        if (index < 0 || index >= stacks.Count || stacks[index].Item.Armour is not { } armour) return false;
+        ItemDefinition item = stacks[index].Item;
+        ItemDefinition? removed;
+        if (armour.Slot == WearSlot.Body)
+        {
+            removed = body;
+            body = item;
+        }
+        else
+        {
+            if (accessories.Contains(item)) return false;
+            int slot = Array.IndexOf(accessories, null);
+            if (slot < 0) slot = 0;
+            removed = accessories[slot];
+            accessories[slot] = item;
+        }
+        Remove(index);
+        if (removed is not null) Stack(removed, 1);
+        stats.SetEquipmentSources(Sources());
+        return true;
+    }
+
+    /// <summary>Takes off worn piece <paramref name="index"/> (in <see cref="Worn"/> order) into the stacks, if a slot is free.</summary>
+    internal bool TakeOff(int index)
+    {
+        ItemDefinition? item = Worn.ElementAtOrDefault(index);
+        if (item is null || (SlotsUsed >= Slots && stacks.All(s => s.Item != item))) return false;
+        if (item == body) body = null;
+        else accessories[Array.IndexOf(accessories, item)] = null;
+        Stack(item, 1);
+        stats.SetEquipmentSources(Sources());
+        return true;
+    }
+
+    private ItemDefinition UseStack(MechanicsDefinition mechanics, (ItemDefinition Item, int Count) ready)
+    {
         ConsumableDefinition use = ready.Item.Consumable!;
         if (use.Restore is { } restore) stats.Track(restore.Track).Restore(restore.Amount);
         foreach (string effect in use.Effects ?? []) stats.Effects.Apply(mechanics.Effect(effect)!, $"item.{ready.Item.Id}");
-        int at = stacks.FindIndex(s => s.Item == ready.Item);
-        if (ready.Count > 1) stacks[at] = (ready.Item, ready.Count - 1);
-        else stacks.RemoveAt(at);
+        Remove(stacks.FindIndex(s => s.Item == ready.Item));
         return ready.Item;
+    }
+
+    // One fewer of stack index; the last leaves its slot.
+    private void Remove(int index)
+    {
+        (ItemDefinition item, int count) = stacks[index];
+        if (count > 1) stacks[index] = (item, count - 1);
+        else stacks.RemoveAt(index);
+    }
+
+    private void Stack(ItemDefinition item, int count)
+    {
+        int at = stacks.FindIndex(s => s.Item == item);
+        if (at >= 0) stacks[at] = (item, stacks[at].Count + count);
+        else stacks.Add((item, count));
     }
 
     /// <summary>The Engine stat sources the worn armour holds, one per piece and slot.</summary>

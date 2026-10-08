@@ -15,7 +15,7 @@
     <RustyEngineProductUiEntry>main.js</RustyEngineProductUiEntry>
     <RustyEngineProductContentRoot>$(MSBuildProjectDirectory)/../../content</RustyEngineProductContentRoot>
     <RustyEngineProductUiProjectionStream>rusty-riders</RustyEngineProductUiProjectionStream>
-    <RustyEngineProductUiProjectionContract>rusty.riders.gallery</RustyEngineProductUiProjectionContract>
+    <RustyEngineProductUiProjectionContract>rusty.riders.hud</RustyEngineProductUiProjectionContract>
     <RustyEngineProductLifecycleMode>realtime</RustyEngineProductLifecycleMode>
     <RustyEngineProductFixedStepHz>60</RustyEngineProductFixedStepHz>
     <RustyEngineProductFixedStepMaxCatchUpSteps>4</RustyEngineProductFixedStepMaxCatchUpSteps>
@@ -24,6 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <RustyEngineProductInputIntent Include="riders.inventory" Value="payload:riders.inventory.v1" />
     <PackageReference Include="Rusty.Engine" Version="[$(RustyEnginePackageVersion)]" />
   </ItemGroup>
 </Project>

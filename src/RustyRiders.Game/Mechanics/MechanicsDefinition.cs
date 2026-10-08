@@ -134,8 +134,11 @@ internal sealed record AttributeScaling(string Attribute, float PerPoint);
 /// <summary>A resource pool (health, charge) bounded by a derived stat, recovering <see cref="Regeneration"/> points a world second.</summary>
 internal sealed record TrackDefinition(string Id, string Name, string Maximum, float Regeneration);
 
-/// <summary>A kind of damage; each actor holds a resistance to it as a fraction removed (negative is a weakness).</summary>
-internal sealed record DamageKindDefinition(string Id, string Name, float MinimumResistance, float MaximumResistance);
+/// <summary>
+/// A kind of damage; each actor holds a resistance to it as a fraction removed (negative is a weakness).
+/// <see cref="Icon"/> names its picture in the DOM UI's art.
+/// </summary>
+internal sealed record DamageKindDefinition(string Id, string Name, float MinimumResistance, float MaximumResistance, string Icon);
 
 /// <summary>
 /// One actor's numbers in the vocabulary: every attribute, any derived bases it overrides, its resistances (absent is
