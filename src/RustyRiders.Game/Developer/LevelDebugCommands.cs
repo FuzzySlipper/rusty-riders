@@ -21,7 +21,7 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
         if (scene() is not LevelScene level) return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "Not in a level.");
         LevelPoints points = level.Points;
         return DebugCommandResult.Success(JsonSerializer.Serialize(new LevelInspection(level.Status, Xyz(points.Entry), Xyz(points.Arrival),
-            points.Rifts.Select(r => new RiftInspection(r.Index, Xyz(r.Feet), r.Destination.Tileset, r.Destination.Name)).ToArray(),
+            points.Rifts.Select(r => new RiftInspection(r.Index, Xyz(r.Feet), r.Destination?.Tileset ?? "", r.Destination?.Name ?? "return")).ToArray(),
             points.Caches.Select(Xyz).ToArray(), points.Residents.Select(Xyz).ToArray(), level.Problems.ToArray()),
             DebugJson.Default.LevelInspection));
     }
@@ -53,7 +53,7 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
         Vector3 face = new(MathF.Sin(rift.YawRadians), 0, MathF.Cos(rift.YawRadians));
         Vector3 stand = level.Navigation.Nearest(rift.Feet + face * ApproachMetres) ?? rift.Feet + face * ApproachMetres;
         walker.Place(stand, Walker.YawDegreesToward(stand, rift.Feet));
-        return DebugCommandResult.Success($"Standing at {Xyz(stand)[0]:0.0}, {Xyz(stand)[2]:0.0}, facing rift {index} to {rift.Destination.Name}.");
+        return DebugCommandResult.Success($"Standing at {Xyz(stand)[0]:0.0}, {Xyz(stand)[2]:0.0}, facing rift {index} to {rift.Destination?.Name ?? "return"}.");
     }
 
     [DebugCommand("riders.dev.goto", Description = "Developer override: stand at floor point (x, z) facing a yaw in degrees (0 faces -Z, 90 faces +X), for repeatable captures.")]
@@ -65,6 +65,17 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
         Vector3 stand = scene() is LevelScene level ? level.Navigation.Nearest(point) ?? point : point;
         walker.Place(stand, yaw);
         return DebugCommandResult.Success(FormattableString.Invariant($"Standing at {stand.X:0.0}, {stand.Y:0.0}, {stand.Z:0.0}."));
+    }
+
+    [DebugCommand("riders.dev.travel", Description = "Developer override: stand in rift <index>, so the next update goes through it.")]
+    public DebugCommandResult Travel(int index)
+    {
+        if (scene() is not LevelScene level) return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "Not in a level.");
+        if (index < 0 || index >= level.Points.Rifts.Count)
+            return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, $"Rifts are 0 to {level.Points.Rifts.Count - 1}.");
+        RiftPoint rift = level.Points.Rifts[index];
+        walker.Place(rift.Feet, walker.LookState.YawRadians * 180 / MathF.PI);
+        return DebugCommandResult.Success($"Standing in rift {index} to {rift.Destination?.Name ?? "return"}.");
     }
 
     [DebugCommand("riders.dev.entry", Description = "Developer override: stand at the arrival point in front of the entry portal, facing into the level.")]

@@ -43,14 +43,18 @@ export function mountProductUi(root, context) {
       .riders-gallery .threat .chase { font-size:16px; font-weight:600; color:#ffb38a; letter-spacing:.03em; }
       .riders-gallery .threat .hostiles { font-size:12px; color:#f0c8b8; }
       .riders-gallery .threat div:empty { display:none; }
+      .riders-gallery .threat .depth { font-size:12px; color:#d9c8ff; }
+      .riders-gallery .summary { position:absolute; left:50%; top:30%; transform:translateX(-50%); max-width:46ch; white-space:pre-line; text-align:center; background:#120c16e6; border:1px solid #6b4a7a; border-radius:8px; padding:14px 22px; font-size:16px; color:#f3e9ff; }
+      .riders-gallery .summary:empty { display:none; }
       .riders-gallery .reticle { position:absolute; left:50%; top:50%; width:4px; height:4px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px #0007; transform:translate(-50%,-50%); }
     </style>
     <header><h1>Rusty Riders</h1><div class="status" data-fact="status">Loading</div><div class="problems" data-fact="problems"></div></header>
     <div class="clock"><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
     <div class="vitals"><div class="bar"><div class="fill"></div></div><div class="value" data-fact="health"></div><div class="effects" data-fact="effects"></div></div>
-    <div class="arms"><div class="hands" data-fact="hands"></div><div class="supplies" data-fact="supplies"></div><div class="haul" data-fact="haul"></div><div class="ready" data-fact="ready"></div></div>
+    <div class="arms"><div class="hands" data-fact="hands"></div><div class="supplies" data-fact="supplies"></div><div class="haul" data-fact="haul"></div><div class="haul" data-fact="bank"></div><div class="ready" data-fact="ready"></div></div>
     <div class="prompt" data-fact="prompt"></div>
-    <div class="threat"><div class="chase" data-fact="chase"></div><div class="hostiles" data-fact="hostiles"></div></div>
+    <div class="threat"><div class="chase" data-fact="chase"></div><div class="hostiles" data-fact="hostiles"></div><div class="depth" data-fact="depth"></div></div>
+    <div class="summary" data-fact="summary"></div>
     <div class="notice" data-fact="notice"></div>
     <div class="action" data-fact="action"></div>
     <div class="reticle"></div>

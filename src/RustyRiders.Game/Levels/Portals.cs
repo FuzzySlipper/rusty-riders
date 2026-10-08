@@ -38,8 +38,10 @@ internal sealed class Portals : IDisposable
         portals.Add((points.Entry, points.EntryYawRadians, Make(sphere, PrimitiveGeometry.Sphere, rules.EntryColor),
             Make(cube, PrimitiveGeometry.Cube, rules.EntryColor)));
         foreach (RiftPoint rift in points.Rifts)
-            portals.Add((rift.Feet, rift.YawRadians, Make(sphere, PrimitiveGeometry.Sphere, rift.Destination.RiftColor),
-                Make(cube, PrimitiveGeometry.Cube, rift.Destination.RiftColor)));
+        {
+            float[] color = rift.Destination?.RiftColor ?? rules.ReturnColor;
+            portals.Add((rift.Feet, rift.YawRadians, Make(sphere, PrimitiveGeometry.Sphere, color), Make(cube, PrimitiveGeometry.Cube, color)));
+        }
         if (!rules.Markers.Show) return;
         ulong id = FirstObjectId + (ulong)(portals.Count * ObjectsPerPortal);
         Vector3 size = new(rules.Markers.Size);

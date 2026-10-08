@@ -37,7 +37,8 @@ internal sealed record LevelRules(PointRules Points, NavigationTuning Navigation
 /// <see cref="LevelAttempts"/> levels in all.
 /// </summary>
 internal sealed record PointRules(string[] RiftTags, int MinimumRifts, int MaximumRifts, string[] CacheTags, string[] CacheObjectives,
-    string[] ResidentTags, float ArrivalMetres, float ReachSlackMetres, int LevelAttempts, PortalLook Portal, float[] EntryColor, MarkerLook Markers)
+    string[] ResidentTags, float ArrivalMetres, float ReachSlackMetres, int LevelAttempts, PortalLook Portal, float[] EntryColor, float[] ReturnColor,
+    MarkerLook Markers)
 {
     internal const string Path = "levels/points.json";
 
@@ -48,6 +49,7 @@ internal sealed record PointRules(string[] RiftTags, int MinimumRifts, int Maxim
         Authored.AtLeast(Path, "reachSlackMetres", ReachSlackMetres, 0);
         Authored.Require(LevelAttempts >= 1, Path, "levelAttempts", "must be at least 1.");
         Authored.Colour(Path, "entryColor", EntryColor);
+        Authored.Colour(Path, "returnColor", ReturnColor);
         Portal.Validate();
         Markers.Validate();
     }

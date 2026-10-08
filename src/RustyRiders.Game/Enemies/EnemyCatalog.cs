@@ -61,12 +61,6 @@ internal sealed record EnemyLook(float[] Size, float[] Color, float[] WindupColo
 
 internal sealed record EnemyKindFile(EnemyKind[] Kinds);
 
-/// <summary>A value that changes by <see cref="PerDepth"/> for each level pushed through, never below <see cref="Minimum"/>.</summary>
-internal sealed record DepthCurve(float Base, float PerDepth, float Minimum)
-{
-    internal float At(int depth) => MathF.Max(Minimum, Base + PerDepth * depth);
-}
-
 /// <summary>A kind's share of a random pick.</summary>
 internal sealed record KindWeight(string Kind, int Weight);
 

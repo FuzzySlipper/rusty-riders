@@ -250,6 +250,39 @@ Converted only when a task needs it ([direction.md](direction.md#what-the-old-ar
 Out of scope for it: the base, affixes and rarity, converted enemy animation, the third-person camera, save
 games beyond a banked total.
 
+### What the escalation does today
+
+With the authored curves (`content/run/run.json`, `content/enemies/chase.json`), each rift pushed through:
+
+| Depth | Chase timer | First wave | Reward multiplier |
+| --- | --- | --- | --- |
+| 0 | 30 s | 2 | ×1.0 |
+| 2 | 24 s | 4 | ×1.7 |
+| 4 | 18 s | 6 | ×2.4 |
+
+Wave intervals also shrink with depth (12 s − 1 per depth, floor 4 s). The multiplier scales cache and drop rolls,
+so supplies, ammunition and gear rise together.
+
+Every level has exactly one return rift (placed by the seed). Its label shows the haul it would bank, and a rift
+to another world shows that world and the depth it leads to.
+
+### Push or bank (question 4): first read
+
+Question 4 is not yet answered by real play: the run loop was exercised with developer travel, not a played
+run. What is in place:
+- The stakes are visible (haul, bank, the depth a rift leads to).
+- A fall costs the whole haul.
+- The cost of pushing (timer down 3 s and one more chaser per wave per depth) and the reward (×0.35 per depth)
+  are both on screen.
+
+Things to watch in the first human playtests:
+- The return rift can be the farthest rift, which makes banking a trek; it may want to be nearer the entry, or
+  marked.
+- Supplies only come from caches and drops, so a level rushed for its rift banks little. The haul may need its
+  own source in each level (a bonus room cache) for the choice to bite by depth 3–4.
+- At depth 4 the timer (18 s) still leaves room to open a cache. Whether that feels frantic depends on wave
+  pathing time, which is level-size dependent.
+
 ## Open questions
 
 - How much a death keeps (nothing, a fraction, or banked-at-checkpoint).

@@ -24,6 +24,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly Walker walker;
     private readonly TimeFlow time;
     private readonly Play play;
+    private readonly Expedition run;
     private readonly UiStream hud;
     private ulong uiSequence;
     private double sampleTime;
@@ -40,6 +41,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         WalkerTuning walking = WalkerTuning.Load(engine);
         walker = new Walker(engine, walking, scenes.Current);
         play = new Play(engine, walker, walking.Radius);
+        run = new Expedition(engine, scenes, play, walker);
         EnterScene();
         time = new TimeFlow(engine, TimeTuning.Load(engine));
         hud = engine.Ui.OpenStream(new UiStreamRequest(UiStreamId, UiContract));
@@ -73,6 +75,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         if (DeveloperKeys(physical)) EnterScene();
         if (physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();
         jumpPending |= frame.JumpPressed;
+        if (frame.Movement != System.Numerics.Vector2.Zero) run.Dismiss();
         float actionSeconds = play.Act(physical, scenes.ShowingLevel);
         bool fell = false;
         for (uint step = 0; step < update.Facts.AdmittedStepCount && !fell; step++)
@@ -85,7 +88,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         if (update.Facts.AdmittedStepCount > 0) scenes.Current.Animate(time.WorldSeconds);
         if (scenes.Level is { } level && level.RiftAt(walker.Feet) is { } rift)
         {
-            Travel(level, rift);
+            run.Travel(level, rift);
+            jumpPending = false;
             Publish();
             return ProductUpdateResult.None;
         }
@@ -138,6 +142,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         if (disposed) return;
         disposed = true;
         walker.Dispose();
+        run.Dispose();
         play.Dispose();
         scenes.Dispose();
         hud.Dispose();
@@ -171,31 +176,19 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         return null;
     }
 
-    /// <summary>Play takes up the current scene and the walker stands at its spawn.</summary>
+    /// <summary>Play takes up the current scene at the run's depth and the walker stands at its spawn.</summary>
     private void EnterScene()
     {
-        play.Enter(scenes.Current, scenes.Settings.Tileset, scenes.Seed, 0, 1);
-        walker.Enter(scenes.Current);
+        run.EnterScene();
         jumpPending = false;
     }
 
-    /// <summary>
-    /// The player has fallen. The run loop will decide what that costs; for now they stand up whole at the level's arrival
-    /// and the world holds.
-    /// </summary>
+    /// <summary>The player has fallen: the run ends (its haul lost) and the next begins, with the world held.</summary>
     private void Defeated()
     {
-        play.ResetPlayer();
-        EnterScene();
+        run.Fell();
+        jumpPending = false;
         time.Hold();
-    }
-
-    /// <summary>Goes through a rift: a level of its destination world, on a layout and seed drawn from this level's seed.</summary>
-    private void Travel(LevelScene from, RiftPoint rift)
-    {
-        Random random = new(unchecked(scenes.Seed * 31 + rift.Index + 1));
-        scenes.GoTo(rift.Destination.Tileset, from.TravelLayouts[random.Next(from.TravelLayouts.Length)], random.Next());
-        EnterScene();
     }
 
     private void Publish()
@@ -203,6 +196,6 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         engine.Graphics.PublishSnapshot([.. scenes.Current.Facts, .. play.Facts()]);
         walker.Publish(sampleTime);
         engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scenes.Current, walker, time, play.Vitals,
-            play.MechanicsText, play.Combat, play.Enemies, play.Inventory, play.Pickups)));
+            play.MechanicsText, play.Combat, play.Enemies, play.Inventory, play.Pickups, run)));
     }
 }

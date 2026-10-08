@@ -6,6 +6,7 @@ using RustyRiders.Game.Enemies;
 using RustyRiders.Game.Items;
 using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
+using RustyRiders.Game.Run;
 using RustyRiders.Game.Time;
 
 namespace RustyRiders.Game.Ui;
@@ -15,18 +16,22 @@ internal static class Hud
 {
     private const int ProblemsShown = 4;
 
-    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat, EnemyDirector enemies, Inventory inventory, Pickups pickups)
+    internal static UiValue Create(IWalkScene scene, Walker walker, TimeFlow time, PlayerVitals vitals, MechanicsMessages messages, PlayerCombat combat, EnemyDirector enemies, Inventory inventory, Pickups pickups, Expedition run)
     {
         string problems = scene.Problems.Count == 0 ? ""
             : string.Join("\n", scene.Problems.Take(ProblemsShown))
               + (scene.Problems.Count > ProblemsShown ? $"\n… and {scene.Problems.Count - ProblemsShown} more" : "");
         (string hands, string supplies, string action, string notice) = combat.Hud();
         (string chase, string hostiles) = enemies.Hud();
+        (string depth, string bank, string? rift) = run.Hud(walker.Feet);
         (string Key, string Text)[] fields =
         [
             ("status", scene.Status),
             ("problems", problems),
-            ("exhibit", scene.Describe(walker.Position)),
+            ("exhibit", rift ?? scene.Describe(walker.Position)),
+            ("depth", depth),
+            ("bank", bank),
+            ("summary", run.Summary),
             ("position", FormattableString.Invariant($"{(walker.Flying ? "flying" : "walking")} · {walker.Feet.X:0.0}, {walker.Feet.Y:0.0}, {walker.Feet.Z:0.0}")),
             ("time", time.State.Describe(time.Tuning.HeldRate)),
             ("worldTime", FormattableString.Invariant($"{time.WorldSeconds:0.0} s")),

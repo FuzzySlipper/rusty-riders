@@ -3,8 +3,14 @@ using Rusty.Engine;
 
 namespace RustyRiders.Game.Levels;
 
-/// <summary>A rift out of the level: where it stands, which way its face turns, and the world it leads to.</summary>
-internal sealed record RiftPoint(int Index, Vector3 Feet, float YawRadians, World Destination);
+/// <summary>
+/// A rift out of the level: where it stands, which way its face turns, and the world it leads to, or none for the
+/// return rift, which ends the run and banks its haul.
+/// </summary>
+internal sealed record RiftPoint(int Index, Vector3 Feet, float YawRadians, World? Destination)
+{
+    internal bool Returns => Destination is null;
+}
 
 /// <summary>
 /// A stamped level's gameplay points, standing on its navigation: the entry portal (where the player arrives and the
@@ -17,7 +23,8 @@ internal sealed record LevelPoints(Vector3 Entry, float EntryYawRadians, Vector3
     /// <summary>
     /// Places the points from the plan's rooms by <paramref name="rules"/> and snaps each to the navigation; a point with
     /// no walkable support near it, or none the arrival can walk to within the slack, is left out and named in
-    /// <see cref="Problems"/>. Rift destinations are the other worlds, shuffled by the seed.
+    /// <see cref="Problems"/>. One rift, picked by the seed, is the return rift; the others lead to the other worlds,
+    /// shuffled by the seed.
     /// </summary>
     internal static LevelPoints Place(LevelPlan plan, PointRules rules, World[] worlds, string tileset, int seed,
         Func<(int X, int Z), Vector3> cellCentre, LevelNavigation navigation)
@@ -48,14 +55,18 @@ internal sealed record LevelPoints(Vector3 Entry, float EntryYawRadians, Vector3
 
         World[] destinations = worlds.Where(world => world.Tileset != tileset).OrderBy(_ => random.Next()).ToArray();
         if (destinations.Length == 0) destinations = worlds;
-        List<RiftPoint> rifts = [];
+        List<(Vector3 Feet, float Yaw)> spots = [];
         foreach ((int X, int Z) cell in riftCells)
         {
             if (Snap(cellCentre(cell), $"rift at cell {cell}") is not { } feet) continue;
             Vector3 toEntry = entry - feet;
-            float yaw = MathF.Atan2(toEntry.X, toEntry.Z); // the disc's face turns toward where the player came in
-            rifts.Add(new RiftPoint(rifts.Count, feet, yaw, destinations[rifts.Count % destinations.Length]));
+            spots.Add((feet, MathF.Atan2(toEntry.X, toEntry.Z))); // the disc's face turns toward where the player came in
         }
+        int returning = spots.Count == 0 ? -1 : random.Next(spots.Count);
+        List<RiftPoint> rifts = [];
+        int destination = 0;
+        for (int i = 0; i < spots.Count; i++)
+            rifts.Add(new RiftPoint(i, spots[i].Feet, spots[i].Yaw, i == returning ? null : destinations[destination++ % destinations.Length]));
 
         List<Vector3> caches = [];
         foreach (PlannedRoom room in others)

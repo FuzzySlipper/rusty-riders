@@ -130,10 +130,12 @@ internal sealed class LevelScene : IWalkScene
     /// <summary>Moves the level's world-time presentation (the portals) to <paramref name="seconds"/>.</summary>
     public void Animate(double seconds) => worldSeconds = seconds;
 
+    /// <summary>The rift nearest a position, if one is close enough for its label to show.</summary>
+    internal RiftPoint? RiftNear(Vector3 position) => Points.Rifts.Where(rift => Vector3.Distance(rift.Feet, position) <= RiftLabelMetres)
+        .MinBy(rift => Vector3.Distance(rift.Feet, position));
+
     public string Describe(Vector3 position)
     {
-        RiftPoint? near = Points.Rifts.MinBy(rift => Vector3.Distance(rift.Feet, position));
-        if (near is not null && Vector3.Distance(near.Feet, position) <= RiftLabelMetres) return $"Rift → {near.Destination.Name}";
         (int x, int z) = ((int)MathF.Round(-position.X / cellSize), (int)MathF.Round(position.Z / cellSize));
         return tiles.TryGetValue((x, z), out var placed)
             ? $"{placed.Tile.Kind} ({x}, {z}) turned {placed.Tile.Rotation * 90}° · {System.IO.Path.GetFileName(placed.Prefab)}"

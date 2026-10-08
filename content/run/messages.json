@@ -1,0 +1,9 @@
+{
+  "depth": "Depth {depth} · rewards ×{multiplier}",
+  "banked": "Banked {total}",
+  "rift": "Rift to {world} · depth {depth}",
+  "returnRift": "Return rift · bank {haul}",
+  "summaryBanked": "Run {run} ends: {haul} banked from depth {depth}. Bank {total}.",
+  "summaryLost": "Run {run} ends: you fell at depth {depth} and {haul} is lost. Bank {total}.",
+  "summaryNext": "Move to begin run {next}."
+}

@@ -1,0 +1,4 @@
+{
+  "rewardMultiplier": { "base": 1, "perDepth": 0.35, "minimum": 1 },
+  "seedStride": 7919
+}
