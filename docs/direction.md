@@ -133,6 +133,39 @@ Captures: crew-playtest sessions `af817b80-a918-4cbc-a914-18485bb68d9d` (tiles, 
 `dcf08c11-e5c9-4634-a624-a524ce53cf72` (floor textures) and
 `94395057-13a6-4930-b617-2d542f9575b5` (sweeps), retained 14 days.
 
+## Converted weapons and enemies
+
+`scripts/import-old-art.sh` also converts the starter weapons (Den #9645) and one animated creature per
+starter enemy kind (Den #9646). Each weapon is an old item prefab, so it gets a placement file. Each enemy is
+its whole animated model, `models/<model>.glb`, plus its NPC prefab's placement file. That file holds only
+static per-mesh parts and the old prefab scale. Picked by look from rendered previews (2026-10-08):
+
+| Use | Old source | Why |
+| --- | --- | --- |
+| rift-blade | `GameData/Items/Weapons/Models/Prefabs/1H_sword_C_ShortSword` | Wavy blade, red hilt |
+| maul | `.../Prefabs/BattleHammer_Maul` | Two-handed hammer, textured |
+| laser-flintlock | `.../Prefabs/Flintlock_Flintlock` | The only textured pistol; the sci-fi guns have no Unity materials |
+| ember-wand | `Art/Models/Weapons/Mandragora` | Twisted staff with a red crystal |
+| frost-sigil | `Art/Models/Weapons/Ravenwood` | Dark staff with a blue crystal; its `crystal` row alone can be the sigil |
+| ripper | `Art/Models/Enemies/KOTG HARPY` | Fast clawed flyer |
+| gunner | `Art/Models/Enemies/HC Weresquid` | Staff caster with six `castSpell` clips |
+| brute | `Art/Models/Enemies/OH Demon Brute` | Heavy, with a big weapon |
+
+Most enemy clips (idle, getHit, death, in-place walk and run) are in `Art/Animations/Character`, not beside
+the model. unity-import merges `Model@Clip` files only from the model's own folder. So the script converts from
+a hard-linked copy of `Assets` with those clips linked beside each model, which Unity bound through the
+creature's animator. It leaves out the root-motion (`_RM`) duplicates.
+
+Other creatures that were tried:
+- The FBX 2013 re-saves suggested first did not work out.
+  - `OH HobgoblinNew` matches the Character Hobgoblin clips, but its own one-key take converts to a
+    zero-length clip, which the Engine refuses (`InvalidClipDuration`).
+  - `OH Hobgoblin` is admitted, but its `plate_armor` skin deforms into a blob.
+  - `OH Watcher` is refused (its clip timestamps collapse at microsecond quantization).
+  - `HC EVIL WATCHER` has the zero-length take, and its Character clips are FBX 6 that have not been re-saved.
+  - The `KOTG ORC` and `OH SKELETON KNIGHT` Character clips are FBX 6 that have not been re-saved either.
+- `OH Succubus` with every clip exceeds the Engine's 4,096 animation channels.
+
 ## Backups of generated art
 
 `content/old-art/` stays out of git, including Git LFS. LFS still keeps every uploaded version, and each
