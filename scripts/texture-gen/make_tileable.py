@@ -2,13 +2,17 @@
 """Make a generated texture tile, and derive its normal map.
 
     scripts/texture-gen/make_tileable.py <input.png> <out-albedo.png> <out-normal.png> --prompt "..." [--size 1024]
+        [--model qwen|zimage|zimage-lora] [--lora NAME.safetensors] [--colour] [--trim-frame]
 
 Tiling (needs a ComfyUI, COMFY_URL, default the 5090 desktop, with Qwen-Image 2.1 or Z-Image Turbo):
 1. The image is rolled by half its size, so its seams form a cross through the middle and its borders,
    formerly its interior, wrap continuously.
 2. A model repaints a soft band over that cross (img2img under a noise mask), so the seam disappears while
    the borders stay untouched. Qwen-Image 2.1 (the default) also sees the rolled image as its reference,
-   so the band continues the texture's own style; Z-Image Turbo works from the prompt alone.
+   so the band continues the texture's own style; Z-Image Turbo works from the prompt alone. zimage-lora is
+   Z-Image base with a style LoRA (--lora, default the house LoRA) and the house negative prompt: it knows the
+   style without a reference, and runs on the Strix Halos, which lack the Qwen-Image 2.1 nodes.
+With --trim-frame an ink border drawn around the image (checks.py flags it "framed") is cut off first.
 The albedo is saved greyscale unless --colour is given: level palettes tint it.
 
 Normal map: a height from blurred luminance (bright is high, as the old toon textures read) and its
@@ -25,6 +29,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 sys.path.insert(0, os.path.dirname(__file__))
+import checks  # noqa: E402
 import comfy  # noqa: E402
 
 
@@ -36,7 +41,12 @@ def seam_mask(size: int, band: float) -> Image.Image:
     return Image.fromarray((cross * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(size / 64))
 
 
-def inpaint_graph(model: str, image: str, mask: str, prompt: str, seed: int, denoise: float) -> dict:
+HOUSE_LORA = "rrink_zimage_v4_seg4_2000_steps_00001_.safetensors"
+HOUSE_NEGATIVE = ("text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, "
+                  "landscape, photograph, photorealistic, 3d render, seam, straight line")
+
+
+def inpaint_graph(model: str, image: str, mask: str, prompt: str, seed: int, denoise: float, lora: str) -> dict:
     if model == "qwen":
         return {
             "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": "qwen_image_2.1_int8_convrot.safetensors", "weight_dtype": "default"}},
@@ -53,6 +63,25 @@ def inpaint_graph(model: str, image: str, mask: str, prompt: str, seed: int, den
             "masked": {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["encode", 0], "mask": ["mask", 0]}},
             "sample": {"class_type": "KSampler", "inputs": {"model": ["cache", 0], "positive": ["text", 0], "negative": ["text", 1],
                        "latent_image": ["masked", 0], "seed": seed, "steps": 25, "cfg": 1, "sampler_name": "euler",
+                       "scheduler": "simple", "denoise": denoise}},
+            "decode": {"class_type": "VAEDecode", "inputs": {"samples": ["sample", 0], "vae": ["vae", 0]}},
+            "save": {"class_type": "SaveImage", "inputs": {"images": ["decode", 0], "filename_prefix": "riders-tileable"}},
+        }
+    if model == "zimage-lora":
+        return {
+            "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": "z_image_bf16.safetensors", "weight_dtype": "default"}},
+            "lora": {"class_type": "LoraLoaderModelOnly", "inputs": {"model": ["unet", 0], "lora_name": lora, "strength_model": 1.0}},
+            "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}},
+            "vae": {"class_type": "VAELoader", "inputs": {"vae_name": "ae.safetensors"}},
+            "model": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["lora", 0], "shift": 3}},
+            "text": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": prompt}},
+            "negative": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": HOUSE_NEGATIVE}},
+            "image": {"class_type": "LoadImage", "inputs": {"image": image}},
+            "mask": {"class_type": "LoadImageMask", "inputs": {"image": mask, "channel": "red"}},
+            "encode": {"class_type": "VAEEncode", "inputs": {"pixels": ["image", 0], "vae": ["vae", 0]}},
+            "masked": {"class_type": "SetLatentNoiseMask", "inputs": {"samples": ["encode", 0], "mask": ["mask", 0]}},
+            "sample": {"class_type": "KSampler", "inputs": {"model": ["model", 0], "positive": ["text", 0], "negative": ["negative", 0],
+                       "latent_image": ["masked", 0], "seed": seed, "steps": 25, "cfg": 4, "sampler_name": "res_multistep",
                        "scheduler": "simple", "denoise": denoise}},
             "decode": {"class_type": "VAEDecode", "inputs": {"samples": ["sample", 0], "vae": ["vae", 0]}},
             "save": {"class_type": "SaveImage", "inputs": {"images": ["decode", 0], "filename_prefix": "riders-tileable"}},
@@ -76,7 +105,7 @@ def inpaint_graph(model: str, image: str, mask: str, prompt: str, seed: int, den
     }
 
 
-def tileable(source: Image.Image, model: str, prompt: str, seed: int, denoise: float, band: float) -> Image.Image:
+def tileable(source: Image.Image, model: str, prompt: str, seed: int, denoise: float, band: float, lora: str) -> Image.Image:
     size = source.width
     rolled = Image.fromarray(np.roll(np.asarray(source), (size // 2, size // 2), axis=(0, 1)))
     mask = seam_mask(size, band)
@@ -86,7 +115,7 @@ def tileable(source: Image.Image, model: str, prompt: str, seed: int, denoise: f
         mask.save(mask_path)
         comfy.upload(image_path)
         comfy.upload(mask_path)
-        out = comfy.run(inpaint_graph(model, os.path.basename(image_path), os.path.basename(mask_path), prompt, seed, denoise),
+        out = comfy.run(inpaint_graph(model, os.path.basename(image_path), os.path.basename(mask_path), prompt, seed, denoise, lora),
                         os.path.join(work, "out"))
         painted = Image.open(out[0]).convert("RGB").resize((size, size), Image.LANCZOS)
     # Keep the untouched pixels exactly (the VAE round trip softens them), so the borders still wrap.
@@ -116,11 +145,16 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=9373)
     parser.add_argument("--denoise", type=float, default=.75)
     parser.add_argument("--band", type=float, default=.08, help="seam band half-width as a share of the size")
-    parser.add_argument("--model", choices=["qwen", "zimage"], default="qwen", help="what repaints the seams")
+    parser.add_argument("--model", choices=["qwen", "zimage", "zimage-lora"], default="qwen", help="what repaints the seams")
+    parser.add_argument("--lora", default=HOUSE_LORA, help="style LoRA for --model zimage-lora")
+    parser.add_argument("--trim-frame", action="store_true", help="cut off a drawn border before tiling")
     parser.add_argument("--colour", action="store_true", help="keep colour instead of saving a greyscale albedo")
     args = parser.parse_args()
-    source = Image.open(args.input).convert("RGB").resize((args.size, args.size), Image.LANCZOS)
-    albedo = tileable(source, args.model, args.prompt, args.seed, args.denoise, args.band)
+    source = Image.open(args.input).convert("RGB")
+    if args.trim_frame and (box := checks.frame_box(source)):
+        source = source.crop(box)
+    source = source.resize((args.size, args.size), Image.LANCZOS)
+    albedo = tileable(source, args.model, args.prompt, args.seed, args.denoise, args.band, args.lora)
     if not args.colour:
         albedo = albedo.convert("L").convert("RGB")
     # Engine content textures are 8-bit RGBA PNGs.

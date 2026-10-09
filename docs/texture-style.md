@@ -158,8 +158,19 @@ On the 72 images of the two reviews above, the first version agreed with the use
 The rubric was written from these same reviews, so validate it on the next fresh batch before relying on it.
 As a pre-filter, the judges drop the obvious rejects, and the user's pass decides.
 
-**Fresh validation (v4 review, 2026-10-08): 62% (15/24), no better than chance on that batch.** It caught neither
-of the two rejects (the shadowed palace floors: shadows are not in its rubric) and rejected 7 of 22 keeps, three
-of them user favourites. On a strong batch where nearly everything is a keep, the rubric's reject cues (flat
-fills, murk) mostly hit acceptable images. Use it only to drop obvious failures from weak or mixed batches, and
-do not use it to rank a good batch.
+**Fresh validation (v4 review, 2026-10-08): 62% (15/24), no better than chance on that batch.** The first
+version caught neither of the two rejects (shadowed palace floors: shadows were not in its rubric) and rejected
+7 of 22 keeps, three of them user favourites. On a strong batch where nearly everything is a keep, its reject
+cues (flat fills, murk) mostly hit acceptable images.
+
+The second version (the current prompt file) adds "a scene rather than a surface" (walls, pillars or steps
+casting strong shadows) as a reject, and says a plain but hand-inked image is a keep, and to keep when unsure:
+
+| Version | First 72 (two reviews) | v4 review (24) | All 96 |
+| --- | --- | --- | --- |
+| 1 | 81%: 30/39 rejects caught, 5/33 keeps rejected | 62%: 0/2 caught, 7/22 rejected | 73/96 |
+| 2 | 78%: 25/39 caught, 2/33 rejected | 75%: 2/2 caught, 6/22 rejected | 74/96 |
+
+Both rows are in-sample: version 2's shadow cue was written from the v4 review's two rejects. Version 2 is more
+lenient, which suits a pre-filter, but neither version ranks a good batch: use it to drop obvious failures from
+weak or mixed batches, and leave the choice among good images to the user's pass.

@@ -1,5 +1,11 @@
 You are pre-screening candidate floor textures for the art director of a stylized first-person game. Do only this:
 1. Read /home/agent/dev/rusty-riders/docs/texture-style.md, the sections "House style" and "Human review calibration". They describe what the art director keeps and rejects.
-2. Look at the contact sheet SHEET (12 candidates lettered A–L; subjects are cave rock, cave cells, lava rock and forest ground).
-3. For each letter decide "keep" or "reject" as the art director would. Rejects are: clean flat vector-like fills with little ink detail; photographic or 3D-rendered looks; busy fields of oval cells; muddy or murky low-contrast images. Keeps are hand-painted, hand-inked images with visible ink linework, crack lines or hatching and varied tone inside forms. Judge style only; ignore seams, borders and camera angle.
+2. Look at the contact sheet SHEET (12 candidates lettered A–L, each a floor surface seen from above).
+3. For each letter decide "keep" or "reject" as the art director would. Reject only clear failures:
+   - clean flat vector-like fills: shapes filled with one smooth tone, with outlines but almost no ink detail inside them;
+   - photographic or 3D-rendered looks;
+   - busy fields of small oval cells;
+   - muddy or murky low-contrast images;
+   - a scene rather than a surface: walls, pillars, steps or ledges throwing strong cast shadows across the floor.
+   Keep hand-painted, hand-inked images with visible ink linework, crack lines or hatching and varied tone inside forms. A plain or simple image that is still hand-inked is a keep; when unsure, keep. Judge style only; ignore seams, thin borders and a slight camera angle.
 Reply with ONLY a JSON object {"A": "keep" or "reject", ..., "L": ...}. No other text, no files.
