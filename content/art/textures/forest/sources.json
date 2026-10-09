@@ -1,0 +1,24 @@
+{
+  "about": "Generated forest floor textures in the house ink style (rusty-riders #9420), user favourites from the blind v4 review of 2026-10-08. Made tileable by scripts/texture-gen/make_tileable.py --model zimage-lora --colour --trim-frame (Z-Image base with the house LoRA rrink_zimage_v4_seg4_2000 repainting the seam cross, denoise 0.75, band 0.08, seed 9373), on the den-m5/den-nimo Strix Halo ComfyUI. Colour albedo, not greyscale.",
+  "ink-a": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16, 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg6_3000_steps_00001_.safetensors at 1.0",
+    "seed": 3,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of mossy forest earth with small plants and tangled roots, filling the whole image, green and brown",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render",
+    "review": "img-09.png in the v4 blind review"
+  },
+  "ink-b": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16, 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg4_2000_steps_00001_.safetensors at 1.0",
+    "seed": 3,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of mossy forest earth with small plants and tangled roots, filling the whole image, green and brown",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render",
+    "review": "img-23.png in the v4 blind review"
+  },
+  "ink-c": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16, 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg4_2000_steps_00001_.safetensors at 1.0",
+    "seed": 4,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of mossy forest earth with small plants and tangled roots, filling the whole image, green and brown",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render",
+    "review": "img-01.png in the v4 blind review (ink border trimmed before tiling)"
+  }
+}

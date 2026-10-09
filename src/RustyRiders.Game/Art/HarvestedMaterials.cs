@@ -85,8 +85,9 @@ internal sealed class HarvestedMaterials : IDisposable
         RenderResourceReference normal = replacement is null
             ? Texture(document, glbPath, material["normalTexture"]?["index"], TextureColorSpace.Linear)
             : replacement.Normal is { } normalPath ? Texture(normalPath, TextureColorSpace.Linear) : default;
-        Color color = recolor?.BaseColor(material) ?? ColorOf(pbr?["baseColorFactor"], new Color(1, 1, 1, 1));
-        Color emissive = ColorOf(material["emissiveFactor"], new Color(0, 0, 0, 1));
+        Color color = replacement is { Untinted: true } ? new Color(1, 1, 1, 1)
+            : recolor?.BaseColor(material) ?? ColorOf(pbr?["baseColorFactor"], new Color(1, 1, 1, 1));
+        Color emissive = replacement is { Untinted: true } ? new Color(0, 0, 0, 1) : ColorOf(material["emissiveFactor"], new Color(0, 0, 0, 1));
         return engine.Graphics.CreateMaterial(new MaterialRequest(color, albedo, look.Roughness, new Color(1, 1, 1, 1),
             new Vector3(emissive.R, emissive.G, emissive.B), 1, false, MaterialAlphaMode.Opaque, .5f, 0,
             normal, look.NormalScale, look.TriplanarSharpness));
@@ -125,5 +126,8 @@ internal sealed class HarvestedMaterials : IDisposable
 /// <summary>How a harvested material is drawn on new geometry: triplanar sharpness (0 for the mesh's uv), normal tilt, roughness.</summary>
 internal sealed record HarvestedLook(float TriplanarSharpness, float NormalScale, float Roughness);
 
-/// <summary>Content textures (content-root paths) that replace a harvested material's own.</summary>
-internal sealed record ReplacementTextures(string Albedo, string? Normal);
+/// <summary>
+/// Content textures (content-root paths) that replace a harvested material's own. An untinted albedo is already
+/// coloured, so it drops the material's tint and glow.
+/// </summary>
+internal sealed record ReplacementTextures(string Albedo, string? Normal, bool Untinted = false);

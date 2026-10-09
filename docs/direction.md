@@ -129,6 +129,16 @@ Notes on the process:
 - Qwen-Image 2.1 was installed on the 5090 for this through ComfyUI-Manager's API
   (`Comfy-Org/Qwen-Image-2.1`: int8 model, Qwen3-VL 8B encoder, VAE, and the t2i/i2i prompt enhancers).
 
+**Lava and Forest** got generated builds too (2026-10-08, `content/levels/shells/LavaMap.json` and `ForestMap.json`,
+copied from the Cave's recipe with each tileset's floor, wall and prop names). Their floors are the user's favourites
+from the v4 LoRA review (`content/art/textures/lava/`, `forest/`; see texture-style.md):
+- They are colour textures (`"colour": true`), drawn without the material's palette tint and glow. The Lava ground
+  material's red tint and glow turned them into red mush; greyscale textures keep the tint.
+- In the swept builds they replace a red wash (Lava) and a noisy ground texture (Forest), and read as the house style
+  at eye level. Forest `ink-c` is the strongest up close.
+- The walls are still the old harvested textures: Lava's is a bright red wash and Forest's a busy camouflage. They
+  need the same treatment next. Forest under a closed ceiling also reads as a cave rather than a clearing.
+
 Captures: crew-playtest sessions `af817b80-a918-4cbc-a914-18485bb68d9d` (tiles, shells),
 `dcf08c11-e5c9-4634-a624-a524ce53cf72` (floor textures) and
 `94395057-13a6-4930-b617-2d542f9575b5` (sweeps), retained 14 days.

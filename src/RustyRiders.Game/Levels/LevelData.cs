@@ -67,11 +67,12 @@ internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial
 /// <summary>
 /// A floor texture to try in place of the floor material's own (content-root paths), repeating every
 /// <see cref="Metres"/>; <see cref="Source"/> says where it came from. <c>level.json</c>'s <c>floorTexture</c>, or V,
-/// picks one by id.
+/// picks one by id. A greyscale albedo takes the material's palette tint and glow; a <see cref="Colour"/> one is
+/// drawn as painted.
 /// </summary>
-internal sealed record FloorTexture(string Id, string Albedo, string? Normal, float Metres, string Source)
+internal sealed record FloorTexture(string Id, string Albedo, string? Normal, float Metres, string Source, bool Colour = false)
 {
-    internal Art.ReplacementTextures Replacement => new(Albedo, Normal);
+    internal Art.ReplacementTextures Replacement => new(Albedo, Normal, Colour);
 }
 
 /// <summary>
