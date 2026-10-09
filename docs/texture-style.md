@@ -56,24 +56,40 @@ The judges' rankings are merged by mean rank across shuffled orders. Calibration
 
 ## House style LoRA
 
-`rrink_zimage_v3_seg6_3000_steps_00001_.safetensors` is the house Z-Image base LoRA for the ink-toon family:
-- **Trained on:** 43 crops of the old Cave, Lava, Forest and combat textures, plus six GPT gold examples (two
-  Cave floors, a Lava floor, a forest floor, a ribbed cave wall and an eerie forest clearing), each whole and
-  zoomed. The Palace, StoneRoad and CyberTube textures are a different style and were left out.
-- **Settings:** 1024 px, rank 32, learning rate 3e-4, 3000 steps, on den-nimo (about 11.5 h).
+`rrink_zimage_v4_seg4_2000_steps_00001_.safetensors` (v4 at 2000 steps) is the house Z-Image base LoRA for the
+ink-toon family, at strength 1.0 with the house prompt below:
+- **Trained on:** the same 43 crops of the old Cave, Lava, Forest and combat textures as v3, plus the 26 images
+  the user kept in the first two review passes (mostly v2 output with Moebius wording), each whole and zoomed:
+  95 images. The Palace, StoneRoad and CyberTube textures are a different style and were left out.
+- **Settings:** 1024 px, rank 32, learning rate 3e-4, 3000 steps in six checkpointed segments, on den-m5
+  (about 10.5 h; a first attempt on den-nimo died when another workload ran the machine out of memory).
 - **Trigger:** "rrink style".
-- **Copies:** den-nimo, den-m5 and the 5090.
+- **Copies:** v4-2000 and v4-3000 on den-m5; every checkpoint in den-m5's ComfyUI `output/loras`.
 
-It gives consistent flat cel fills with ink outlines on cave rock and cells, lava and forest ground. Sonnet
-judges tied its best Cave rock floor with the GPT gold rock and placed it above the GPT cells, at 18 s an image.
+The user's blind review (2026-10-08, 24 images over cave rock, lava rock, forest ground and palace floor, seeds
+3–4) called it the best result so far. They marked their favourites and two tentative rejects:
+
+| Set | Favourites | Rejected |
+| --- | --- | --- |
+| v4-2000 | 5/8 | 1/8 |
+| v4-3000 | 3/8 | 0/8 |
+| v2-2000 | 4/8 | 1/8 |
+
+- **By subject:** forest ground 6/6 favourites, lava 4/6, cave rock 1/6, palace floor 1/6.
+- **Rejects:** both are palace floors with a strong cast shadow, drawn like a scene rather than a surface. They
+  would suit sprites; for textures, try "even flat lighting" in the prompt and "cast shadow, drop shadow" in
+  the negative. Both were also flagged `perspective` by `checks.py`, which flagged six kept images too.
+- **Frames:** seed 4 drew a thin ink border on most images, for every LoRA (`checks.py` flags them `framed`). The
+  user did not mind them, but trim them (`checks.frame_box`) before making a texture tile.
 
 Earlier runs:
 
 | Run | Settings | Result |
 | --- | --- | --- |
 | v1 | rank 16, learning rate 1e-4, 1500 steps | Barely moved anything but stone |
-| v2 | 768 px, two golds, 2000 steps | Worked, but its best floors now rank last against v3 |
-| v3 at 1500–2000 steps | as above | Uneven: sepia casts, and a forest that slid back toward photos |
+| v2 | 768 px, two golds, 2000 steps | Hand-inked detail the user liked; still competitive with v4 |
+| v3 at 1500–2000 steps | 1024 px, six GPT golds | Uneven: sepia casts, and a forest that slid back toward photos |
+| v3 at 3000 steps | as above | Consistent flat cel fills; judges tied it with the GPT golds, the user rejected 10/12 |
 
 The comparisons are in Den #9420, and the tools are in `scripts/texture-gen/` (`lora_dataset.py`, `caption.py`,
 `train_lora.py`).
@@ -99,7 +115,7 @@ marks before trusting their rankings again.
 
 ## House prompt
 
-For Z-Image base with the house LoRA (v2 at 1.0 or v3 at 0.75), the user's second review (2026-10-07, 24 images)
+For Z-Image base with the house LoRA (v4 or v2 at 1.0; earlier v3 at 0.75), the user's second review (2026-10-07, 24 images)
 kept every image with the Moebius wording (12/12) and fewer than half of the plain ones (5/12):
 
 | Prompt | v2 at 1.0 | v3 at 0.75 |
@@ -142,3 +158,8 @@ On the 72 images of the two reviews above, the first version agreed with the use
 The rubric was written from these same reviews, so validate it on the next fresh batch before relying on it.
 As a pre-filter, the judges drop the obvious rejects, and the user's pass decides.
 
+**Fresh validation (v4 review, 2026-10-08): 62% (15/24), no better than chance on that batch.** It caught neither
+of the two rejects (the shadowed palace floors: shadows are not in its rubric) and rejected 7 of 22 keeps, three
+of them user favourites. On a strong batch where nearly everything is a keep, the rubric's reject cues (flat
+fills, murk) mostly hit acceptable images. Use it only to drop obvious failures from weak or mixed batches, and
+do not use it to rank a good batch.
