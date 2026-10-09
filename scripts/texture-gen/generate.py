@@ -2,12 +2,20 @@
 """Generate a batch of images on the ComfyUI host, one per seed.
 
     scripts/texture-gen/generate.py <out-dir> --prompt "..." --model zimage-base [--lora NAME.safetensors]
-        [--lora-strength 1] [--seeds 1-8] [--reference ref.png] [--size 1024] [--tag name]
+        [--lora-strength 1] [--seeds 1-8] [--reference ref.png] [--size 1024] [--tag name] [--seamless]
+        [--control layout.png] [--control-strength 0.8]
 
 Models:
 - zimage-turbo: Z-Image Turbo, 8 steps, cfg 1 (fast drafts; no negative prompt)
 - zimage-base: Z-Image, 25 steps, cfg 4 (what style LoRAs are trained on)
 - qwen-edit: Qwen-Image 2.1 with --reference as its reference image, 25 steps, cfg 1
+
+--seamless (Z-Image only) patches the model and VAE to wrap at the image edges (SeamlessTileModelDiT and
+MakeCircularVAEDiT from ComfyUI-Universal-Seamless-Tiles, installed on den-m5), so the image tiles as generated.
+
+--control (Z-Image only) guides the composition with a line drawing through the Z-Image Fun ControlNet Union 2.1
+(models/model_patches on den-nimo and den-m5), for example a wrapping layout from layouts.py; the README's useful
+strength range is 0.65-1.
 
 Writes <out-dir>/<tag>-<seed>.png and appends each run (model, LoRA, prompt, seed, seconds) to
 <out-dir>/runs.jsonl, the provenance a texture's sources.json entry is copied from.
@@ -24,7 +32,7 @@ import comfy  # noqa: E402
 
 
 def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str, lora: str | None, strength: float,
-           negative: str = "") -> dict:
+           negative: str = "", seamless: bool = False, control: str | None = None, control_strength: float = .8) -> dict:
     g = {
         "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": unet, "weight_dtype": "default"}},
         "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}},
@@ -42,6 +50,17 @@ def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str,
     if lora:
         g["lora"] = {"class_type": "LoraLoaderModelOnly", "inputs": {"model": ["unet", 0], "lora_name": lora, "strength_model": strength}}
         g["sampling"]["inputs"]["model"] = ["lora", 0]
+    if control:
+        g["patch"] = {"class_type": "ModelPatchLoader", "inputs": {"name": "Z-Image-Fun-Controlnet-Union-2.1.safetensors"}}
+        g["layout"] = {"class_type": "LoadImage", "inputs": {"image": control}}
+        g["control"] = {"class_type": "ZImageFunControlnet", "inputs": {"model": g["sampling"]["inputs"]["model"], "model_patch": ["patch", 0],
+                        "vae": ["vae", 0], "strength": control_strength, "image": ["layout", 0]}}
+        g["sampling"]["inputs"]["model"] = ["control", 0]
+    if seamless:
+        g["seamless"] = {"class_type": "SeamlessTileModelDiT", "inputs": {"model": g["sampling"]["inputs"]["model"], "tiling": "enable", "seed": seed}}
+        g["sampling"]["inputs"]["model"] = ["seamless", 0]
+        g["circular"] = {"class_type": "MakeCircularVAEDiT", "inputs": {"vae": ["vae", 0], "tiling": "enable", "copy_vae": "Make a copy"}}
+        g["decode"]["inputs"]["vae"] = ["circular", 0]
     return g
 
 
@@ -82,8 +101,13 @@ def main() -> None:
     parser.add_argument("--reference")
     parser.add_argument("--size", type=int, default=1024)
     parser.add_argument("--tag", default="gen")
+    parser.add_argument("--control", help="layout image for the Z-Image ControlNet")
+    parser.add_argument("--control-strength", type=float, default=.8)
+    parser.add_argument("--seamless", action="store_true", help="generate wrapping at the edges (Z-Image; needs the seamless nodes)")
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
+    if args.control:
+        comfy.upload(args.control)
     if args.model == "qwen-edit":
         if not args.reference:
             parser.error("qwen-edit needs --reference")
@@ -92,15 +116,18 @@ def main() -> None:
         if args.model == "qwen-edit":
             g = qwen_edit(args.prompt, seed, args.size, os.path.basename(args.reference))
         elif args.model == "zimage-turbo":
-            g = zimage(args.prompt, seed, args.size, 8, 1, "z_image_turbo_bf16.safetensors", args.lora, args.lora_strength)
+            g = zimage(args.prompt, seed, args.size, 8, 1, "z_image_turbo_bf16.safetensors", args.lora, args.lora_strength, seamless=args.seamless,
+                       control=os.path.basename(args.control) if args.control else None, control_strength=args.control_strength)
         else:
-            g = zimage(args.prompt, seed, args.size, 25, 4, "z_image_bf16.safetensors", args.lora, args.lora_strength, args.negative)
+            g = zimage(args.prompt, seed, args.size, 25, 4, "z_image_bf16.safetensors", args.lora, args.lora_strength, args.negative, args.seamless,
+                       os.path.basename(args.control) if args.control else None, args.control_strength)
         with tempfile.TemporaryDirectory() as work:
             out = comfy.run(g, os.path.join(work, "out"))
             path = os.path.join(args.out_dir, f"{args.tag}-{seed}.png")
             shutil.copy(out[0], path)
         record = {"image": path, "model": args.model, "lora": args.lora, "lora_strength": args.lora_strength if args.lora else None,
-                  "reference": args.reference, "prompt": args.prompt, "negative": args.negative, "seed": seed, "size": args.size}
+                  "reference": args.reference, "prompt": args.prompt, "negative": args.negative, "seed": seed, "size": args.size, "seamless": args.seamless,
+                  "control": args.control, "control_strength": args.control_strength if args.control else None}
         with open(os.path.join(args.out_dir, "runs.jsonl"), "a") as runs:
             runs.write(json.dumps(record) + "\n")
 
