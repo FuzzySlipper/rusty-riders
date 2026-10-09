@@ -154,6 +154,22 @@ prompt and "cast shadow, drop shadow, walls, pillars, steps, scene" to the negat
   deep fissures" draws a pit or tunnel mouth seen from above, and "damp cave floor with puddles and lichen" a dark
   scene: the word "cave" pulls toward scenes unless the subject is clearly a flat surface.
 
+**Generate surfaces with `generate.py --seamless`** (den-m5's ComfyUI-Universal-Seamless-Tiles nodes: the model and
+VAE wrap at the image edges). Without it, about 14 of 16 cave and palace images in the round above were scenes, by
+the user's marks. In the next round (2026-10-09, 18 images, seeds 5–6, viewed tiled 2x2 in review):
+
+| Variant | Favourites | Rejected |
+| --- | --- | --- |
+| House wording + seamless | 5/6 | 0/6 |
+| "Seamless repeating floor texture asset … material swatch" + seamless | 3/6 | 0/6 |
+| Texture-asset wording, no seamless | 2/6 | 2/6 |
+
+- Every image was a surface, not a scene. The seamless images tile exactly as generated (seam 0.8–1.2), so they
+  need no seam repaint.
+- The texture-asset wording draws small wallpaper-like repeats and thinner ink. Keep the house wording.
+- Both rejects tiled oddly in 2x2 without the patch, though they looked fine alone. Review surfaces tiled
+  (`t` in the review app).
+
 ## Keep-or-reject judge
 
 Sonnet judges pre-screen batches with `scripts/review/prompts/keep-reject-judge.txt`, one judge per contact

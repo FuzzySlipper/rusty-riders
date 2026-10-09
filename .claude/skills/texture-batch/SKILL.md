@@ -23,7 +23,9 @@ greyscale values for palette tinting. Attach a style reference; the Cave's is `w
 | Z-Image Turbo (5090) | Fast text-only drafts, 3 s each | 8 steps, `res_multistep`, shift 3 |
 
 For Z-Image base with the house LoRA, use the house prompt and negative in `docs/texture-style.md` ("House
-prompt": Moebius-inked wording). In review it beat plain prompts 12/12 to 5/12.
+prompt": Moebius-inked wording). In review it beat plain prompts 12/12 to 5/12. Add `--seamless` (den-m5) for any
+surface: it keeps the model from drawing a scene and makes the image tile as generated, so step 2 is only needed
+for images made without it.
 
 `scripts/texture-gen/generate.py` runs Z-Image (turbo or base, with or without a LoRA) and Qwen edit batches over
 seeds and records provenance; point `COMFY_URL` at the 5090 (fastest when free), den-nimo (192.168.1.23) or
