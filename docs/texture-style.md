@@ -170,6 +170,18 @@ the user's marks. In the next round (2026-10-09, 18 images, seeds 5–6, viewed 
 - Both rejects tiled oddly in 2x2 without the patch, though they looked fine alone. Review surfaces tiled
   (`t` in the review app).
 
+**ControlNet layouts** (`layouts.py` → `generate.py --control`, Z-Image Fun ControlNet Union 2.1 on both Strix
+Halos). A strength sweep (2026-10-09, seed 5, house wording):
+- **Alone, at 0.35–0.5:** follows the layout and keeps the ink. Best for regular structure: a carved tile grid at
+  0.35 came out as clean, evenly repeating palace tiles. Stones and slabs also hold their ink at 0.35. The
+  output does not wrap, so it needs the seam repaint (`make_tileable.py --model zimage-lora`).
+- **At 0.8:** exact shapes, but pale flat fills with almost no ink.
+- **Combined with `--seamless`:** 5 of 6 images dissolved into a featureless smear. The two patches conflict, so do
+  not combine them.
+
+So use `--seamless` alone for organic surfaces (rock, slabs, mosaics, ground), and ControlNet at about 0.35
+followed by a seam repaint when the structure must be regular (tiles, panels, brick).
+
 ## Keep-or-reject judge
 
 Sonnet judges pre-screen batches with `scripts/review/prompts/keep-reject-judge.txt`, one judge per contact

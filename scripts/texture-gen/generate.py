@@ -15,7 +15,8 @@ MakeCircularVAEDiT from ComfyUI-Universal-Seamless-Tiles, installed on den-m5), 
 
 --control (Z-Image only) guides the composition with a line drawing through the Z-Image Fun ControlNet Union 2.1
 (models/model_patches on den-nimo and den-m5), for example a wrapping layout from layouts.py; the README's useful
-strength range is 0.65-1.
+strength range is 0.65-1, but with the house LoRA 0.35-0.5 keeps the ink (docs/texture-style.md); do not
+combine with --seamless.
 
 Writes <out-dir>/<tag>-<seed>.png and appends each run (model, LoRA, prompt, seed, seconds) to
 <out-dir>/runs.jsonl, the provenance a texture's sources.json entry is copied from.
@@ -32,7 +33,7 @@ import comfy  # noqa: E402
 
 
 def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str, lora: str | None, strength: float,
-           negative: str = "", seamless: bool = False, control: str | None = None, control_strength: float = .8) -> dict:
+           negative: str = "", seamless: bool = False, control: str | None = None, control_strength: float = .35) -> dict:
     g = {
         "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": unet, "weight_dtype": "default"}},
         "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}},
@@ -102,7 +103,7 @@ def main() -> None:
     parser.add_argument("--size", type=int, default=1024)
     parser.add_argument("--tag", default="gen")
     parser.add_argument("--control", help="layout image for the Z-Image ControlNet")
-    parser.add_argument("--control-strength", type=float, default=.8)
+    parser.add_argument("--control-strength", type=float, default=.35)
     parser.add_argument("--seamless", action="store_true", help="generate wrapping at the edges (Z-Image; needs the seamless nodes)")
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
