@@ -144,6 +144,16 @@ What the wording does:
 - **The negative prompt** removes text and signatures. Comic-panel frames (3 of 12) and perspective views
   (seed-dependent) still slip through: crop frames, and drop perspective views before tiling.
 
+For surfaces that come out as scenes (architecture especially), add ", even flat lighting, no shadows" to the
+prompt and "cast shadow, drop shadow, walls, pillars, steps, scene" to the negative. In a round on v4-2000
+(2026-10-08, seeds 5–6, cave and palace wordings with and without it):
+- **Palace floors:** without it, pillars, a cast shadow or an angled camera appeared in 3 of 4 images; with it, 1 of
+  4 (a stray column). "Square stone tiles with carved inlay bands" draws one large centred panel, which would repeat
+  visibly; "inlaid coloured stone in geometric patterns" gives a colourful mosaic that fills the frame better.
+- **Cave floors:** "broken rock slabs and scattered pebbles" gives a flat ink surface. "Rough cave bedrock with
+  deep fissures" draws a pit or tunnel mouth seen from above, and "damp cave floor with puddles and lichen" a dark
+  scene: the word "cave" pulls toward scenes unless the subject is clearly a flat surface.
+
 ## Keep-or-reject judge
 
 Sonnet judges pre-screen batches with `scripts/review/prompts/keep-reject-judge.txt`, one judge per contact
