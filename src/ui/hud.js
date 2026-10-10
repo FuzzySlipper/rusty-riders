@@ -5,7 +5,8 @@ export function mountHud(document) {
   const element = document.createElement('div');
   element.className = 'hud';
   element.innerHTML = `
-    <header class="dev"><h1>Rusty Riders</h1><div class="status" data-fact="status"></div><div class="problems" data-fact="problems"></div></header>
+    <header class="dev"><h1>Rusty Riders</h1><div class="status" data-fact="status"></div><div class="problems" data-fact="problems"></div>
+      <div class="keys"><span><kbd>WASD</kbd>move</span><span><kbd>Shift</kbd>sprint</span><span><kbd>Space</kbd>jump</span><span><kbd>T</kbd>wait</span><span><kbd>R</kbd>reload</span><span><kbd>E</kbd>open/take</span><span><kbd>1–9</kbd>weapon</span><span><kbd>I</kbd>inventory</span><span><kbd>C</kbd>character</span><span><kbd>F</kbd>fly</span><span><kbd>H</kbd>to start</span><span><kbd>N B V G</kbd>developer</span></div><div class="position" data-fact="position"></div></header>
     <div class="banner redbar"><i class="orn rail"></i><i class="orn left"></i><i class="orn right"></i><div class="chase" data-fact="chase"></div><div class="line"><span class="hostiles" data-fact="hostiles"></span><span class="depth" data-fact="depth"></span></div></div>
     <div class="clock"><i class="orn ring"></i><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
     <div class="notice" data-fact="notice"></div>
@@ -20,14 +21,13 @@ export function mountHud(document) {
       <div class="tracks"></div>
       <div class="effects"></div>
     </div>
-    <div class="hotbar redbar">
-      <i class="orn rail"></i><i class="orn left"></i><i class="orn right"></i>
+    <div class="hotbar framed">
       <div class="hand" data-hand="0"><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>LMB</kbd></div>
       <div class="hand" data-hand="1"><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>RMB</kbd></div>
       <div class="hand ready"><div class="socket"><i class="orn ring"></i></div><div class="name" data-fact="ready"></div><kbd>Q</kbd></div>
       <div class="run"><div data-fact="haul"></div><div data-fact="bank"></div></div>
     </div>
-    <footer class="controls"><span><kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>T</kbd> wait · <kbd>R</kbd> reload · <kbd>E</kbd> open/take · <kbd>1</kbd>–<kbd>9</kbd> weapon · <kbd>I</kbd> inventory · <kbd>C</kbd> character · <kbd>F</kbd> fly · <kbd>H</kbd> back to start · <kbd>N</kbd>/<kbd>B</kbd>/<kbd>V</kbd>/<kbd>G</kbd> developer</span><span data-fact="position"></span></footer>`;
+`;
   const fields = [...element.querySelectorAll('[data-fact]')];
   const healthFill = element.querySelector('.health i');
   const healthValue = element.querySelector('.health .value');

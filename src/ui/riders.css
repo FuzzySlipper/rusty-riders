@@ -43,14 +43,19 @@
   overflow: hidden; flex: 1; box-shadow: inset 0 0 calc(4 * var(--u)) #000; }
 .riders-ui .bar i { display: block; height: 100%; background: linear-gradient(#ff7a5a, #b8261c); transition: width .12s; }
 
-/* Developer status, top left */
-.riders-ui .dev { top: var(--gap); left: var(--gap); max-width: 30%; opacity: .8; }
-.riders-ui .dev h1 { margin: 0; font: calc(20 * var(--u)) Alagard, serif; letter-spacing: .04em; }
-.riders-ui .dev .status { font-size: var(--small); color: var(--muted); white-space: pre-line; }
+/* Developer block, top left in the screen's own corner: status, problems, the controls and the position, compact, so
+   it can be switched off as one. */
+.riders-ui .dev { top: calc(var(--gap) / 2); left: calc(var(--gap) / 2 - var(--bleed)); max-width: calc(300 * var(--u)); opacity: .9;
+  padding: calc(4 * var(--u)) calc(8 * var(--u)); background: #0b0709c8; border-radius: calc(4 * var(--u)); }
+.riders-ui .dev h1 { margin: 0; font: calc(15 * var(--u)) Alagard, serif; letter-spacing: .04em; }
+.riders-ui .dev .status, .riders-ui .dev .position { font-size: var(--tiny); color: var(--muted); white-space: pre-line; }
+.riders-ui .dev .keys { display: grid; grid-template-columns: repeat(3, auto); gap: calc(1 * var(--u)) calc(8 * var(--u)); margin: calc(4 * var(--u)) 0;
+  font-size: var(--tiny); color: #a99f90; justify-content: start; }
+.riders-ui .dev .keys kbd { font-size: var(--tiny); margin-right: calc(4 * var(--u)); padding: 0 calc(3 * var(--u)); }
 .riders-ui .dev .problems { white-space: pre-line; color: #f2b48c; font: var(--tiny)/1.4 ui-monospace, monospace; }
 .riders-ui .dev .problems:empty { display: none; }
 
-/* Red bars (the chase banner and the hands): a dark well under a rail with skull caps at both ends.
+/* The red bar (the chase banner): a dark well under a rail with skull caps at both ends.
    The caps are 880 and 936 px of a 512 px tall frame, the rail a repeating 200 px run of it. */
 .riders-ui .redbar { --h: calc(128 * var(--u)); --rail: calc(var(--h) * .39); min-height: var(--h); box-sizing: border-box;
   min-width: calc(var(--h) * 3.55); padding: calc(var(--rail) + 4 * var(--u)) calc(var(--h) * .3) calc(6 * var(--u)); }
@@ -62,9 +67,6 @@
 .riders-ui .redbar > .rail { top: 0; height: var(--h); left: calc(var(--h) * 880 / 512 - var(--u)); right: calc(var(--h) * 936 / 512 - var(--u));
   background-size: auto var(--h); background-repeat: repeat-x; }
 .riders-ui .redbar { isolation: isolate; }
-.riders-ui .hotbar > .left { background-image: url("./art/hotbar-left.png"); }
-.riders-ui .hotbar > .right { background-image: url("./art/hotbar-right.png"); }
-.riders-ui .hotbar > .rail { background-image: url("./art/hotbar-rail.png"); }
 .riders-ui .banner > .left { background-image: url("./art/banner-left.png"); }
 .riders-ui .banner > .right { background-image: url("./art/banner-right.png"); }
 .riders-ui .banner > .rail { background-image: url("./art/banner-rail.png"); }
@@ -111,21 +113,28 @@
 .riders-ui .panel::after { content: ''; position: absolute; pointer-events: none; inset: calc(var(--frame) * -.25);
   border: var(--frame) solid transparent; border-image: url("./art/panel.png") 200 / var(--frame) round; }
 
+/* Framed panels: a dark well in the quiet bone frame, for the hands and screens to come. A 9-slice whose corners keep
+   their size and whose rails repeat, outside the box with its rail on the box's edge; it wraps any size. */
+.riders-ui .framed { --frame: calc(28 * var(--u)); box-sizing: border-box;
+  background: var(--panel) url("./art/fill.png") 0 0 / calc(280 * var(--u)) auto repeat; box-shadow: inset 0 0 calc(16 * var(--u)) #000; }
+.riders-ui .framed::after { content: ''; position: absolute; pointer-events: none; inset: calc(var(--frame) * -.25);
+  border: var(--frame) solid transparent; border-image: url("./art/frame.png") 56 / var(--frame) round; }
+
 /* Run summary */
 .riders-ui .summary { --frame: calc(56 * var(--u)); left: 50%; top: 26%; transform: translateX(-50%); max-width: 48ch; padding: calc(28 * var(--u)) calc(40 * var(--u));
   white-space: pre-line; text-align: center; font: var(--title)/1.5 Alagard, serif; color: #f3e9ff; }
 .riders-ui .summary:empty { display: none; }
 
 /* Vitals, bottom left: the skull corner mirrored so it faces the centre, flush in the screen's corner. Its leg's flat
-   foot stands on the bottom edge and its horn arm runs as a rail along the bars' top to the left edge (past the
-   HUD band on ultrawide screens). The corner is 1100 px of a 1024 px tall frame, the rail a repeating 400 px run. */
-.riders-ui .vitals { --h: calc(176 * var(--u)); --w: calc(330 * var(--u)); left: 0; bottom: 0; width: var(--w); height: var(--h);
+   foot stands on the bottom edge and its horn arm runs as a rail along the bars' top to the left edge. It
+   stays in the screen's own corner on ultrawide screens, outside the HUD band. The corner is 1100 px of a 1024 px tall frame, the rail a repeating 400 px run. */
+.riders-ui .vitals { --h: calc(176 * var(--u)); --w: calc(330 * var(--u)); left: calc(-1 * var(--bleed)); bottom: 0; width: var(--w); height: var(--h);
   box-sizing: border-box; padding: calc(var(--h) * .34) calc(var(--h) * .33) 0 var(--gap); isolation: isolate; }
-.riders-ui .vitals::before { content: ''; position: absolute; inset: calc(var(--h) * .3) calc(var(--h) * .2) 0 calc(-1 * var(--bleed)); z-index: -1;
+.riders-ui .vitals::before { content: ''; position: absolute; inset: calc(var(--h) * .3) calc(var(--h) * .2) 0 0; z-index: -1;
   background: var(--panel) url("./art/fill.png") 0 0 / calc(280 * var(--u)) auto repeat; box-shadow: inset 0 0 calc(12 * var(--u)) #000; }
 .riders-ui .vitals > .corner { right: 0; top: 0; height: var(--h); width: calc(var(--h) * 1100 / 1024); background-image: url("./art/vitals-corner.png");
   transform: scaleX(-1); }
-.riders-ui .vitals > .rail { top: 0; height: var(--h); left: calc(-1 * var(--bleed)); right: calc(var(--h) * 1100 / 1024 - var(--u));
+.riders-ui .vitals > .rail { top: 0; height: var(--h); left: 0; right: calc(var(--h) * 1100 / 1024 - var(--u));
   background: url("./art/vitals-rail.png") 100% 0 / auto var(--h) repeat-x; }
 .riders-ui .vitals .health { display: flex; align-items: center; gap: calc(8 * var(--u)); }
 .riders-ui .vitals .health .bar { height: calc(14 * var(--u)); }
@@ -137,9 +146,9 @@
 .riders-ui .vitals .effects { margin-top: calc(6 * var(--u)); display: flex; flex-wrap: wrap; gap: calc(4 * var(--u)); }
 .riders-ui .vitals .effect { font-size: var(--small); color: #cfe3ff; background: #0b1420c0; padding: 0 calc(6 * var(--u)); border-radius: calc(3 * var(--u)); }
 
-/* Hands, bottom centre: each in a round skull socket */
-.riders-ui .hotbar { bottom: calc(var(--gap) + 6 * var(--u)); left: 50%; transform: translateX(-50%); display: flex; align-items: flex-start;
-  justify-content: center; gap: calc(14 * var(--u)); }
+/* Hands, bottom centre: a framed well standing on the bottom edge, each hand in a round skull socket */
+.riders-ui .hotbar { bottom: 0; left: 50%; transform: translateX(-50%); display: flex; align-items: flex-start;
+  justify-content: center; gap: calc(14 * var(--u)); padding: calc(16 * var(--u)) calc(22 * var(--u)) calc(8 * var(--u)); }
 .riders-ui .hand { width: calc(96 * var(--u)); text-align: center; position: relative; }
 .riders-ui .socket { position: relative; width: calc(52 * var(--u)); height: calc(52 * var(--u)); margin: 0 auto; display: grid; place-items: center;
   border-radius: 50%; background: radial-gradient(#2a1418, #0b0709); box-shadow: 0 0 0 var(--u) var(--line); }
@@ -152,9 +161,6 @@
 .riders-ui .hand.ready[data-empty] { opacity: .45; }
 .riders-ui .hotbar .run { align-self: center; font-size: var(--small); color: var(--violet); min-width: calc(90 * var(--u)); }
 .riders-ui .icon.line { filter: drop-shadow(0 0 1px #000) brightness(1.1) sepia(1) hue-rotate(50deg) saturate(3); }
-
-.riders-ui .controls { left: calc(330 * var(--u)); right: 0; bottom: 0; padding: calc(2 * var(--u)) var(--gap); display: flex; justify-content: space-between;
-  font-size: var(--tiny); color: #a99f90; background: linear-gradient(transparent, #000a); }
 
 /* Screens: a panel over the paused game, the crest above its title */
 .riders-ui .foreground { position: absolute; inset: 0; pointer-events: auto; display: grid; place-items: center; background: #05030799; }

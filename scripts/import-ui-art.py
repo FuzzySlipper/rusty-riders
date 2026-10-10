@@ -25,8 +25,6 @@ ABILITY = "GameData/Icons/Abilities"
 # display size at --u: 1px, so it stays sharp up to the largest UI scale step; riders.css gives the display sizes.
 # (output name, source path under old-game/Assets, crop box or None for the whole sprite, export scale)
 PIECES = [
-    ("hotbar-left.png", f"{UI}/OH_UI_Hotbar_Bottom_Frame.png", (0, 0, 880, 512), 0.375),     # red skull leg and horns
-    ("hotbar-right.png", f"{UI}/OH_UI_Hotbar_Bottom_Frame.png", (1120, 0, 2056, 512), 0.375),
     ("banner-left.png", f"{UI}/OH_UI_Hotbar_Top_Frame.png", (0, 0, 880, 512), 0.375),
     ("banner-right.png", f"{UI}/OH_UI_Hotbar_Top_Frame.png", (1120, 0, 2056, 512), 0.375),
     ("vitals-corner.png", f"{UI}/UI_bar_gouche_brush_effect_Square.png", (0, 0, 1100, 1024), 0.375),  # skull corner, horn arm
@@ -40,13 +38,13 @@ PIECES = [
 GENERATED = [
     ("slot-corner.png", "slot-corner.png", 48 / 991),  # 24 px at --u: 1px
     ("divider.png", "divider.png", 960 / 1496),         # 480 px at --u: 1px
+    ("frame.png", "frame.png", 56 / 170),               # subtle 9-slice: a 170 px corner slice is 28 px at --u: 1px
 ]
 GENERATED_ICONS = [("ammo.png", "ammo.png")]
 GENERATED_DIR = ROOT / "content" / "art" / "ui"
 # Rails that repeat along a bar's width: (output name, source, x, y0, y1, width, overlap, export scale). The strip is
 # taken from a flat run of the rail and cross-faded over its overlap so it tiles without a seam.
 RAILS = [
-    ("hotbar-rail.png", f"{UI}/OH_UI_Hotbar_Bottom_Frame.png", 880, 0, 512, 200, 40, 0.375),
     ("banner-rail.png", f"{UI}/OH_UI_Hotbar_Top_Frame.png", 880, 0, 512, 200, 40, 0.375),
     ("vitals-rail.png", f"{UI}/UI_bar_gouche_brush_effect_Square.png", 1100, 0, 1024, 400, 100, 0.375),
 ]
