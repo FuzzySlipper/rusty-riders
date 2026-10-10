@@ -43,12 +43,17 @@ The art never carries layout. The UI has two layers:
 - **Ornaments**: the old game's art, pinned to an element at a fixed scale (`<i class="orn …">`, `pointer-events:
   none`). An ornament keeps its own proportions and never stretches; changing, adding or regenerating one cannot move
   anything else. Pieces that run along a length are repeating rails or fills, never stretched middles:
-  - the red bars (the chase banner and the hands): skull caps at both ends and a rail that repeats between them;
-  - the vitals: the skull corner and its horn arm, which repeats along the bars;
+  - the red bars (the chase banner and the hands): skull caps at both ends and a rail that repeats between them. The
+    banner is the bar upside down, its legs' flat feet on the screen's top edge and its horns facing into the view;
+  - the vitals: the skull corner mirrored to face the centre, flush in the screen's bottom-left corner: its leg's flat
+    foot on the bottom edge, its horn arm a rail along the bars' top that runs to the screen's left edge (past the
+    HUD band on ultrawide screens);
   - panels (screens, the run summary): the violet horned frame as a 9-slice whose corners keep their size and whose
     rails repeat, drawn outside the box with its rail on the box's edge;
   - the round skull socket behind each hand, the horned ring round the clock, the crest over a screen's title, and
-    the brushed fill that repeats inside wells.
+    the brushed fill that repeats inside wells;
+  - generated in the old style: horned caps on two corners of each slot, the divider under a screen's title, and the
+    ammunition icon.
 
 `--u` steps with the viewport (0.65 to 2 px) so the whole UI scales together. The HUD keeps to a centred band no
 wider than 2:1, so ultrawide screens keep it in view. It was checked at 16:9, 21:9, 4:3 and a 960×540 window.
@@ -63,11 +68,11 @@ wider than 2:1, so ultrawide screens keep it in view. It was checked at 16:9, 21
 Line-art icons are tinted green, as the old game's hotbar icons were; painted ones show as they are. Rerun the script
 to regenerate the folder from `old-game/`.
 
-Ornaments the old art lacks, to generate in its style (prompts and LoRAs in the repo):
-- an ammunition icon (tech ammo uses a junk-container icon for now);
-- a small corner for slots and tooltips, to replace their plain border;
-- a divider flourish for screen headings;
-- frames for future screens (map, base/meta) if they need a different shape from the violet panel.
+Ornaments the old art lacks are generated in its style (GPT image through the `codex-image-gen` skill, with crops of
+the old art as references) on flat green, then keyed and cropped. The masters and their prompts are in
+`content/art/ui/` (`sources.json`); the import script exports them with the old pieces. They are experiments, not a
+house-style recipe. Still to make when they are needed: frames for future screens (map, base/meta) if they need a
+different shape from the violet panel.
 
 Fonts are not UI-root files: the host refuses font files there. The title face (Alagard, the old game's pixel
 fantasy font) is `content/ui/alagard.ttf`, granted by `Ui/UiFonts.cs` through `Ui.OpenFont`. Its URL arrives as

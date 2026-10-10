@@ -1,0 +1,27 @@
+{
+  "about": "UI ornaments generated in the old Rift Riders UI style where the old art has none (rusty-riders #9808), 2026-10-09. Experimental: generated, not old art and not a house-style recipe. scripts/import-ui-art.py exports them into src/ui/art/ with the old pieces.",
+  "ammo": {
+    "route": "GPT image through a Codex oneshot (codex-image-gen skill, gpt-6-sol/gpt-6-luna relay) on a flat #00FF00 background, keyed and cropped by hand into this folder (green dominance to alpha, despilled); references were crops of the old Rift Riders UI art",
+    "references": [
+      "src/ui/art/icons: tech-cell, charge, shield-cell, scrap, medkit side by side"
+    ],
+    "prompt": "A single inventory item icon for a first-person science-fantasy game: a cluster of three stubby glowing energy cartridges / rift ammunition rounds bound together with a bone clasp, violet-blue glow in their cores, brass and dark metal casings. Square, around 1024x1024, the object centred and filling about 75% of the frame, readable when shrunk to 48 pixels: chunky silhouette, strong contrast. Style: match the reference images exactly - the hand-inked biomechanical (H.R. Giger-like) fantasy UI art of an old indie game: bold black ink outlines, flat colour fills with a soft gradient, black stipple/grain shading, organic horn, bone and claw shapes. The first reference shows the existing item icons it must sit beside: same painted look, same level of detail and palette weight. Put the subject on a perfectly flat, uniform pure green (#00FF00) background with no shadow, gradient, vignette or texture on the background. Use NO green anywhere in the subject itself. NO text, NO letters, NO numbers, NO watermark.",
+    "pick": "second of two runs: clearer silhouette at 48 px"
+  },
+  "slot-corner": {
+    "route": "GPT image through a Codex oneshot (codex-image-gen skill, gpt-6-sol/gpt-6-luna relay) on a flat #00FF00 background, keyed and cropped by hand into this folder (green dominance to alpha, despilled); references were crops of the old Rift Riders UI art",
+    "references": [
+      "the violet horned corner of UI SLICE BOX_border.png"
+    ],
+    "prompt": "A tiny decorative CORNER cap for the top-left corner of a small square inventory slot in a dark fantasy game UI. NOT a face and NOT a skull: a compact, chunky knot of two or three curved horns/claws growing out of the corner point, with two short, thick, straight stubs leaving it - one exactly horizontal to the right and one exactly vertical downward - each ending in a clean flat cut. The whole piece must read clearly when shrunk to 24 pixels: very few, bold shapes, thick black ink outline, no fine interior detail. Pale violet / lavender fill (like #b49cc4) with a soft darker violet gradient in the hollows and a little black stipple shading. Square image around 1024x1024 with the corner point at the top-left, the piece occupying the top-left 60% of the image. Style lineage: the hand-inked biomechanical (H.R. Giger-like) fantasy UI of the reference, but much simpler. Put the subject on a perfectly flat, uniform pure green (#00FF00) background with no shadow or texture. Use NO green in the subject. NO text, NO letters, NO watermark.",
+    "pick": "second brief: the first copied the reference panel corner, far too fine at 24 px"
+  },
+  "divider": {
+    "route": "GPT image through a Codex oneshot (codex-image-gen skill, gpt-6-sol/gpt-6-luna relay) on a flat #00FF00 background, keyed and cropped by hand into this folder (green dominance to alpha, despilled); references were crops of the old Rift Riders UI art",
+    "references": [
+      "src/ui/art/panel.png",
+      "src/ui/art/crest.png"
+    ],
+    "prompt": "A single horizontal DIVIDER flourish to sit under section headings in a dark fantasy game UI screen: a small central horned skull-or-bone knot with two long thin tapering spine/rail lines extending left and right, perfectly symmetrical and perfectly horizontal, the lines thinning to points at both ends. Pale violet / lavender with black ink outlines and a little off-white bone, matching the references (the panel frame and the crest). Very wide and short: around 1536x256, the ornament spanning nearly the full width but only about a sixth of the height. Style: match the reference images exactly - the hand-inked biomechanical (H.R. Giger-like) fantasy UI art of an old indie game: bold black ink outlines, flat colour fills with a soft gradient, black stipple/grain shading, organic horn, bone and claw shapes. Put the subject on a perfectly flat, uniform pure green (#00FF00) background with no shadow, gradient, vignette or texture on the background. Use NO green anywhere in the subject itself. NO text, NO letters, NO numbers, NO watermark."
+  }
+}

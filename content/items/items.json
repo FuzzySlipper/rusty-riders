@@ -379,7 +379,7 @@
         0.85,
         0.3
       ],
-      "icon": "tech-cell",
+      "icon": "ammo",
       "ammo": {
         "track": "tech-ammo",
         "amount": 12

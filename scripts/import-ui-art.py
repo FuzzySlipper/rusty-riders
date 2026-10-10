@@ -35,6 +35,14 @@ PIECES = [
     ("crest.png", f"{UI}/uiInventory_topper_only.png", None, 0.5),
     ("panel.png", f"{UI}/UI SLICE BOX_border.png", None, 0.5),  # violet horned 9-slice: fixed corners, repeating rails
 ]
+# Ornaments the old art lacks, generated in its style (content/art/ui/sources.json has how): (output name, keyed
+# master under content/art/ui, export scale).
+GENERATED = [
+    ("slot-corner.png", "slot-corner.png", 48 / 991),  # 24 px at --u: 1px
+    ("divider.png", "divider.png", 960 / 1496),         # 480 px at --u: 1px
+]
+GENERATED_ICONS = [("ammo.png", "ammo.png")]
+GENERATED_DIR = ROOT / "content" / "art" / "ui"
 # Rails that repeat along a bar's width: (output name, source, x, y0, y1, width, overlap, export scale). The strip is
 # taken from a flat run of the rail and cross-faded over its overlap so it tiles without a seam.
 RAILS = [
@@ -57,7 +65,6 @@ ICONS = [
     ("medkit.png", f"{OLD_ICONS}/I_square-bottle.png"),
     ("tonic.png", f"{ABILITY}/Old/A_Heal.png"),
     ("shield-cell.png", f"{JUNK}/Science_Junk_Electronic1.png"),
-    ("tech-cell.png", f"{JUNK}/Alien_Junk_Container.png"),
     ("charge.png", f"{JUNK}/Misc_AlienMaterial1.png"),
     ("scrap.png", f"{JUNK}/Misc_LowGradeScrapMetal1.png"),
     ("shard.png", f"{OLD_ICONS}/W_Relic.png"),
@@ -102,6 +109,8 @@ def main() -> int:
     for name, source, x, y0, y1, width, overlap, scale in RAILS:
         strip = Image.open(OLD / source).convert("RGBA").crop((x, y0, x + width + overlap, y1))
         save(seamless(strip, width, overlap, horizontal=True), scale, name)
+    for name, master, scale in GENERATED:
+        save(Image.open(GENERATED_DIR / master).convert("RGBA"), scale, name)
     name, source, box, overlap, scale = FILL
     tile = Image.open(OLD / source).convert("RGBA").crop(box)
     tile = seamless(tile, tile.width - overlap, overlap, horizontal=True)
@@ -110,9 +119,13 @@ def main() -> int:
         image = Image.open(OLD / source).convert("RGBA")
         image.thumbnail((ICON_SIZE, ICON_SIZE), Image.LANCZOS)
         image.save(OUT / "icons" / name, optimize=True)
+    for name, master in GENERATED_ICONS:
+        image = Image.open(GENERATED_DIR / master).convert("RGBA")
+        image.thumbnail((ICON_SIZE, ICON_SIZE), Image.LANCZOS)
+        image.save(OUT / "icons" / name, optimize=True)
     FONT[0].parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(OLD / FONT[1], FONT[0])
-    print(f"wrote {len(PIECES) + len(RAILS) + 1} pieces and {len(ICONS)} icons to {OUT.relative_to(ROOT)}, and the font to {FONT[0].relative_to(ROOT)}")
+    print(f"wrote {len(PIECES) + len(RAILS) + len(GENERATED) + 1} pieces and {len(ICONS) + len(GENERATED_ICONS)} icons to {OUT.relative_to(ROOT)}, and the font to {FONT[0].relative_to(ROOT)}")
     return 0
 
 
