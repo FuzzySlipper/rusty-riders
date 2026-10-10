@@ -101,7 +101,7 @@ def main() -> int:
         print(f"no {OLD}: the old game's assets are needed", file=sys.stderr)
         return 1
     (OUT / "icons").mkdir(parents=True, exist_ok=True)
-    for stale in OUT.glob("*.png"):
+    for stale in [*OUT.glob("*.png"), *OUT.glob("icons/*.png")]:
         stale.unlink()
     for name, source, box, scale in PIECES:
         image = Image.open(OLD / source).convert("RGBA")
