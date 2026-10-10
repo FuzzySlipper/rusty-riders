@@ -3,16 +3,18 @@ import { icon } from './art.js';
 /** The character sheet: attributes, derived stats with what they are made of, and resistances by damage kind. */
 export function mountSheetScreen(document) {
   const element = document.createElement('section');
-  element.className = 'screen sheet-screen';
+  element.className = 'screen panel sheet-screen';
   element.setAttribute('aria-label', 'Character');
   element.innerHTML = `
-    <div class="crest"></div>
+    <i class="orn crest"></i>
+    <div class="body">
     <h2>Rider</h2>
     <div class="columns">
       <div><h3>Attributes</h3><dl class="attributes"></dl><h3>Resistances</h3><div class="resistances"></div></div>
       <div><h3>Derived</h3><dl class="derived"></dl></div>
     </div>
-    <footer><kbd>C</kbd> or <kbd>Esc</kbd> back to the rift</footer>`;
+    <footer><kbd>C</kbd> or <kbd>Esc</kbd> back to the rift</footer>
+    </div>`;
   const row = (name, value, detail) => {
     const fragment = document.createDocumentFragment();
     const term = document.createElement('dt');

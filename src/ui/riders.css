@@ -1,111 +1,185 @@
-/* Rift Riders UI: the old game's frames (./art, see scripts/import-ui-art.py) over a dark brushed fill.
-   9-slice borders are the Unity sprite borders divided by the import's scale factor. */
+/* Rift Riders UI in two layers (docs/ui.md).
+   Function: plain DOM and CSS drawn from the tokens below; it reads whole with every ornament gone.
+   Ornaments: the old game's art (./art, cut by scripts/import-ui-art.py) pinned to an element at a fixed scale,
+   never stretched and never carrying layout. Rails and fills repeat; corners and caps keep their size.
+   Everything is sized in --u, one stepped scale from the viewport. */
 /* Alagard (the title face) is granted by the product and registered by main.js from the facts. */
 
-.riders-ui { --ink: #efe6d6; --muted: #b9ae9c; --green: #9cf27a; --red: #e0453a; --violet: #c9a8ff;
-  position: fixed; inset: 0; pointer-events: none; color: var(--ink); font: 13px/1.45 system-ui, sans-serif; text-shadow: 0 1px 3px #000; }
-.riders-ui kbd { color: #fff; font: 11px ui-monospace, monospace; background: #ffffff1f; padding: 0 4px; border-radius: 3px; text-shadow: none; }
-.riders-ui .hud > * { position: absolute; }
+.riders-ui {
+  --u: 1px;
+  --ink: #efe6d6; --muted: #b9ae9c; --faint: #8f8576; --gold: #ffd27a; --ember: #ffc49a;
+  --green: #9cf27a; --red: #e0453a; --violet: #c9a8ff; --sky: #8fd3ff;
+  --well: #0b0709d0; --panel: #150d12; --line: #6b3b3b; --line-violet: #6d5a86;
+  --gap: calc(16 * var(--u));
+  --text: calc(13 * var(--u)); --small: calc(11 * var(--u)); --tiny: calc(10 * var(--u));
+  --title: calc(18 * var(--u)); --heading: calc(30 * var(--u));
+  position: fixed; inset: 0; pointer-events: none; color: var(--ink);
+  font: var(--text)/1.45 system-ui, sans-serif; text-shadow: 0 1px 3px #000;
+}
+@media (max-height: 760px), (max-width: 1100px) { .riders-ui { --u: .8px; } }
+@media (max-height: 600px), (max-width: 860px) { .riders-ui { --u: .65px; } }
+@media (min-height: 1200px) and (min-width: 1700px) { .riders-ui { --u: 1.25px; } }
+@media (min-height: 1500px) and (min-width: 2200px) { .riders-ui { --u: 1.5px; } }
+@media (min-height: 2000px) and (min-width: 3000px) { .riders-ui { --u: 2px; } }
+
 .riders-ui [hidden] { display: none !important; }
+.riders-ui kbd { color: #fff; font: var(--small) ui-monospace, monospace; background: #ffffff1f; padding: 0 calc(4 * var(--u));
+  border-radius: calc(3 * var(--u)); text-shadow: none; }
+
+/* Ornaments: decoration pinned in place, sized from the art's own proportions. */
+.riders-ui .orn { position: absolute; pointer-events: none; background: center / 100% 100% no-repeat; }
+
+/* The HUD keeps to a centred band no wider than 2:1, so ultrawide screens do not push it to the edges of sight. */
+.riders-ui .hud { position: absolute; inset: 0; margin-inline: auto; max-width: 200vh; }
+.riders-ui .hud > * { position: absolute; }
+
+/* Chips: the plain dark well used for prompts, notices and small labels. */
+.riders-ui .chip { background: var(--well); border: var(--u) solid var(--line); border-radius: calc(3 * var(--u));
+  padding: calc(2 * var(--u)) calc(10 * var(--u)); box-shadow: inset 0 0 calc(6 * var(--u)) #000a; }
+
+/* Bars: a dark track with a coloured fill. */
+.riders-ui .bar { height: calc(10 * var(--u)); background: #1a0d0dcc; border: var(--u) solid #5a2a2a; border-radius: calc(2 * var(--u));
+  overflow: hidden; flex: 1; box-shadow: inset 0 0 calc(4 * var(--u)) #000; }
+.riders-ui .bar i { display: block; height: 100%; background: linear-gradient(#ff7a5a, #b8261c); transition: width .12s; }
 
 /* Developer status, top left */
-.riders-ui .dev { top: 14px; left: 18px; max-width: 46vw; opacity: .8; }
-.riders-ui .dev h1 { margin: 0; font: 20px Alagard, serif; letter-spacing: .04em; color: var(--ink); }
-.riders-ui .dev .status { font-size: 11px; color: var(--muted); white-space: pre-line; }
-.riders-ui .dev .problems { white-space: pre-line; color: #f2b48c; font: 10px/1.4 ui-monospace, monospace; }
+.riders-ui .dev { top: var(--gap); left: var(--gap); max-width: 30%; opacity: .8; }
+.riders-ui .dev h1 { margin: 0; font: calc(20 * var(--u)) Alagard, serif; letter-spacing: .04em; }
+.riders-ui .dev .status { font-size: var(--small); color: var(--muted); white-space: pre-line; }
+.riders-ui .dev .problems { white-space: pre-line; color: #f2b48c; font: var(--tiny)/1.4 ui-monospace, monospace; }
 .riders-ui .dev .problems:empty { display: none; }
 
-/* Chase banner, top centre: the top hotbar frame over the brushed fill */
-.riders-ui .banner { top: 8px; left: 50%; transform: translateX(-50%); min-width: 360px; padding: 14px 70px 10px; text-align: center;
-  border: 0 solid transparent; border-image: url("./art/banner.png") 53 122 0 199 fill / 26px 61px 0 99px;
-  background: #150d10 url("./art/fill.png") center / cover; background-clip: content-box; }
-.riders-ui .banner .chase { font: 18px Alagard, serif; color: #ffc49a; letter-spacing: .05em; }
-.riders-ui .banner .hostiles, .riders-ui .banner .depth { font-size: 12px; color: var(--muted); }
-.riders-ui .banner .depth { color: var(--violet); }
-.riders-ui .banner div:empty { display: none; }
+/* Red bars (the chase banner and the hands): a dark well under a rail with skull caps at both ends.
+   The caps are 880 and 936 px of a 512 px tall frame, the rail a repeating 200 px run of it. */
+.riders-ui .redbar { --h: calc(128 * var(--u)); --rail: calc(var(--h) * .39); min-height: var(--h); box-sizing: border-box;
+  min-width: calc(var(--h) * 3.55); padding: calc(var(--rail) + 4 * var(--u)) calc(var(--h) * .3) calc(6 * var(--u)); }
+.riders-ui .redbar::before { content: ''; position: absolute; inset: calc(var(--rail) - 4 * var(--u)) calc(var(--h) * .12) 0;
+  background: var(--panel) url("./art/fill.png") 0 0 / calc(280 * var(--u)) auto repeat; border-radius: 0 0 calc(6 * var(--u)) calc(6 * var(--u));
+  box-shadow: inset 0 0 calc(12 * var(--u)) #000; z-index: -1; }
+.riders-ui .redbar > .left { left: 0; top: 0; height: var(--h); width: calc(var(--h) * 880 / 512); }
+.riders-ui .redbar > .right { right: 0; top: 0; height: var(--h); width: calc(var(--h) * 936 / 512); }
+.riders-ui .redbar > .rail { top: 0; height: var(--h); left: calc(var(--h) * 880 / 512 - var(--u)); right: calc(var(--h) * 936 / 512 - var(--u));
+  background-size: auto var(--h); background-repeat: repeat-x; }
+.riders-ui .redbar { isolation: isolate; }
+.riders-ui .hotbar > .left { background-image: url("./art/hotbar-left.png"); }
+.riders-ui .hotbar > .right { background-image: url("./art/hotbar-right.png"); }
+.riders-ui .hotbar > .rail { background-image: url("./art/hotbar-rail.png"); }
+.riders-ui .banner > .left { background-image: url("./art/banner-left.png"); }
+.riders-ui .banner > .right { background-image: url("./art/banner-right.png"); }
+.riders-ui .banner > .rail { background-image: url("./art/banner-rail.png"); }
 
-/* World time, top right: the horned ring */
-.riders-ui .clock { top: 6px; right: 14px; width: 128px; height: 128px; display: grid; place-content: center; text-align: center; }
-.riders-ui .clock .ring { position: absolute; inset: 0; background: url("./art/ring.png") center / contain no-repeat; }
-.riders-ui .clock .state { position: relative; font: 15px Alagard, serif; color: #8fd3ff; text-transform: uppercase; letter-spacing: .06em; }
+/* Chase banner, top centre */
+.riders-ui .banner { --h: calc(96 * var(--u)); top: 0; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap; }
+.riders-ui .banner .chase { font: var(--title) Alagard, serif; color: var(--ember); letter-spacing: .05em; line-height: 1.2; }
+.riders-ui .banner .line { font-size: var(--small); color: var(--muted); display: flex; gap: calc(12 * var(--u)); justify-content: center; }
+.riders-ui .banner .depth { color: var(--violet); }
+.riders-ui .banner .line span:empty { display: none; }
+
+/* World time, top right: the horned ring around the state */
+.riders-ui .clock { top: calc(var(--gap) / 2); right: var(--gap); width: calc(112 * var(--u)); height: calc(112 * var(--u));
+  display: grid; place-content: center; text-align: center; }
+.riders-ui .clock > .ring { inset: 0; background-image: url("./art/ring.png"); }
+.riders-ui .clock .state { position: relative; font: calc(15 * var(--u)) Alagard, serif; color: var(--sky); text-transform: uppercase; letter-spacing: .06em; }
 .riders-ui .clock[data-held] .state { color: var(--ink); }
-.riders-ui .clock .world { position: relative; font: 11px ui-monospace, monospace; color: var(--muted); }
+.riders-ui .clock .world { position: relative; font: var(--small) ui-monospace, monospace; color: var(--muted); }
 
 /* Centre: notice, reticle, action, prompt, what is underfoot */
-.riders-ui .reticle { left: 50%; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #0008; transform: translate(-50%, -50%); }
-.riders-ui .notice { left: 50%; top: calc(50% - 52px); transform: translateX(-50%); font: 17px Alagard, serif; color: #fff4e0; white-space: nowrap; }
-.riders-ui .action { left: 50%; top: calc(50% + 18px); transform: translateX(-50%); text-align: center; font-size: 11px; letter-spacing: .08em;
+.riders-ui .reticle { left: 50%; top: 50%; width: calc(4 * var(--u)); height: calc(4 * var(--u)); border-radius: 50%; background: #fff;
+  box-shadow: 0 0 0 calc(2 * var(--u)) #0008; transform: translate(-50%, -50%); }
+.riders-ui .notice { left: 50%; top: calc(50% - 52 * var(--u)); transform: translateX(-50%); font: calc(17 * var(--u)) Alagard, serif; color: #fff4e0; white-space: nowrap; }
+.riders-ui .action { left: 50%; top: calc(50% + 18 * var(--u)); transform: translateX(-50%); text-align: center; font-size: var(--small); letter-spacing: .08em;
   text-transform: uppercase; color: #ffe2a8; display: none; }
 .riders-ui .action[data-active] { display: block; }
-.riders-ui .action .progress { width: 90px; height: 3px; margin: 3px auto 0; background: #ffffff26; }
+.riders-ui .action .progress { width: calc(90 * var(--u)); height: calc(3 * var(--u)); margin: calc(3 * var(--u)) auto 0; background: #ffffff26; }
 .riders-ui .action .progress i { display: block; height: 100%; background: #ffe2a8; }
-.riders-ui .prompt { left: 50%; top: calc(50% + 50px); transform: translateX(-50%); font-size: 14px; padding: 3px 12px; background: #120c10d0; border: 1px solid #6b3b3b; border-radius: 4px; }
-.riders-ui .prompt:not(:empty)::before { content: 'E'; font: 11px ui-monospace, monospace; background: #ffffff2c; padding: 0 4px; border-radius: 3px; margin-right: 7px; }
-.riders-ui .exhibit { left: 50%; bottom: 152px; transform: translateX(-50%); font-size: 14px; padding: 3px 12px; background: #120c10b0; border-radius: 4px; white-space: nowrap; }
+.riders-ui .prompt { left: 50%; top: calc(50% + 50 * var(--u)); transform: translateX(-50%); font-size: calc(14 * var(--u)); }
+.riders-ui .prompt:not(:empty)::before { content: 'E'; font: var(--small) ui-monospace, monospace; background: #ffffff2c; padding: 0 calc(4 * var(--u));
+  border-radius: calc(3 * var(--u)); margin-right: calc(7 * var(--u)); }
+.riders-ui .exhibit { left: 50%; bottom: calc(170 * var(--u)); transform: translateX(-50%); font-size: calc(14 * var(--u)); white-space: nowrap; }
 .riders-ui .notice:empty, .riders-ui .prompt:empty, .riders-ui .exhibit:empty { display: none; }
 
-/* Run summary: a horned panel over the fill */
-.riders-ui .summary { left: 50%; top: 26%; transform: translateX(-50%); max-width: 48ch; padding: 30px 40px; white-space: pre-line; text-align: center;
-  font: 18px/1.5 Alagard, serif; color: #f3e9ff; border: 0 solid transparent; border-image: url("./art/panel.png") 100 fill / 50px;
-  background: #150d12 url("./art/fill.png") center / 160% 160%; background-clip: padding-box; }
+/* Panels (screens, the run summary): a dark well with the violet horned frame round it. The frame is a 9-slice whose
+   corners keep their size and whose rails repeat; it sits outside the box, its rail centred on the box's edge. */
+.riders-ui .panel { --frame: calc(84 * var(--u)); box-sizing: border-box;
+  background: var(--panel) url("./art/fill.png") 0 0 / calc(280 * var(--u)) auto repeat;
+  border: var(--u) solid var(--line-violet); box-shadow: inset 0 0 calc(24 * var(--u)) #000, 0 0 calc(30 * var(--u)) #000c; }
+.riders-ui .panel::after { content: ''; position: absolute; pointer-events: none; inset: calc(var(--frame) * -.25);
+  border: var(--frame) solid transparent; border-image: url("./art/panel.png") 200 / var(--frame) round; }
+
+/* Run summary */
+.riders-ui .summary { --frame: calc(56 * var(--u)); left: 50%; top: 26%; transform: translateX(-50%); max-width: 48ch; padding: calc(28 * var(--u)) calc(40 * var(--u));
+  white-space: pre-line; text-align: center; font: var(--title)/1.5 Alagard, serif; color: #f3e9ff; }
 .riders-ui .summary:empty { display: none; }
 
-/* Vitals, bottom left: the skull corner with bars under its arm */
-.riders-ui .vitals { left: 6px; bottom: 26px; width: 318px; height: 192px; padding: 62px 10px 0 82px; box-sizing: border-box;
-  background: url("./art/vitals.png") left top / 384px 192px no-repeat; }
-.riders-ui .vitals > * { background: #0b0709b0; border-radius: 3px; padding: 2px 6px; }
-.riders-ui .vitals .effects { background: none; padding: 0; }
-.riders-ui .vitals .bar { height: 10px; background: #1a0d0dcc; border: 1px solid #5a2a2a; border-radius: 2px; overflow: hidden; flex: 1; }
-.riders-ui .vitals .bar i { display: block; height: 100%; background: linear-gradient(#ff7a5a, #b8261c); transition: width .12s; }
-.riders-ui .vitals .health { display: flex; align-items: center; gap: 8px; }
-.riders-ui .vitals .health .bar { height: 14px; }
-.riders-ui .vitals .health .value { font: 15px Alagard, serif; min-width: 70px; }
-.riders-ui .vitals .track { display: flex; align-items: center; gap: 8px; margin-top: 5px; font-size: 11px; color: var(--muted); }
-.riders-ui .vitals .track .label { min-width: 62px; }
+/* Vitals, bottom left: the skull corner over the bars, its horn arm a rail along their top.
+   The corner is 1100 px of a 1024 px tall frame, the rail a repeating 400 px run of it. */
+.riders-ui .vitals { --h: calc(176 * var(--u)); left: var(--gap); bottom: calc(var(--gap) + 10 * var(--u)); width: calc(330 * var(--u)); min-height: var(--h);
+  box-sizing: border-box; padding: calc(var(--h) * .34) calc(12 * var(--u)) calc(10 * var(--u)) calc(var(--h) * .33); isolation: isolate; }
+.riders-ui .vitals::before { content: ''; position: absolute; inset: calc(var(--h) * .3) 0 0 calc(var(--h) * .2); z-index: -1;
+  background: var(--panel) url("./art/fill.png") 0 0 / calc(280 * var(--u)) auto repeat; border-radius: 0 0 calc(6 * var(--u)) 0;
+  box-shadow: inset 0 0 calc(12 * var(--u)) #000; }
+.riders-ui .vitals > .corner { left: 0; top: 0; height: var(--h); width: calc(var(--h) * 1100 / 1024); background-image: url("./art/vitals-corner.png"); }
+.riders-ui .vitals > .rail { top: 0; height: var(--h); left: calc(var(--h) * 1100 / 1024 - var(--u)); right: 0;
+  background: url("./art/vitals-rail.png") 0 0 / auto var(--h) repeat-x; }
+.riders-ui .vitals .health { display: flex; align-items: center; gap: calc(8 * var(--u)); }
+.riders-ui .vitals .health .bar { height: calc(14 * var(--u)); }
+.riders-ui .vitals .health .value { font: calc(15 * var(--u)) Alagard, serif; min-width: calc(70 * var(--u)); }
+.riders-ui .vitals .track { display: flex; align-items: center; gap: calc(8 * var(--u)); margin-top: calc(5 * var(--u)); font-size: var(--small); color: var(--muted); }
+.riders-ui .vitals .track .label { min-width: calc(62 * var(--u)); }
 .riders-ui .vitals .track .bar i { background: linear-gradient(#b99bff, #5b3aa8); }
-.riders-ui .vitals .track .value { min-width: 28px; text-align: right; font-family: ui-monospace, monospace; }
-.riders-ui .vitals .effects { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
-.riders-ui .vitals .effect { font-size: 11px; color: #cfe3ff; background: #0b1420c0; padding: 0 6px; border-radius: 3px; }
+.riders-ui .vitals .track .value { min-width: calc(28 * var(--u)); text-align: right; font-family: ui-monospace, monospace; }
+.riders-ui .vitals .effects { margin-top: calc(6 * var(--u)); display: flex; flex-wrap: wrap; gap: calc(4 * var(--u)); }
+.riders-ui .vitals .effect { font-size: var(--small); color: #cfe3ff; background: #0b1420c0; padding: 0 calc(6 * var(--u)); border-radius: calc(3 * var(--u)); }
 
-/* Hands, bottom centre: the red hotbar with round skull sockets */
-.riders-ui .hotbar { left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 14px; padding: 30px 74px 10px 104px;
-  border: 0 solid transparent; border-image: url("./art/hotbar.png") 53 122 0 199 fill / 32px 74px 0 104px; }
-.riders-ui .hand { width: 104px; text-align: center; position: relative; }
-.riders-ui .hand .socket { width: 72px; height: 72px; margin: 0 auto; display: grid; place-items: center; background: url("./art/button.png") center / contain no-repeat; }
-.riders-ui .hand .socket .icon { width: 40px; height: 40px; object-fit: contain; border-radius: 50%; }
-.riders-ui .hand[data-acting] .socket { filter: drop-shadow(0 0 8px #ffd27a); }
-.riders-ui .hand .name { font-size: 11px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.riders-ui .hand .load { font: 11px ui-monospace, monospace; color: #ffd27a; min-height: 14px; }
-.riders-ui .hand kbd { position: absolute; top: 0; right: 4px; }
+/* Hands, bottom centre: each in a round skull socket */
+.riders-ui .hotbar { bottom: calc(var(--gap) + 6 * var(--u)); left: 50%; transform: translateX(-50%); display: flex; align-items: flex-start;
+  justify-content: center; gap: calc(14 * var(--u)); }
+.riders-ui .hand { width: calc(96 * var(--u)); text-align: center; position: relative; }
+.riders-ui .socket { position: relative; width: calc(52 * var(--u)); height: calc(52 * var(--u)); margin: 0 auto; display: grid; place-items: center;
+  border-radius: 50%; background: radial-gradient(#2a1418, #0b0709); box-shadow: 0 0 0 var(--u) var(--line); }
+.riders-ui .socket > .ring { inset: calc(-14 * var(--u)); background-image: url("./art/socket.png"); }
+.riders-ui .socket .icon { position: relative; width: calc(30 * var(--u)); height: calc(30 * var(--u)); object-fit: contain; border-radius: 50%; }
+.riders-ui .hand[data-acting] .socket { filter: drop-shadow(0 0 calc(8 * var(--u)) var(--gold)); }
+.riders-ui .hand .name { margin-top: calc(6 * var(--u)); font-size: var(--small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.riders-ui .hand .load { position: absolute; top: calc(30 * var(--u)); right: 0; font: var(--small) ui-monospace, monospace; color: var(--gold); }
+.riders-ui .hand kbd { position: absolute; top: calc(-4 * var(--u)); right: 0; }
 .riders-ui .hand.ready[data-empty] { opacity: .45; }
-.riders-ui .hotbar .run { align-self: center; font-size: 12px; color: var(--violet); min-width: 90px; }
+.riders-ui .hotbar .run { align-self: center; font-size: var(--small); color: var(--violet); min-width: calc(90 * var(--u)); }
 .riders-ui .icon.line { filter: drop-shadow(0 0 1px #000) brightness(1.1) sepia(1) hue-rotate(50deg) saturate(3); }
 
-.riders-ui .controls { left: 14px; right: 14px; bottom: 4px; display: flex; justify-content: space-between; font-size: 10px; color: #a99f90; }
+.riders-ui .controls { left: 0; right: 0; bottom: 0; padding: calc(2 * var(--u)) var(--gap); display: flex; justify-content: space-between;
+  font-size: var(--tiny); color: #a99f90; background: linear-gradient(transparent, #000a); }
 
-/* Screens: a horned violet panel over the brushed fill, paused */
+/* Screens: a panel over the paused game, the crest above its title */
 .riders-ui .foreground { position: absolute; inset: 0; pointer-events: auto; display: grid; place-items: center; background: #05030799; }
-.riders-ui .screen { position: relative; width: min(760px, 92vw); max-height: 88vh; overflow: auto; box-sizing: border-box; padding: 54px 64px 70px;
-  border: 0 solid transparent; border-image: url("./art/panel.png") 100 fill / 64px; background: #140c12 url("./art/fill.png") center / 160% 160%; background-clip: padding-box; }
-.riders-ui .screen .crest { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 255px; height: 86px; background: url("./art/crest.png") center / contain no-repeat; opacity: .8; pointer-events: none; }
-.riders-ui .screen h2 { margin: 18px 0 6px; text-align: center; font: 30px Alagard, serif; letter-spacing: .08em; color: #f6e3c8; }
-.riders-ui .screen h3 { margin: 16px 0 6px; font: 16px Alagard, serif; color: var(--violet); letter-spacing: .05em; }
-.riders-ui .screen footer { margin-top: 18px; text-align: center; font-size: 11px; color: var(--muted); }
-.riders-ui .screen .meta { display: flex; justify-content: center; gap: 24px; color: var(--muted); }
-.riders-ui .grid { display: flex; flex-wrap: wrap; gap: 8px; }
-.riders-ui .slot { width: 112px; height: 112px; padding: 16px 8px 8px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-  color: var(--ink); font: 11px/1.2 system-ui, sans-serif; cursor: pointer; border: 0 solid transparent;
-  border-image: url("./art/slot.png") 77 fill / 26px; background: #0d0a10d8; background-clip: padding-box; }
-.riders-ui .slot .icon { width: 52px; height: 52px; object-fit: contain; }
+.riders-ui .screen { position: relative; width: min(calc(760 * var(--u)), 86vw); }
+.riders-ui .screen > .crest { top: calc(-46 * var(--u)); left: 50%; transform: translateX(-50%); width: calc(240 * var(--u)); height: calc(82 * var(--u));
+  background-image: url("./art/crest.png"); opacity: .85; z-index: 1; }
+.riders-ui .screen > .body { max-height: 80vh; overflow: auto; box-sizing: border-box; padding: calc(30 * var(--u)) calc(40 * var(--u)) calc(26 * var(--u)); }
+.riders-ui .screen h2 { margin: 0 0 calc(6 * var(--u)); text-align: center; font: var(--heading) Alagard, serif; letter-spacing: .08em; color: #f6e3c8; }
+.riders-ui .screen h3 { margin: calc(16 * var(--u)) 0 calc(6 * var(--u)); font: calc(16 * var(--u)) Alagard, serif; color: var(--violet); letter-spacing: .05em;
+  border-bottom: var(--u) solid #6d5a8666; padding-bottom: calc(2 * var(--u)); }
+.riders-ui .screen footer { margin-top: calc(18 * var(--u)); text-align: center; font-size: var(--small); color: var(--muted); }
+.riders-ui .screen .meta { display: flex; justify-content: center; gap: calc(24 * var(--u)); color: var(--muted); }
+
+/* Slots: a square well with a thin frame; gold on hover, green when held */
+.riders-ui .grid { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)); }
+.riders-ui .slot { width: calc(96 * var(--u)); height: calc(96 * var(--u)); padding: calc(8 * var(--u)) calc(6 * var(--u)) calc(6 * var(--u));
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; color: var(--ink); font: var(--small)/1.2 system-ui, sans-serif;
+  cursor: pointer; background: radial-gradient(#22161d, #0d0a10); border: var(--u) solid var(--line-violet); border-radius: calc(4 * var(--u));
+  box-shadow: inset 0 0 calc(10 * var(--u)) #000, inset 0 0 0 var(--u) #00000080; }
+.riders-ui .slot .icon { width: calc(48 * var(--u)); height: calc(48 * var(--u)); object-fit: contain; }
 .riders-ui .slot .caption { text-align: center; overflow: hidden; max-height: 2.4em; }
-.riders-ui .slot[data-held] { filter: drop-shadow(0 0 6px #9cf27a); }
+.riders-ui .slot[data-held] { border-color: var(--green); box-shadow: inset 0 0 calc(10 * var(--u)) #000, 0 0 calc(6 * var(--u)) #9cf27a80; }
 .riders-ui .slot:disabled { cursor: default; opacity: .8; }
-.riders-ui .slot:hover:not(:disabled), .riders-ui .slot:focus-visible { filter: drop-shadow(0 0 6px #ffd27a); outline: none; }
-.riders-ui .columns { display: grid; grid-template-columns: 1fr 1.3fr; gap: 28px; }
-.riders-ui dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; margin: 0; }
+.riders-ui .slot:hover:not(:disabled), .riders-ui .slot:focus-visible { border-color: var(--gold); box-shadow: inset 0 0 calc(10 * var(--u)) #000, 0 0 calc(8 * var(--u)) #ffd27a80; outline: none; }
+
+/* Character sheet */
+.riders-ui .columns { display: grid; grid-template-columns: 1fr 1.3fr; gap: calc(28 * var(--u)); }
+.riders-ui dl { display: grid; grid-template-columns: auto 1fr; gap: calc(3 * var(--u)) calc(14 * var(--u)); margin: 0; }
 .riders-ui dt { color: var(--muted); }
-.riders-ui dd { margin: 0; font: 15px Alagard, serif; }
-.riders-ui dd small { display: block; font: 10px system-ui, sans-serif; color: #8f8576; }
-.riders-ui .resistances { display: grid; gap: 4px; }
-.riders-ui .resistance { display: flex; align-items: center; gap: 8px; }
-.riders-ui .resistance .icon { width: 26px; height: 26px; }
+.riders-ui dd { margin: 0; font: calc(15 * var(--u)) Alagard, serif; }
+.riders-ui dd small { display: block; font: var(--tiny) system-ui, sans-serif; color: var(--faint); }
+.riders-ui .resistances { display: grid; gap: calc(4 * var(--u)); }
+.riders-ui .resistance { display: flex; align-items: center; gap: calc(8 * var(--u)); }
+.riders-ui .resistance .icon { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }

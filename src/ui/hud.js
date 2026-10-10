@@ -6,23 +6,25 @@ export function mountHud(document) {
   element.className = 'hud';
   element.innerHTML = `
     <header class="dev"><h1>Rusty Riders</h1><div class="status" data-fact="status"></div><div class="problems" data-fact="problems"></div></header>
-    <div class="banner"><div class="chase" data-fact="chase"></div><div class="hostiles" data-fact="hostiles"></div><div class="depth" data-fact="depth"></div></div>
-    <div class="clock"><div class="ring"></div><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
+    <div class="banner redbar"><i class="orn rail"></i><i class="orn left"></i><i class="orn right"></i><div class="chase" data-fact="chase"></div><div class="line"><span class="hostiles" data-fact="hostiles"></span><span class="depth" data-fact="depth"></span></div></div>
+    <div class="clock"><i class="orn ring"></i><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
     <div class="notice" data-fact="notice"></div>
     <div class="reticle"></div>
     <div class="action"><span data-fact="action"></span><div class="progress"><i></i></div></div>
-    <div class="prompt" data-fact="prompt"></div>
-    <output class="exhibit" data-fact="exhibit" aria-live="polite"></output>
-    <div class="summary" data-fact="summary"></div>
+    <div class="prompt chip" data-fact="prompt"></div>
+    <output class="exhibit chip" data-fact="exhibit" aria-live="polite"></output>
+    <div class="summary panel" data-fact="summary"></div>
     <div class="vitals">
+      <i class="orn rail"></i><i class="orn corner"></i>
       <div class="health"><div class="bar"><i></i></div><span class="value"></span></div>
       <div class="tracks"></div>
       <div class="effects"></div>
     </div>
-    <div class="hotbar">
-      <div class="hand" data-hand="0"><div class="socket"></div><div class="name"></div><div class="load"></div><kbd>LMB</kbd></div>
-      <div class="hand" data-hand="1"><div class="socket"></div><div class="name"></div><div class="load"></div><kbd>RMB</kbd></div>
-      <div class="hand ready"><div class="socket"></div><div class="name" data-fact="ready"></div><kbd>Q</kbd></div>
+    <div class="hotbar redbar">
+      <i class="orn rail"></i><i class="orn left"></i><i class="orn right"></i>
+      <div class="hand" data-hand="0"><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>LMB</kbd></div>
+      <div class="hand" data-hand="1"><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>RMB</kbd></div>
+      <div class="hand ready"><div class="socket"><i class="orn ring"></i></div><div class="name" data-fact="ready"></div><kbd>Q</kbd></div>
       <div class="run"><div data-fact="haul"></div><div data-fact="bank"></div></div>
     </div>
     <footer class="controls"><span><kbd>WASD</kbd> move · <kbd>Shift</kbd> sprint · <kbd>Space</kbd> jump · <kbd>T</kbd> wait · <kbd>R</kbd> reload · <kbd>E</kbd> open/take · <kbd>1</kbd>–<kbd>9</kbd> weapon · <kbd>I</kbd> inventory · <kbd>C</kbd> character · <kbd>F</kbd> fly · <kbd>H</kbd> back to start · <kbd>N</kbd>/<kbd>B</kbd>/<kbd>V</kbd>/<kbd>G</kbd> developer</span><span data-fact="position"></span></footer>`;
@@ -38,6 +40,9 @@ export function mountHud(document) {
   const ready = element.querySelector('.hand.ready');
   let readyIcon = null;
   const handIcons = [null, null];
+
+  // A socket keeps its ring ornament; only the icon after it changes.
+  const setIcon = (socket, image) => socket.replaceChildren(socket.firstElementChild, image);
 
   function draw(facts) {
     for (const field of fields) field.textContent = facts[field.dataset.fact] ?? '';
@@ -67,7 +72,7 @@ export function mountHud(document) {
       if (!slot) return;
       if (handIcons[index] !== hand.icon) {
         handIcons[index] = hand.icon;
-        slot.querySelector('.socket').replaceChildren(icon(document, hand.icon));
+        setIcon(slot.querySelector('.socket'), icon(document, hand.icon));
       }
       slot.querySelector('.name').textContent = hand.name;
       slot.querySelector('.load').textContent = hand.size > 0 ? `${hand.loaded}/${hand.size}` : '';
@@ -75,7 +80,7 @@ export function mountHud(document) {
     });
     if (readyIcon !== facts.readyIcon) {
       readyIcon = facts.readyIcon;
-      ready.querySelector('.socket').replaceChildren(icon(document, readyIcon));
+      setIcon(ready.querySelector('.socket'), icon(document, readyIcon));
     }
     ready.toggleAttribute('data-empty', !facts.readyIcon);
   }

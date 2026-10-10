@@ -6,16 +6,18 @@ import { icon } from './art.js';
  */
 export function mountInventoryScreen(document, intents) {
   const element = document.createElement('section');
-  element.className = 'screen inventory-screen';
+  element.className = 'screen panel inventory-screen';
   element.setAttribute('aria-label', 'Inventory');
   element.innerHTML = `
-    <div class="crest"></div>
+    <i class="orn crest"></i>
+    <div class="body">
     <h2>Pack</h2>
     <div class="meta"><span class="slots"></span><span class="haul"></span></div>
     <h3>Weapons</h3><div class="grid weapons"></div>
     <h3>Worn</h3><div class="grid worn"></div>
     <h3>Carried</h3><div class="grid stacks"></div>
-    <footer><kbd>I</kbd> or <kbd>Esc</kbd> back to the rift · click a weapon for the main hand, right-click for the off hand</footer>`;
+    <footer><kbd>I</kbd> or <kbd>Esc</kbd> back to the rift · click a weapon for the main hand, right-click for the off hand</footer>
+    </div>`;
   const grids = { weapons: element.querySelector('.weapons'), worn: element.querySelector('.worn'), stacks: element.querySelector('.stacks') };
   const claim = (action, index, hand = 0) => {
     try {
