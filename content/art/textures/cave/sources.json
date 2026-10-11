@@ -26,5 +26,26 @@
     "route": "ComfyUI 0.37 on the RTX 5090 desktop: Z-Image Turbo bf16, 8 steps res_multistep cfg 1 shift 3, 1024x1024, no reference",
     "seed": 11,
     "prompt": "Top-down orthographic photo-flat texture of a cave floor surface filling the entire frame, even ambient lighting, hand-painted cartoon cel-shaded game art, bold black ink outlines, flat grey fills with soft pale highlights, greyscale. A chaotic natural scatter of irregular rounded stones and pebbles of many different sizes, from large boulders to tiny grit, randomly packed with dark cracks between them, organic and uneven like a riverbed seen from above."
+  },
+  "wall-ink": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16 with SeamlessTileModelDiT + MakeCircularVAEDiT (tiles as generated, no seam repaint), 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg4_2000_steps_00001_.safetensors at 1.0",
+    "seed": 6,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a cave rock wall of layered, folded grey stone strata with cracks and ink-lined ridges, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, floor, ground, scene",
+    "review": "cave-wall-6.png in the wall review of 2026-10-11 (all 18 kept)"
+  },
+  "ink-a": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16 with SeamlessTileModelDiT + MakeCircularVAEDiT (tiles as generated), 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg4_2000_steps_00001_.safetensors at 1.0",
+    "seed": 5,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of broken grey rock slabs and scattered pebbles with ink crack lines, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, walls, pillars, steps, scene, single object, focal point, vignette",
+    "review": "cave-slabs-house-seam-5.png: a user favourite in the texture-surface review of 2026-10-09"
+  },
+  "ink-b": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16 with SeamlessTileModelDiT + MakeCircularVAEDiT (tiles as generated), 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg4_2000_steps_00001_.safetensors at 1.0",
+    "seed": 6,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of broken grey rock slabs and scattered pebbles with ink crack lines, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, walls, pillars, steps, scene, single object, focal point, vignette",
+    "review": "cave-slabs-house-seam-6.png: a user favourite in the texture-surface review of 2026-10-09"
   }
 }

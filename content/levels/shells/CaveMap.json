@@ -49,6 +49,22 @@
   },
   "floorTextures": [
     {
+      "id": "ink-a",
+      "albedo": "art/textures/cave/floor-ink-a.png",
+      "normal": "art/textures/cave/floor-ink-a-normal.png",
+      "metres": 5,
+      "source": "Z-Image base + house LoRA with the seamless patch (Strix Halo ComfyUI), user favourite; see sources.json",
+      "colour": true
+    },
+    {
+      "id": "ink-b",
+      "albedo": "art/textures/cave/floor-ink-b.png",
+      "normal": "art/textures/cave/floor-ink-b-normal.png",
+      "metres": 5,
+      "source": "Z-Image base + house LoRA with the seamless patch (Strix Halo ComfyUI), user favourite; see sources.json",
+      "colour": true
+    },
+    {
       "id": "gpt-cells",
       "albedo": "art/textures/cave/floor-gpt-cells.png",
       "normal": "art/textures/cave/floor-gpt-cells-normal.png",
@@ -83,5 +99,13 @@
       "metres": 3,
       "source": "Z-Image Turbo text-to-image on the 5090 ComfyUI, no reference"
     }
-  ]
+  ],
+  "wallTexture": {
+    "id": "wall-ink",
+    "albedo": "art/textures/cave/wall-ink.png",
+    "normal": "art/textures/cave/wall-ink-normal.png",
+    "metres": 6,
+    "source": "Z-Image base + house LoRA with the seamless patch (Strix Halo ComfyUI), from the 2026-10-11 wall review; see sources.json",
+    "colour": true
+  }
 }

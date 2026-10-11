@@ -139,6 +139,17 @@ from the v4 LoRA review (`content/art/textures/lava/`, `forest/`; see texture-st
 - The walls are still the old harvested textures: Lava's is a bright red wash and Forest's a busy camouflage. They
   need the same treatment next. Forest under a closed ceiling also reads as a cave rather than a clearing.
 
+**Walls** (2026-10-11): each recipe's optional `wallTexture` replaces the wall material's own texture on walls and
+ceilings. The Cave, Lava and Forest walls are seamless house-style textures picked from a wall review in which the
+user kept all 18. Those without a strong diagonal grain were chosen:
+- **Lava:** vertical basalt with glowing seams, in place of the red wash.
+- **Forest:** horizontal mossy ledges, in place of the camouflage noise.
+- **Cave:** folded strata.
+
+In the swept builds the walls now match the floors' style. The Cave also gained two seamless slab floors
+(`ink-a`, `ink-b`, first in V's cycle; not yet checked in game). Implicit and sampled shells draw the wall texture
+triplanar at the recipe's `textureMetres`.
+
 Captures: crew-playtest sessions `af817b80-a918-4cbc-a914-18485bb68d9d` (tiles, shells),
 `dcf08c11-e5c9-4634-a624-a524ce53cf72` (floor textures) and
 `94395057-13a6-4930-b617-2d542f9575b5` (sweeps), retained 14 days.

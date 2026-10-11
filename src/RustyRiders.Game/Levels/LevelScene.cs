@@ -164,14 +164,15 @@ internal sealed class LevelScene : IWalkScene
         bool swept = build == LevelSettings.SweepsBuild;
         HarvestedLook look = new(swept ? 0 : shell.TriplanarSharpness, shell.NormalScale, shell.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        FloorTexture? floorTexture = null;
+        SurfaceTexture? floorTexture = null;
         if (floorTextureId is not null && (floorTexture = shell.FloorTextures.FirstOrDefault(t => t.Id == floorTextureId)) is null)
             problems.Add($"{tileset.Id} shells have no floor texture '{floorTextureId}'");
-        Material walls = materials.Get(shell.WallMaterial, prefabs, look),
+        Material walls = materials.Get(shell.WallMaterial, prefabs, look, shell.WallTexture?.Replacement),
             floor = materials.Get(shell.FloorMaterial, prefabs, look, floorTexture?.Replacement);
         try
         {
-            shells = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor, floorTexture?.Metres ?? shell.Sweep.FloorMetres, seed)
+            shells = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor,
+                    shell.WallTexture?.Metres ?? shell.Sweep.WallMetres, floorTexture?.Metres ?? shell.Sweep.FloorMetres, seed)
                 : new LevelShells(engine, shell, cellSize, walkGrids, walls, floor, seed);
         }
         catch (EngineCallException error)

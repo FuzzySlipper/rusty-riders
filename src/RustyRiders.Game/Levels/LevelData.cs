@@ -49,13 +49,15 @@ internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layo
 /// materials the floor and walls take (Assets-relative .mat paths, as palettes name them), how they are drawn, the
 /// room and corridor ceilings, the smoothing and wave displacement of the walls and floor, extraction detail, and
 /// which converted models of each tile prefab stay as props (model file names starting with one of
-/// <see cref="Props"/>). <see cref="Extraction"/> is <c>implicit</c> or <c>sampled</c> (see <see cref="LevelShells"/>);
+/// <see cref="Props"/>). <see cref="FloorTextures"/> are floors to try (V cycles them); <see cref="WallTexture"/>, when
+/// set, replaces the wall material's own texture on walls and ceilings. <see cref="Extraction"/> is <c>implicit</c> or <c>sampled</c> (see <see cref="LevelShells"/>);
 /// <see cref="BlockMetres"/> sizes sampled blocks, and zero limits mean the Engine defaults. Lengths are metres.
 /// </summary>
 internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial, float TextureMetres, float TriplanarSharpness,
     float NormalScale, float Roughness, float RoomHeight, float CorridorHeight, float FloorMaterialTop, float BlendRadius,
     ShellNoise WallNoise, ShellNoise FloorNoise, string Extraction, float SampleSpacing, float BlockMetres, uint MaxSamples,
-    float CreaseDegrees, uint MaxVertices, uint MaxTriangles, string[] Props, SweepDefinition Sweep, FloorTexture[] FloorTextures)
+    float CreaseDegrees, uint MaxVertices, uint MaxTriangles, string[] Props, SweepDefinition Sweep, SurfaceTexture[] FloorTextures,
+    SurfaceTexture? WallTexture = null)
 {
     internal static ShellDefinition? Load(IEngineContext engine, string tileset) =>
         Authored.ReadOptional(engine, $"levels/shells/{tileset}.json", LevelJson.Default.ShellDefinition);
@@ -65,12 +67,12 @@ internal sealed record ShellDefinition(string FloorMaterial, string WallMaterial
 }
 
 /// <summary>
-/// A floor texture to try in place of the floor material's own (content-root paths), repeating every
-/// <see cref="Metres"/>; <see cref="Source"/> says where it came from. <c>level.json</c>'s <c>floorTexture</c>, or V,
-/// picks one by id. A greyscale albedo takes the material's palette tint and glow; a <see cref="Colour"/> one is
-/// drawn as painted.
+/// A generated texture in place of a shell material's own (content-root paths), repeating every
+/// <see cref="Metres"/>; <see cref="Source"/> says where it came from. For floors, <c>level.json</c>'s
+/// <c>floorTexture</c>, or V, picks one by id. A greyscale albedo takes the material's palette tint and glow; a
+/// <see cref="Colour"/> one is drawn as painted.
 /// </summary>
-internal sealed record FloorTexture(string Id, string Albedo, string? Normal, float Metres, string Source, bool Colour = false)
+internal sealed record SurfaceTexture(string Id, string Albedo, string? Normal, float Metres, string Source, bool Colour = false)
 {
     internal Art.ReplacementTextures Replacement => new(Albedo, Normal, Colour);
 }

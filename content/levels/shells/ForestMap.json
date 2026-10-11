@@ -71,5 +71,13 @@
       "source": "Z-Image base + house LoRA (Strix Halo ComfyUI), user favourite from the v4 review; see sources.json",
       "colour": true
     }
-  ]
+  ],
+  "wallTexture": {
+    "id": "wall-ink",
+    "albedo": "art/textures/forest/wall-ink.png",
+    "normal": "art/textures/forest/wall-ink-normal.png",
+    "metres": 6,
+    "source": "Z-Image base + house LoRA with the seamless patch (Strix Halo ComfyUI), from the 2026-10-11 wall review; see sources.json",
+    "colour": true
+  }
 }

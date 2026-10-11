@@ -20,10 +20,10 @@ internal sealed class LevelSweeps : IGeneratedLevel
     private readonly MeshResource whole;
 
     internal LevelSweeps(IEngineContext engine, ShellDefinition shell, float cellSize, IReadOnlyList<(PlannedTile Tile, string[] Walkable)> tiles,
-        Material walls, Material floor, float floorMetres, int seed)
+        Material walls, Material floor, float wallMetres, float floorMetres, int seed)
     {
         long started = System.Diagnostics.Stopwatch.GetTimestamp(); // load-cost evidence only, never simulation time
-        SweepDefinition sweep = shell.Sweep;
+        SweepDefinition sweep = shell.Sweep with { WallMetres = wallMetres };
         float step = cellSize / WalkCells.PerTile;
         Dictionary<(int X, int Z), float> open = WalkCells.Open(tiles, shell);
         List<WalkRectangle> rectangles = WalkCells.Merge(open);

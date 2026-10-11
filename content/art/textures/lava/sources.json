@@ -13,5 +13,12 @@
     "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of cracked dark volcanic rock with glowing orange lava in the cracks, filling the whole image",
     "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render",
     "review": "img-21.png in the v4 blind review"
+  },
+  "wall-ink": {
+    "route": "ComfyUI on a Strix Halo: Z-Image base bf16 with SeamlessTileModelDiT + MakeCircularVAEDiT (tiles as generated, no seam repaint), 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg4_2000_steps_00001_.safetensors at 1.0",
+    "seed": 5,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a dark volcanic rock wall of layered basalt with thin glowing orange lava seams in the cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, floor, ground, scene",
+    "review": "lava-wall-5.png in the wall review of 2026-10-11 (all 18 kept)"
   }
 }
