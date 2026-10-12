@@ -56,31 +56,42 @@ The judges' rankings are merged by mean rank across shuffled orders. Calibration
 
 ## House style LoRA
 
-`rrink_zimage_v4_seg4_2000_steps_00001_.safetensors` (v4 at 2000 steps) is the house Z-Image base LoRA for the
-ink-toon family, at strength 1.0 with the house prompt below:
-- **Trained on:** the same 43 crops of the old Cave, Lava, Forest and combat textures as v3, plus the 26 images
-  the user kept in the first two review passes (mostly v2 output with Moebius wording), each whole and zoomed:
-  95 images. The Palace, StoneRoad and CyberTube textures are a different style and were left out.
-- **Settings:** 1024 px, rank 32, learning rate 3e-4, 3000 steps in six checkpointed segments, on den-m5
-  (about 10.5 h; a first attempt on den-nimo died when another workload ran the machine out of memory).
-- **Trigger:** "rrink style".
-- **Copies:** v4-2000 and v4-3000 on den-m5; every checkpoint in den-m5's ComfyUI `output/loras`.
+`rrink_zimage_v5_seg6_3000_steps_00001_.safetensors` (v5 at 3000 steps) is the house Z-Image base LoRA, at strength
+1.0 with the house prompt below and `generate.py --seamless`:
+- **Trained on:** the 43 old-game texture crops, plus 17 surfaces the user favoured: the seamless-patch round's keeps,
+  the two palace-tile keeps, and the five tiled Lava and Forest floors now in `content/art/textures/`. Each is whole
+  and zoomed, captioned "seamless floor texture seen from above, …": 77 images.
+- **Settings:** 1024 px, rank 32, learning rate 3e-4, 3000 steps in six segments, on den-m5 (2026-10-11, about
+  10.5 h; a first attempt on den-nimo was killed when the machine ran out of memory).
+- **Copies:** v5-2000 and v5-3000 on den-m5 and den-nimo.
 
-The user's blind review (2026-10-08, 24 images over cave rock, lava rock, forest ground and palace floor, seeds
-3–4) called it the best result so far. They marked their favourites and two tentative rejects:
+In the user's blind review (2026-10-11, 40 images over cave slabs, palace mosaic, palace tiles, lava rock and
+forest ground, seeds 7–8) they rejected only images with errors or tiling problems:
 
-| Set | Favourites | Rejected |
-| --- | --- | --- |
-| v4-2000 | 5/8 | 1/8 |
-| v4-3000 | 3/8 | 0/8 |
-| v2-2000 | 4/8 | 1/8 |
+| Set | Rejected |
+| --- | --- |
+| v5-3000 + seamless | 0/10 |
+| v4-2000 + seamless | 1/10 |
+| v5-2000 + seamless | 3/10 |
+| v5-3000, no seamless | 10/10 |
 
-- **By subject:** forest ground 6/6 favourites, lava 4/6, cave rock 1/6, palace floor 1/6.
-- **Rejects:** both are palace floors with a strong cast shadow, drawn like a scene rather than a surface. They
-  would suit sprites; for textures, try "even flat lighting" in the prompt and "cast shadow, drop shadow" in
-  the negative. Both were also flagged `perspective` by `checks.py`, which flagged six kept images too.
-- **Frames:** seed 4 drew a thin ink border on most images, for every LoRA (`checks.py` flags them `framed`). The
-  user did not mind them, but trim them (`checks.frame_box`) before making a texture tile.
+- **The seamless patch is still required.** Without it, v5 still draws frames, angled views and centred
+  compositions, and half its images show seams; training on surfaces alone did not teach it to make them.
+- **Style:** v5's ink is a little bolder and its colours warmer than v4's; the user said the style came through well.
+  At 3000 steps v5 loosens palace tiles toward irregular flagstones, so use ControlNet layouts when a strict grid
+  matters.
+- **Seamless failures:** the rejected seamless images (three lava, one forest) have a hard break *inside* the image,
+  such as a jagged band across it. `checks.py`'s seam measure only reads the edges and missed all four. Row and
+  column discontinuity measures did not separate them from palace tiles' real straight lines, so the tiled human
+  pass (`t` in the review app) remains the check for this.
+
+v4 (`rrink_zimage_v4_seg4_2000_steps_00001_.safetensors`) was the house LoRA before:
+- **Trained on:** the same 43 crops plus 26 keeps from the first two reviews (mostly v2 output with Moebius wording).
+- **Settings:** 1024 px, rank 32, 3000 steps, on den-m5.
+- **Result:** the user's blind review of 2026-10-08 (no seamless patch) called it the best so far: v4-2000 drew 5/8
+  favourites, v4-3000 3/8, v2 4/8. Both rejects were palace floors drawn as scenes with cast shadows.
+- **Frames:** seed 4 drew a thin ink border on most images for every LoRA (`checks.py` flags them `framed`). Trim
+  them (`make_tileable.py --trim-frame`) before tiling.
 
 Earlier runs:
 
@@ -115,7 +126,7 @@ marks before trusting their rankings again.
 
 ## House prompt
 
-For Z-Image base with the house LoRA (v4 or v2 at 1.0; earlier v3 at 0.75), the user's second review (2026-10-07, 24 images)
+For Z-Image base with the house LoRA (v5 or v4 at 1.0; earlier v2 at 1.0 and v3 at 0.75), the user's second review (2026-10-07, 24 images)
 kept every image with the Moebius wording (12/12) and fewer than half of the plain ones (5/12):
 
 | Prompt | v2 at 1.0 | v3 at 0.75 |

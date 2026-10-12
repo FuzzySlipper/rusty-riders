@@ -41,7 +41,7 @@ def seam_mask(size: int, band: float) -> Image.Image:
     return Image.fromarray((cross * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(size / 64))
 
 
-HOUSE_LORA = "rrink_zimage_v4_seg4_2000_steps_00001_.safetensors"
+HOUSE_LORA = "rrink_zimage_v5_seg6_3000_steps_00001_.safetensors"
 HOUSE_NEGATIVE = ("text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, "
                   "landscape, photograph, photorealistic, 3d render, seam, straight line")
 
