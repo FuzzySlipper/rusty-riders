@@ -23,7 +23,7 @@ Then, from this repository:
 rusty status
 rusty install
 scripts/import-old-art.sh
-rusty dev --project src/RustyRiders.Game/RustyRiders.Game.csproj --port 8787
+rusty dev --port 8787
 ```
 
 `scripts/import-old-art.sh` converts the level tileset tiles and the combat
@@ -57,8 +57,7 @@ collides, so fly to see raised floors.
 The level's tileset, layout, seed and optional palette are set in `content/level.json`; without a palette the seed picks one of the tileset's, as the old game did. Its `build` is `tiles` (the default), `shells` or `sweeps`, generated level geometry for tilesets with a recipe in `content/levels/shells/` (CaveMap so far; see [docs/levels.md](docs/levels.md#generated-shells)). The
 walker tuning is in `content/walker.json`, and the gallery's exhibits in
 `content/gallery.json`.
-To run it in the background instead, `rusty dev start --project
-src/RustyRiders.Game/RustyRiders.Game.csproj` (same options) returns once the
+To run it in the background instead, `rusty dev start` (same options) returns once the
 game serves; `rusty dev status` and `rusty dev stop` report and end that
 session. Stop sessions this way rather than by killing processes: other
 products' hosts run on the same machine.
@@ -67,7 +66,9 @@ products' hosts run on the same machine.
 changes to declared C#, UI, or content inputs rebuild and reload it. See
 `rusty dev --help` for `--bind-host`, `--live-debug`, and `--debugger`.
 
-`Directory.Build.props` pins the exact SDK/runtime pair. `rusty install`
+`Directory.Build.props` pins the exact SDK/runtime pair and names the product
+(`RustyEngineProject`) that `rusty dev` and `rusty build` run when no
+`--project` is given. `rusty install`
 downloads it once into the shared Engine cache, and later builds and runs work
 offline. No Engine source checkout is required.
 
@@ -75,7 +76,7 @@ To adopt the newest published pair deliberately:
 
 ```bash
 rusty update
-rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj
+rusty build
 ```
 
 `rusty update` lists the release notes to read; include the changed
@@ -86,7 +87,7 @@ after the product builds and serves on the new pair, and otherwise opens an
 NativeAOT fidelity/release check:
 
 ```bash
-rusty build --project src/RustyRiders.Game/RustyRiders.Game.csproj --aot
+rusty build --aot
 ```
 
 ## Repository shape
