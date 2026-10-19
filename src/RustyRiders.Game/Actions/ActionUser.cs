@@ -21,6 +21,7 @@ internal sealed class ActionUser
     private const float Due = 1e-4f;
     private float remaining;
     private float scale = 1;
+    private float elapsed;
 
     internal ActionDefinition? Current { get; private set; }
     internal ActionPhase Phase { get; private set; }
@@ -31,6 +32,15 @@ internal sealed class ActionUser
     {
         ActionPhase.Windup => a.Timing.Windup, ActionPhase.Commit => a.Timing.Commit, ActionPhase.Recovery => a.Timing.Recovery, _ => 1
     } * scale);
+
+    /// <summary>How many actions have begun; a held view starts an action's motion when this changes.</summary>
+    internal ulong Started { get; private set; }
+
+    /// <summary>World seconds since the current action began (one update can admit several steps after it began).</summary>
+    internal float Elapsed => Current is null ? 0 : elapsed;
+
+    /// <summary>How the current action's phases are scaled (the user's action time when it began).</summary>
+    internal float Scale => scale;
 
     internal float Cooldown(string action) => cooldowns.GetValueOrDefault(action);
 
@@ -48,6 +58,8 @@ internal sealed class ActionUser
         Aim = aim;
         Phase = ActionPhase.Windup;
         scale = timeScale;
+        elapsed = 0;
+        Started++;
         remaining = action.Timing.Windup * scale;
         if (action.Timing.Cooldown > 0) cooldowns[action.Id] = action.Timing.Cooldown;
         return action.Duration * scale;
@@ -63,6 +75,7 @@ internal sealed class ActionUser
             if ((cooldowns[id] -= seconds) <= 0) cooldowns.Remove(id);
         if (Current is not { } action) return null;
         remaining -= seconds;
+        elapsed += seconds;
         ActionDefinition? landed = null;
         while (remaining <= Due && Current is not null)
             switch (Phase)

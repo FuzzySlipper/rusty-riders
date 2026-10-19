@@ -12,37 +12,7 @@
       "icon": "blade",
       "weapon": {
         "action": "blade-slash",
-        "look": {
-          "size": [
-            0.05,
-            0.05,
-            0.75
-          ],
-          "color": [
-            0.75,
-            0.85,
-            1.0
-          ],
-          "offset": [
-            0,
-            0.05,
-            -0.3
-          ],
-          "muzzle": [
-            0,
-            0.05,
-            -0.7
-          ],
-          "model": {
-            "glb": "parts/Art/Models/Weapons/Prefabs/1H_sword_C/1H_Sword_C01-c550c662.glb",
-            "length": 0.7,
-            "rotation": [
-              160,
-              0,
-              0
-            ]
-          }
-        }
+        "look": "rift-blade"
       }
     },
     {
@@ -57,37 +27,7 @@
       "icon": "maul",
       "weapon": {
         "action": "maul-smash",
-        "look": {
-          "size": [
-            0.22,
-            0.22,
-            0.55
-          ],
-          "color": [
-            0.45,
-            0.38,
-            0.3
-          ],
-          "offset": [
-            0,
-            0.05,
-            -0.3
-          ],
-          "muzzle": [
-            0,
-            0.05,
-            -0.6
-          ],
-          "model": {
-            "glb": "parts/Art/Models/Weapons/Prefabs/BattleHammer/Battle_hammer-b2842784.glb",
-            "length": 0.75,
-            "rotation": [
-              -25,
-              0,
-              0
-            ]
-          }
-        }
+        "look": "maul"
       }
     },
     {
@@ -107,37 +47,7 @@
           "size": 6,
           "track": "tech-ammo"
         },
-        "look": {
-          "size": [
-            0.08,
-            0.14,
-            0.4
-          ],
-          "color": [
-            0.55,
-            0.42,
-            0.25
-          ],
-          "offset": [
-            0,
-            0,
-            -0.15
-          ],
-          "muzzle": [
-            0,
-            0.03,
-            -0.38
-          ],
-          "model": {
-            "glb": "parts/Art/Models/Weapons/Prefabs/Flintlock/polySurface122-0e0f03ea.glb",
-            "length": 0.38,
-            "rotation": [
-              0,
-              90,
-              0
-            ]
-          }
-        }
+        "look": "laser-flintlock"
       }
     },
     {
@@ -152,37 +62,7 @@
       "icon": "wand",
       "weapon": {
         "action": "ember-bolt",
-        "look": {
-          "size": [
-            0.04,
-            0.04,
-            0.45
-          ],
-          "color": [
-            1.0,
-            0.45,
-            0.15
-          ],
-          "offset": [
-            0,
-            0,
-            -0.2
-          ],
-          "muzzle": [
-            0,
-            0,
-            -0.45
-          ],
-          "model": {
-            "glb": "parts/Art/Models/Weapons/Prefabs/Mandragora/Mandragora-5d1fade9.glb",
-            "length": 0.6,
-            "rotation": [
-              -70,
-              0,
-              0
-            ]
-          }
-        }
+        "look": "ember-wand"
       }
     },
     {
@@ -197,37 +77,7 @@
       "icon": "sigil",
       "weapon": {
         "action": "frost-nova",
-        "look": {
-          "size": [
-            0.16,
-            0.16,
-            0.04
-          ],
-          "color": [
-            0.55,
-            0.85,
-            1.0
-          ],
-          "offset": [
-            0,
-            0.02,
-            -0.1
-          ],
-          "muzzle": [
-            0,
-            0.02,
-            -0.12
-          ],
-          "model": {
-            "glb": "parts/Art/Models/Weapons/Ravenwood/crystal-98430252.glb",
-            "length": 0.26,
-            "rotation": [
-              0,
-              0,
-              0
-            ]
-          }
-        }
+        "look": "frost-sigil"
       }
     },
     {

@@ -1,0 +1,342 @@
+{
+  "settleSeconds": 0.15,
+  "settleEase": "QuadOut",
+  "motions": {
+    "swing": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "raised": {
+          "position": [
+            0.0,
+            0.1,
+            0.06
+          ],
+          "rotation": [
+            30,
+            -10,
+            -10
+          ]
+        },
+        "strike": {
+          "position": [
+            -0.1,
+            0.06,
+            0.0
+          ],
+          "rotation": [
+            -55,
+            15,
+            20
+          ]
+        },
+        "follow": {
+          "position": [
+            -0.14,
+            -0.04,
+            0.04
+          ],
+          "rotation": [
+            -75,
+            25,
+            30
+          ]
+        },
+        "heaved": {
+          "position": [
+            0.04,
+            0.16,
+            0.1
+          ],
+          "rotation": [
+            45,
+            -10,
+            -15
+          ]
+        },
+        "smash": {
+          "position": [
+            -0.08,
+            -0.02,
+            -0.06
+          ],
+          "rotation": [
+            -80,
+            10,
+            15
+          ]
+        }
+      },
+      "tracks": {
+        "default": [
+          {
+            "pose": "raised",
+            "phase": "Windup",
+            "at": 0.5,
+            "ease": "CubicOut",
+            "grip": 0.4
+          },
+          {
+            "pose": "strike",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "QuadIn",
+            "grip": 1
+          },
+          {
+            "pose": "follow",
+            "phase": "Commit",
+            "at": 1,
+            "ease": "QuadOut",
+            "grip": 0.8
+          }
+        ],
+        "maul-smash": [
+          {
+            "pose": "heaved",
+            "phase": "Windup",
+            "at": 0.7,
+            "ease": "SineOut",
+            "grip": 0.4
+          },
+          {
+            "pose": "smash",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "QuadIn",
+            "grip": 1
+          },
+          {
+            "pose": "smash",
+            "phase": "Commit",
+            "at": 1,
+            "ease": "Linear",
+            "grip": 1
+          }
+        ]
+      }
+    },
+    "shot": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "aim": {
+          "position": [
+            -0.08,
+            0.06,
+            -0.1
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "kick": {
+          "position": [
+            -0.08,
+            0.1,
+            -0.02
+          ],
+          "rotation": [
+            18,
+            0,
+            0
+          ]
+        },
+        "lowered": {
+          "position": [
+            -0.03,
+            -0.07,
+            -0.04
+          ],
+          "rotation": [
+            -25,
+            15,
+            30
+          ]
+        }
+      },
+      "tracks": {
+        "default": [
+          {
+            "pose": "aim",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "QuadOut",
+            "grip": 0.6
+          },
+          {
+            "pose": "kick",
+            "phase": "Commit",
+            "at": 0.3,
+            "ease": "ExpoOut",
+            "grip": 1
+          },
+          {
+            "pose": "aim",
+            "phase": "Commit",
+            "at": 1,
+            "ease": "SineOut",
+            "grip": 0.6
+          }
+        ],
+        "flintlock-reload": [
+          {
+            "pose": "lowered",
+            "phase": "Windup",
+            "at": 0.3,
+            "ease": "QuadOut",
+            "grip": 0
+          },
+          {
+            "pose": "lowered",
+            "phase": "Windup",
+            "at": 0.72,
+            "ease": "Linear",
+            "grip": 0
+          },
+          {
+            "pose": "rest",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "SineInOut",
+            "grip": 0
+          }
+        ]
+      }
+    },
+    "cast": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "drawn": {
+          "position": [
+            0.0,
+            0.03,
+            0.1
+          ],
+          "rotation": [
+            12,
+            0,
+            0
+          ]
+        },
+        "thrust": {
+          "position": [
+            -0.06,
+            0.05,
+            -0.14
+          ],
+          "rotation": [
+            -6,
+            0,
+            0
+          ]
+        },
+        "lifted": {
+          "position": [
+            -0.04,
+            0.18,
+            0.0
+          ],
+          "rotation": [
+            25,
+            0,
+            0
+          ]
+        },
+        "burst": {
+          "position": [
+            -0.06,
+            0.0,
+            -0.12
+          ],
+          "rotation": [
+            -20,
+            0,
+            0
+          ]
+        }
+      },
+      "tracks": {
+        "default": [
+          {
+            "pose": "drawn",
+            "phase": "Windup",
+            "at": 0.6,
+            "ease": "SineOut",
+            "grip": 0.4
+          },
+          {
+            "pose": "thrust",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "QuadIn",
+            "grip": 1
+          },
+          {
+            "pose": "thrust",
+            "phase": "Commit",
+            "at": 1,
+            "ease": "Linear",
+            "grip": 1
+          }
+        ],
+        "frost-nova": [
+          {
+            "pose": "lifted",
+            "phase": "Windup",
+            "at": 0.8,
+            "ease": "SineOut",
+            "grip": 0.6
+          },
+          {
+            "pose": "burst",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "ExpoIn",
+            "grip": 1
+          },
+          {
+            "pose": "burst",
+            "phase": "Commit",
+            "at": 1,
+            "ease": "Linear",
+            "grip": 1
+          }
+        ]
+      }
+    }
+  }
+}

@@ -25,6 +25,10 @@
 
   <ItemGroup>
     <RustyEngineProductInputIntent Include="riders.inventory" Value="payload:riders.inventory.v1" />
+    <!-- The held presentation reloads in place under rusty dev (RustyRidersProduct.ReloadHeld). -->
+    <RustyEngineLiveContent Include="held/looks.json" />
+    <RustyEngineLiveContent Include="held/stances.json" />
+    <RustyEngineLiveContent Include="held/motion.json" />
     <PackageReference Include="Rusty.Engine" Version="[$(RustyEnginePackageVersion)]" />
   </ItemGroup>
 </Project>

@@ -2,13 +2,16 @@ import { mountHud } from './hud.js';
 import { mountInventoryScreen } from './inventory-screen.js';
 import { mountSheetScreen } from './sheet-screen.js';
 import { createPauseFlow } from './pause.js';
+import { createDeveloperShell, developerAvailable } from './developer.js';
 
 /**
  * Composition, navigation and focus only. The HUD and each screen own their markup and drawing; the Engine owns the
  * canvas, pointer lock, input delivery, lifecycle and projection transport, and the C# owners own all game state.
- * A screen pauses the game while it is open and gives focus back to play when it closes.
+ * A screen pauses the game while it is open and gives focus back to play when it closes. F2 docks the Engine developer
+ * shell beside play without pausing it (developer sessions only), so held motion plays while it is tuned.
  */
 const SCREEN_KEYS = { KeyI: 'inventory', KeyC: 'sheet' };
+const DEVELOPER_KEY = 'F2';
 
 export function mountProductUi(root, context) {
   const document = root.ownerDocument;
@@ -23,7 +26,9 @@ export function mountProductUi(root, context) {
   foreground.hidden = true;
   foreground.setAttribute('data-rusty-ui-interactive', '');
   foreground.append(...Object.values(screens).map(view => view.element));
-  layer.append(hud.element, foreground);
+  const developerHost = document.createElement('div');
+  developerHost.className = 'developer-host';
+  layer.append(hud.element, foreground, developerHost);
   root.append(layer);
   let screen = null;
   let disposed = false;
@@ -51,9 +56,28 @@ export function mountProductUi(root, context) {
       await pause.pause();
     }
   };
+  const toGameplay = () => {
+    if (disposed || screen !== null) return;
+    context?.ui?.setInteractionMode?.('gameplay');
+    context?.ui?.focusGameplay?.();
+  };
+  const developer = createDeveloperShell(developerHost, { viewport: context?.viewport, onClose: toGameplay });
+  const toggleDeveloper = async () => {
+    if (developer.isOpen) { developer.close(); return; }
+    if (screen !== null || !await developerAvailable() || disposed) return;
+    context?.ui?.setInteractionMode?.('interface');
+    await developer.open();
+  };
   const onKey = event => {
     if (event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
+    if (event.code === DEVELOPER_KEY && screen === null) {
+      event.preventDefault();
+      event.stopPropagation();
+      void toggleDeveloper();
+      return;
+    }
     const target = SCREEN_KEYS[event.code];
+    if (target && developer.isOpen) return;
     if (target && (screen === null || screen === target)) {
       event.preventDefault();
       event.stopPropagation();
@@ -85,6 +109,7 @@ export function mountProductUi(root, context) {
       disposed = true;
       unsubscribe?.();
       pause.dispose();
+      developer.dispose();
       document.removeEventListener('keydown', onKey, true);
       layer.remove();
     },

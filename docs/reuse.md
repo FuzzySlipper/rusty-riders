@@ -19,6 +19,7 @@ candidates, not compatibility promises.
 | Inventory, equipment, loot tables | rusty-hotel `Supplies/FieldCase.cs`, `Loot/`; rusty-craftsurvive `Modules/Inventory/` | Leave qualities and affixes until wanted |
 | Growth and a refuge checkpoint | rusty-hotel `Progression/`, `Expedition/` | For the base |
 | DOM screens | rusty-hotel `src/ui/` (plain ES modules); rusty-craftsurvive `src/ui/` (TypeScript) | Projections in, semantic intents out |
+| First-person held motion, arms, workbench | rusty-hotel `src/Hotel.Game/Combat/` (`Held*`, `ArmsView`, `HandFitting`, `GripLandmarks`), `Interface/Workbench/`; rusty-fptester `docs/reference.md` (controller, actions, developer shell) | fptester is the maintained first-person reference; hotel holds the held-motion and arms tooling |
 | Gameplay time adoption | rusty-engine `docs/csharp-lifecycle.md` (Gameplay time), `fixtures/csharp-gameplay-time` | Engine docs, not a code donor |
 
 rusty-hotel's own `docs/reuse.md` lists further donors (rusty-fptester,
@@ -54,6 +55,9 @@ Do not change or clean donor repositories to make them easier to copy.
 | rusty-hotel | `4485dfd4dc0190f4547aae1874cc9e4687828681` | `src/Hotel.Game/Combat/ResidentView.cs` | `Enemies/EnemyView.cs`: clip choice by state and the attack clip sampled at action progress (strike share, commit share, crossfade); per-enemy bodies and corpses are new |
 | rusty-hotel | `4485dfd4dc0190f4547aae1874cc9e4687828681` | `src/Hotel.Game/Interface/UiValueWriter.cs` | `Ui/UiValueWriter.cs`, as written |
 | rusty-hotel | `4485dfd4dc0190f4547aae1874cc9e4687828681` | `src/ui/pause.js` | `src/ui/pause.js`, with the error text made about the game, not the hotel |
+| rusty-hotel | `dba13227a382a3afa74dc751a93626aaddcfd901` | `src/Hotel.Game/Combat/HeldDefinition.cs`, `HeldStance.cs`, `HeldMotion.cs`, `CombatView.cs` (held presentation) | `Held/`: held looks seated on stances, keyed motion played as Engine tween timelines (started that far along, settled when cut short), the motion viewer's views and live reload in place (`Refresh`). Adapted to two hands that each hold their own weapon: the off hand is the main hand's placement mirrored (`Frames.Mirror`), each look is drawn in a metre look space with its converted model fitted from its bounds (rotation and length tunable live), keys carry one hand's `grip` closure, and timelines follow the action's time scale. Dropped landmarks, hand shapes and fitting, off grips, muzzle flash and the stance guide. |
+| rusty-hotel | `dba13227a382a3afa74dc751a93626aaddcfd901` | `src/Hotel.Game/Interface/HeldMotionDebugCommands.cs`, `Interface/Workbench/HotelWorkbench.cs`, `ViewmodelTunables.cs` | `Developer/HeldMotionDebugCommands.cs` and `Developer/Workbench/`: the `riders.dev.motion*` viewer (plays in real time, since the world holds while the player stands still), nudge and stance commands, a model-fit command, and the workbench page with a hand chooser. Dropped the arms and hands controls until the arms exist. |
+| rusty-fptester | `61f58a91103e6fed1a2bb3a6cac7457f02122b53` | `src/ui/developer.js` | `src/ui/developer.js`: availability probe and the docked Engine developer shell on its `onClose`, with hotel's grip inspection views and the motion viewer reset on close. |
 | rusty-hotel | `82451c5dfb7b457654940c5822d832a19be9eef8` | `src/Hotel.Game/Content/Template.cs` | `Content/Template.cs`: `Fill`, `Check` and `Plain`, as written |
 
 ## Old game art in the UI

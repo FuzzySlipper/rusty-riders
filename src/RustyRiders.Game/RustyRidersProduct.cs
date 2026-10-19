@@ -63,6 +63,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         {
             if (input.Kind == InputEventKind.Clear) jumpPending = false;
         }
+        ReloadHeld(update.ContentChanges);
         time.Observe(update.Facts);
         float delta = (float)update.Facts.FixedDeltaSeconds;
         // Look and controls in host time, so they stay live while the world holds; the body per admitted step.
@@ -143,6 +144,21 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         registrar.Register(new CombatDebugCommands(play.Combat, walker));
         registrar.Register(new EnemyDebugCommands(play.Enemies, walker));
         registrar.Register(new ItemDebugCommands(play.Inventory, play.Pickups, play.Loot, play.Items, walker));
+        HeldMotionDebugCommands motionViewer = new(play.Combat, Publish, play.Combat.LookUses());
+        registrar.Register(motionViewer);
+        registrar.Register(new InspectionTargetsDebugModule(engine.Graphics, play.Combat.View.Targets));
+        registrar.Register(new Developer.Workbench.HeldWorkbench(engine.ContentSource, play.Combat, motionViewer, Publish).Module());
+    }
+
+    // An edited held-presentation file under rusty dev reloads into the running game; what cannot is reported.
+    private void ReloadHeld(ReadOnlySpan<ContentReferenceInfo> changes)
+    {
+        HashSet<string> changed = [];
+        foreach (ContentReferenceInfo change in changes)
+            if (Held.HeldCatalog.Files.Contains(change.Path)) changed.Add(change.Path);
+        if (changed.Count == 0) return;
+        foreach (string problem in play.Combat.ReloadHeld(changed)) Console.Error.WriteLine($"Held presentation {problem}");
+        Publish();
     }
 
     public void Dispose()
@@ -204,6 +220,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         engine.Graphics.PublishSnapshot([.. scenes.Current.Facts, .. play.Facts()]);
         play.Enemies.Animate(); // animation instances bind to bodies in the published snapshot
+        play.Combat.Animate(); // held motion tweens play over looks in the published snapshot
         walker.Publish(sampleTime);
         engine.Ui.PublishProjection(new UiProjection(hud, Hud.Create(scenes.Current, walker, time, play, run, fonts)));
     }

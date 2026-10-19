@@ -2,22 +2,25 @@ using System.Text.Json.Serialization;
 using Rusty.Engine;
 using RustyRiders.Game.Actions;
 using RustyRiders.Game.Content;
+using RustyRiders.Game.Held;
 using RustyRiders.Game.Items;
 using RustyRiders.Game.Mechanics;
 
 namespace RustyRiders.Game.Combat;
 
 /// <summary>
-/// Everything combat composes from content: the action and item catalogs, the player's starting kit, how hands and
-/// hits are presented, the combat HUD text, and the training dummy.
+/// Everything combat composes from content: the action and item catalogs, the player's starting kit, how held weapons
+/// look and move (<see cref="HeldCatalog"/>), how hits are presented, the combat HUD text, and the training dummy.
 /// </summary>
-internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items, Kit Kit, CombatPresentation Presentation,
+internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items, Kit Kit, HeldCatalog Held, CombatPresentation Presentation,
     CombatMessages Text, DummyDefinition Dummy)
 {
     internal static CombatDefinition Load(IEngineContext engine, MechanicsDefinition mechanics)
     {
         ActionCatalog actions = ActionCatalog.Load(engine, mechanics);
         ItemCatalog items = ItemCatalog.Load(engine, mechanics, actions);
+        HeldCatalog held = HeldCatalog.Load(engine);
+        ValidateHeld(held, items, actions);
         Kit kit = Authored.Read(engine, Kit.Path, CombatJson.Default.Kit);
         items.Require(Kit.Path, "carried", kit.Carried);
         Authored.Require(kit.Carried.All(id => items.Item(id)!.Weapon is not null), Kit.Path, "carried", "carried lists weapons; other starting items go in items.");
@@ -34,7 +37,23 @@ internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items
         mechanics.Validate(DummyDefinition.Path, "stats", dummy.Stats);
         Authored.Point(DummyDefinition.Path, "size", dummy.Size);
         Authored.Colour(DummyDefinition.Path, "color", dummy.Color);
-        return new(actions, items, kit, presentation, text, dummy);
+        return new(actions, items, kit, held, presentation, text, dummy);
+    }
+
+    /// <summary>Every weapon names a held look whose motion has keys, in time order, for each action the weapon uses.</summary>
+    internal static void ValidateHeld(HeldCatalog held, ItemCatalog items, ActionCatalog actions)
+    {
+        List<(string, HeldLookDefinition, ActionDefinition)> uses = [];
+        for (int i = 0; i < items.Items.Length; i++)
+        {
+            if (items.Items[i].Weapon is not { } weapon) continue;
+            string at = $"items[{i}].weapon";
+            held.Require(ItemCatalog.Path, $"{at}.look", weapon.Look);
+            HeldLookDefinition look = held.Look(weapon.Look)!;
+            uses.Add(($"{at}.action", look, actions.Action(weapon.Action)!));
+            if (weapon.Reload is { } reload) uses.Add(($"{at}.reload", look, actions.Action(reload)!));
+        }
+        held.Motion.Validate(ItemCatalog.Path, uses);
     }
 }
 
@@ -50,22 +69,15 @@ internal sealed record Kit(string[] Carried, string MainHand, string OffHand, Ki
 internal sealed record KitStack(string Item, int Count);
 
 /// <summary>
-/// Hands and hits on screen (content/combat/presentation.json): each hand's rest point in camera space (right, up,
-/// back), how far a windup draws it back and a commit drives it, how much it drops in recovery, the size of a projectile,
-/// an impact burst's particles, size and life, and how long a hit notice shows (host seconds).
+/// Hits on screen (content/combat/presentation.json): the size of a projectile, an impact burst's particles, size and
+/// life, and how long a hit notice shows (host seconds). Held weapons are content/held/.
 /// </summary>
-internal sealed record CombatPresentation(float[] MainHand, float[] OffHand, float[] Windup, float[] Commit, float RecoveryDrop,
-    float ProjectileSize, int ImpactBurst, float ImpactSize, float ImpactSeconds, float NoticeSeconds)
+internal sealed record CombatPresentation(float ProjectileSize, int ImpactBurst, float ImpactSize, float ImpactSeconds, float NoticeSeconds)
 {
     internal const string Path = "combat/presentation.json";
 
     internal void Validate()
     {
-        Authored.Point(Path, "mainHand", MainHand);
-        Authored.Point(Path, "offHand", OffHand);
-        Authored.Point(Path, "windup", Windup);
-        Authored.Point(Path, "commit", Commit);
-        Authored.AtLeast(Path, "recoveryDrop", RecoveryDrop, 0);
         Authored.Positive(Path, "projectileSize", ProjectileSize);
         Authored.Require(ImpactBurst is >= 1 and <= 256, Path, "impactBurst", "must be 1 to 256 particles.");
         Authored.Positive(Path, "impactSize", ImpactSize);

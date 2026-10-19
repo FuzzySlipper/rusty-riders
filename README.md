@@ -66,6 +66,16 @@ products' hosts run on the same machine.
 changes to declared C#, UI, or content inputs rebuild and reload it. See
 `rusty dev --help` for `--bind-host`, `--live-debug`, and `--debugger`.
 
+### Tuning first-person weapons
+
+Run `rusty dev --port 8787 --live-debug` and press F2 in play to dock the Engine developer shell: two views of the
+hands' grips, the first-person workbench and the console. The workbench picks a weapon look, an action and a hand,
+steps or plays the action's keys (in real time, though the world holds), and tunes the look's model fit, its stance,
+nudge and grip, each key's timing, curve and pose with sliders. Save writes the changed values into `content/held/`.
+Editing those files by hand also reloads them into the running game. The same in the console: `riders.dev.motion
+<look> <action>`, then `.key`, `.next`, `.play <speed>`, `.at <seconds>`, `.pose`, `.hand`, `riders.dev.held.nudge`,
+`riders.dev.held.fit` and `riders.dev.stance.set`.
+
 `Directory.Build.props` pins the exact SDK/runtime pair and names the product
 (`RustyEngineProject`) that `rusty dev` and `rusty build` run when no
 `--project` is given. `rusty install`

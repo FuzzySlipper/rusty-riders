@@ -1,8 +1,8 @@
 using System.Numerics;
 using Rusty.Engine;
 using RustyRiders.Game.Actions;
-using RustyRiders.Game.Art;
 using RustyRiders.Game.Content;
+using RustyRiders.Game.Held;
 using RustyRiders.Game.Items;
 using RustyRiders.Game.Mechanics;
 using RustyRiders.Game.Player;
@@ -12,15 +12,15 @@ namespace RustyRiders.Game.Combat;
 /// <summary>
 /// The player's fighting: two hands holding weapons the inventory carries, one action at a time through the shared pipeline, costs
 /// (charge, ammunition, rounds in a magazine) and reloads, training dummies to hit, and what it all looks like (held
-/// weapons on the viewmodel layer, projectiles, impact bursts) and says on the HUD. A use returns the world seconds it
+/// weapons through <see cref="HeldView"/>, projectiles, impact bursts) and says on the HUD. A use returns the world seconds it
 /// costs; the caller buys them from gameplay time. Hits resolve in the current scene's spatial session.
 /// </summary>
 internal sealed class PlayerCombat : IDisposable
 {
-    internal const int MainHand = 0, OffHand = 1;
+    internal const int MainHand = HeldView.MainHand, OffHand = HeldView.OffHand;
     private const ulong FirstDummyEntity = 10_000;
+    // The two held looks are the first objects; projectiles and dummies follow.
     private const ulong FirstObjectId = 3_000_000;
-    private const string OldArtRoot = "old-art";
 
     private readonly IEngineContext engine;
     private readonly CombatDefinition definition;
@@ -34,9 +34,7 @@ internal sealed class PlayerCombat : IDisposable
     private readonly Dictionary<string, int> loaded = [];
     private readonly List<TrainingDummy> dummies = [];
     private readonly List<Appearance> appearances = [];
-    private readonly Dictionary<string, Appearance> held = [];
-    private readonly ConvertedArt art;
-    private readonly Dictionary<string, (Appearance Appearance, Transform Pose)> models = [];
+    private readonly HeldView held;
     private readonly Appearance projectile, dummy;
     private ActionResolution? resolution;
     private int actingHand = MainHand;
@@ -54,12 +52,7 @@ internal sealed class PlayerCombat : IDisposable
         this.vitals = vitals;
         this.walker = walker;
         actor = new PlayerActor(walker, vitals, radius);
-        art = new ConvertedArt(engine, OldArtRoot);
-        foreach (ItemDefinition item in definition.Items.Items.Where(i => i.Weapon is not null))
-        {
-            held[item.Id] = Primitive(PrimitiveGeometry.Cube, item.Weapon!.Look.Color);
-            if (item.Weapon.Look.Model is { } model && art.Model(model.Glb) is { } mesh) models[item.Id] = (mesh.Appearance, Fit(mesh, model));
-        }
+        held = new HeldView(engine, definition.Held, FirstObjectId);
         projectile = Primitive(PrimitiveGeometry.Sphere, [1f, .7f, .35f]);
         dummy = Primitive(PrimitiveGeometry.Cube, definition.Dummy.Color);
         Reset();
@@ -68,6 +61,8 @@ internal sealed class PlayerCombat : IDisposable
     internal IActionActor Actor => actor;
     internal IReadOnlyList<TrainingDummy> Dummies => dummies;
     internal bool Busy => user.Busy;
+    internal HeldView View => held;
+    internal ActionDefinition? Action(string id) => definition.Actions.Action(id);
 
     /// <summary>The scene's session is where hits now resolve; shots in flight and dummies stay behind in the old one.</summary>
     internal void Enter(SpatialSession session)
@@ -75,12 +70,14 @@ internal sealed class PlayerCombat : IDisposable
         resolution = new ActionResolution(engine, session, mechanics);
         dummies.Clear();
         user.Interrupt();
+        held.Reset();
     }
 
     /// <summary>The kit as it starts: its weapons in hand and every magazine full.</summary>
     internal void Reset()
     {
         user.Reset();
+        held.Reset();
         resolution?.Clear();
         hands[MainHand] = new Hand(definition.Items.Item(definition.Kit.MainHand)!);
         hands[OffHand] = new Hand(definition.Items.Item(definition.Kit.OffHand)!);
@@ -175,27 +172,10 @@ internal sealed class PlayerCombat : IDisposable
     /// <summary>Held weapons (camera space, viewmodel layer), projectiles and dummies as they stand now.</summary>
     internal IEnumerable<AppearanceFact> Facts()
     {
-        ulong id = FirstObjectId;
         CombatPresentation p = definition.Presentation;
-        for (int h = 0; h < hands.Length; h++)
-        {
-            HeldLook look = hands[h].Item.Weapon!.Look;
-            Vector3 at = Authored.Vector(h == MainHand ? p.MainHand : p.OffHand) + Authored.Vector(look.Offset);
-            if (h == actingHand && user.Current is not null)
-                at += user.Phase switch
-                {
-                    ActionPhase.Windup => Authored.Vector(p.Windup) * user.PhaseProgress,
-                    ActionPhase.Commit => Authored.Vector(p.Commit),
-                    ActionPhase.Recovery => Authored.Vector(p.Commit) * (1 - user.PhaseProgress) - Vector3.UnitY * p.RecoveryDrop * (1 - user.PhaseProgress),
-                    _ => Vector3.Zero,
-                };
-            if (models.TryGetValue(hands[h].Item.Id, out var model))
-                yield return new AppearanceFact(id++, false, 0, new Transform(at + model.Pose.Translation, model.Pose.Rotation, model.Pose.Scale),
-                    model.Appearance, walker.Flying is false, RenderLayer.Viewmodel);
-            else
-                yield return new AppearanceFact(id++, false, 0, new Transform(at, Quaternion.Identity, Authored.Vector(look.Size)),
-                    held[hands[h].Item.Id], walker.Flying is false, RenderLayer.Viewmodel);
-        }
+        foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, walker.Flying is false))
+            yield return fact;
+        ulong id = FirstObjectId + 2;
         foreach (Projectile shot in resolution?.Projectiles ?? [])
             yield return new AppearanceFact(id++, false, 0, new Transform(shot.Position, Quaternion.Identity, new Vector3(p.ProjectileSize)),
                 projectile, true, RenderLayer.Scene);
@@ -216,27 +196,43 @@ internal sealed class PlayerCombat : IDisposable
         return ($"{Describe(hands[MainHand])}  ·  {Describe(hands[OffHand])}", supplies, action, noticeLeft > 0 ? notice : "");
     }
 
+    /// <summary>Each held look's actions, from the weapons that show it (the developer motion viewer's choices).</summary>
+    internal IReadOnlyDictionary<string, string[]> LookUses() => definition.Items.Items.Where(i => i.Weapon is not null)
+        .GroupBy(i => i.Weapon!.Look)
+        .ToDictionary(g => g.Key, g => g.SelectMany(i => new[] { i.Weapon!.Action, i.Weapon.Reload }).OfType<string>().Distinct().ToArray());
+
+    /// <summary>
+    /// Under rusty dev an edited held-presentation file (declared live content) arrives here instead of a restart: the
+    /// files are read again, validated as at load, and the changed ones' values taken into the catalog the view holds.
+    /// Returns what needs a restart, or why the content did not load (the last usable values are kept).
+    /// </summary>
+    internal string[] ReloadHeld(IReadOnlySet<string> changed)
+    {
+        try
+        {
+            HeldCatalog fresh = HeldCatalog.Load(engine);
+            CombatDefinition.ValidateHeld(fresh, definition.Items, definition.Actions);
+            return definition.Held.Refresh(fresh, changed);
+        }
+        catch (Exception error) when (error is InvalidOperationException or EngineCallException)
+        {
+            return [$"not reloaded: {error.Message}"];
+        }
+    }
+
+    /// <summary>Once the held looks are in the published snapshot, their motion follows the action in progress.</summary>
+    internal void Animate() => held.Animate(user, actingHand);
+
     /// <summary>Converted weapon models that could not be opened (they fall back to their boxes).</summary>
-    internal IReadOnlyList<string> Problems => art.Problems;
+    internal IReadOnlyList<string> Problems => held.Problems;
 
     public void Dispose()
     {
-        art.Dispose();
+        held.Dispose();
         foreach (Appearance appearance in appearances) appearance.Dispose();
     }
 
     // A gun comes with a full magazine the first time it is held.
-    // A model centred on its bounds, scaled so its longest side is the authored length and turned by the authored rotation:
-    // the pose relative to the hand's point.
-    private static Transform Fit(ArtMesh mesh, HeldModel model)
-    {
-        Vector3 extent = mesh.BoundsMax - mesh.BoundsMin, centre = (mesh.BoundsMax + mesh.BoundsMin) / 2;
-        float scale = model.Length / MathF.Max(1e-4f, MathF.Max(extent.X, MathF.Max(extent.Y, extent.Z)));
-        Vector3 turn = Authored.Vector(model.Rotation) * (MathF.PI / 180);
-        Quaternion rotation = Quaternion.CreateFromYawPitchRoll(turn.Y, turn.X, turn.Z);
-        return new Transform(Vector3.Transform(-centre * scale, rotation), rotation, new Vector3(scale));
-    }
-
     private int Loaded(ItemDefinition item) =>
         loaded.TryGetValue(item.Id, out int rounds) ? rounds : loaded[item.Id] = item.Weapon!.Magazine?.Size ?? 0;
 

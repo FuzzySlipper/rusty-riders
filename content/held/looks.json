@@ -1,0 +1,229 @@
+{
+  "looks": [
+    {
+      "id": "rift-blade",
+      "motion": "swing",
+      "stance": "blade",
+      "grips": {
+        "main": [
+          0,
+          0,
+          0.27
+        ]
+      },
+      "box": {
+        "size": [
+          0.05,
+          0.05,
+          0.75
+        ],
+        "color": [
+          0.75,
+          0.85,
+          1.0
+        ]
+      },
+      "model": {
+        "glb": "parts/Art/Models/Weapons/Prefabs/1H_sword_C/1H_Sword_C01-c550c662.glb",
+        "length": 0.7,
+        "rotation": [
+          90,
+          0,
+          0
+        ]
+      },
+      "nudge": {
+        "grip": [
+          0,
+          0,
+          0
+        ],
+        "turn": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "maul",
+      "motion": "swing",
+      "stance": "heavy",
+      "grips": {
+        "main": [
+          0,
+          0,
+          0.3
+        ]
+      },
+      "box": {
+        "size": [
+          0.22,
+          0.22,
+          0.55
+        ],
+        "color": [
+          0.45,
+          0.38,
+          0.3
+        ]
+      },
+      "model": {
+        "glb": "parts/Art/Models/Weapons/Prefabs/BattleHammer/Battle_hammer-b2842784.glb",
+        "length": 0.75,
+        "rotation": [
+          -90,
+          0,
+          0
+        ]
+      },
+      "nudge": {
+        "grip": [
+          0,
+          0,
+          0
+        ],
+        "turn": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "laser-flintlock",
+      "motion": "shot",
+      "stance": "firearm",
+      "grips": {
+        "main": [
+          0,
+          -0.04,
+          0.12
+        ]
+      },
+      "box": {
+        "size": [
+          0.08,
+          0.14,
+          0.4
+        ],
+        "color": [
+          0.55,
+          0.42,
+          0.25
+        ]
+      },
+      "model": {
+        "glb": "parts/Art/Models/Weapons/Prefabs/Flintlock/polySurface122-0e0f03ea.glb",
+        "length": 0.38,
+        "rotation": [
+          0,
+          -90,
+          0
+        ]
+      },
+      "nudge": {
+        "grip": [
+          0,
+          0,
+          0
+        ],
+        "turn": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "ember-wand",
+      "motion": "cast",
+      "stance": "wand",
+      "grips": {
+        "main": [
+          0,
+          0,
+          0.2
+        ]
+      },
+      "box": {
+        "size": [
+          0.04,
+          0.04,
+          0.45
+        ],
+        "color": [
+          1.0,
+          0.45,
+          0.15
+        ]
+      },
+      "model": {
+        "glb": "parts/Art/Models/Weapons/Prefabs/Mandragora/Mandragora-5d1fade9.glb",
+        "length": 0.6,
+        "rotation": [
+          0,
+          180,
+          0
+        ]
+      },
+      "nudge": {
+        "grip": [
+          0,
+          0,
+          0
+        ],
+        "turn": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "frost-sigil",
+      "motion": "cast",
+      "stance": "raised",
+      "grips": {
+        "main": [
+          0,
+          0,
+          0
+        ]
+      },
+      "box": {
+        "size": [
+          0.16,
+          0.16,
+          0.04
+        ],
+        "color": [
+          0.55,
+          0.85,
+          1.0
+        ]
+      },
+      "model": {
+        "glb": "parts/Art/Models/Weapons/Ravenwood/crystal-98430252.glb",
+        "length": 0.26,
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "nudge": {
+        "grip": [
+          0,
+          0,
+          0
+        ],
+        "turn": [
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ]
+}

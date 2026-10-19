@@ -1,0 +1,174 @@
+using System.Text.Json;
+using Rusty.Engine.Debugging;
+using RustyRiders.Game.Actions;
+using RustyRiders.Game.Combat;
+using RustyRiders.Game.Held;
+
+namespace RustyRiders.Game.Developer;
+
+/// <summary>
+/// Developer motion viewer in the Engine console: show any held look in a hand, step its action's keys (each held
+/// exactly), play the action at any speed in real time, show any moment of it, try pose changes, and nudge a look or
+/// move a stance live. Edits change only the loaded content; each prints the JSON to paste into content/held/ (or use
+/// the workbench's Save). Adapted from rusty-hotel's <c>HeldMotionDebugCommands</c> (docs/reuse.md).
+/// </summary>
+/// <param name="publish">Republishes the scene, so a held pose shows at once.</param>
+/// <param name="uses">Each look's actions, from the weapons that show it.</param>
+internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publish, IReadOnlyDictionary<string, string[]> uses) : IDebugCommandModule
+{
+    private string? look;
+    private ActionDefinition? action;
+    private int hand = HeldView.MainHand;
+    private int key = -1;
+
+    private HeldCatalog Held => combat.View.Catalog;
+    private HeldView View => combat.View;
+
+    /// <summary>The look the viewer shows, the hand it shows it in, the action whose keys it steps, and the key it holds (-1: none).</summary>
+    internal (string? Look, int Hand, ActionDefinition? Action, int Key) Viewing => (look, hand, action, key);
+
+    internal IReadOnlyDictionary<string, string[]> Uses => uses;
+
+    private HeldMotion Motion => Held.Motion.Motions[Held.Look(look!)!.Motion];
+    private MotionKey[] Keys => Motion.Track(action!.Id)!;
+
+    [DebugCommand("riders.dev.motion", Description = "Developer motion viewer: show a held look (e.g. rift-blade) at rest in the viewer's hand (main at first) with one of its actions (e.g. blade-slash), and list that action's keys.")]
+    public DebugCommandResult Show(string heldLook, string actionId) => Show(heldLook, actionId, hand == HeldView.OffHand ? "off" : "main");
+
+    [DebugCommand("riders.dev.motion.hand", Description = "Developer motion viewer: show the shown look in the main or the off hand (mirrored).")]
+    public DebugCommandResult Hand(string inHand) =>
+        look is null ? Failure("Choose a look first: riders.dev.motion <look> <action>.") : Show(look, action!.Id, inHand);
+
+    /// <summary>Shows a look with one of its actions in a hand (main or off).</summary>
+    internal DebugCommandResult Show(string heldLook, string actionId, string inHand)
+    {
+        if (Held.Look(heldLook) is null) return Failure($"Unknown look '{heldLook}'. Looks: {string.Join(", ", Held.Looks.Select(l => l.Id))}.");
+        if (combat.Action(actionId) is not { } chosen) return Failure($"Unknown action '{actionId}'.");
+        if (inHand is not ("main" or "off")) return Failure("The hand is main or off.");
+        if (Held.Motion.Motions[Held.Look(heldLook)!.Motion].Track(chosen.Id) is null)
+            return Failure($"Motion '{Held.Look(heldLook)!.Motion}' has no track for '{actionId}' and no default.");
+        (look, action, hand, key) = (heldLook, chosen, inHand == "off" ? HeldView.OffHand : HeldView.MainHand, -1);
+        View.View(hand, look);
+        publish();
+        return DebugCommandResult.Success(Describe());
+    }
+
+    [DebugCommand("riders.dev.motion.key", Description = "Developer motion viewer: hold the shown look exactly in key n's pose (0 is the first key; -1 is rest).")]
+    public DebugCommandResult Key(int n)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        if (n < -1 || n >= Keys.Length) return Failure($"Keys run from 0 to {Keys.Length - 1} (-1 is rest).");
+        key = n;
+        View.HoldKey(action!, n);
+        publish();
+        return DebugCommandResult.Success(n < 0 ? "rest" : Line(n));
+    }
+
+    [DebugCommand("riders.dev.motion.next", Description = "Developer motion viewer: hold the next key's pose (after the last, rest).")]
+    public DebugCommandResult Next() => look is null ? Key(-1) : Key(key + 1 >= Keys.Length ? -1 : key + 1);
+
+    [DebugCommand("riders.dev.motion.prev", Description = "Developer motion viewer: hold the previous key's pose (before the first, rest).")]
+    public DebugCommandResult Previous() => look is null ? Key(-1) : Key(key - 1 < -1 ? Keys.Length - 1 : key - 1);
+
+    [DebugCommand("riders.dev.motion.play", Description = "Developer motion viewer: play the action's motion from rest at a speed (1 is as in play, 0.25 a quarter), in real time.")]
+    public DebugCommandResult Play(float speed)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        if (!(speed > 0.01f && speed <= 4)) return Failure("Speed runs from 0.01 to 4.");
+        key = -1;
+        View.Hold(null);
+        publish();
+        View.Play(action!, speed);
+        return DebugCommandResult.Success($"Playing {action!.Id} on {look} over {action.Duration / speed:0.##} s.");
+    }
+
+    [DebugCommand("riders.dev.motion.at", Description = "Developer motion viewer: show the action's motion paused at a moment, in seconds from its start (curves and all, as the Engine plays them).")]
+    public DebugCommandResult At(float seconds)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        ActionTiming t = action!.Timing;
+        if (!(seconds >= 0 && seconds <= action.Duration)) return Failure($"The action runs from 0 to {action.Duration:0.###} s.");
+        key = -1;
+        View.Hold(null);
+        publish();
+        View.Play(action, 1, seconds);
+        string phase = seconds < t.Windup ? "windup" : seconds < t.Windup + t.Commit ? "commit" : "recovery";
+        return DebugCommandResult.Success($"{action.Id} at {seconds:0.###} s ({phase}; the strike is at {t.Windup:0.###} s).");
+    }
+
+    [DebugCommand("riders.dev.motion.pose", Description = "Developer motion viewer: set a pose of the shown look's motion (its grip moved from the stance by x y z metres, the look turned about it by x y z degrees) in the loaded content, hold it, and print its JSON.")]
+    public DebugCommandResult Pose(string name, float x, float y, float z, float rx, float ry, float rz)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        if (!Motion.Poses.TryGetValue(name, out HeldPose? pose))
+            return Failure($"Motion '{Held.Look(look)!.Motion}' has no pose '{name}'. Poses: {string.Join(", ", Motion.Poses.Keys)}.");
+        (pose.Position[0], pose.Position[1], pose.Position[2]) = (x, y, z);
+        (pose.Rotation[0], pose.Rotation[1], pose.Rotation[2]) = (rx, ry, rz);
+        View.Hold(pose);
+        publish();
+        return DebugCommandResult.Success($"\"{name}\": {JsonSerializer.Serialize(pose, HeldJson.Default.HeldPose)}  (in {HeldMotionCatalog.Path} motions.{Held.Look(look)!.Motion}.poses)");
+    }
+
+    [DebugCommand("riders.dev.held.nudge", Description = "Developer held tuning: nudge the shown look from its stance (grip moved x y z metres, turned x y z degrees) in the loaded content, and print its JSON.")]
+    public DebugCommandResult Nudge(float x, float y, float z, float rx, float ry, float rz)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        HeldLookDefinition shown = Held.Look(look)!;
+        (shown.Adjust.Grip[0], shown.Adjust.Grip[1], shown.Adjust.Grip[2]) = (x, y, z);
+        (shown.Adjust.Turn[0], shown.Adjust.Turn[1], shown.Adjust.Turn[2]) = (rx, ry, rz);
+        Held.Seat(shown);
+        publish();
+        return DebugCommandResult.Success($"\"nudge\": {{\"grip\": [{x}, {y}, {z}], \"turn\": [{rx}, {ry}, {rz}]}}  (in {HeldCatalog.Path}, look '{look}')");
+    }
+
+    [DebugCommand("riders.dev.held.fit", Description = "Developer held tuning: turn the shown look's converted model in look space (x y z degrees, so its length runs along -Z and its up side +Y) and set its length in metres, in the loaded content, and print its JSON.")]
+    public DebugCommandResult FitModel(float rx, float ry, float rz, float length)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        if (Held.Look(look)!.Model is not { } model) return Failure($"'{look}' has no converted model; it is drawn as its box.");
+        if (!(length > 0.01f)) return Failure("The length is positive metres.");
+        (model.Rotation[0], model.Rotation[1], model.Rotation[2]) = (rx, ry, rz);
+        model.Length = length;
+        publish();
+        return DebugCommandResult.Success($"\"rotation\": [{rx}, {ry}, {rz}], \"length\": {length}  (in {HeldCatalog.Path}, look '{look}' model)");
+    }
+
+    [DebugCommand("riders.dev.stance.set", Description = "Developer held tuning: move the shown look's stance (grip, the point its length heads toward, its up side; camera space x y z each) in the loaded content, reseating every look in it, and print its JSON.")]
+    public DebugCommandResult Stance(float gx, float gy, float gz, float tx, float ty, float tz, float ux, float uy, float uz)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        string id = Held.Look(look)!.Stance;
+        HeldStance stance = Held.Stances.Stances[id];
+        (stance.Grip[0], stance.Grip[1], stance.Grip[2]) = (gx, gy, gz);
+        (stance.Toward[0], stance.Toward[1], stance.Toward[2]) = (tx, ty, tz);
+        (stance.Up[0], stance.Up[1], stance.Up[2]) = (ux, uy, uz);
+        foreach (HeldLookDefinition each in Held.Looks.Where(l => l.Stance == id)) Held.Seat(each);
+        publish();
+        return DebugCommandResult.Success($"\"{id}\": {{\"grip\": [{gx}, {gy}, {gz}], \"toward\": [{tx}, {ty}, {tz}], \"up\": [{ux}, {uy}, {uz}]}}  (in {StanceCatalog.Path})");
+    }
+
+    [DebugCommand("riders.dev.motion.off", Description = "Developer motion viewer: return the hands to what they hold.")]
+    public DebugCommandResult Off()
+    {
+        (look, action, key) = (null, null, -1);
+        View.View(hand, null);
+        publish();
+        return DebugCommandResult.Success("Motion viewer off.");
+    }
+
+    private string Describe()
+    {
+        ActionTiming t = action!.Timing;
+        return $"{look} in the {(hand == HeldView.OffHand ? "off" : "main")} hand · {action.Id} (motion '{Held.Look(look!)!.Motion}'; windup {t.Windup} s, commit {t.Commit} s, recovery {t.Recovery} s; the strike is at {t.Windup} s)\n" +
+            string.Join("\n", Enumerable.Range(0, Keys.Length).Select(Line));
+    }
+
+    private string Line(int i)
+    {
+        MotionKey k = Keys[i];
+        HeldPose pose = Motion.Poses[k.Pose];
+        return $"{i}: {k.Pose} at {k.Phase} {k.At:0.##} = {k.Time(action!.Timing):0.###} s, {k.Ease}, grip {k.Grip}; position [{string.Join(", ", pose.Position)}] rotation [{string.Join(", ", pose.Rotation)}]";
+    }
+
+    private static DebugCommandResult Failure(string message) => DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, message);
+}

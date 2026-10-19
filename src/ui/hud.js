@@ -6,7 +6,7 @@ export function mountHud(document) {
   element.className = 'hud';
   element.innerHTML = `
     <header class="dev"><h1>Rusty Riders</h1><div class="status" data-fact="status"></div><div class="problems" data-fact="problems"></div>
-      <div class="keys"><span><kbd>WASD</kbd>move</span><span><kbd>Shift</kbd>sprint</span><span><kbd>Space</kbd>jump</span><span><kbd>T</kbd>wait</span><span><kbd>R</kbd>reload</span><span><kbd>E</kbd>open/take</span><span><kbd>1–9</kbd>weapon</span><span><kbd>I</kbd>inventory</span><span><kbd>C</kbd>character</span><span><kbd>F</kbd>fly</span><span><kbd>H</kbd>to start</span><span><kbd>N B V G</kbd>developer</span></div><div class="position" data-fact="position"></div></header>
+      <div class="keys"><span><kbd>WASD</kbd>move</span><span><kbd>Shift</kbd>sprint</span><span><kbd>Space</kbd>jump</span><span><kbd>T</kbd>wait</span><span><kbd>R</kbd>reload</span><span><kbd>E</kbd>open/take</span><span><kbd>1–9</kbd>weapon</span><span><kbd>I</kbd>inventory</span><span><kbd>C</kbd>character</span><span><kbd>F</kbd>fly</span><span><kbd>H</kbd>to start</span><span><kbd>N B V G F2</kbd>developer</span></div><div class="position" data-fact="position"></div></header>
     <div class="banner redbar"><i class="orn rail"></i><i class="orn left"></i><i class="orn right"></i><div class="chase" data-fact="chase"></div><div class="line"><span class="hostiles" data-fact="hostiles"></span><span class="depth" data-fact="depth"></span></div></div>
     <div class="clock"><i class="orn ring"></i><div class="state" data-fact="time"></div><div class="world" data-fact="worldTime"></div></div>
     <div class="notice" data-fact="notice"></div>

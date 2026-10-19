@@ -202,3 +202,11 @@
 .riders-ui .resistances { display: grid; gap: calc(4 * var(--u)); }
 .riders-ui .resistance { display: flex; align-items: center; gap: calc(8 * var(--u)); }
 .riders-ui .resistance .icon { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }
+
+/* Developer shell (developer sessions only): the Engine shell docked at the left, clear of the main hand. */
+.riders-ui .developer-host { position:absolute; inset:0; pointer-events:none; }
+.riders-ui .developer-host > * { pointer-events:auto; }
+.riders-ui .rusty-developer-shell { --rusty-shell-width:28rem; }
+.riders-ui .rusty-developer-shell__panel--view { height:22vh; }
+.riders-ui .rusty-developer-shell__panel--tunables { flex:none; height:34vh; }
+.riders-ui .developer-error { position:absolute; top:0.75rem; left:0.75rem; max-width:24rem; padding:0.75rem; background:#1b1d18ee; color:#eee; font-size:0.75rem; }
