@@ -27,17 +27,19 @@ internal sealed class HeldView : IDisposable
     // Each look's appearance and its opened model (none when it is drawn as its box).
     private readonly Dictionary<string, (Appearance Appearance, ArtMesh? Mesh)> looks = [];
     private readonly Hand[] hands = [new(), new()];
+    private readonly ArmsView arms;
     private ulong startedSeen;
     private (int Hand, string Look, HeldPose? Pose)? viewing;
     private (ActionDefinition Action, int Key)? viewingKey;
 
-    /// <param name="firstObject">The published object id of the main hand's look; the off hand's is the next.</param>
+    /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' are the next two.</param>
     internal HeldView(IEngineContext engine, HeldCatalog held, ulong firstObject)
     {
         this.engine = engine;
         this.held = held;
         this.firstObject = firstObject;
         art = new ConvertedArt(engine, OldArtRoot);
+        arms = new ArmsView(engine, held.Arms, firstObject + 2);
         foreach (HeldLookDefinition look in held.Looks)
             looks[look.Id] = look.Model is { } model && art.Model(model.Glb) is { } mesh ? (mesh.Appearance, mesh) : (Box(look.Box), null);
     }
@@ -63,7 +65,11 @@ internal sealed class HeldView : IDisposable
             yield return new AppearanceFact(firstObject + (ulong)h, false, 0, new Transform(at, turn, Fit(look).Scale),
                 looks[look.Id].Appearance, visible, RenderLayer.Viewmodel);
         }
+        yield return arms.Fact(visible);
     }
+
+    /// <summary>How far each wrist was drawn from its grip (see <see cref="ArmsView.Shortfall"/>).</summary>
+    internal (float Main, float Off) ArmsShortfall => arms.Shortfall;
 
     /// <summary>
     /// Once the looks are in the published snapshot: starts the acting hand's motion as its action starts (that far
@@ -79,14 +85,27 @@ internal sealed class HeldView : IDisposable
             if (playing.Look != hand.Look) Cancel(hand);
             else if (cutShort && Running(playing.Handle)) Begin(h, held.Motion.Settle(Offset(hand)), TweenClock.World);
         }
-        if (viewing is not null || user.Started == startedSeen) return;
-        startedSeen = user.Started;
-        if (user.Current is not { } action) return;
-        Hand acting = hands[actingHand];
-        HeldLookDefinition look = held.Look(acting.Look)!;
-        TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, actingHand == OffHand),
-            user.Scale, from: Offset(acting));
-        Begin(actingHand, timeline, TweenClock.World, user.Elapsed, action, user.Started);
+        if (viewing is null && user.Started != startedSeen)
+        {
+            startedSeen = user.Started;
+            if (user.Current is { } action)
+            {
+                Hand acting = hands[actingHand];
+                HeldLookDefinition look = held.Look(acting.Look)!;
+                TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, actingHand == OffHand),
+                    user.Scale, from: Offset(acting));
+                Begin(actingHand, timeline, TweenClock.World, user.Elapsed, action, user.Started, user.Scale);
+            }
+        }
+        Reach();
+    }
+
+    /// <summary>Reaches the arms for both hands' grips where their looks are drawn now, each hand closed as its motion says.</summary>
+    internal void Reach()
+    {
+        (Vector3 mainGrip, Quaternion mainLook) = Grip(MainHand);
+        (Vector3 offGrip, Quaternion offLook) = Grip(OffHand);
+        arms.Reach((mainGrip, mainLook, Closure(MainHand)), (offGrip, offLook, Closure(OffHand)));
     }
 
     /// <summary>Ends every motion (a level or the kit changes).</summary>
@@ -141,7 +160,7 @@ internal sealed class HeldView : IDisposable
         viewingKey = null;
         HeldLookDefinition look = held.Look(view.Look)!;
         TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, view.Hand == OffHand), speed: speed);
-        TweenHandle handle = Begin(view.Hand, timeline, TweenClock.Realtime, action: action);
+        TweenHandle handle = Begin(view.Hand, timeline, TweenClock.Realtime, action: action, speed: speed);
         if (at is not { } seconds) return;
         engine.Tween.Control(new TweenControlRequest(handle, TweenControl.Pause));
         engine.Tween.Control(TweenControlRequest.Seek(handle, seconds));
@@ -169,22 +188,56 @@ internal sealed class HeldView : IDisposable
         List<InspectionTarget> targets = [];
         foreach (var (hand, id) in new[] { (MainHand, "main-grip"), (OffHand, "off-grip") })
         {
-            HeldLookDefinition look = held.Look(hands[hand].Look)!;
-            Transform fit = Fit(look);
-            (Vector3 at, Quaternion turn) = Now(hand);
-            // The drawn model is the look turned by its fit, so the look's own turn is the drawn turn less the fit's.
-            Quaternion lookTurn = Quaternion.Normalize(turn * Quaternion.Inverse(fit.Rotation));
-            Vector3 grip = at + Vector3.Transform(Authored.Vector(look.Grips.Main) - fit.Translation, lookTurn);
+            (Vector3 grip, Quaternion lookTurn) = Grip(hand);
             targets.Add(new(id, OverlayPlace.Camera, grip) { Rotation = lookTurn, Radius = GripFrame, Framing = "side" });
         }
         return targets;
     }
+
+    // A hand's grip where its look is drawn now (camera space) and the look's turn there.
+    private (Vector3 Grip, Quaternion Look) Grip(int hand)
+    {
+        HeldLookDefinition look = held.Look(hands[hand].Look)!;
+        Transform fit = Fit(look);
+        (Vector3 at, Quaternion turn) = Now(hand);
+        // The drawn model is the look turned by its fit, so the look's own turn is the drawn turn less the fit's.
+        Quaternion lookTurn = Quaternion.Normalize(turn * Quaternion.Inverse(fit.Rotation));
+        return (at + Vector3.Transform(Authored.Vector(look.Grips.Main) - fit.Translation, lookTurn), lookTurn);
+    }
+
+    // How closed a hand is now (-1 open, 0 its grip, 1 squeezed): the viewer's held key, or the playing action's keys
+    // where the Engine reports its tween has got to, eased by each key's curve as the Engine eases them.
+    private float Closure(int index)
+    {
+        Hand hand = hands[index];
+        if (viewing is { } view && view.Hand == index && viewingKey is { } key)
+            return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? keys[key.Key].Grip : 0;
+        if (hand.Tween is not { } playing || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return 0;
+        TweenReadout readout = engine.Tween.Read(playing.Handle);
+        if (readout.State == TweenState.Ended) return 0;
+        float time = (float)readout.ElapsedSeconds * hand.Speed / hand.Scale;
+        (float from, float start) = (0, 0);
+        foreach ((float at, float grip, TweenEasingKind curve) in track.Select(k => (k.Time(action.Timing), k.Grip, k.Ease))
+            .Append((action.Duration, 0f, held.Motion.SettleEase)))
+        {
+            if (time <= at)
+            {
+                float t = at - start <= 0 ? 1 : engine.Tween.Evaluate(curve, Math.Clamp((time - start) / (at - start), 0, 1));
+                return from + (grip - from) * t;
+            }
+            (from, start) = (grip, at);
+        }
+        return 0;
+    }
+
+    private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);
 
     // How far around a grip its inspection view frames (metres).
     private const float GripFrame = .35f;
 
     public void Dispose()
     {
+        arms.Dispose();
         art.Dispose();
         foreach (Appearance box in boxes) box.Dispose();
     }
@@ -209,8 +262,11 @@ internal sealed class HeldView : IDisposable
     }
 
     // Starts a hand's motion tween, replacing its tweens; remembers it so where it shows the look can be sampled.
-    private TweenHandle Begin(int hand, TweenSegment[] segments, TweenClock clock, float elapsed = 0, ActionDefinition? action = null, ulong started = 0)
+    private TweenHandle Begin(int hand, TweenSegment[] segments, TweenClock clock, float elapsed = 0, ActionDefinition? action = null, ulong started = 0,
+        float scale = 1, float speed = 1)
     {
+        hands[hand].Scale = scale;
+        hands[hand].Speed = speed;
         TweenStartRequest request = new(firstObject + (ulong)hand, segments) { Clock = clock };
         TweenHandle handle = engine.Tween.Start(request with { ElapsedSeconds = elapsed }).Tween;
         hands[hand].Tween = (handle, request, hands[hand].Look, started);
@@ -262,5 +318,7 @@ internal sealed class HeldView : IDisposable
         internal string Look = "";
         internal (TweenHandle Handle, TweenStartRequest Request, string Look, ulong Started)? Tween;
         internal ActionDefinition? Action;
+        // The action's time scale and the viewer's playback speed, to read the keys at the tween's elapsed time.
+        internal float Scale = 1, Speed = 1;
     }
 }

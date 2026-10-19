@@ -229,8 +229,9 @@ one owner, keep Engine-admitted time. Rusty Riders follows it and keeps the prov
 
 Converted only when a task needs it ([direction.md](direction.md#what-the-old-art-is-worth)):
 - **Weapons:** `old-game/Assets/Art/Models/Weapons/` (72 FBX 7.x, including the sci-fi gun set). They are
-  needed for first-person held weapons. There are no first-person arms, so weapons float or a simple
-  hand model is made.
+  needed for first-person held weapons (converted, `content/held/looks.json`). The old first-person arms
+  (`FPArms_Male_Leather_Armor`, referenced by `GameData/Settings/Backup/ArmsCopy.prefab`) left no mesh, so the
+  arms are generated in their spirit (`art/arms/`).
 - **Enemies:** `Art/Models/Enemies/` (31 creatures with animation clips, 81 FBX 6 files, some already
   re-saved in `old-game-fbx2013/`).
 - **Portal:** `Environment/Futuristic Portal/` and `PortalMachine/`.

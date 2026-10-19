@@ -147,6 +147,33 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success($"\"{id}\": {{\"grip\": [{gx}, {gy}, {gz}], \"toward\": [{tx}, {ty}, {tz}], \"up\": [{ux}, {uy}, {uz}]}}  (in {StanceCatalog.Path})");
     }
 
+    [DebugCommand("riders.arms", Description = "Read how far each arm's wrist was last drawn from its grip, as the Engine IK solve reports it (metres; more than a centimetre is a grip out of reach).")]
+    public DebugCommandResult Arms()
+    {
+        var (main, off) = View.ArmsShortfall;
+        return DebugCommandResult.Success($"Wrist shortfall: main {main:0.###} m, off {off:0.###} m.");
+    }
+
+    [DebugCommand("riders.dev.arms.hand", Description = "Developer arms tuning: set how a hand holds a look (its turn from the look, x y z degrees, and its palm from the wrist, x y z metres; the left hand mirrors it) in the loaded content, and print its JSON.")]
+    public DebugCommandResult ArmsHand(float rx, float ry, float rz, float px, float py, float pz)
+    {
+        ArmHand hand = Held.Arms.Hand;
+        (hand.Rotation[0], hand.Rotation[1], hand.Rotation[2]) = (rx, ry, rz);
+        (hand.Palm[0], hand.Palm[1], hand.Palm[2]) = (px, py, pz);
+        publish();
+        return DebugCommandResult.Success($"\"hand\": {{\"rotation\": [{rx}, {ry}, {rz}], \"palm\": [{px}, {py}, {pz}]}}  (in {ArmsDefinition.Path})");
+    }
+
+    [DebugCommand("riders.dev.arms.reach", Description = "Developer arms tuning: set where the right shoulder sits and the point the right elbow bends toward (camera space x y z each; the left mirrors them) in the loaded content, and print their JSON.")]
+    public DebugCommandResult ArmsReach(float sx, float sy, float sz, float px, float py, float pz)
+    {
+        ArmsDefinition arms = Held.Arms;
+        (arms.Shoulder[0], arms.Shoulder[1], arms.Shoulder[2]) = (sx, sy, sz);
+        (arms.Pole[0], arms.Pole[1], arms.Pole[2]) = (px, py, pz);
+        publish();
+        return DebugCommandResult.Success($"\"shoulder\": [{sx}, {sy}, {sz}], \"pole\": [{px}, {py}, {pz}]  (in {ArmsDefinition.Path})");
+    }
+
     [DebugCommand("riders.dev.motion.off", Description = "Developer motion viewer: return the hands to what they hold.")]
     public DebugCommandResult Off()
     {

@@ -1,0 +1,89 @@
+{
+  "model": "held/models/arms.glb",
+  "clip": "grip",
+  "hands": {
+    "fingers": [
+      "Index",
+      "Middle",
+      "Ring",
+      "Pinky"
+    ],
+    "thumb": "Thumb",
+    "close": {
+      "fingers": [
+        2,
+        2,
+        2
+      ],
+      "thumb": [
+        [
+          1,
+          -1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          2,
+          0
+        ]
+      ]
+    },
+    "open": {
+      "fingers": [
+        -62,
+        -70,
+        -45
+      ],
+      "thumb": [
+        [
+          0,
+          10
+        ],
+        [
+          -70,
+          0
+        ],
+        [
+          -70,
+          0
+        ]
+      ]
+    }
+  },
+  "shoulder": [
+    0.2,
+    -0.265,
+    0.05
+  ],
+  "pole": [
+    0.76,
+    -0.4,
+    -0.02
+  ],
+  "main": {
+    "upper": "R_Upperarm",
+    "lower": "R_Forearm",
+    "hand": "R_Hand",
+    "digits": "R_"
+  },
+  "off": {
+    "upper": "L_Upperarm",
+    "lower": "L_Forearm",
+    "hand": "L_Hand",
+    "digits": "L_"
+  },
+  "hand": {
+    "rotation": [
+      19,
+      -97,
+      -14
+    ],
+    "palm": [
+      -0.006,
+      0.085,
+      -0.035
+    ]
+  }
+}

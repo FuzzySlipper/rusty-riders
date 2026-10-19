@@ -19,7 +19,7 @@ internal sealed class PlayerCombat : IDisposable
 {
     internal const int MainHand = HeldView.MainHand, OffHand = HeldView.OffHand;
     private const ulong FirstDummyEntity = 10_000;
-    // The two held looks are the first objects; projectiles and dummies follow.
+    // The two held looks and the arms are the first objects; projectiles and dummies follow.
     private const ulong FirstObjectId = 3_000_000;
 
     private readonly IEngineContext engine;
@@ -175,7 +175,7 @@ internal sealed class PlayerCombat : IDisposable
         CombatPresentation p = definition.Presentation;
         foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, walker.Flying is false))
             yield return fact;
-        ulong id = FirstObjectId + 2;
+        ulong id = FirstObjectId + 3;
         foreach (Projectile shot in resolution?.Projectiles ?? [])
             yield return new AppearanceFact(id++, false, 0, new Transform(shot.Position, Quaternion.Identity, new Vector3(p.ProjectileSize)),
                 projectile, true, RenderLayer.Scene);

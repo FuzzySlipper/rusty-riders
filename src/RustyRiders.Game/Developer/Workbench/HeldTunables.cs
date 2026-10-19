@@ -93,6 +93,16 @@ internal static class HeldTunables
                 .. Vector("pose.rotation", "turn", pose.Rotation, -180, 180, 1, HeldMotionCatalog.Path, $"{posePointer}/rotation", publish)
             ]) { File = HeldMotionCatalog.Path });
         }
+        // The arms: where the right shoulder sits and the right elbow's pole (the left's are mirrored), and how a hand
+        // holds a look (its turn from the look and its palm from the wrist), for both hands alike.
+        ArmsDefinition arms = held.Arms;
+        groups.Add(new("arms", "Arms (the left mirrors the right)",
+        [
+            .. Vector("arms.shoulder", "shoulder", arms.Shoulder, -0.6f, 0.6f, .005f, ArmsDefinition.Path, "/shoulder", publish),
+            .. Vector("arms.pole", "elbow toward", arms.Pole, -2, 2, .01f, ArmsDefinition.Path, "/pole", publish),
+            .. Vector("arms.hand.rotation", "hand turn", arms.Hand.Rotation, -180, 180, 1, ArmsDefinition.Path, "/hand/rotation", publish),
+            .. Vector("arms.hand.palm", "palm", arms.Hand.Palm, -0.15f, 0.15f, .002f, ArmsDefinition.Path, "/hand/palm", publish)
+        ]) { File = ArmsDefinition.Path });
         return groups;
     }
 

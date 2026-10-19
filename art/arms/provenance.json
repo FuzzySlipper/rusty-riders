@@ -1,0 +1,21 @@
+{
+ "asset": "first-person arms (procedural, leather gloves over dark leather sleeves)",
+ "source": "none: built from art/arms/leather.json (extending base.json, copied from rusty-hotel art/arms/base.json) by the asset-pipeline generator; stands in for the old game's FPArms_Male_Leather_Armor, whose mesh did not survive",
+ "method": "asset-pipeline tools/fps-arms/generate.py and surfaces.py at commit e83fc54d8689ea7b05f325acda55c02a19e399f2, headless Blender 5.2.2",
+ "command": "blender -b --factory-startup --python <asset-pipeline>/tools/fps-arms/generate.py -- --params art/arms/leather.json --out content/held/models/arms.glb",
+ "checks": "rusty asset check (pinned pair 0.1.0-dev.0a37678209ff) admitted",
+ "files": [
+  {
+   "path": "content/held/models/arms.glb",
+   "sha256": "658ac6b0d2f4e50cffd031949374d9fba71e108be9fe501fd1a1b09d5b0ffed2"
+  },
+  {
+   "path": "art/arms/base.json",
+   "sha256": "ae985a9ee61b618d96e4da9782ff8d6732951cb71d75d56a61acc17b00178271"
+  },
+  {
+   "path": "art/arms/leather.json",
+   "sha256": "3e5780ced428cd0a897f910feaea9c0e56defd65aca0f6c428caaeb00e957571"
+  }
+ ]
+}

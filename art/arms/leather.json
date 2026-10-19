@@ -1,0 +1,79 @@
+{
+  "extends": "base.json",
+  "preview": {
+    "shoulder": [
+      0.2,
+      -0.265,
+      0.05
+    ]
+  },
+  "materials": {
+    "glove": {
+      "colour": [
+        0.16,
+        0.085,
+        0.04
+      ],
+      "roughness": 0.6,
+      "surface": {
+        "kind": "leather",
+        "tile": 0.03,
+        "size": 512,
+        "relief": 0.8,
+        "variation": 0.12,
+        "hollows": 0.4,
+        "seed": 21
+      }
+    },
+    "cuff": {
+      "colour": [
+        0.11,
+        0.06,
+        0.03
+      ],
+      "roughness": 0.65,
+      "surface": {
+        "kind": "leather",
+        "tile": 0.035,
+        "size": 512,
+        "relief": 0.9,
+        "variation": 0.15,
+        "hollows": 0.5,
+        "seed": 22
+      }
+    },
+    "sleeve": {
+      "colour": [
+        0.045,
+        0.035,
+        0.03
+      ],
+      "roughness": 0.7,
+      "surface": {
+        "kind": "leather",
+        "tile": 0.05,
+        "size": 512,
+        "relief": 1.0,
+        "variation": 0.18,
+        "hollows": 0.55,
+        "seed": 23
+      }
+    },
+    "lining": {
+      "colour": [
+        0.08,
+        0.05,
+        0.035
+      ],
+      "roughness": 0.7
+    },
+    "shirt": {
+      "colour": [
+        0.22,
+        0.17,
+        0.12
+      ],
+      "roughness": 0.8
+    }
+  }
+}

@@ -1,0 +1,355 @@
+{
+  "arm": {
+    "shoulderWidth": 0.4,
+    "upperLength": 0.29,
+    "forearmLength": 0.26,
+    "upperDirection": [
+      0.05,
+      0.55,
+      -0.83
+    ],
+    "forearmDirection": [
+      -0.04,
+      0.96,
+      -0.28
+    ],
+    "jointBlend": 0.045,
+    "bendRadius": 0.05
+  },
+  "rings": {
+    "around": 24,
+    "sleeve": 72,
+    "palm": 10,
+    "finger": 12
+  },
+  "sleeve": {
+    "shoulderRadius": 0.06,
+    "cuffRadius": 0.05,
+    "flatten": 0.92,
+    "behindShoulder": 0.06,
+    "cuffShort": 0.035,
+    "foldDepth": 0.035,
+    "foldSpread": 0.07,
+    "foldPitch": 0.035,
+    "lip": 0.006,
+    "thickness": 0.006,
+    "liningDepth": 0.05
+  },
+  "shirtCuff": {
+    "radius": 0.044,
+    "flatten": 0.9,
+    "inside": 0.04,
+    "short": 0.012,
+    "edge": 0.004
+  },
+  "glove": {
+    "gauntletLength": 0.05,
+    "gauntletRadius": 0.04,
+    "wristRadius": 0.033,
+    "wristBlend": 0.02
+  },
+  "hand": {
+    "palmLength": 0.095,
+    "palmCap": 0.006,
+    "wristWidth": 0.056,
+    "knuckleWidth": 0.084,
+    "wristThickness": 0.042,
+    "palmThickness": 0.03,
+    "palmPower": 2.1,
+    "padShift": 0.12,
+    "fingerBlend": 0.008,
+    "fingerFlatten": 0.88,
+    "fingers": {
+      "Index": {
+        "lateral": 0.0275,
+        "forward": -0.004,
+        "drop": 0.002,
+        "splay": 0.04,
+        "lengths": [
+          0.0374,
+          0.0221,
+          0.0187
+        ],
+        "radius": 0.0097,
+        "taper": 0.78,
+        "root": 0.012
+      },
+      "Middle": {
+        "lateral": 0.0085,
+        "forward": 0.0,
+        "drop": 0.0,
+        "splay": 0.0,
+        "lengths": [
+          0.0408,
+          0.0255,
+          0.0195
+        ],
+        "radius": 0.0099,
+        "taper": 0.78,
+        "root": 0.012
+      },
+      "Ring": {
+        "lateral": -0.0105,
+        "forward": -0.003,
+        "drop": 0.001,
+        "splay": -0.04,
+        "lengths": [
+          0.0382,
+          0.0238,
+          0.0187
+        ],
+        "radius": 0.0094,
+        "taper": 0.78,
+        "root": 0.012
+      },
+      "Pinky": {
+        "lateral": -0.028,
+        "forward": -0.012,
+        "drop": 0.003,
+        "splay": -0.09,
+        "lengths": [
+          0.0298,
+          0.0179,
+          0.0161
+        ],
+        "radius": 0.0085,
+        "taper": 0.8,
+        "root": 0.012
+      }
+    },
+    "thumb": {
+      "forward": 0.03,
+      "lateral": 0.024,
+      "drop": 0.012,
+      "direction": [
+        0.8,
+        0.5,
+        0.3
+      ],
+      "roll": [
+        0.45,
+        0.9
+      ],
+      "lengths": [
+        0.038,
+        0.031,
+        0.026
+      ],
+      "radius": 0.0115,
+      "rootRadius": 0.016,
+      "taper": 0.8,
+      "root": 0.006
+    },
+    "knuckles": {
+      "height": 0.004,
+      "width": 0.0075,
+      "from": 0.72
+    }
+  },
+  "materials": {
+    "sleeve": {
+      "colour": [
+        0.035,
+        0.034,
+        0.04
+      ],
+      "roughness": 0.85,
+      "surface": {
+        "kind": "twill",
+        "tile": 0.02,
+        "size": 512,
+        "lines": 24,
+        "relief": 0.5,
+        "variation": 0.06,
+        "seed": 3
+      }
+    },
+    "lining": {
+      "colour": [
+        0.12,
+        0.05,
+        0.05
+      ],
+      "roughness": 0.6
+    },
+    "shirt": {
+      "colour": [
+        0.5,
+        0.48,
+        0.44
+      ],
+      "roughness": 0.65
+    },
+    "glove": {
+      "colour": [
+        0.86,
+        0.86,
+        0.83
+      ],
+      "roughness": 0.75
+    }
+  },
+  "clips": {
+    "idle": {
+      "curl": [
+        20,
+        25,
+        12
+      ],
+      "spread": {
+        "Index": 2,
+        "Middle": 0,
+        "Ring": -2,
+        "Pinky": -5
+      },
+      "thumb": [
+        [
+          -10,
+          -10
+        ],
+        [
+          20,
+          0
+        ],
+        [
+          25,
+          0
+        ]
+      ]
+    },
+    "open": {
+      "curl": [
+        0,
+        0,
+        0
+      ],
+      "spread": {
+        "Index": 6,
+        "Middle": 0,
+        "Ring": -6,
+        "Pinky": -12
+      },
+      "thumb": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    "fist": {
+      "curl": [
+        85,
+        100,
+        70
+      ],
+      "spread": {
+        "Index": 0,
+        "Middle": 0,
+        "Ring": 0,
+        "Pinky": 0
+      },
+      "thumb": [
+        [
+          40,
+          90
+        ],
+        [
+          70,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ]
+    },
+    "grip": {
+      "curl": [
+        62,
+        70,
+        45
+      ],
+      "spread": {
+        "Index": 0,
+        "Middle": 0,
+        "Ring": 0,
+        "Pinky": 0
+      },
+      "thumb": [
+        [
+          0,
+          -10
+        ],
+        [
+          70,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ]
+    },
+    "squeeze": {
+      "curl": [
+        76,
+        84,
+        58
+      ],
+      "spread": {
+        "Index": 0,
+        "Middle": 0,
+        "Ring": 0,
+        "Pinky": 0
+      },
+      "thumb": [
+        [
+          5,
+          -15
+        ],
+        [
+          80,
+          0
+        ],
+        [
+          80,
+          0
+        ]
+      ]
+    }
+  },
+  "preview": {
+    "shoulder": [
+      0.2,
+      -0.24,
+      0.06
+    ],
+    "size": [
+      960,
+      540
+    ],
+    "samples": 48,
+    "hold": {
+      "wrist": [
+        0.16,
+        -0.12,
+        -0.42
+      ],
+      "pole": [
+        0.6,
+        -0.7,
+        0.2
+      ]
+    },
+    "fieldOfView": 75,
+    "key": 150
+  }
+}
