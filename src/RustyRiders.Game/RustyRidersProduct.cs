@@ -27,7 +27,6 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     private readonly Expedition run;
     private readonly UiStream hud;
     private readonly UiFonts fonts;
-    private ulong uiSequence;
     private double sampleTime;
     private bool started;
     private bool paused;
@@ -206,6 +205,6 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         engine.Graphics.PublishSnapshot([.. scenes.Current.Facts, .. play.Facts()]);
         play.Enemies.Animate(); // animation instances bind to bodies in the published snapshot
         walker.Publish(sampleTime);
-        engine.Ui.PublishProjection(new UiProjection(hud, ++uiSequence, Hud.Create(scenes.Current, walker, time, play, run, fonts)));
+        engine.Ui.PublishProjection(new UiProjection(hud, Hud.Create(scenes.Current, walker, time, play, run, fonts)));
     }
 }

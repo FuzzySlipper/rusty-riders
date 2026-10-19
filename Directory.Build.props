@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- The one Engine SDK/runtime pair pin. `rusty install` installs it;
          only `rusty update` changes it. -->
-    <RustyEnginePackageVersion>0.1.0-dev.4fa1c2731106</RustyEnginePackageVersion>
+    <RustyEnginePackageVersion>0.1.0-dev.0a37678209ff</RustyEnginePackageVersion>
     <!-- The product `rusty dev` and `rusty build` run when no project is named. -->
     <RustyEngineProject>src/RustyRiders.Game/RustyRiders.Game.csproj</RustyEngineProject>
     <!-- Every restore, plain dotnet included, takes exactly the pinned SDK from
