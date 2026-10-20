@@ -211,44 +211,59 @@ used; confirm their licences before any public release.
 ### Baking old clips into held motion
 
 A held look's motion is the weapon alone in camera space, so an old clip becomes held motion by following its weapon
-bone from the camera bone: `scripts/bake-held-motion.py` samples `weapon_r` (or `--hand l`) every frame, takes its move
-and turn from the set's idle (`--rest`), splits the frames into windup (to the strike, the frame the grip moves
-fastest), commit (until it slows below `--slow` of that) and recovery, keeps only the keys a straight blend between
-them would miss by more than `--position` metres or `--angle` degrees, and writes them as poses and a track into
-`content/held/motion.json`, each key timed by its phase so it lands on the same beat at the action's own speed. The
-hand's closure comes from the source hand's finger curl. The arms are not baked: ours reach the grip by IK on any rig.
+from the eye: `scripts/bake-held-motion.py` (Blender) samples the weapon's grip and turn every frame, takes them from
+the rest pose, splits the frames into windup (to the strike, the frame the grip moves fastest), commit (until it slows)
+and recovery, keeps only the keys a straight blend between them would miss by more than 2 cm or 8 degrees, and writes
+them as poses and a track into `content/held/motion.json`, each key timed by its phase so it lands on the same beat at
+the action's own speed. Beside each key it bakes what the source arm does that our IK cannot infer: the hand's closure
+(the source fingers' curl), the body's lean (`shoulder`) and the elbow's bend (`elbow`). The arms are not baked as a
+skeleton: ours reach the grip by IK on any rig.
 
-```bash
-blender -b --factory-startup --python scripts/bake-held-motion.py -- \
-  old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Attack_RD.fbx \
-  --rest old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx --motion sns --action blade-slash --look rift-blade --seat
-```
-
-That is the rift blade's slash (motion `sns`, 30 keys from 121 frames), baked with `--seat`.
+Every bake is an entry in `art/held-motion/bakes.json`, and `scripts/bake-held-motions.sh [NAME]` runs them all (or
+one), converting the CAT clips with unity-import first. An entry names:
+- `clip` and `rest` (the set's idle; without one, the clip's first baked frame), relative to `old-game/Assets`, and
+  optionally `from` and `to` frames to bake part of a clip;
+- `source`: `mannequin` (FpMelee/FPP_*, FBX, a camera bone) or `cat` (the Hands pack, no camera bone: the eye is a
+  fixed point over its shoulders);
+- `weapon`: the bone the weapon rides (the mannequin's `weapon_r`/`weapon_l` by default, the Hands pack's gun body such
+  as `B_Gun_03_Body`), or `palm` for a casting hand, which rides the look in the palm with the hand's own turn (a
+  weapon bone is not always at its hand: the dagger set's `weapon_l` hangs half a metre away, beside the other hand);
+- `hand`: `l` bakes a left hand, mirrored into the main hand's space;
+- `motion`, `action` and `look`; `seat` seats the look where the source weapon rests and holds it as the source hand
+  does (below); `hold` (`fist` or `pistol`) says how; `strike` and `commitEnd` (a frame, or a fraction below 1) set the
+  phases where the grip's speed does not (a reload); `noClosure` keeps the hand closed through an open-handed gesture
+  (a wand would drop).
 
 Two things keep the hands on a baked weapon:
-- **The body leans.** The source character lunges: its shoulder moves 17 cm toward the blow by the strike, so its
-  nearly straight arm reaches a grip 0.64 m ahead. Each baked key carries that move as `shoulder` (camera space, the
-  main hand's; mirrored for the off hand), and the arms move with it. Beyond that, `ArmsView` leans the body in by
-  itself when a grip still lies past an arm's length (at most 0.3 m), so a motion holds on rigs with shorter arms.
+- **The body leans.** The source character lunges: its shoulder moves 17 cm toward the slash by the strike, so its
+  nearly straight arm reaches a grip 0.64 m ahead. Each key carries that move as `shoulder` (camera space, the main
+  hand's; mirrored for the off hand), and the arms move with it. Beyond that, `ArmsView` leans the body in by itself
+  when a grip still lies past an arm's length (at most 0.3 m), so a motion holds on rigs with shorter arms.
   `riders.arms` reports both leans and the wrists' shortfall.
-- **The look rests where the source rests, held as the source holds it.** Turns are baked from rest, so they follow
-  the source's path only if the look starts where the source weapon does. `--seat` sets the look's nudge to the source's
-  rest and its `grips.hand` to the source hand's hold on the weapon (the hand's canonical frame from the look's, measured
-  from the source's knuckles as `ArmsView` measures rigs). The blade is the weapon bone's axis leaving the fist past the
-  index finger and its up side the axis along the fingers (`--blade`, `--edge` override): for the FPP set that is +Z,
-  with +Y along the fingers. The axis that travels furthest in a swing is not the blade (it runs along the fingers);
-  taking it turned the sword a quarter turn in the hand and folded the wrist back.
-- **The elbow follows the source's.** Each key carries the source elbow's bend as `elbow`, the point the holding arm's
-  elbow bends toward (camera space, mirrored for the off hand), so the forearm keeps the source's line.
+- **The look rests where the source rests, held as the source holds it.** Turns are baked from rest, so they follow the
+  source's path only if the look starts where the source weapon does. `seat` sets the look's nudge to the source's rest
+  and its `grips.hand` to the source hand's hold on the weapon (the hand's canonical frame from the look's, measured
+  from the source's knuckles as `ArmsView` measures rigs). Which weapon-bone axes are the look's length and up side
+  follows from the hold: a `fist`'s blade leaves past the index finger with its edges along the fingers; a `pistol`'s
+  barrel runs along the hand with its sights toward the index finger (`blade` and `edge` name axes outright). The axis
+  that travels furthest in a swing is not the blade (on the FPP set it runs along the fingers); taking it turned the
+  sword a quarter turn in the hand and folded the wrist back.
 
-The source's rest grip, (0.28, -0.19, -0.38) from its camera, sits within a few centimetres of the blade stance, so its
-moves carry over at scale 1. Compared against a render of the source from its camera at the same moments (its blade drawn
-along the weapon bone's +Z), the hand, wrist and blade agree at rest, at the strike and through recovery, and both
-leave the view in the windup. Its 1.5 s recovery is
-squeezed into the action's 0.25 s. The keys are ordinary held motion: step, retime and edit them in the workbench. A
-clip set's own idle is the rest; the `_Start`, `_Loop` and `_End` parts of a heavy attack are separate clips, to bake
-one at a time or join first.
+The current bakes, each compared against its source rendered from its eye at the same moments (a stick drawn on the
+baked weapon axis), with no wrist shortfall over any of them:
+
+| Look and action | Source | Notes |
+| --- | --- | --- |
+| rift-blade `blade-slash` | `FPP_sns_Attack_RD` (motion `sns`) | 30 keys; rests blade-up as the sword-and-shield idle |
+| maul `maul-smash` | `FPP_Longs_Attack_D` (`longsword`) | A two-handed chop, held one-handed: raise, low strike, return |
+| ember-wand `ember-bolt` | `FPP_Dag_Magic`, left hand, `palm` (`dagger-magic`) | The dagger set's casting hand; the staff lies across the view |
+| frost-sigil `frost-nova` | `FPP_Longs_Magic`, left hand, `palm` (`longsword-magic`) | The off hand leaves the hilt to cast; `FPP_sns_Magic1` starts and ends out of view, so its sigil would be hidden at rest |
+| laser-flintlock `flintlock-shot`, `flintlock-reload` | Hands pack `Hands_Gun_03_Shot`, `_Reload` (`revolver`) | The painted arms' own revolver set; the reload's strike at 80 % |
+
+A source's 1 to 2 s clip is squeezed into the action's own timing (the slash's 1.5 s recovery into 0.25 s). The keys
+are ordinary held motion: step, retime and edit them in the workbench. A rebake that gives a look another motion, or
+adds or removes a motion, is a structural change: restart the game to see it (an edited key or pose reloads in place).
+The heavy attacks' `_Start`, `_Loop` and `_End` parts are separate clips, to bake one at a time or join first.
 
 ## Backups of generated art
 

@@ -1227,6 +1227,2099 @@
           }
         ]
       }
+    },
+    "longsword": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "maul-smash-1": {
+          "position": [
+            -0.009,
+            0.038,
+            0.018
+          ],
+          "rotation": [
+            9.2,
+            0.4,
+            -0.3
+          ]
+        },
+        "maul-smash-2": {
+          "position": [
+            -0.038,
+            0.159,
+            0.069
+          ],
+          "rotation": [
+            27.1,
+            -3.7,
+            -4.2
+          ]
+        },
+        "maul-smash-3": {
+          "position": [
+            -0.101,
+            0.247,
+            0.052
+          ],
+          "rotation": [
+            29.4,
+            -7.9,
+            -12.1
+          ]
+        },
+        "maul-smash-4": {
+          "position": [
+            -0.158,
+            0.219,
+            -0.023
+          ],
+          "rotation": [
+            10.7,
+            -2.9,
+            -12.3
+          ]
+        },
+        "maul-smash-5": {
+          "position": [
+            -0.192,
+            0.134,
+            -0.122
+          ],
+          "rotation": [
+            -23.9,
+            3.0,
+            -10.3
+          ]
+        },
+        "maul-smash-6": {
+          "position": [
+            -0.191,
+            -0.03,
+            -0.223
+          ],
+          "rotation": [
+            -74.9,
+            -28.9,
+            27.7
+          ]
+        },
+        "maul-smash-7": {
+          "position": [
+            -0.192,
+            -0.165,
+            -0.242
+          ],
+          "rotation": [
+            -73.4,
+            -127.4,
+            129.4
+          ]
+        },
+        "maul-smash-8": {
+          "position": [
+            -0.194,
+            -0.302,
+            -0.204
+          ],
+          "rotation": [
+            -60.9,
+            -147.3,
+            150.2
+          ]
+        },
+        "maul-smash-9": {
+          "position": [
+            -0.201,
+            -0.512,
+            -0.07
+          ],
+          "rotation": [
+            -45.4,
+            -177.0,
+            171.3
+          ]
+        },
+        "maul-smash-10": {
+          "position": [
+            -0.224,
+            -0.629,
+            0.081
+          ],
+          "rotation": [
+            -28.5,
+            147.6,
+            176.6
+          ]
+        },
+        "maul-smash-11": {
+          "position": [
+            -0.228,
+            -0.637,
+            0.104
+          ],
+          "rotation": [
+            -26.4,
+            139.8,
+            176.8
+          ]
+        },
+        "maul-smash-12": {
+          "position": [
+            -0.231,
+            -0.642,
+            0.124
+          ],
+          "rotation": [
+            -25.0,
+            131.3,
+            177.2
+          ]
+        },
+        "maul-smash-13": {
+          "position": [
+            -0.232,
+            -0.643,
+            0.14
+          ],
+          "rotation": [
+            -24.3,
+            122.4,
+            177.8
+          ]
+        },
+        "maul-smash-14": {
+          "position": [
+            -0.231,
+            -0.641,
+            0.154
+          ],
+          "rotation": [
+            -24.2,
+            113.7,
+            178.5
+          ]
+        },
+        "maul-smash-15": {
+          "position": [
+            -0.228,
+            -0.637,
+            0.166
+          ],
+          "rotation": [
+            -24.7,
+            105.3,
+            179.3
+          ]
+        },
+        "maul-smash-16": {
+          "position": [
+            -0.222,
+            -0.63,
+            0.175
+          ],
+          "rotation": [
+            -25.7,
+            97.1,
+            -179.8
+          ]
+        },
+        "maul-smash-17": {
+          "position": [
+            -0.214,
+            -0.621,
+            0.182
+          ],
+          "rotation": [
+            -27.1,
+            89.3,
+            -178.8
+          ]
+        },
+        "maul-smash-18": {
+          "position": [
+            -0.204,
+            -0.611,
+            0.187
+          ],
+          "rotation": [
+            -28.9,
+            81.8,
+            -177.5
+          ]
+        },
+        "maul-smash-19": {
+          "position": [
+            -0.192,
+            -0.6,
+            0.19
+          ],
+          "rotation": [
+            -30.9,
+            74.3,
+            -175.7
+          ]
+        },
+        "maul-smash-20": {
+          "position": [
+            -0.179,
+            -0.587,
+            0.191
+          ],
+          "rotation": [
+            -33.0,
+            67.0,
+            -173.6
+          ]
+        },
+        "maul-smash-21": {
+          "position": [
+            -0.164,
+            -0.574,
+            0.192
+          ],
+          "rotation": [
+            -34.9,
+            58.5,
+            -170.6
+          ]
+        },
+        "maul-smash-22": {
+          "position": [
+            -0.149,
+            -0.561,
+            0.192
+          ],
+          "rotation": [
+            -36.5,
+            50.5,
+            -167.3
+          ]
+        },
+        "maul-smash-23": {
+          "position": [
+            -0.048,
+            -0.459,
+            0.177
+          ],
+          "rotation": [
+            -35.1,
+            3.7,
+            -135.9
+          ]
+        },
+        "maul-smash-24": {
+          "position": [
+            0.041,
+            -0.32,
+            0.152
+          ],
+          "rotation": [
+            -11.3,
+            -24.1,
+            -104.5
+          ]
+        },
+        "maul-smash-25": {
+          "position": [
+            0.059,
+            -0.111,
+            0.1
+          ],
+          "rotation": [
+            29.8,
+            -18.2,
+            -59.6
+          ]
+        },
+        "maul-smash-26": {
+          "position": [
+            0.054,
+            -0.049,
+            0.072
+          ],
+          "rotation": [
+            25.7,
+            6.0,
+            -21.4
+          ]
+        },
+        "maul-smash-27": {
+          "position": [
+            0.043,
+            -0.03,
+            0.023
+          ],
+          "rotation": [
+            7.6,
+            8.9,
+            -5.7
+          ]
+        }
+      },
+      "tracks": {
+        "maul-smash": [
+          {
+            "pose": "maul-smash-1",
+            "phase": "Windup",
+            "at": 0.105,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.002,
+              0.001,
+              -0.005
+            ],
+            "elbow": [
+              0.437,
+              -0.433,
+              -0.141
+            ]
+          },
+          {
+            "pose": "maul-smash-2",
+            "phase": "Windup",
+            "at": 0.263,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.011,
+              0.011,
+              -0.024
+            ],
+            "elbow": [
+              0.459,
+              -0.344,
+              -0.22
+            ]
+          },
+          {
+            "pose": "maul-smash-3",
+            "phase": "Windup",
+            "at": 0.421,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.019,
+              0.027,
+              -0.056
+            ],
+            "elbow": [
+              0.353,
+              -0.263,
+              -0.317
+            ]
+          },
+          {
+            "pose": "maul-smash-4",
+            "phase": "Windup",
+            "at": 0.526,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.018,
+              0.037,
+              -0.079
+            ],
+            "elbow": [
+              0.258,
+              -0.294,
+              -0.345
+            ]
+          },
+          {
+            "pose": "maul-smash-5",
+            "phase": "Windup",
+            "at": 0.632,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.015,
+              0.041,
+              -0.101
+            ],
+            "elbow": [
+              0.31,
+              -0.259,
+              -0.344
+            ]
+          },
+          {
+            "pose": "maul-smash-6",
+            "phase": "Windup",
+            "at": 0.789,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.009,
+              0.042,
+              -0.119
+            ],
+            "elbow": [
+              0.283,
+              -0.217,
+              -0.329
+            ]
+          },
+          {
+            "pose": "maul-smash-7",
+            "phase": "Windup",
+            "at": 0.895,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.007,
+              0.038,
+              -0.126
+            ],
+            "elbow": [
+              0.195,
+              -0.252,
+              -0.316
+            ]
+          },
+          {
+            "pose": "maul-smash-8",
+            "phase": "Windup",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.006,
+              0.035,
+              -0.127
+            ],
+            "elbow": [
+              0.188,
+              -0.335,
+              -0.289
+            ]
+          },
+          {
+            "pose": "maul-smash-9",
+            "phase": "Commit",
+            "at": 0.444,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.011,
+              0.022,
+              -0.107
+            ],
+            "elbow": [
+              0.132,
+              -0.44,
+              -0.182
+            ]
+          },
+          {
+            "pose": "maul-smash-10",
+            "phase": "Commit",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.012,
+              0.004,
+              -0.079
+            ],
+            "elbow": [
+              0.112,
+              -0.518,
+              -0.049
+            ]
+          },
+          {
+            "pose": "maul-smash-11",
+            "phase": "Recovery",
+            "at": 0.014,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.012,
+              0.003,
+              -0.074
+            ],
+            "elbow": [
+              0.11,
+              -0.529,
+              -0.02
+            ]
+          },
+          {
+            "pose": "maul-smash-12",
+            "phase": "Recovery",
+            "at": 0.029,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.012,
+              0.003,
+              -0.068
+            ],
+            "elbow": [
+              0.108,
+              -0.538,
+              0.01
+            ]
+          },
+          {
+            "pose": "maul-smash-13",
+            "phase": "Recovery",
+            "at": 0.043,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.012,
+              0.004,
+              -0.062
+            ],
+            "elbow": [
+              0.106,
+              -0.544,
+              0.04
+            ]
+          },
+          {
+            "pose": "maul-smash-14",
+            "phase": "Recovery",
+            "at": 0.058,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.013,
+              0.004,
+              -0.058
+            ],
+            "elbow": [
+              0.106,
+              -0.552,
+              0.071
+            ]
+          },
+          {
+            "pose": "maul-smash-15",
+            "phase": "Recovery",
+            "at": 0.072,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.013,
+              0.005,
+              -0.055
+            ],
+            "elbow": [
+              0.105,
+              -0.558,
+              0.1
+            ]
+          },
+          {
+            "pose": "maul-smash-16",
+            "phase": "Recovery",
+            "at": 0.087,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.013,
+              0.007,
+              -0.052
+            ],
+            "elbow": [
+              0.105,
+              -0.563,
+              0.128
+            ]
+          },
+          {
+            "pose": "maul-smash-17",
+            "phase": "Recovery",
+            "at": 0.101,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.013,
+              0.008,
+              -0.051
+            ],
+            "elbow": [
+              0.106,
+              -0.567,
+              0.154
+            ]
+          },
+          {
+            "pose": "maul-smash-18",
+            "phase": "Recovery",
+            "at": 0.116,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.014,
+              0.01,
+              -0.049
+            ],
+            "elbow": [
+              0.106,
+              -0.57,
+              0.176
+            ]
+          },
+          {
+            "pose": "maul-smash-19",
+            "phase": "Recovery",
+            "at": 0.13,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.014,
+              0.011,
+              -0.048
+            ],
+            "elbow": [
+              0.107,
+              -0.574,
+              0.194
+            ]
+          },
+          {
+            "pose": "maul-smash-20",
+            "phase": "Recovery",
+            "at": 0.145,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.015,
+              0.013,
+              -0.047
+            ],
+            "elbow": [
+              0.109,
+              -0.577,
+              0.209
+            ]
+          },
+          {
+            "pose": "maul-smash-21",
+            "phase": "Recovery",
+            "at": 0.159,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.015,
+              0.014,
+              -0.046
+            ],
+            "elbow": [
+              0.111,
+              -0.581,
+              0.222
+            ]
+          },
+          {
+            "pose": "maul-smash-22",
+            "phase": "Recovery",
+            "at": 0.174,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.015,
+              0.016,
+              -0.045
+            ],
+            "elbow": [
+              0.113,
+              -0.586,
+              0.232
+            ]
+          },
+          {
+            "pose": "maul-smash-23",
+            "phase": "Recovery",
+            "at": 0.261,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.016,
+              0.02,
+              -0.042
+            ],
+            "elbow": [
+              0.136,
+              -0.626,
+              0.246
+            ]
+          },
+          {
+            "pose": "maul-smash-24",
+            "phase": "Recovery",
+            "at": 0.362,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.016,
+              0.018,
+              -0.037
+            ],
+            "elbow": [
+              0.156,
+              -0.676,
+              0.184
+            ]
+          },
+          {
+            "pose": "maul-smash-25",
+            "phase": "Recovery",
+            "at": 0.536,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.013,
+              0.012,
+              -0.031
+            ],
+            "elbow": [
+              0.317,
+              -0.653,
+              -0.019
+            ]
+          },
+          {
+            "pose": "maul-smash-26",
+            "phase": "Recovery",
+            "at": 0.638,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.006,
+              0.002,
+              -0.014
+            ],
+            "elbow": [
+              0.391,
+              -0.579,
+              -0.066
+            ]
+          },
+          {
+            "pose": "maul-smash-27",
+            "phase": "Recovery",
+            "at": 0.739,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              -0.001,
+              -0.003,
+              -0.002
+            ],
+            "elbow": [
+              0.414,
+              -0.498,
+              -0.087
+            ]
+          },
+          {
+            "pose": "rest",
+            "phase": "Recovery",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              -0.0
+            ],
+            "elbow": [
+              0.424,
+              -0.451,
+              -0.12
+            ]
+          }
+        ]
+      }
+    },
+    "dagger-magic": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "ember-bolt-1": {
+          "position": [
+            -0.009,
+            0.019,
+            0.12
+          ],
+          "rotation": [
+            -0.1,
+            13.0,
+            -15.6
+          ]
+        },
+        "ember-bolt-2": {
+          "position": [
+            -0.025,
+            0.037,
+            0.14
+          ],
+          "rotation": [
+            7.8,
+            18.1,
+            -12.8
+          ]
+        },
+        "ember-bolt-3": {
+          "position": [
+            -0.058,
+            0.062,
+            0.077
+          ],
+          "rotation": [
+            11.9,
+            18.2,
+            -4.4
+          ]
+        },
+        "ember-bolt-4": {
+          "position": [
+            -0.122,
+            0.087,
+            -0.141
+          ],
+          "rotation": [
+            -4.2,
+            1.1,
+            15.0
+          ]
+        },
+        "ember-bolt-5": {
+          "position": [
+            -0.138,
+            0.095,
+            -0.271
+          ],
+          "rotation": [
+            -7.9,
+            -20.2,
+            33.2
+          ]
+        },
+        "ember-bolt-6": {
+          "position": [
+            -0.146,
+            0.114,
+            -0.317
+          ],
+          "rotation": [
+            -4.3,
+            -25.0,
+            24.7
+          ]
+        },
+        "ember-bolt-7": {
+          "position": [
+            -0.157,
+            0.113,
+            -0.313
+          ],
+          "rotation": [
+            2.8,
+            -17.1,
+            10.2
+          ]
+        },
+        "ember-bolt-8": {
+          "position": [
+            -0.123,
+            0.08,
+            -0.307
+          ],
+          "rotation": [
+            -6.8,
+            -18.4,
+            -1.4
+          ]
+        },
+        "ember-bolt-9": {
+          "position": [
+            -0.062,
+            0.048,
+            -0.225
+          ],
+          "rotation": [
+            -9.8,
+            -10.4,
+            -5.0
+          ]
+        },
+        "ember-bolt-10": {
+          "position": [
+            0.001,
+            -0.035,
+            0.009
+          ],
+          "rotation": [
+            -4.1,
+            3.0,
+            -8.6
+          ]
+        }
+      },
+      "tracks": {
+        "ember-bolt": [
+          {
+            "pose": "ember-bolt-1",
+            "phase": "Windup",
+            "at": 0.417,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.004,
+              0.0,
+              0.011
+            ],
+            "elbow": [
+              0.618,
+              -0.482,
+              -0.004
+            ]
+          },
+          {
+            "pose": "ember-bolt-2",
+            "phase": "Windup",
+            "at": 0.583,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.004,
+              0.003,
+              -0.011
+            ],
+            "elbow": [
+              0.66,
+              -0.442,
+              -0.011
+            ]
+          },
+          {
+            "pose": "ember-bolt-3",
+            "phase": "Windup",
+            "at": 0.75,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.003,
+              0.009,
+              -0.055
+            ],
+            "elbow": [
+              0.664,
+              -0.377,
+              -0.119
+            ]
+          },
+          {
+            "pose": "ember-bolt-4",
+            "phase": "Windup",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.015,
+              0.019,
+              -0.123
+            ],
+            "elbow": [
+              0.509,
+              -0.331,
+              -0.324
+            ]
+          },
+          {
+            "pose": "ember-bolt-5",
+            "phase": "Commit",
+            "at": 0.5,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.034,
+              0.022,
+              -0.159
+            ],
+            "elbow": [
+              0.325,
+              -0.311,
+              -0.407
+            ]
+          },
+          {
+            "pose": "ember-bolt-6",
+            "phase": "Commit",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.053,
+              0.021,
+              -0.181
+            ],
+            "elbow": [
+              0.281,
+              -0.202,
+              -0.428
+            ]
+          },
+          {
+            "pose": "ember-bolt-7",
+            "phase": "Recovery",
+            "at": 0.047,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.052,
+              0.017,
+              -0.185
+            ],
+            "elbow": [
+              0.249,
+              -0.253,
+              -0.44
+            ]
+          },
+          {
+            "pose": "ember-bolt-8",
+            "phase": "Recovery",
+            "at": 0.125,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.048,
+              0.014,
+              -0.178
+            ],
+            "elbow": [
+              0.289,
+              -0.274,
+              -0.423
+            ]
+          },
+          {
+            "pose": "ember-bolt-9",
+            "phase": "Recovery",
+            "at": 0.359,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.026,
+              0.008,
+              -0.127
+            ],
+            "elbow": [
+              0.346,
+              -0.392,
+              -0.345
+            ]
+          },
+          {
+            "pose": "ember-bolt-10",
+            "phase": "Recovery",
+            "at": 0.797,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.009,
+              -0.003,
+              -0.005
+            ],
+            "elbow": [
+              0.532,
+              -0.481,
+              -0.071
+            ]
+          },
+          {
+            "pose": "rest",
+            "phase": "Recovery",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.0,
+              -0.0,
+              -0.0
+            ],
+            "elbow": [
+              0.519,
+              -0.474,
+              -0.103
+            ]
+          }
+        ]
+      }
+    },
+    "revolver": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "flintlock-shot-1": {
+          "position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            -0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "flintlock-shot-2": {
+          "position": [
+            0.0,
+            0.008,
+            0.031
+          ],
+          "rotation": [
+            -0.4,
+            -0.0,
+            -0.0
+          ]
+        },
+        "flintlock-shot-3": {
+          "position": [
+            0.0,
+            0.013,
+            0.046
+          ],
+          "rotation": [
+            7.3,
+            0.0,
+            0.0
+          ]
+        },
+        "flintlock-reload-1": {
+          "position": [
+            -0.006,
+            0.024,
+            0.0
+          ],
+          "rotation": [
+            -5.9,
+            0.9,
+            -12.8
+          ]
+        },
+        "flintlock-reload-2": {
+          "position": [
+            -0.013,
+            0.048,
+            0.0
+          ],
+          "rotation": [
+            7.5,
+            -1.4,
+            -25.5
+          ]
+        },
+        "flintlock-reload-3": {
+          "position": [
+            -0.028,
+            0.041,
+            -0.046
+          ],
+          "rotation": [
+            53.6,
+            8.5,
+            17.3
+          ]
+        },
+        "flintlock-reload-4": {
+          "position": [
+            -0.028,
+            0.011,
+            -0.042
+          ],
+          "rotation": [
+            53.6,
+            8.5,
+            17.3
+          ]
+        },
+        "flintlock-reload-5": {
+          "position": [
+            -0.028,
+            0.029,
+            -0.063
+          ],
+          "rotation": [
+            53.6,
+            8.5,
+            2.5
+          ]
+        },
+        "flintlock-reload-6": {
+          "position": [
+            -0.028,
+            -0.02,
+            -0.07
+          ],
+          "rotation": [
+            -6.0,
+            -6.6,
+            4.2
+          ]
+        },
+        "flintlock-reload-7": {
+          "position": [
+            -0.028,
+            0.001,
+            -0.084
+          ],
+          "rotation": [
+            -6.0,
+            -6.6,
+            20.1
+          ]
+        },
+        "flintlock-reload-8": {
+          "position": [
+            -0.024,
+            0.005,
+            -0.085
+          ],
+          "rotation": [
+            -11.0,
+            -8.5,
+            19.1
+          ]
+        },
+        "flintlock-reload-9": {
+          "position": [
+            0.03,
+            0.054,
+            -0.085
+          ],
+          "rotation": [
+            -0.1,
+            -7.5,
+            -16.7
+          ]
+        },
+        "flintlock-reload-10": {
+          "position": [
+            0.001,
+            0.002,
+            -0.004
+          ],
+          "rotation": [
+            0.0,
+            -0.3,
+            -0.7
+          ]
+        }
+      },
+      "tracks": {
+        "flintlock-shot": [
+          {
+            "pose": "flintlock-shot-1",
+            "phase": "Windup",
+            "at": 0.714,
+            "ease": "Linear",
+            "grip": 0.25,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.182,
+              -0.756,
+              -0.035
+            ]
+          },
+          {
+            "pose": "flintlock-shot-2",
+            "phase": "Windup",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.24,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.181,
+              -0.774,
+              -0.027
+            ]
+          },
+          {
+            "pose": "flintlock-shot-3",
+            "phase": "Commit",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.19,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.182,
+              -0.786,
+              0.005
+            ]
+          },
+          {
+            "pose": "rest",
+            "phase": "Recovery",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.182,
+              -0.756,
+              -0.035
+            ]
+          }
+        ],
+        "flintlock-reload": [
+          {
+            "pose": "flintlock-reload-1",
+            "phase": "Windup",
+            "at": 0.048,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.177,
+              -0.74,
+              -0.091
+            ]
+          },
+          {
+            "pose": "flintlock-reload-2",
+            "phase": "Windup",
+            "at": 0.095,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.169,
+              -0.737,
+              -0.093
+            ]
+          },
+          {
+            "pose": "flintlock-reload-3",
+            "phase": "Windup",
+            "at": 0.143,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.176,
+              -0.682,
+              -0.062
+            ]
+          },
+          {
+            "pose": "flintlock-reload-4",
+            "phase": "Windup",
+            "at": 0.333,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.178,
+              -0.689,
+              -0.031
+            ]
+          },
+          {
+            "pose": "flintlock-reload-5",
+            "phase": "Windup",
+            "at": 0.476,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.175,
+              -0.668,
+              -0.071
+            ]
+          },
+          {
+            "pose": "flintlock-reload-6",
+            "phase": "Windup",
+            "at": 0.714,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.161,
+              -0.694,
+              -0.077
+            ]
+          },
+          {
+            "pose": "flintlock-reload-7",
+            "phase": "Windup",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.161,
+              -0.678,
+              -0.103
+            ]
+          },
+          {
+            "pose": "flintlock-reload-8",
+            "phase": "Commit",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.159,
+              -0.67,
+              -0.116
+            ]
+          },
+          {
+            "pose": "flintlock-reload-9",
+            "phase": "Recovery",
+            "at": 0.188,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.191,
+              -0.659,
+              -0.156
+            ]
+          },
+          {
+            "pose": "flintlock-reload-10",
+            "phase": "Recovery",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0.0,
+            "shoulder": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.182,
+              -0.756,
+              -0.036
+            ]
+          }
+        ]
+      }
+    },
+    "longsword-magic": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "frost-nova-1": {
+          "position": [
+            0.038,
+            0.001,
+            0.015
+          ],
+          "rotation": [
+            -17.5,
+            7.7,
+            21.1
+          ]
+        },
+        "frost-nova-2": {
+          "position": [
+            0.264,
+            0.064,
+            0.153
+          ],
+          "rotation": [
+            -15.6,
+            -2.1,
+            2.2
+          ]
+        },
+        "frost-nova-3": {
+          "position": [
+            0.314,
+            0.088,
+            0.21
+          ],
+          "rotation": [
+            -16.4,
+            -4.1,
+            -2.0
+          ]
+        },
+        "frost-nova-4": {
+          "position": [
+            0.342,
+            0.11,
+            0.236
+          ],
+          "rotation": [
+            -14.0,
+            -6.6,
+            -8.0
+          ]
+        },
+        "frost-nova-5": {
+          "position": [
+            0.339,
+            0.141,
+            0.177
+          ],
+          "rotation": [
+            -7.5,
+            -8.4,
+            -13.5
+          ]
+        },
+        "frost-nova-6": {
+          "position": [
+            0.324,
+            0.158,
+            0.113
+          ],
+          "rotation": [
+            -1.8,
+            -8.4,
+            -10.4
+          ]
+        },
+        "frost-nova-7": {
+          "position": [
+            0.28,
+            0.184,
+            -0.088
+          ],
+          "rotation": [
+            1.8,
+            -19.7,
+            8.5
+          ]
+        },
+        "frost-nova-8": {
+          "position": [
+            0.271,
+            0.182,
+            -0.195
+          ],
+          "rotation": [
+            -9.0,
+            -30.9,
+            22.5
+          ]
+        },
+        "frost-nova-9": {
+          "position": [
+            0.277,
+            0.176,
+            -0.26
+          ],
+          "rotation": [
+            -18.7,
+            -40.6,
+            31.3
+          ]
+        },
+        "frost-nova-10": {
+          "position": [
+            0.274,
+            0.175,
+            -0.28
+          ],
+          "rotation": [
+            -18.4,
+            -42.0,
+            30.8
+          ]
+        },
+        "frost-nova-11": {
+          "position": [
+            0.266,
+            0.158,
+            -0.285
+          ],
+          "rotation": [
+            -10.6,
+            -40.4,
+            32.3
+          ]
+        },
+        "frost-nova-12": {
+          "position": [
+            0.3,
+            0.102,
+            -0.286
+          ],
+          "rotation": [
+            -21.7,
+            -36.3,
+            22.2
+          ]
+        },
+        "frost-nova-13": {
+          "position": [
+            0.257,
+            0.089,
+            -0.242
+          ],
+          "rotation": [
+            -21.6,
+            -17.8,
+            18.2
+          ]
+        },
+        "frost-nova-14": {
+          "position": [
+            0.139,
+            0.009,
+            -0.113
+          ],
+          "rotation": [
+            -24.9,
+            15.0,
+            8.6
+          ]
+        },
+        "frost-nova-15": {
+          "position": [
+            0.051,
+            -0.038,
+            -0.029
+          ],
+          "rotation": [
+            -23.7,
+            26.5,
+            11.8
+          ]
+        },
+        "frost-nova-16": {
+          "position": [
+            0.007,
+            -0.039,
+            -0.0
+          ],
+          "rotation": [
+            -16.2,
+            21.3,
+            10.4
+          ]
+        },
+        "frost-nova-17": {
+          "position": [
+            -0.016,
+            -0.011,
+            0.004
+          ],
+          "rotation": [
+            -0.8,
+            0.2,
+            -0.2
+          ]
+        }
+      },
+      "tracks": {
+        "frost-nova": [
+          {
+            "pose": "frost-nova-1",
+            "phase": "Windup",
+            "at": 0.25,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.005,
+              0.018,
+              -0.002
+            ],
+            "elbow": [
+              0.207,
+              -0.566,
+              -0.262
+            ]
+          },
+          {
+            "pose": "frost-nova-2",
+            "phase": "Windup",
+            "at": 0.55,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.002,
+              0.071,
+              0.114
+            ],
+            "elbow": [
+              0.491,
+              -0.52,
+              -0.077
+            ]
+          },
+          {
+            "pose": "frost-nova-3",
+            "phase": "Windup",
+            "at": 0.65,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.02,
+              0.076,
+              0.142
+            ],
+            "elbow": [
+              0.543,
+              -0.5,
+              0.02
+            ]
+          },
+          {
+            "pose": "frost-nova-4",
+            "phase": "Windup",
+            "at": 0.75,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.023,
+              0.077,
+              0.134
+            ],
+            "elbow": [
+              0.566,
+              -0.502,
+              0.041
+            ]
+          },
+          {
+            "pose": "frost-nova-5",
+            "phase": "Windup",
+            "at": 0.85,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.001,
+              0.074,
+              0.092
+            ],
+            "elbow": [
+              0.586,
+              -0.455,
+              -0.095
+            ]
+          },
+          {
+            "pose": "frost-nova-6",
+            "phase": "Windup",
+            "at": 0.9,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.016,
+              0.072,
+              0.061
+            ],
+            "elbow": [
+              0.593,
+              -0.387,
+              -0.184
+            ]
+          },
+          {
+            "pose": "frost-nova-7",
+            "phase": "Windup",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.033,
+              0.069,
+              -0.011
+            ],
+            "elbow": [
+              0.499,
+              -0.255,
+              -0.329
+            ]
+          },
+          {
+            "pose": "frost-nova-8",
+            "phase": "Commit",
+            "at": 0.333,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.03,
+              0.07,
+              -0.046
+            ],
+            "elbow": [
+              0.372,
+              -0.28,
+              -0.37
+            ]
+          },
+          {
+            "pose": "frost-nova-9",
+            "phase": "Commit",
+            "at": 0.667,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.021,
+              0.071,
+              -0.074
+            ],
+            "elbow": [
+              0.287,
+              -0.276,
+              -0.395
+            ]
+          },
+          {
+            "pose": "frost-nova-10",
+            "phase": "Commit",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.013,
+              0.071,
+              -0.093
+            ],
+            "elbow": [
+              0.287,
+              -0.27,
+              -0.412
+            ]
+          },
+          {
+            "pose": "frost-nova-11",
+            "phase": "Recovery",
+            "at": 0.024,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.008,
+              0.07,
+              -0.101
+            ],
+            "elbow": [
+              0.287,
+              -0.289,
+              -0.415
+            ]
+          },
+          {
+            "pose": "frost-nova-12",
+            "phase": "Recovery",
+            "at": 0.11,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.008,
+              0.065,
+              -0.1
+            ],
+            "elbow": [
+              0.288,
+              -0.344,
+              -0.392
+            ]
+          },
+          {
+            "pose": "frost-nova-13",
+            "phase": "Recovery",
+            "at": 0.268,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              0.009,
+              0.06,
+              -0.076
+            ],
+            "elbow": [
+              0.313,
+              -0.363,
+              -0.369
+            ]
+          },
+          {
+            "pose": "frost-nova-14",
+            "phase": "Recovery",
+            "at": 0.476,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.005,
+              0.035,
+              -0.069
+            ],
+            "elbow": [
+              0.356,
+              -0.482,
+              -0.353
+            ]
+          },
+          {
+            "pose": "frost-nova-15",
+            "phase": "Recovery",
+            "at": 0.573,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.01,
+              0.017,
+              -0.052
+            ],
+            "elbow": [
+              0.286,
+              -0.549,
+              -0.327
+            ]
+          },
+          {
+            "pose": "frost-nova-16",
+            "phase": "Recovery",
+            "at": 0.61,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.01,
+              0.011,
+              -0.039
+            ],
+            "elbow": [
+              0.219,
+              -0.561,
+              -0.307
+            ]
+          },
+          {
+            "pose": "frost-nova-17",
+            "phase": "Recovery",
+            "at": 0.695,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.012,
+              -0.001,
+              -0.012
+            ],
+            "elbow": [
+              0.125,
+              -0.539,
+              -0.269
+            ]
+          },
+          {
+            "pose": "rest",
+            "phase": "Recovery",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": 0,
+            "shoulder": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "elbow": [
+              0.117,
+              -0.532,
+              -0.247
+            ]
+          }
+        ]
+      }
     }
   }
 }

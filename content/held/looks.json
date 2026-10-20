@@ -52,13 +52,18 @@
     },
     {
       "id": "maul",
-      "motion": "swing",
+      "motion": "longsword",
       "stance": "heavy",
       "grips": {
         "main": [
           0,
           0,
           0.3
+        ],
+        "hand": [
+          -8.2,
+          -86.3,
+          38.1
         ]
       },
       "box": {
@@ -84,26 +89,31 @@
       },
       "nudge": {
         "grip": [
-          0,
-          0,
-          0
+          -0.055,
+          0.201,
+          0.066
         ],
         "turn": [
-          0,
-          0,
-          0
+          21.7,
+          -3.7,
+          -4.8
         ]
       }
     },
     {
       "id": "laser-flintlock",
-      "motion": "shot",
+      "motion": "revolver",
       "stance": "firearm",
       "grips": {
         "main": [
           0,
           -0.04,
           0.12
+        ],
+        "hand": [
+          -3.4,
+          73.7,
+          -83.6
         ]
       },
       "box": {
@@ -129,26 +139,31 @@
       },
       "nudge": {
         "grip": [
-          0,
-          0,
-          0
+          -0.016,
+          -0.061,
+          0.051
         ],
         "turn": [
-          0,
-          0,
-          0
+          3.5,
+          -5.2,
+          -0.3
         ]
       }
     },
     {
       "id": "ember-wand",
-      "motion": "cast",
+      "motion": "dagger-magic",
       "stance": "wand",
       "grips": {
         "main": [
           0,
           0,
           0.2
+        ],
+        "hand": [
+          -0.0,
+          -90.0,
+          -0.0
         ]
       },
       "box": {
@@ -174,26 +189,31 @@
       },
       "nudge": {
         "grip": [
-          0,
-          0,
-          0
+          0.061,
+          0.009,
+          0.019
         ],
         "turn": [
-          0,
-          0,
-          0
+          -6.8,
+          117.0,
+          -44.0
         ]
       }
     },
     {
       "id": "frost-sigil",
-      "motion": "cast",
+      "motion": "longsword-magic",
       "stance": "raised",
       "grips": {
         "main": [
           0,
           0,
           0
+        ],
+        "hand": [
+          0.0,
+          -90.0,
+          -0.0
         ]
       },
       "box": {
@@ -219,14 +239,14 @@
       },
       "nudge": {
         "grip": [
-          0,
-          0,
-          0
+          -0.381,
+          -0.125,
+          0.064
         ],
         "turn": [
-          0,
-          0,
-          0
+          66.8,
+          25.9,
+          12.0
         ]
       }
     }

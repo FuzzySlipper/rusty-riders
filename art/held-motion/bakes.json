@@ -1,0 +1,68 @@
+[
+  {
+    "name": "rift-blade slash",
+    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Attack_RD.fbx",
+    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+    "motion": "sns",
+    "action": "blade-slash",
+    "look": "rift-blade",
+    "seat": true
+  },
+  {
+    "name": "maul smash",
+    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Attack_D.fbx",
+    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+    "motion": "longsword",
+    "action": "maul-smash",
+    "look": "maul",
+    "seat": true
+  },
+  {
+    "name": "ember wand bolt",
+    "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Magic.fbx",
+    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+    "hand": "l",
+    "motion": "dagger-magic",
+    "action": "ember-bolt",
+    "look": "ember-wand",
+    "seat": true,
+    "noClosure": true,
+    "weapon": "palm"
+  },
+  {
+    "name": "frost sigil nova",
+    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Magic.fbx",
+    "hand": "l",
+    "motion": "longsword-magic",
+    "action": "frost-nova",
+    "look": "frost-sigil",
+    "seat": true,
+    "noClosure": true,
+    "weapon": "palm",
+    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx"
+  },
+  {
+    "name": "flintlock shot",
+    "source": "cat",
+    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Shot.FBX",
+    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+    "weapon": "B_Gun_03_Body",
+    "hold": "pistol",
+    "motion": "revolver",
+    "action": "flintlock-shot",
+    "look": "laser-flintlock",
+    "seat": true
+  },
+  {
+    "name": "flintlock reload",
+    "source": "cat",
+    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Reload.FBX",
+    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+    "weapon": "B_Gun_03_Body",
+    "hold": "pistol",
+    "motion": "revolver",
+    "action": "flintlock-reload",
+    "strike": 0.8,
+    "commitEnd": 0.85
+  }
+]
