@@ -10,30 +10,27 @@ namespace RustyRiders.Game.Held;
 /// <summary>
 /// What the two hands hold, drawn on the viewmodel layer: each hand's look published at rest where its stance seats it
 /// (the off hand mirrored), and moved through an action by an Engine tween timeline built from the look's motion,
-/// started as the action starts and eased back to rest when it is cut short. Also the developer motion viewer, which
-/// shows any look in a hand, holds a key's pose, plays an action at a speed or shows a moment of it. Adapted from
-/// rusty-hotel's <c>CombatView</c> held presentation (docs/reuse.md).
+/// started as the action starts and eased back to rest when it is cut short; the arms reaching both hands' grips. Also
+/// the developer motion viewer, which shows any look in a hand, holds a key's pose, plays an action at a speed or shows
+/// a moment of it. Adapted from rusty-hotel's <c>CombatView</c> held presentation (docs/reuse.md); each hand's tween
+/// state is a <see cref="HeldHand"/> and the arms an <see cref="ArmsSlot"/>.
 /// </summary>
 internal sealed class HeldView : IDisposable
 {
     internal const int MainHand = 0, OffHand = 1;
     private const string OldArtRoot = "old-art";
+    // How far around a grip its inspection view frames (metres).
+    private const float GripFrame = .35f;
 
     private readonly IEngineContext engine;
     private readonly HeldCatalog held;
-    private readonly ulong firstObject;
     private readonly ConvertedArt art;
     private readonly List<Appearance> boxes = [];
     // Each look's appearance and its opened model (none when it is drawn as its box).
     private readonly Dictionary<string, (Appearance Appearance, ArtMesh? Mesh)> looks = [];
-    private readonly Hand[] hands = [new(), new()];
-    private ArmsView arms;
-    // Arms replaced by another rig: released once a snapshot without them is published (an object keeps one
-    // animation instance, so each rig is drawn on its own object, alternating between two).
-    private ArmsView? retired;
-    private readonly List<string> armsProblems = [];
-    /// <summary>The rig profile that draws the arms when none other is chosen or opens: the generated arms, kept in git.</summary>
-    internal const string FallbackRig = "generated";
+    private readonly HeldHand[] hands;
+    private readonly ArmsSlot arms;
+    private readonly List<(int Hand, FeedbackKind Kind)> felt = [];
     private (int Hand, string Look, HeldPose? Pose)? viewing;
     private (ActionDefinition Action, int Key)? viewingKey;
 
@@ -42,60 +39,32 @@ internal sealed class HeldView : IDisposable
     {
         this.engine = engine;
         this.held = held;
-        this.firstObject = firstObject;
         art = new ConvertedArt(engine, OldArtRoot);
-        foreach (Hand hand in hands) hand.Layers = new FeedbackLayers(engine);
-        arms = Arms(held.Arms.Rig, firstObject + 2) ?? Arms(FallbackRig, firstObject + 2)
-            ?? throw new InvalidOperationException($"The fallback arms did not open: {string.Join("; ", armsProblems)}");
+        hands = [new(engine, firstObject), new(engine, firstObject + 1)];
+        arms = new ArmsSlot(engine, held, firstObject + 2);
         foreach (HeldLookDefinition look in held.Looks)
             looks[look.Id] = look.Model is { } model && art.Model(model.Glb) is { } mesh ? (mesh.Appearance, mesh) : (Box(look.Box), null);
     }
 
-    /// <summary>Converted models that could not be opened (their looks are drawn as boxes).</summary>
-    internal IReadOnlyList<string> Problems => [.. art.Problems, .. armsProblems];
+    internal HeldCatalog Catalog => held;
+
+    /// <summary>Converted models that could not be opened (their looks are drawn as boxes) and arms rigs that did not open.</summary>
+    internal IReadOnlyList<string> Problems => [.. art.Problems, .. arms.Problems];
 
     /// <summary>How many feedback punches each hand has had since its motion last started (ended ones are counted until sampled).</summary>
     internal (int Main, int Off) Felt => (hands[MainHand].Layers.Count, hands[OffHand].Layers.Count);
 
     /// <summary>The rig profile drawing the arms now.</summary>
-    internal string Rig => arms.Id;
+    internal string Rig => arms.Drawn.Id;
 
     /// <summary>The arms as drawn now: wrist shortfall, arm lengths and the measured hand frames.</summary>
-    internal ArmsView DrawnArms => arms;
+    internal ArmsView DrawnArms => arms.Drawn;
 
-    /// <summary>
-    /// Developer arms comparison: draws the arms by another rig profile, with the same hold; returns why it could not,
-    /// or null. The caller publishes, after which the previous arms are released.
-    /// </summary>
-    internal string? ShowRig(string id)
-    {
-        if (!held.Rigs.ContainsKey(id)) return $"Unknown rig '{id}'. Rigs: {string.Join(", ", held.Rigs.Keys)}.";
-        if (id == arms.Id) return null;
-        int problems = armsProblems.Count;
-        if (Arms(id, arms.Object == firstObject + 2 ? firstObject + 3 : firstObject + 2) is not { } next)
-            return armsProblems[problems];
-        retired?.Dispose();
-        (retired, arms) = (arms, next);
-        held.Arms.Rig = id;
-        return null;
-    }
+    /// <summary>How far each wrist was drawn from its grip (see <see cref="ArmsView.Shortfall"/>).</summary>
+    internal (float Main, float Off) ArmsShortfall => arms.Drawn.Shortfall;
 
-    // The arms drawn by a rig profile on an object, or null with the reason recorded when its model does not open
-    // (an old-game model not imported here).
-    private ArmsView? Arms(string id, ulong objectId)
-    {
-        try
-        {
-            return new ArmsView(engine, held.Arms, held.Rigs[id], id, objectId);
-        }
-        catch (Exception error) when (error is EngineCallException or InvalidOperationException)
-        {
-            armsProblems.Add($"arms rig {id}: {error.Message}");
-            return null;
-        }
-    }
-
-    internal HeldCatalog Catalog => held;
+    /// <summary>Developer arms comparison: draws the arms by another rig profile (see <see cref="ArmsSlot.Show"/>).</summary>
+    internal string? ShowRig(string id) => arms.Show(id);
 
     /// <summary>
     /// The hands' looks as published (camera space, viewmodel layer): each at rest, or in the pose the motion viewer
@@ -110,46 +79,43 @@ internal sealed class HeldView : IDisposable
             HeldLookDefinition look = held.Look(hands[h].Look)!;
             HeldPose pose = viewing is { } view && view.Hand == h && Viewed() is { } shown ? shown : Rest(look);
             (Vector3 at, Quaternion turn) = Drawn(look, pose, h == OffHand);
-            yield return new AppearanceFact(firstObject + (ulong)h, false, 0, new Transform(at, turn, Fit(look).Scale),
+            yield return new AppearanceFact(hands[h].Object, false, 0, new Transform(at, turn, Fit(look).Scale),
                 looks[look.Id].Appearance, visible, RenderLayer.Viewmodel);
         }
         // The body leans with a blow: the arms move by both hands' motions together (two blows at once lean as their sum;
         // the arms' own reach then keeps each hand on its grip).
-        arms.Lean = Keyed(MainHand).Lean + Keyed(OffHand).Lean;
-        arms.Aim(Aim(MainHand), Aim(OffHand));
-        yield return arms.Fact(visible);
-        // Replaced arms are published hidden once, then left out; they are released after that snapshot.
-        if (retired is { Published: false }) yield return retired.Fact(false);
+        arms.Drawn.Lean = Keyed(MainHand).Lean + Keyed(OffHand).Lean;
+        arms.Drawn.Aim(Aim(MainHand), Aim(OffHand));
+        yield return arms.Drawn.Fact(visible);
+        if (arms.Retired is { } retired) yield return retired;
     }
 
-    /// <summary>How far each wrist was drawn from its grip (see <see cref="ArmsView.Shortfall"/>).</summary>
-    internal (float Main, float Off) ArmsShortfall => arms.Shortfall;
-
     /// <summary>
-    /// Once the looks are in the published snapshot: starts the acting hand's motion as its action starts (that far
-    /// along already), and settles a hand back to rest when its action is cut short or its look changes.
+    /// Once the looks are in the published snapshot: starts a hand's motion as its action starts (that far along
+    /// already), settles a hand back to rest when its action is cut short or its look changes, starts the punches felt,
+    /// and reaches the arms.
     /// </summary>
     internal void Animate(IReadOnlyList<ActionUser> users)
     {
         for (int h = 0; h < hands.Length; h++)
         {
-            Hand hand = hands[h];
+            HeldHand hand = hands[h];
             ActionUser user = users[h];
             if (hand.Tween is { } playing)
             {
                 // Only an action's own motion is cut short (a settle and the viewer's playback start no action: 0).
                 bool cutShort = playing.Started != 0 && playing.Started == user.Started && user.Current is null;
-                if (playing.Look != hand.Look) Cancel(hand);
-                else if (cutShort && Running(playing.Handle)) Begin(h, held.Motion.Settle(Offset(hand)), TweenClock.World);
+                if (playing.Look != hand.Look) hand.Cancel();
+                else if (cutShort && hand.Running) hand.Begin(held.Motion.Settle(hand.Offset()), TweenClock.World);
             }
             if (viewing is not null || user.Started == hand.StartedSeen) continue;
             hand.StartedSeen = user.Started;
             if (user.Current is not { } action) continue;
             HeldLookDefinition look = held.Look(hand.Look)!;
-            int side = h;
-            TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, side == OffHand),
-                user.Scale, from: Offset(hand));
-            Begin(h, timeline, TweenClock.World, user.Elapsed, action, user.Started, user.Scale);
+            bool offHand = h == OffHand;
+            TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, offHand),
+                user.Scale, from: hand.Offset());
+            hand.Begin(timeline, TweenClock.World, user.Elapsed, action, user.Started, user.Scale);
         }
         Punch();
         Reach();
@@ -158,20 +124,20 @@ internal sealed class HeldView : IDisposable
     /// <summary>Reaches the arms for both hands' grips where their looks are drawn now, each hand closed as its motion says.</summary>
     internal void Reach()
     {
-        if (retired is not null && !retired.Published)
-            retired.Published = true;
-        else if (retired is not null)
-        {
-            retired.Dispose();
-            retired = null;
-        }
-        arms.Reach(Aim(MainHand), Aim(OffHand));
+        arms.Published();
+        arms.Drawn.Reach(Aim(MainHand), Aim(OffHand));
     }
+
+    /// <summary>
+    /// A hand feels its action land: a punch layered over its motion. Started once its motion for this update has
+    /// started (an action can start and land in one update, and the motion's start would end an earlier punch).
+    /// </summary>
+    internal void Feel(int hand, FeedbackKind kind) => felt.Add((hand, kind));
 
     /// <summary>Ends every motion (a level or the kit changes).</summary>
     internal void Reset()
     {
-        foreach (Hand hand in hands) Cancel(hand);
+        foreach (HeldHand hand in hands) hand.Cancel();
         viewing = null;
         viewingKey = null;
     }
@@ -185,7 +151,7 @@ internal sealed class HeldView : IDisposable
     /// <summary>Developer motion viewer: shows a look in a hand in place of what it holds, at rest; null returns to play.</summary>
     internal void View(int hand, string? look)
     {
-        foreach (Hand each in hands) Cancel(each);
+        foreach (HeldHand each in hands) each.Cancel();
         viewing = look is null ? null : (hand, look, null);
         viewingKey = null;
     }
@@ -194,7 +160,7 @@ internal sealed class HeldView : IDisposable
     internal void HoldKey(ActionDefinition action, int key)
     {
         if (viewing is not { } view) return;
-        Cancel(hands[view.Hand]);
+        hands[view.Hand].Cancel();
         viewing = view with { Pose = null };
         viewingKey = key < 0 ? null : (action, key);
     }
@@ -203,7 +169,7 @@ internal sealed class HeldView : IDisposable
     internal void Hold(HeldPose? pose)
     {
         if (viewing is not { } view) return;
-        Cancel(hands[view.Hand]);
+        hands[view.Hand].Cancel();
         viewing = view with { Pose = pose };
         viewingKey = null;
     }
@@ -220,7 +186,7 @@ internal sealed class HeldView : IDisposable
         viewingKey = null;
         HeldLookDefinition look = held.Look(view.Look)!;
         TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, view.Hand == OffHand), speed: speed);
-        TweenHandle handle = Begin(view.Hand, timeline, TweenClock.Realtime, action: action, speed: speed);
+        TweenHandle handle = hands[view.Hand].Begin(timeline, TweenClock.Realtime, action: action, speed: speed);
         if (at is not { } seconds) return;
         engine.Tween.Control(new TweenControlRequest(handle, TweenControl.Pause));
         engine.Tween.Control(TweenControlRequest.Seek(handle, seconds));
@@ -235,7 +201,7 @@ internal sealed class HeldView : IDisposable
         HeldLookDefinition look = held.Look(hands[hand].Look)!;
         if (viewing is { } view && view.Hand == hand && Viewed() is { } pose) return Drawn(look, pose, hand == OffHand);
         (Vector3 at, Quaternion turn) = Drawn(look, Rest(look), hand == OffHand);
-        (Vector3 move, Quaternion offset) = Offset(hands[hand]);
+        (Vector3 move, Quaternion offset) = hands[hand].Offset();
         return (at + move, Quaternion.Normalize(turn * offset));
     }
 
@@ -254,6 +220,13 @@ internal sealed class HeldView : IDisposable
         return targets;
     }
 
+    public void Dispose()
+    {
+        arms.Dispose();
+        art.Dispose();
+        foreach (Appearance box in boxes) box.Dispose();
+    }
+
     // A hand's grip where its look is drawn now (camera space) and the look's turn there.
     private (Vector3 Grip, Quaternion Look) Grip(int hand)
     {
@@ -270,17 +243,14 @@ internal sealed class HeldView : IDisposable
     // where the Engine reports its tween has got to, eased by each key's curve as the Engine eases them.
     private (float Grip, Vector3 Lean, Vector3 Elbow) Keyed(int index)
     {
-        Hand hand = hands[index];
+        HeldHand hand = hands[index];
         Vector3 Side(Vector3 point) => index == OffHand ? Frames.Mirror(point) : point;
         Vector3 pole = Side(Authored.Vector(held.Arms.Pole));
         Vector3 Lean(MotionKey key) => key.Shoulder is { } lean ? Side(Authored.Vector(lean)) : Vector3.Zero;
         Vector3 Elbow(MotionKey key) => key.Elbow is { } elbow ? Side(Authored.Vector(elbow)) : pole;
         if (viewing is { } view && view.Hand == index && viewingKey is { } key)
             return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? (keys[key.Key].Grip, Lean(keys[key.Key]), Elbow(keys[key.Key])) : (0, Vector3.Zero, pole);
-        if (hand.Tween is not { } playing || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return (0, Vector3.Zero, pole);
-        TweenReadout readout = engine.Tween.Read(playing.Handle);
-        if (readout.State == TweenState.Ended) return (0, Vector3.Zero, pole);
-        float time = (float)readout.ElapsedSeconds * hand.Speed / hand.Scale;
+        if (hand.ActionTime() is not { } time || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return (0, Vector3.Zero, pole);
         (float grip, Vector3 lean, Vector3 elbow, float start) from = (0, Vector3.Zero, pole, 0);
         foreach ((float at, float grip, Vector3 lean, Vector3 elbow, TweenEasingKind curve) in track
             .Select(k => (k.Time(action.Timing), k.Grip, Lean(k), Elbow(k), k.Ease))
@@ -306,17 +276,6 @@ internal sealed class HeldView : IDisposable
 
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);
 
-    // How far around a grip its inspection view frames (metres).
-    private const float GripFrame = .35f;
-
-    public void Dispose()
-    {
-        arms.Dispose();
-        retired?.Dispose();
-        art.Dispose();
-        foreach (Appearance box in boxes) box.Dispose();
-    }
-
     private HeldPose Rest(HeldLookDefinition look) => held.Motion.Motions[look.Motion].Poses[HeldMotionCatalog.Rest];
 
     // The pose the viewer holds: the held key's, as its track says now (rest once the key is gone), or the pose it was given.
@@ -336,60 +295,14 @@ internal sealed class HeldView : IDisposable
         return (at + Vector3.Transform(fit.Translation, turn), Quaternion.Normalize(turn * fit.Rotation));
     }
 
-    // Starts a hand's motion tween, replacing its tweens; remembers it so where it shows the look can be sampled.
-    private TweenHandle Begin(int hand, TweenSegment[] segments, TweenClock clock, float elapsed = 0, ActionDefinition? action = null, ulong started = 0,
-        float scale = 1, float speed = 1)
-    {
-        // A replacing start ends the hand's tweens, its feedback layers among them.
-        hands[hand].Layers.Ended();
-        hands[hand].Scale = scale;
-        hands[hand].Speed = speed;
-        TweenStartRequest request = new(firstObject + (ulong)hand, segments) { Clock = clock };
-        TweenHandle handle = engine.Tween.Start(request with { ElapsedSeconds = elapsed }).Tween;
-        hands[hand].Tween = (handle, request, hands[hand].Look, started);
-        hands[hand].Action = action;
-        return handle;
-    }
-
-    private void Cancel(Hand hand)
-    {
-        if (hand.Tween is { } playing) engine.Tween.Control(new TweenControlRequest(playing.Handle, TweenControl.Cancel));
-        hand.Layers.Cancel();
-        hand.Tween = null;
-        hand.Action = null;
-    }
-
-    // The offset a hand's motion shows now (from its rest placement), or none.
-    // The offset a hand's motion and its feedback layers show now (from its rest placement): translations add and the
-    // layers' turns follow the motion's in the model's frame, as the Engine composes them.
-    private (Vector3 Move, Quaternion Turn) Offset(Hand hand)
-    {
-        (Vector3 layerMove, Quaternion layerTurn) = hand.Layers.Offset();
-        if (hand.Tween is not { } playing || playing.Look != hand.Look) return (layerMove, layerTurn);
-        TweenReadout readout = engine.Tween.Read(playing.Handle);
-        if (readout.State == TweenState.Ended) return (layerMove, layerTurn);
-        TweenSample sample = engine.Tween.Sample(playing.Request, readout.ElapsedSeconds);
-        return (sample.Translation + layerMove, Quaternion.Normalize(sample.Rotation * layerTurn));
-    }
-
-    /// <summary>
-    /// A hand feels its action land: a punch layered over its motion. Started once its motion for this update has
-    /// started (an action can start and land in one update, and the motion's start would end an earlier punch).
-    /// </summary>
-    internal void Feel(int hand, FeedbackKind kind) => felt.Add((hand, kind));
-
-    private readonly List<(int Hand, FeedbackKind Kind)> felt = [];
-
     // Starts the punches felt since the last update over each hand's motion as now drawn.
     private void Punch()
     {
         foreach (var (hand, kind) in felt)
-            hands[hand].Layers.Start(firstObject + (ulong)hand, held.Feedback.Punch(kind), Now(hand).Turn, hand == OffHand,
+            hands[hand].Layers.Start(hands[hand].Object, held.Feedback.Punch(kind), Now(hand).Turn, hand == OffHand,
                 viewing is null ? TweenClock.World : TweenClock.Realtime);
         felt.Clear();
     }
-
-    private bool Running(TweenHandle tween) => engine.Tween.Read(tween).State != TweenState.Ended;
 
     // How a look is drawn inside look space: its converted model centred on its bounds, scaled so its longest side is
     // the authored length and turned by the authored rotation (read each time, so tuning them shows at once), or its box.
@@ -408,19 +321,5 @@ internal sealed class HeldView : IDisposable
         Appearance made = engine.Graphics.CreatePrimitive(new PrimitiveAppearanceRequest(PrimitiveGeometry.Cube, false, Authored.Color(box.Color)));
         boxes.Add(made);
         return made;
-    }
-    // A hand's shown look and the motion tween last started on it: the timeline it plays (to sample where it shows the
-    // look), the look it was started for, the action start it plays (0 for a settle or the viewer), and that action.
-    private sealed class Hand
-    {
-        internal string Look = "";
-        internal (TweenHandle Handle, TweenStartRequest Request, string Look, ulong Started)? Tween;
-        internal ActionDefinition? Action;
-        // The last action start of this hand's user that its motion has followed.
-        internal ulong StartedSeen;
-        // Feedback punches layered over the motion.
-        internal FeedbackLayers Layers = null!;
-        // The action's time scale and the viewer's playback speed, to read the keys at the tween's elapsed time.
-        internal float Scale = 1, Speed = 1;
     }
 }
