@@ -129,6 +129,7 @@ rusty build --aot
 | `Directory.Build.props` | Matched Engine SDK/runtime pin |
 | `docs/architecture.md` | Current ownership and data flow |
 | `docs/direction.md` | Game direction, scale of the old kit, what the old art is worth, backups |
+| `docs/held-format-convergence.md` | The held weapons' format against rusty-hotel's: what each expresses, conflicting conventions, the upstream shape |
 | `docs/design.md` | Game design: pillars, run loop, gameplay time, combat, items, prototype scope |
 | `docs/reuse.md` | Sibling repos as one-time code donors: where to look, copying procedure, incorporated provenance |
 | `docs/levels.md` | Level data, generation, palettes and the old source |
