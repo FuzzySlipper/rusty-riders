@@ -44,7 +44,7 @@ internal static class Hud
                 w.Text("text", Effect(e, play.MechanicsText)))).ToArray()),
             Hands(w, play.Combat),
             w.Text("action", action),
-            w.Number("actionProgress", play.Combat.Acting?.Progress ?? 0),
+            w.Number("actionProgress", play.Combat.Latest?.Progress ?? 0),
             w.Text("notice", notice),
             w.Text("prompt", play.Pickups.Prompt(walker.Feet)),
             w.Text("chase", chase),
@@ -74,7 +74,7 @@ internal static class Hud
         {
             (Items.ItemDefinition item, int loaded, int size) = combat.Held(hand);
             return w.Object("", w.Text("name", item.Name), w.Text("icon", item.Icon), w.Number("loaded", loaded), w.Number("size", size),
-                w.Flag("acting", combat.Acting?.Hand == hand));
+                w.Flag("acting", combat.Acting(hand) is not null));
         }).ToArray());
 
     /// <summary>An effect's name with its stacks, time left and any ward left, from the authored templates.</summary>

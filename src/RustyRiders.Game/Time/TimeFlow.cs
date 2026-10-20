@@ -50,7 +50,9 @@ internal sealed class TimeFlow
         }
         if (demand.ActionSeconds > 0)
         {
-            Spend(demand.ActionSeconds);
+            // A new advance replaces the one still running: an action begun while the other hand's is being paid for
+            // buys whichever ends later, so neither is cut short.
+            Spend(Math.Max(demand.ActionSeconds, State.AdvanceSeconds));
             return;
         }
         if (State.AdvanceSeconds > 0) return; // a wait or an action is still being paid for

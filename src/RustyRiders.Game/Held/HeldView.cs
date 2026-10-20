@@ -34,7 +34,6 @@ internal sealed class HeldView : IDisposable
     private readonly List<string> armsProblems = [];
     /// <summary>The rig profile that draws the arms when none other is chosen or opens: the generated arms, kept in git.</summary>
     internal const string FallbackRig = "generated";
-    private ulong startedSeen;
     private (int Hand, string Look, HeldPose? Pose)? viewing;
     private (ActionDefinition Action, int Key)? viewingKey;
 
@@ -114,7 +113,8 @@ internal sealed class HeldView : IDisposable
             yield return new AppearanceFact(firstObject + (ulong)h, false, 0, new Transform(at, turn, Fit(look).Scale),
                 looks[look.Id].Appearance, visible, RenderLayer.Viewmodel);
         }
-        // The body leans with a blow: the arms move by the acting hand's motion (only one hand acts at a time).
+        // The body leans with a blow: the arms move by both hands' motions together (two blows at once lean as their sum;
+        // the arms' own reach then keeps each hand on its grip).
         arms.Lean = Keyed(MainHand).Lean + Keyed(OffHand).Lean;
         arms.Aim(Aim(MainHand), Aim(OffHand));
         yield return arms.Fact(visible);
@@ -129,28 +129,27 @@ internal sealed class HeldView : IDisposable
     /// Once the looks are in the published snapshot: starts the acting hand's motion as its action starts (that far
     /// along already), and settles a hand back to rest when its action is cut short or its look changes.
     /// </summary>
-    internal void Animate(ActionUser user, int actingHand)
+    internal void Animate(IReadOnlyList<ActionUser> users)
     {
         for (int h = 0; h < hands.Length; h++)
         {
             Hand hand = hands[h];
-            if (hand.Tween is not { } playing) continue;
-            // Only an action's own motion is cut short (a settle and the viewer's playback start no action: 0).
-            bool cutShort = playing.Started != 0 && playing.Started == user.Started && (user.Current is null || h != actingHand);
-            if (playing.Look != hand.Look) Cancel(hand);
-            else if (cutShort && Running(playing.Handle)) Begin(h, held.Motion.Settle(Offset(hand)), TweenClock.World);
-        }
-        if (viewing is null && user.Started != startedSeen)
-        {
-            startedSeen = user.Started;
-            if (user.Current is { } action)
+            ActionUser user = users[h];
+            if (hand.Tween is { } playing)
             {
-                Hand acting = hands[actingHand];
-                HeldLookDefinition look = held.Look(acting.Look)!;
-                TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, actingHand == OffHand),
-                    user.Scale, from: Offset(acting));
-                Begin(actingHand, timeline, TweenClock.World, user.Elapsed, action, user.Started, user.Scale);
+                // Only an action's own motion is cut short (a settle and the viewer's playback start no action: 0).
+                bool cutShort = playing.Started != 0 && playing.Started == user.Started && user.Current is null;
+                if (playing.Look != hand.Look) Cancel(hand);
+                else if (cutShort && Running(playing.Handle)) Begin(h, held.Motion.Settle(Offset(hand)), TweenClock.World);
             }
+            if (viewing is not null || user.Started == hand.StartedSeen) continue;
+            hand.StartedSeen = user.Started;
+            if (user.Current is not { } action) continue;
+            HeldLookDefinition look = held.Look(hand.Look)!;
+            int side = h;
+            TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, side == OffHand),
+                user.Scale, from: Offset(hand));
+            Begin(h, timeline, TweenClock.World, user.Elapsed, action, user.Started, user.Scale);
         }
         Punch();
         Reach();
@@ -417,6 +416,8 @@ internal sealed class HeldView : IDisposable
         internal string Look = "";
         internal (TweenHandle Handle, TweenStartRequest Request, string Look, ulong Started)? Tween;
         internal ActionDefinition? Action;
+        // The last action start of this hand's user that its motion has followed.
+        internal ulong StartedSeen;
         // Feedback punches layered over the motion.
         internal FeedbackLayers Layers = null!;
         // The action's time scale and the viewer's playback speed, to read the keys at the tween's elapsed time.

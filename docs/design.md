@@ -159,7 +159,11 @@ rusty-hotel's `Actions/`):
 
 Ammo kinds from the old data: BulletClip, TechAmmo, TechCharge, MagicCharge, PowerCharge (Arrows if bows
 come back). The player holds a main hand and an off hand. A gun in one hand and a blade in the other is
-encouraged.
+encouraged. Each hand acts on its own: a hand is busy only with its own action, so the off hand can strike or cast
+while the main hand's action is still recovering (and the reverse). Each hand's action keeps its own aim, phases and
+cooldown. An action begun while the other hand's is still being paid for in world time buys whichever ends later, so
+overlapping actions cost the longer, not the sum. Taking, using an item and swapping weapons wait until both hands are
+free. When both hands' motions lean the body, it leans by both together.
 
 ### Spells
 

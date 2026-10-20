@@ -10,7 +10,8 @@ using RustyRiders.Game.Player;
 namespace RustyRiders.Game.Combat;
 
 /// <summary>
-/// The player's fighting: two hands holding weapons the inventory carries, one action at a time through the shared pipeline, costs
+/// The player's fighting: two hands holding weapons the inventory carries, each running its own action through the shared
+/// pipeline (a hand is busy only with its own action, so one can strike while the other recovers), costs
 /// (charge, ammunition, rounds in a magazine) and reloads, training dummies to hit, and what it all looks like (held
 /// weapons through <see cref="HeldView"/>, projectiles, impact bursts) and says on the HUD. A use returns the world seconds it
 /// costs; the caller buys them from gameplay time. Hits resolve in the current scene's spatial session.
@@ -28,7 +29,8 @@ internal sealed class PlayerCombat : IDisposable
     private readonly PlayerVitals vitals;
     private readonly Walker walker;
     private readonly PlayerActor actor;
-    private readonly ActionUser user = new();
+    // Each hand's action timing: its action in progress, its aim and its cooldowns.
+    private readonly ActionUser[] users = [new(), new()];
     private readonly Hand[] hands = new Hand[2];
     private readonly Inventory inventory;
     private readonly Dictionary<string, int> loaded = [];
@@ -37,7 +39,8 @@ internal sealed class PlayerCombat : IDisposable
     private readonly HeldView held;
     private readonly Appearance projectile, dummy;
     private ActionResolution? resolution;
-    private int actingHand = MainHand;
+    // The hand whose action began last (the HUD's progress follows it).
+    private int latestHand = MainHand;
     private ulong nextDummy = FirstDummyEntity, bursts;
     private string notice = "";
     private double noticeLeft;
@@ -60,7 +63,8 @@ internal sealed class PlayerCombat : IDisposable
 
     internal IActionActor Actor => actor;
     internal IReadOnlyList<TrainingDummy> Dummies => dummies;
-    internal bool Busy => user.Busy;
+    /// <summary>Whether either hand's action is under way (what needs both hands free waits: taking, using, swapping).</summary>
+    internal bool Busy => users.Any(u => u.Busy);
     internal HeldView View => held;
     internal ActionDefinition? Action(string id) => definition.Actions.Action(id);
 
@@ -69,14 +73,14 @@ internal sealed class PlayerCombat : IDisposable
     {
         resolution = new ActionResolution(engine, session, mechanics);
         dummies.Clear();
-        user.Interrupt();
+        foreach (ActionUser user in users) user.Interrupt();
         held.Reset();
     }
 
     /// <summary>The kit as it starts: its weapons in hand and every magazine full.</summary>
     internal void Reset()
     {
-        user.Reset();
+        foreach (ActionUser user in users) user.Reset();
         held.Reset();
         resolution?.Clear();
         hands[MainHand] = new Hand(definition.Items.Item(definition.Kit.MainHand)!);
@@ -88,7 +92,7 @@ internal sealed class PlayerCombat : IDisposable
     /// <summary>Takes carried weapon <paramref name="index"/> into the main hand (swapping hands if it is in the off hand).</summary>
     internal void Select(int index)
     {
-        if (index < 0 || index >= inventory.Weapons.Count || user.Busy) return;
+        if (index < 0 || index >= inventory.Weapons.Count || Busy) return;
         ItemDefinition item = inventory.Weapons[index];
         if (hands[OffHand].Item == item) hands[OffHand] = hands[MainHand];
         hands[MainHand] = new Hand(item);
@@ -97,7 +101,7 @@ internal sealed class PlayerCombat : IDisposable
     /// <summary>Puts carried weapon <paramref name="index"/> in a hand (the hands swap when it is in the other).</summary>
     internal void Hold(int index, int hand)
     {
-        if (index < 0 || index >= inventory.Weapons.Count || user.Busy || hand is not (MainHand or OffHand)) return;
+        if (index < 0 || index >= inventory.Weapons.Count || Busy || hand is not (MainHand or OffHand)) return;
         ItemDefinition item = inventory.Weapons[index];
         int other = 1 - hand;
         if (hands[other].Item == item) hands[other] = hands[hand];
@@ -111,16 +115,21 @@ internal sealed class PlayerCombat : IDisposable
     internal (ItemDefinition Item, int Loaded, int Size) Held(int hand) =>
         (hands[hand].Item, Loaded(hands[hand].Item), hands[hand].Item.Weapon!.Magazine?.Size ?? 0);
 
-    /// <summary>The hand whose action is under way, its phase label and how far through it is (0 to 1), or none.</summary>
-    internal (int Hand, string Label, float Progress)? Acting => user.Current is { } current
-        ? (actingHand, user.Phase == ActionPhase.Windup ? current.WindupLabel : current.CommitLabel, user.PhaseProgress) : null;
+    /// <summary>A hand's action under way: its phase label and how far through it is (0 to 1), or none.</summary>
+    internal (string Label, float Progress)? Acting(int hand) => users[hand] is { Current: { } current } user
+        ? (user.Phase == ActionPhase.Windup ? current.WindupLabel : current.CommitLabel, user.PhaseProgress) : null;
+
+    /// <summary>The action under way that began last, with its hand, or none.</summary>
+    internal (int Hand, string Label, float Progress)? Latest =>
+        Acting(latestHand) is { } latest ? (latestHand, latest.Label, latest.Progress)
+        : Acting(1 - latestHand) is { } other ? (1 - latestHand, other.Label, other.Progress) : null;
 
     /// <summary>Uses a hand's weapon. Returns the world seconds the action costs, or null when it could not start.</summary>
     internal float? Use(int hand)
     {
         WeaponDefinition weapon = hands[hand].Item.Weapon!;
         ActionDefinition action = definition.Actions.Action(weapon.Action)!;
-        if (user.Readiness(action) != ActionRefusal.None) return null;
+        if (users[hand].Readiness(action) != ActionRefusal.None) return null;
         if (action.Cost.Rounds > Loaded(hands[hand].Item))
             return Reload(hand) ?? Notice(definition.Text.Empty);
         foreach ((string track, int amount) in action.Cost.Tracks)
@@ -135,7 +144,7 @@ internal sealed class PlayerCombat : IDisposable
     internal float? Reload(int hand)
     {
         ItemDefinition item = hands[hand].Item;
-        if (item.Weapon is not { Reload: { } reload, Magazine: { } magazine } || user.Busy) return null;
+        if (item.Weapon is not { Reload: { } reload, Magazine: { } magazine } || users[hand].Busy) return null;
         if (Loaded(item) >= magazine.Size || vitals.Stats.Track(magazine.Track).ValueInt <= 0) return null;
         return Begin(definition.Actions.Action(reload)!, hand);
     }
@@ -149,19 +158,20 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     /// <summary>
-    /// Advances by world seconds: the action in progress (landing it when its windup ends), shots in flight, and the
-    /// dummies' effects. <paramref name="others"/> are the other bodies the player's actions may hit (enemies).
+    /// Advances by world seconds: each hand's action in progress (landing it when its windup ends), shots in flight, and
+    /// the dummies' effects. <paramref name="others"/> are the other bodies the player's actions may hit (enemies).
     /// </summary>
     internal void Step(float seconds, IReadOnlyList<IActionActor> others)
     {
         if (resolution is null) return;
         IActionActor[] targets = [.. dummies.Where(d => d.Alive), .. others];
-        if (user.Step(seconds) is { } landed)
+        for (int hand = 0; hand < users.Length; hand++)
         {
-            if (landed.Reloads) Refill(hands[actingHand].Item);
-            else Feedback(resolution.Land(landed, actor, user.Aim, targets), true);
+            if (users[hand].Step(seconds) is not { } landed) continue;
+            if (landed.Reloads) Refill(hands[hand].Item);
+            else Feedback(resolution.Land(landed, actor, users[hand].Aim, targets), hand);
         }
-        Feedback(resolution.Step(seconds, [.. targets, actor]), false);
+        Feedback(resolution.Step(seconds, [.. targets, actor]), null);
         foreach (TrainingDummy target in dummies) target.Stats.Effects.Advance(seconds);
         dummies.RemoveAll(d => !d.Alive);
     }
@@ -192,7 +202,7 @@ internal sealed class PlayerCombat : IDisposable
             : hand.Item.Name;
         string supplies = string.Join("  ", mechanics.Tracks.Where(t => t.Id != ActorStats.HealthTrack).Select(t =>
             Template.Fill(text.Carried, ("name", t.Name), ("value", vitals.Stats.Track(t.Id).ValueInt))));
-        string action = user.Current is { } current ? user.Phase == ActionPhase.Windup ? current.WindupLabel : current.CommitLabel : "";
+        string action = string.Join("  ·  ", new[] { MainHand, OffHand }.Select(Acting).OfType<(string Label, float Progress)>().Select(a => a.Label));
         return ($"{Describe(hands[MainHand])}  ·  {Describe(hands[OffHand])}", supplies, action, noticeLeft > 0 ? notice : "");
     }
 
@@ -221,7 +231,7 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     /// <summary>Once the held looks are in the published snapshot, their motion follows the action in progress.</summary>
-    internal void Animate() => held.Animate(user, actingHand);
+    internal void Animate() => held.Animate(users);
 
     /// <summary>Converted weapon models that could not be opened (they fall back to their boxes).</summary>
     internal IReadOnlyList<string> Problems => held.Problems;
@@ -238,9 +248,9 @@ internal sealed class PlayerCombat : IDisposable
 
     private float Begin(ActionDefinition action, int hand)
     {
-        actingHand = hand;
+        latestHand = hand;
         float scale = (float)vitals.Stats.Stat(ActorStats.ActionTimeStat).Value;
-        return user.Begin(action, walker.Forward, scale);
+        return users[hand].Begin(action, walker.Forward, scale);
     }
 
     private void Refill(ItemDefinition item)
@@ -263,12 +273,14 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     // A burst where each landed action ended, and a notice of what the player's own actions did.
-    private void Feedback(ActionImpact[] impacts, bool landedNow)
+    // landedBy is the hand whose action landed now (null for shots in flight).
+    private void Feedback(ActionImpact[] impacts, int? landedBy)
     {
+        bool landedNow = landedBy is not null;
         foreach (ActionImpact impact in impacts)
         {
             if (impact.Action.Delivery.Kind != DeliveryKind.Self) Burst(impact.End);
-            if (impact.User == actor && landedNow && Felt(impact) is { } kind) held.Feel(actingHand, kind);
+            if (impact.User == actor && landedBy is { } hand && Felt(impact) is { } kind) held.Feel(hand, kind);
             if (impact.User != actor || (!landedNow && impact.Target is null && !impact.Surface)) continue;
             string name = impact.Target is INamed named ? named.Name : "";
             CombatMessages text = definition.Text;

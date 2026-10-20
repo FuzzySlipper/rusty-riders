@@ -75,7 +75,8 @@ internal sealed class Play : IDisposable
     /// <summary>
     /// The player's controls this update: number keys take a carried weapon into the main hand; E opens or takes, Q uses
     /// the ready consumable, the primary and secondary buttons use the main and off hands, R reloads. Nothing acts in the
-    /// gallery, in flight, while stunned or while an action is under way. Returns the world seconds what began now costs.
+    /// gallery, in flight or while stunned; each hand acts unless its own action is under way, so one can strike while the
+    /// other recovers, and taking or using an item waits for both. Returns the world seconds what began now costs.
     /// </summary>
     internal float Act(PhysicalInputState physical, bool inLevel)
     {
@@ -83,13 +84,13 @@ internal sealed class Play : IDisposable
             KeyboardControl.Digit5, KeyboardControl.Digit6, KeyboardControl.Digit7, KeyboardControl.Digit8, KeyboardControl.Digit9];
         for (int i = 0; i < slots.Length; i++)
             if (physical.Pressed(slots[i])) Combat.Select(i);
-        if (!inLevel || walker.Flying || Vitals.Stats.Effects.Stunned || Combat.Busy) return 0;
-        if (physical.Pressed(KeyboardControl.KeyE) && Pickups.Use(walker.Feet, Inventory) is { } taken)
+        if (!inLevel || walker.Flying || Vitals.Stats.Effects.Stunned) return 0;
+        if (!Combat.Busy && physical.Pressed(KeyboardControl.KeyE) && Pickups.Use(walker.Feet, Inventory) is { } taken)
         {
             Combat.Announce(taken.Notice);
             return taken.Seconds;
         }
-        if (physical.Pressed(KeyboardControl.KeyQ) && Inventory.Use(mechanics) is { } used)
+        if (!Combat.Busy && physical.Pressed(KeyboardControl.KeyQ) && Inventory.Use(mechanics) is { } used)
         {
             Combat.Announce(Template.Fill(Pickups.Text.Used, ("item", used.Name)));
             return used.Consumable!.Seconds;
