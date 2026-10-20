@@ -175,7 +175,7 @@ internal sealed class PlayerCombat : IDisposable
         CombatPresentation p = definition.Presentation;
         foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, walker.Flying is false))
             yield return fact;
-        ulong id = FirstObjectId + 3;
+        ulong id = FirstObjectId + 4;
         foreach (Projectile shot in resolution?.Projectiles ?? [])
             yield return new AppearanceFact(id++, false, 0, new Transform(shot.Position, Quaternion.Identity, new Vector3(p.ProjectileSize)),
                 projectile, true, RenderLayer.Scene);

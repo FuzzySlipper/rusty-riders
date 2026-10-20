@@ -96,13 +96,33 @@ internal static class HeldTunables
         // The arms: where the right shoulder sits and the right elbow's pole (the left's are mirrored), and how a hand
         // holds a look (its turn from the look and its palm from the wrist), for both hands alike.
         ArmsDefinition arms = held.Arms;
-        groups.Add(new("arms", "Arms (the left mirrors the right)",
+        groups.Add(new("arms", "Arms, every rig (the left mirrors the right)",
         [
             .. Vector("arms.shoulder", "shoulder", arms.Shoulder, -0.6f, 0.6f, .005f, ArmsDefinition.Path, "/shoulder", publish),
             .. Vector("arms.pole", "elbow toward", arms.Pole, -2, 2, .01f, ArmsDefinition.Path, "/pole", publish),
-            .. Vector("arms.hand.rotation", "hand turn", arms.Hand.Rotation, -180, 180, 1, ArmsDefinition.Path, "/hand/rotation", publish),
-            .. Vector("arms.hand.palm", "palm", arms.Hand.Palm, -0.15f, 0.15f, .002f, ArmsDefinition.Path, "/hand/palm", publish)
+            .. Vector("arms.hold", "hold", arms.Hold, -180, 180, 1, ArmsDefinition.Path, "/hold", publish)
         ]) { File = ArmsDefinition.Path });
+        // The rig drawing the arms: how its model is placed, where its palm is, and how its hands close on the clip.
+        ArmRig rig = held.Rigs[arms.Rig];
+        string rigPath = ArmRig.PathOf(arms.Rig);
+        string[] joints = ["base", "middle", "tip"];
+        List<Tunable> rigControls =
+        [
+            .. Vector("rig.turn", "model turn", rig.Turn, -180, 180, 1, rigPath, "/turn", publish),
+            new(new("rig.scale", "model scale", TunableKind.Slider, 0.1f, 3, .01f, rig.Scale) { Source = new(rigPath, "/scale") }, v => { rig.Scale = v; publish(); }),
+            .. Vector("rig.palm", "palm", rig.Palm, -0.15f, 0.15f, .002f, rigPath, "/palm", publish)
+        ];
+        for (int i = 0; i < 3; i++)
+        {
+            int joint = i;
+            rigControls.Add(new(new($"rig.grip.finger.{i}", $"grip finger {joints[i]} curl", TunableKind.Slider, -90, 120, 1, rig.Grip.Fingers[i])
+                { Source = new(rigPath, $"/grip/fingers/{i}") }, v => { rig.Grip.Fingers[joint] = v; publish(); }));
+            rigControls.Add(new(new($"rig.grip.thumb.{i}.curl", $"grip thumb {joints[i]} curl", TunableKind.Slider, -90, 120, 1, rig.Grip.Thumb[i][0])
+                { Source = new(rigPath, $"/grip/thumb/{i}/0") }, v => { rig.Grip.Thumb[joint][0] = v; publish(); }));
+            rigControls.Add(new(new($"rig.grip.thumb.{i}.swing", $"grip thumb {joints[i]} swing", TunableKind.Slider, -90, 90, 1, rig.Grip.Thumb[i][1])
+                { Source = new(rigPath, $"/grip/thumb/{i}/1") }, v => { rig.Grip.Thumb[joint][1] = v; publish(); }));
+        }
+        groups.Add(new($"rig.{arms.Rig}", $"Rig · {arms.Rig}", rigControls) { File = rigPath });
         return groups;
     }
 

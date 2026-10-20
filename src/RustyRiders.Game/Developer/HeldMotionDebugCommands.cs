@@ -147,21 +147,32 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success($"\"{id}\": {{\"grip\": [{gx}, {gy}, {gz}], \"toward\": [{tx}, {ty}, {tz}], \"up\": [{ux}, {uy}, {uz}]}}  (in {StanceCatalog.Path})");
     }
 
-    [DebugCommand("riders.arms", Description = "Read how far each arm's wrist was last drawn from its grip, as the Engine IK solve reports it (metres; more than a centimetre is a grip out of reach).")]
+    [DebugCommand("riders.arms", Description = "Read the arms: the rig drawing them, how far each wrist was last drawn from its grip as the Engine IK solve reports it (metres; more than a centimetre is a grip out of reach), each arm's drawn length, and each hand's measured frame.")]
     public DebugCommandResult Arms()
     {
-        var (main, off) = View.ArmsShortfall;
-        return DebugCommandResult.Success($"Wrist shortfall: main {main:0.###} m, off {off:0.###} m.");
+        ArmsView arms = View.DrawnArms;
+        var (main, off) = arms.Shortfall;
+        var (mainLength, offLength) = arms.ArmLength;
+        string frames = arms.HandFrames is { } f ? $"hand frames main [{f.Main.X:0}, {f.Main.Y:0}, {f.Main.Z:0}] off [{f.Off.X:0}, {f.Off.Y:0}, {f.Off.Z:0}] degrees" : "hand frames not measured yet";
+        return DebugCommandResult.Success($"Rig {arms.Id}. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
     }
 
-    [DebugCommand("riders.dev.arms.hand", Description = "Developer arms tuning: set how a hand holds a look (its turn from the look, x y z degrees, and its palm from the wrist, x y z metres; the left hand mirrors it) in the loaded content, and print its JSON.")]
-    public DebugCommandResult ArmsHand(float rx, float ry, float rz, float px, float py, float pz)
+    [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]
+    public DebugCommandResult Rig(string id)
     {
-        ArmHand hand = Held.Arms.Hand;
-        (hand.Rotation[0], hand.Rotation[1], hand.Rotation[2]) = (rx, ry, rz);
-        (hand.Palm[0], hand.Palm[1], hand.Palm[2]) = (px, py, pz);
+        if (View.ShowRig(id) is { } refusal) return Failure(refusal);
         publish();
-        return DebugCommandResult.Success($"\"hand\": {{\"rotation\": [{rx}, {ry}, {rz}], \"palm\": [{px}, {py}, {pz}]}}  (in {ArmsDefinition.Path})");
+        return DebugCommandResult.Success($"Arms drawn by rig '{id}'. Set \"rig\": \"{id}\" in {ArmsDefinition.Path} to keep it.");
+    }
+
+    [DebugCommand("riders.dev.arms.hold", Description = "Developer arms tuning: set how a hand holds a look (its canonical frame's turn from the look, x y z degrees; every rig, the left mirrored) and the drawing rig's palm offset from its hand joint (x y z metres), in the loaded content, and print their JSON.")]
+    public DebugCommandResult ArmsHold(float rx, float ry, float rz, float px, float py, float pz)
+    {
+        float[] hold = Held.Arms.Hold, palm = Held.Rigs[Held.Arms.Rig].Palm;
+        (hold[0], hold[1], hold[2]) = (rx, ry, rz);
+        (palm[0], palm[1], palm[2]) = (px, py, pz);
+        publish();
+        return DebugCommandResult.Success($"\"hold\": [{rx}, {ry}, {rz}]  (in {ArmsDefinition.Path}); \"palm\": [{px}, {py}, {pz}]  (in {ArmRig.PathOf(Held.Arms.Rig)})");
     }
 
     [DebugCommand("riders.dev.arms.reach", Description = "Developer arms tuning: set where the right shoulder sits and the point the right elbow bends toward (camera space x y z each; the left mirrors them) in the loaded content, and print their JSON.")]

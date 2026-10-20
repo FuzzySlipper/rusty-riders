@@ -17,17 +17,20 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     [JsonIgnore] internal StanceCatalog Stances { get; init; } = null!;
     /// <summary>The first-person arms that hold the looks (<see cref="ArmsDefinition.Path"/>).</summary>
     [JsonIgnore] internal ArmsDefinition Arms { get; init; } = null!;
+    /// <summary>The arms models the arms can be drawn by, by profile id (<see cref="ArmRig.Directory"/>).</summary>
+    [JsonIgnore] internal Dictionary<string, ArmRig> Rigs { get; init; } = null!;
 
     internal const string Path = "held/looks.json";
 
     /// <summary>The content files the held presentation reads, reloaded in place under <c>rusty dev</c> (RustyEngineLiveContent).</summary>
-    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path];
+    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, .. ArmRigs.Ids.Select(ArmRig.PathOf)];
 
     internal static HeldCatalog Load(IEngineContext engine)
     {
+        ArmsDefinition arms = ArmsDefinition.Load(engine);
         HeldCatalog catalog = Authored.Read(engine, Path, HeldJson.Default.HeldCatalog) with
         {
-            Motion = HeldMotionCatalog.Load(engine), Stances = StanceCatalog.Load(engine), Arms = ArmsDefinition.Load(engine)
+            Motion = HeldMotionCatalog.Load(engine), Stances = StanceCatalog.Load(engine), Arms = arms, Rigs = ArmRigs.Load(engine, arms)
         };
         catalog.Validate();
         foreach (HeldLookDefinition look in catalog.Looks) catalog.Seat(look);
@@ -109,10 +112,12 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                 foreach (var (track, keys) in motion.Tracks) live.Tracks[track] = keys;
             }
         }
-        if (changed.Contains(ArmsDefinition.Path))
+        if (changed.Contains(ArmsDefinition.Path)) Arms.Take(fresh.Arms);
+        foreach (var (id, rig) in Rigs)
         {
-            Same(Arms.SameRig(fresh.Arms), $"{ArmsDefinition.Path} model, clip, joint chains or the hands' finger and thumb joints");
-            Arms.Take(fresh.Arms);
+            if (!changed.Contains(ArmRig.PathOf(id))) continue;
+            Same(rig.SameDrawing(fresh.Rigs[id]), $"{ArmRig.PathOf(id)} model, clip, joints or digit frames");
+            rig.Take(fresh.Rigs[id]);
         }
         foreach (HeldLookDefinition look in Looks) Seat(look);
         return [.. needRestart];
@@ -208,4 +213,5 @@ internal sealed record HeldNudge(float[] Grip, float[] Turn);
 [JsonSerializable(typeof(HeldMotionCatalog))]
 [JsonSerializable(typeof(HeldPose))]
 [JsonSerializable(typeof(ArmsDefinition))]
+[JsonSerializable(typeof(ArmRig))]
 internal sealed partial class HeldJson : JsonSerializerContext;

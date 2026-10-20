@@ -1,0 +1,101 @@
+{
+  "model": "old-art/fp-arms/painted.glb",
+  "clip": "Hands_Gun_03_Mesh",
+  "turn": [
+    0,
+    180,
+    0
+  ],
+  "scale": 0.85,
+  "main": {
+    "upper": "CATRigRArm1",
+    "lower": "CATRigRArm21",
+    "hand": "CATRigRArmPalm",
+    "fingers": [
+      [
+        "CATRigRArmDigit21",
+        "CATRigRArmDigit22",
+        "CATRigRArmDigit23"
+      ],
+      [
+        "CATRigRArmDigit31",
+        "CATRigRArmDigit32",
+        "CATRigRArmDigit33"
+      ],
+      [
+        "CATRigRArmDigit41",
+        "CATRigRArmDigit42",
+        "CATRigRArmDigit43"
+      ],
+      [
+        "CATRigRArmDigit51",
+        "CATRigRArmDigit52",
+        "CATRigRArmDigit53"
+      ]
+    ],
+    "thumb": [
+      "CATRigRArmDigit11",
+      "CATRigRArmDigit12",
+      "CATRigRArmDigit13"
+    ]
+  },
+  "off": {
+    "upper": "CATRigLArm1",
+    "lower": "CATRigLArm21",
+    "hand": "CATRigLArmPalm",
+    "fingers": [
+      [
+        "CATRigLArmDigit21",
+        "CATRigLArmDigit22",
+        "CATRigLArmDigit23"
+      ],
+      [
+        "CATRigLArmDigit31",
+        "CATRigLArmDigit32",
+        "CATRigLArmDigit33"
+      ],
+      [
+        "CATRigLArmDigit41",
+        "CATRigLArmDigit42",
+        "CATRigLArmDigit43"
+      ],
+      [
+        "CATRigLArmDigit51",
+        "CATRigLArmDigit52",
+        "CATRigLArmDigit53"
+      ]
+    ],
+    "thumb": [
+      "CATRigLArmDigit11",
+      "CATRigLArmDigit12",
+      "CATRigLArmDigit13"
+    ]
+  },
+  "digits": "Measured",
+  "palm": [
+    -0.006,
+    0.085,
+    -0.035
+  ],
+  "grip": {
+    "fingers": [
+      0,
+      0,
+      0
+    ],
+    "thumb": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ]
+  }
+}

@@ -27,25 +27,70 @@ internal sealed class HeldView : IDisposable
     // Each look's appearance and its opened model (none when it is drawn as its box).
     private readonly Dictionary<string, (Appearance Appearance, ArtMesh? Mesh)> looks = [];
     private readonly Hand[] hands = [new(), new()];
-    private readonly ArmsView arms;
+    private ArmsView arms;
+    // Arms replaced by another rig: released once a snapshot without them is published (an object keeps one
+    // animation instance, so each rig is drawn on its own object, alternating between two).
+    private ArmsView? retired;
+    private readonly List<string> armsProblems = [];
+    /// <summary>The rig profile that draws the arms when none other is chosen or opens: the generated arms, kept in git.</summary>
+    internal const string FallbackRig = "generated";
     private ulong startedSeen;
     private (int Hand, string Look, HeldPose? Pose)? viewing;
     private (ActionDefinition Action, int Key)? viewingKey;
 
-    /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' are the next two.</param>
+    /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' two are the next three.</param>
     internal HeldView(IEngineContext engine, HeldCatalog held, ulong firstObject)
     {
         this.engine = engine;
         this.held = held;
         this.firstObject = firstObject;
         art = new ConvertedArt(engine, OldArtRoot);
-        arms = new ArmsView(engine, held.Arms, firstObject + 2);
+        arms = Arms(held.Arms.Rig, firstObject + 2) ?? Arms(FallbackRig, firstObject + 2)
+            ?? throw new InvalidOperationException($"The fallback arms did not open: {string.Join("; ", armsProblems)}");
         foreach (HeldLookDefinition look in held.Looks)
             looks[look.Id] = look.Model is { } model && art.Model(model.Glb) is { } mesh ? (mesh.Appearance, mesh) : (Box(look.Box), null);
     }
 
     /// <summary>Converted models that could not be opened (their looks are drawn as boxes).</summary>
-    internal IReadOnlyList<string> Problems => art.Problems;
+    internal IReadOnlyList<string> Problems => [.. art.Problems, .. armsProblems];
+
+    /// <summary>The rig profile drawing the arms now.</summary>
+    internal string Rig => arms.Id;
+
+    /// <summary>The arms as drawn now: wrist shortfall, arm lengths and the measured hand frames.</summary>
+    internal ArmsView DrawnArms => arms;
+
+    /// <summary>
+    /// Developer arms comparison: draws the arms by another rig profile, with the same hold; returns why it could not,
+    /// or null. The caller publishes, after which the previous arms are released.
+    /// </summary>
+    internal string? ShowRig(string id)
+    {
+        if (!held.Rigs.ContainsKey(id)) return $"Unknown rig '{id}'. Rigs: {string.Join(", ", held.Rigs.Keys)}.";
+        if (id == arms.Id) return null;
+        int problems = armsProblems.Count;
+        if (Arms(id, arms.Object == firstObject + 2 ? firstObject + 3 : firstObject + 2) is not { } next)
+            return armsProblems[problems];
+        retired?.Dispose();
+        (retired, arms) = (arms, next);
+        held.Arms.Rig = id;
+        return null;
+    }
+
+    // The arms drawn by a rig profile on an object, or null with the reason recorded when its model does not open
+    // (an old-game model not imported here).
+    private ArmsView? Arms(string id, ulong objectId)
+    {
+        try
+        {
+            return new ArmsView(engine, held.Arms, held.Rigs[id], id, objectId);
+        }
+        catch (Exception error) when (error is EngineCallException or InvalidOperationException)
+        {
+            armsProblems.Add($"arms rig {id}: {error.Message}");
+            return null;
+        }
+    }
 
     internal HeldCatalog Catalog => held;
 
@@ -66,6 +111,8 @@ internal sealed class HeldView : IDisposable
                 looks[look.Id].Appearance, visible, RenderLayer.Viewmodel);
         }
         yield return arms.Fact(visible);
+        // Replaced arms are published hidden once, then left out; they are released after that snapshot.
+        if (retired is { Published: false }) yield return retired.Fact(false);
     }
 
     /// <summary>How far each wrist was drawn from its grip (see <see cref="ArmsView.Shortfall"/>).</summary>
@@ -103,6 +150,13 @@ internal sealed class HeldView : IDisposable
     /// <summary>Reaches the arms for both hands' grips where their looks are drawn now, each hand closed as its motion says.</summary>
     internal void Reach()
     {
+        if (retired is not null && !retired.Published)
+            retired.Published = true;
+        else if (retired is not null)
+        {
+            retired.Dispose();
+            retired = null;
+        }
         (Vector3 mainGrip, Quaternion mainLook) = Grip(MainHand);
         (Vector3 offGrip, Quaternion offLook) = Grip(OffHand);
         arms.Reach((mainGrip, mainLook, Closure(MainHand)), (offGrip, offLook, Closure(OffHand)));
@@ -238,6 +292,7 @@ internal sealed class HeldView : IDisposable
     public void Dispose()
     {
         arms.Dispose();
+        retired?.Dispose();
         art.Dispose();
         foreach (Appearance box in boxes) box.Dispose();
     }

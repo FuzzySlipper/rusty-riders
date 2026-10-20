@@ -69,6 +69,15 @@ internal static class Frames
         return Quaternion.CreateFromYawPitchRoll(d.Y, d.X, d.Z);
     }
 
+    /// <summary>Degrees about X, Y and Z that <see cref="Turn"/> turns back into <paramref name="turn"/>.</summary>
+    internal static Vector3 Degrees(Quaternion turn)
+    {
+        // The rotation's columns are the images of the axes; for R = Ry Rx Rz, R12 = -sin x, R02 / R22 = tan y and
+        // R10 / R11 = tan z (from rusty-hotel's Frames).
+        Vector3 cx = Vector3.Transform(Vector3.UnitX, turn), cy = Vector3.Transform(Vector3.UnitY, turn), cz = Vector3.Transform(Vector3.UnitZ, turn);
+        return new Vector3(MathF.Asin(Math.Clamp(-cz.Y, -1, 1)), MathF.Atan2(cz.X, cz.Z), MathF.Atan2(cx.Y, cy.Y)) * (180 / MathF.PI);
+    }
+
     /// <summary>A camera-space point seen in the mirror across the view's centre line (x negated).</summary>
     internal static Vector3 Mirror(Vector3 point) => point with { X = -point.X };
 

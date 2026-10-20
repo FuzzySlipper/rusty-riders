@@ -187,6 +187,27 @@ Other creatures that were tried:
   - The `KOTG ORC` and `OH SKELETON KNIGHT` Character clips are FBX 6 that have not been re-saved either.
 - `OH Succubus` with every clip exceeds the Engine's 4,096 animation channels.
 
+## First-person arms
+
+The old arms turned up in `old-game/Assets/MoreArt` (2026-10-19), with a lot of first-person animation:
+- `FpMelee/MedievalFPArms`: the arms pack the old `ArmsCopy.prefab` used (its mesh GUIDs match): five arm sets
+  (male and female leather armour, cloth, chainmail) on the UE4 mannequin skeleton, with 4K maps and a few unarmed
+  clips. Built as `leather.glb` with its unarmed idle as the clip the Engine needs.
+- `FirstPersonArms`: a gun-hands pack on a 3ds Max CAT rig, one ASCII FBX per weapon (arms and weapon together) with
+  its clips, plus the old game's own hand-painted texture `Hand_Recolor.png`, the arms in the old screenshots. Built
+  as `painted.glb` from `Hands_Gun_03_Mesh` (both arms; the revolver is removed). Blender does not read ASCII FBX, so
+  unity-import (Assimp) converts it first.
+- `FpMelee/FPP_*`: melee clips (sword and shield, longsword, dagger, halberd, spear) on the same mannequin skeleton,
+  with `weapon_l`/`weapon_r` bones, attack start/loop/end, blocks, equips, hits and locomotion. Not converted: they are
+  reference for held motion (a weapon bone track is a held look's motion).
+- `Animations/`: third-person character clips (Mixamo and others), not first person.
+
+`scripts/import-fp-arms.sh` builds both into the ignored `content/old-art/fp-arms/`. Each is a rig profile in
+`content/held/rigs/`: the model, the clip played under the IK, its turn and scale, each arm's joints, and per-rig palm
+and base grip. Hand frames and digit axes are measured from the drawn model, so the arms' hold and the motion keys'
+closure (`content/held/arms.json`) serve every rig unchanged. The packs are third-party store assets the old game
+used; confirm their licences before any public release.
+
 ## Backups of generated art
 
 `content/old-art/` stays out of git, including Git LFS. LFS still keeps every uploaded version, and each
