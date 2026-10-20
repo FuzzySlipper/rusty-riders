@@ -265,6 +265,17 @@ are ordinary held motion: step, retime and edit them in the workbench. A rebake 
 adds or removes a motion, is a structural change: restart the game to see it (an edited key or pose reloads in place).
 The heavy attacks' `_Start`, `_Loop` and `_End` parts are separate clips, to bake one at a time or join first.
 
+### Feedback over baked motion
+
+A baked motion is a tween timeline on the weapon's object, so feedback composes with it rather than replacing it. As a
+player's action lands, the acting hand feels it (`content/held/feedback.json`): a blow that strikes a body (`struck`),
+one stopped by a surface (`blocked`), a shot or cast fired (`fired`). Each is a damped Engine punch started as a layer
+on that hand's object: a move (camera space, mirrored for the off hand) and a turn, swinging back `frequency` times over
+`seconds`. The arms aim at the weapon as drawn, so `HeldView` samples the motion and every running layer together; a
+punch never pulls the hand off the hilt. A punch starts after the hand's motion for that update (an action can start
+and land in one update, and a motion's replacing start would end it). The two hands' motions and punches are
+independent; only one action runs at a time, a combat rule, not an animation one.
+
 ## Backups of generated art
 
 `content/old-art/` stays out of git, including Git LFS. LFS still keeps every uploaded version, and each

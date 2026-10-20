@@ -268,6 +268,7 @@ internal sealed class PlayerCombat : IDisposable
         foreach (ActionImpact impact in impacts)
         {
             if (impact.Action.Delivery.Kind != DeliveryKind.Self) Burst(impact.End);
+            if (impact.User == actor && landedNow && Felt(impact) is { } kind) held.Feel(actingHand, kind);
             if (impact.User != actor || (!landedNow && impact.Target is null && !impact.Surface)) continue;
             string name = impact.Target is INamed named ? named.Name : "";
             CombatMessages text = definition.Text;
@@ -277,6 +278,14 @@ internal sealed class PlayerCombat : IDisposable
                 : Template.Fill(text.Hit, ("target", name), ("damage", impact.Damage)));
         }
     }
+
+    // What the acting hand feels as its action lands: a shot or cast fires; a blow strikes a body or is stopped by a surface.
+    private static FeedbackKind? Felt(ActionImpact impact) => impact.Action.Delivery.Kind switch
+    {
+        DeliveryKind.Self => null,
+        DeliveryKind.Melee => impact.Target is not null ? FeedbackKind.Struck : impact.Surface ? FeedbackKind.Blocked : null,
+        _ => FeedbackKind.Fired
+    };
 
     private void Burst(Vector3 at)
     {

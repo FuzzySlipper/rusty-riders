@@ -45,6 +45,7 @@ internal sealed class HeldView : IDisposable
         this.held = held;
         this.firstObject = firstObject;
         art = new ConvertedArt(engine, OldArtRoot);
+        foreach (Hand hand in hands) hand.Layers = new FeedbackLayers(engine);
         arms = Arms(held.Arms.Rig, firstObject + 2) ?? Arms(FallbackRig, firstObject + 2)
             ?? throw new InvalidOperationException($"The fallback arms did not open: {string.Join("; ", armsProblems)}");
         foreach (HeldLookDefinition look in held.Looks)
@@ -53,6 +54,9 @@ internal sealed class HeldView : IDisposable
 
     /// <summary>Converted models that could not be opened (their looks are drawn as boxes).</summary>
     internal IReadOnlyList<string> Problems => [.. art.Problems, .. armsProblems];
+
+    /// <summary>How many feedback punches each hand has had since its motion last started (ended ones are counted until sampled).</summary>
+    internal (int Main, int Off) Felt => (hands[MainHand].Layers.Count, hands[OffHand].Layers.Count);
 
     /// <summary>The rig profile drawing the arms now.</summary>
     internal string Rig => arms.Id;
@@ -148,6 +152,7 @@ internal sealed class HeldView : IDisposable
                 Begin(actingHand, timeline, TweenClock.World, user.Elapsed, action, user.Started, user.Scale);
             }
         }
+        Punch();
         Reach();
     }
 
@@ -336,6 +341,8 @@ internal sealed class HeldView : IDisposable
     private TweenHandle Begin(int hand, TweenSegment[] segments, TweenClock clock, float elapsed = 0, ActionDefinition? action = null, ulong started = 0,
         float scale = 1, float speed = 1)
     {
+        // A replacing start ends the hand's tweens, its feedback layers among them.
+        hands[hand].Layers.Ended();
         hands[hand].Scale = scale;
         hands[hand].Speed = speed;
         TweenStartRequest request = new(firstObject + (ulong)hand, segments) { Clock = clock };
@@ -348,18 +355,39 @@ internal sealed class HeldView : IDisposable
     private void Cancel(Hand hand)
     {
         if (hand.Tween is { } playing) engine.Tween.Control(new TweenControlRequest(playing.Handle, TweenControl.Cancel));
+        hand.Layers.Cancel();
         hand.Tween = null;
         hand.Action = null;
     }
 
     // The offset a hand's motion shows now (from its rest placement), or none.
+    // The offset a hand's motion and its feedback layers show now (from its rest placement): translations add and the
+    // layers' turns follow the motion's in the model's frame, as the Engine composes them.
     private (Vector3 Move, Quaternion Turn) Offset(Hand hand)
     {
-        if (hand.Tween is not { } playing || playing.Look != hand.Look) return (Vector3.Zero, Quaternion.Identity);
+        (Vector3 layerMove, Quaternion layerTurn) = hand.Layers.Offset();
+        if (hand.Tween is not { } playing || playing.Look != hand.Look) return (layerMove, layerTurn);
         TweenReadout readout = engine.Tween.Read(playing.Handle);
-        if (readout.State == TweenState.Ended) return (Vector3.Zero, Quaternion.Identity);
+        if (readout.State == TweenState.Ended) return (layerMove, layerTurn);
         TweenSample sample = engine.Tween.Sample(playing.Request, readout.ElapsedSeconds);
-        return (sample.Translation, sample.Rotation);
+        return (sample.Translation + layerMove, Quaternion.Normalize(sample.Rotation * layerTurn));
+    }
+
+    /// <summary>
+    /// A hand feels its action land: a punch layered over its motion. Started once its motion for this update has
+    /// started (an action can start and land in one update, and the motion's start would end an earlier punch).
+    /// </summary>
+    internal void Feel(int hand, FeedbackKind kind) => felt.Add((hand, kind));
+
+    private readonly List<(int Hand, FeedbackKind Kind)> felt = [];
+
+    // Starts the punches felt since the last update over each hand's motion as now drawn.
+    private void Punch()
+    {
+        foreach (var (hand, kind) in felt)
+            hands[hand].Layers.Start(firstObject + (ulong)hand, held.Feedback.Punch(kind), Now(hand).Turn, hand == OffHand,
+                viewing is null ? TweenClock.World : TweenClock.Realtime);
+        felt.Clear();
     }
 
     private bool Running(TweenHandle tween) => engine.Tween.Read(tween).State != TweenState.Ended;
@@ -389,6 +417,8 @@ internal sealed class HeldView : IDisposable
         internal string Look = "";
         internal (TweenHandle Handle, TweenStartRequest Request, string Look, ulong Started)? Tween;
         internal ActionDefinition? Action;
+        // Feedback punches layered over the motion.
+        internal FeedbackLayers Layers = null!;
         // The action's time scale and the viewer's playback speed, to read the keys at the tween's elapsed time.
         internal float Scale = 1, Speed = 1;
     }

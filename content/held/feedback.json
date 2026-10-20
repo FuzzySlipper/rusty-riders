@@ -1,0 +1,47 @@
+{
+  "struck": {
+    "move": [
+      -0.02,
+      -0.015,
+      0.03
+    ],
+    "turn": [
+      -6,
+      4,
+      3
+    ],
+    "seconds": 0.22,
+    "frequency": 1.5,
+    "decay": "QuadOut"
+  },
+  "blocked": {
+    "move": [
+      0.03,
+      0.02,
+      0.06
+    ],
+    "turn": [
+      10,
+      -8,
+      -6
+    ],
+    "seconds": 0.35,
+    "frequency": 2.5,
+    "decay": "CubicOut"
+  },
+  "fired": {
+    "move": [
+      0,
+      0.025,
+      0.05
+    ],
+    "turn": [
+      14,
+      0,
+      0
+    ],
+    "seconds": 0.25,
+    "frequency": 1,
+    "decay": "QuadOut"
+  }
+}

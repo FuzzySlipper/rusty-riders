@@ -154,7 +154,8 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         var (main, off) = arms.Shortfall;
         var (mainLength, offLength) = arms.ArmLength;
         string frames = arms.HandFrames is { } f ? $"hand frames main [{f.Main.X:0}, {f.Main.Y:0}, {f.Main.Z:0}] off [{f.Off.X:0}, {f.Off.Y:0}, {f.Off.Z:0}] degrees" : "hand frames not measured yet";
-        return DebugCommandResult.Success($"Rig {arms.Id}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
+        var (mainFelt, offFelt) = View.Felt;
+        return DebugCommandResult.Success($"Rig {arms.Id}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
     }
 
     [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]
@@ -183,6 +184,16 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         (arms.Pole[0], arms.Pole[1], arms.Pole[2]) = (px, py, pz);
         publish();
         return DebugCommandResult.Success($"\"shoulder\": [{sx}, {sy}, {sz}], \"pole\": [{px}, {py}, {pz}]  (in {ArmsDefinition.Path})");
+    }
+
+    [DebugCommand("riders.dev.held.feel", Description = "Developer held tuning: the main or off hand feels its action land (struck, blocked or fired): a feedback punch layered over its motion, as content/held/feedback.json says.")]
+    public DebugCommandResult Feel(string kind, string inHand)
+    {
+        if (!Enum.TryParse(kind, true, out FeedbackKind felt)) return Failure($"Feedback is {string.Join(", ", Enum.GetNames<FeedbackKind>()).ToLowerInvariant()}.");
+        if (inHand is not ("main" or "off")) return Failure("The hand is main or off.");
+        View.Feel(inHand == "off" ? HeldView.OffHand : HeldView.MainHand, felt);
+        publish();
+        return DebugCommandResult.Success($"The {inHand} hand feels {felt}.");
     }
 
     [DebugCommand("riders.dev.motion.off", Description = "Developer motion viewer: return the hands to what they hold.")]

@@ -72,7 +72,8 @@ Run `rusty dev --port 8787 --live-debug` and press F2 in play to dock the Engine
 hands' grips, the first-person workbench and the console. The workbench picks a weapon look, an action and a hand,
 steps or plays the action's keys (in real time, though the world holds), and tunes the look's model fit, its stance,
 nudge and grip, each key's timing, curve, hand closure and pose, and the arms' shoulder, elbow and hold, with
-sliders, and the drawing rig's model turn, scale, palm and base grip. `riders.arms` reports the rig, how far each wrist
+sliders, the drawing rig's model turn, scale, palm and base grip, and the feedback punches a hand feels as its action
+lands (`content/held/feedback.json`: struck, blocked, fired; `riders.dev.held.feel <kind> <main|off>` tries one). `riders.arms` reports the rig, how far each wrist
 falls short of its grip, the arms' lengths and the measured hand frames. Save writes the changed values into `content/held/`.
 Editing those files by hand also reloads them into the running game. The same in the console: `riders.dev.motion
 <look> <action>`, then `.key`, `.next`, `.play <speed>`, `.at <seconds>`, `.pose`, `.hand`, `riders.dev.held.nudge`,

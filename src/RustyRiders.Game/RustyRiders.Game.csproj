@@ -30,6 +30,7 @@
     <RustyEngineLiveContent Include="held/stances.json" />
     <RustyEngineLiveContent Include="held/motion.json" />
     <RustyEngineLiveContent Include="held/arms.json" />
+    <RustyEngineLiveContent Include="held/feedback.json" />
     <RustyEngineLiveContent Include="held/rigs/generated.json" />
     <RustyEngineLiveContent Include="held/rigs/painted.json" />
     <RustyEngineLiveContent Include="held/rigs/leather.json" />

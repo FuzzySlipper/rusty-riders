@@ -96,6 +96,21 @@ internal static class HeldTunables
                 .. Vector("pose.rotation", "turn", pose.Rotation, -180, 180, 1, HeldMotionCatalog.Path, $"{posePointer}/rotation", publish)
             ]) { File = HeldMotionCatalog.Path });
         }
+        // Feedback punches: how far each swings and turns, for how long and how often.
+        List<Tunable> feel = [];
+        foreach (FeedbackKind kind in Enum.GetValues<FeedbackKind>())
+        {
+            HeldPunch punch = held.Feedback.Punch(kind);
+            string field = char.ToLowerInvariant(kind.ToString()[0]) + kind.ToString()[1..];
+            feel.AddRange(Vector($"feel.{field}.move", $"{field} move", punch.Move, -0.15f, 0.15f, .002f, HeldFeedback.Path, $"/{field}/move", publish));
+            feel.AddRange(Vector($"feel.{field}.turn", $"{field} turn", punch.Turn, -45, 45, .5f, HeldFeedback.Path, $"/{field}/turn", publish));
+            feel.Add(new(new($"feel.{field}.seconds", $"{field} seconds", TunableKind.Slider, .02f, 1, .01f, punch.Seconds)
+                { Source = new(HeldFeedback.Path, $"/{field}/seconds") }, v => punch.Seconds = v));
+            feel.Add(new(new($"feel.{field}.frequency", $"{field} swings", TunableKind.Slider, .5f, 6, .25f, punch.Frequency)
+                { Source = new(HeldFeedback.Path, $"/{field}/frequency") }, v => punch.Frequency = v));
+        }
+        groups.Add(new("feedback", "Feedback (riders.dev.held.feel to try one)", feel) { File = HeldFeedback.Path });
+
         // The arms: where the right shoulder sits and the right elbow's pole (the left's are mirrored), and how a hand
         // holds a look (its turn from the look and its palm from the wrist), for both hands alike.
         ArmsDefinition arms = held.Arms;
