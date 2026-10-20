@@ -76,7 +76,7 @@ internal sealed class ArmsView : IDisposable
     /// further from its shoulder than the arm reaches, so both hands stay on their grips whatever the rig's arm length.
     /// The arm furthest short sets the lean; the other arm's IK takes up the move.
     /// </summary>
-    internal void Aim((Vector3 Grip, Quaternion Look) mainHand, (Vector3 Grip, Quaternion Look) offHand)
+    internal void Aim(HandAim mainHand, HandAim offHand)
     {
         reaching = Vector3.Zero;
         if (upperArm is not { } right || offUpperArm is not { } left || ArmLength.Main <= 0) return;
@@ -85,7 +85,7 @@ internal sealed class ArmsView : IDisposable
         Vector3 best = Vector3.Zero;
         foreach (var (shoulder, hand, length, leftArm) in new[] { (Shoulder(right), mainHand, ArmLength.Main, false), (Shoulder(left), offHand, ArmLength.Off, true) })
         {
-            Vector3 toward = Wrist(hand.Grip, hand.Look, leftArm).Wrist - shoulder;
+            Vector3 toward = Wrist(hand, leftArm).Wrist - shoulder;
             float beyond = toward.Length() - (length - Slack);
             if (beyond > best.Length()) best = Vector3.Normalize(toward) * beyond;
         }
@@ -115,7 +115,7 @@ internal sealed class ArmsView : IDisposable
     /// turned with the weapon's look, and closes each hand as given (-1 open, 0 its grip, 1 squeezed). The off hand's
     /// grip and turn are already mirrored; its hold is the main hand's, mirrored.
     /// </summary>
-    internal void Reach((Vector3 Grip, Quaternion Look, float Closure) mainHand, (Vector3 Grip, Quaternion Look, float Closure) offHand)
+    internal void Reach(HandAim mainHand, HandAim offHand)
     {
         if (instance is null)
         {
@@ -138,10 +138,10 @@ internal sealed class ArmsView : IDisposable
         Vector3 Into(Vector3 point) => Vector3.Transform(point - placed.Translation, unturn) / rig.Scale;
         List<TwoBoneIk> chains = [];
         List<JointOverride> overrides = [];
-        foreach (var (side, hand, pole) in new[] { (main, mainHand, Authored.Vector(arms.Pole)), (off, offHand, Frames.Mirror(Authored.Vector(arms.Pole))) })
+        foreach (var (side, hand) in new[] { (main, mainHand), (off, offHand) })
         {
-            (Vector3 wrist, Quaternion turn) = Wrist(hand.Grip, hand.Look, side.Left);
-            chains.Add(new(side.Upper, side.Lower, side.Hand, PoseSpace.Model, Into(wrist), Into(pole), 1));
+            (Vector3 wrist, Quaternion turn) = Wrist(hand, side.Left);
+            chains.Add(new(side.Upper, side.Lower, side.Hand, PoseSpace.Model, Into(wrist), Into(hand.Pole), 1));
             if (!side.Measured) continue;
             overrides.Add(JointOverride.Orient(side.Hand, PoseSpace.Model, Quaternion.Normalize(unturn * turn * side.Frame)));
             overrides.AddRange(side.Close(rig, arms.Hands, hand.Closure).Select(t => JointOverride.AddLocalRotation(t.Joint, t.Turn)));
@@ -151,11 +151,13 @@ internal sealed class ArmsView : IDisposable
 
     /// <summary>
     /// Where a hand's wrist goes to hold a grip (camera space), and how the hand's canonical frame turns: with the look,
-    /// by the arms' hold, with the palm, not the wrist, on the grip. The left hand holds as the right does, mirrored.
+    /// by the look's own hold or else the arms', with the palm, not the wrist, on the grip. The left hand holds as the
+    /// right does, mirrored.
     /// </summary>
-    internal (Vector3 Wrist, Quaternion Turn) Wrist(Vector3 grip, Quaternion look, bool left)
+    internal (Vector3 Wrist, Quaternion Turn) Wrist(HandAim hand, bool left)
     {
-        Quaternion hold = Frames.Turn(arms.Hold);
+        (Vector3 grip, Quaternion look) = (hand.Grip, hand.Look);
+        Quaternion hold = Frames.Turn(hand.Hold ?? arms.Hold);
         Vector3 palm = Authored.Vector(rig.Palm);
         if (left) (hold, palm) = (Frames.Mirror(hold), Frames.Mirror(palm));
         Quaternion turn = Quaternion.Normalize(look * hold);
@@ -246,3 +248,9 @@ internal sealed class ArmsView : IDisposable
         }
     }
 }
+
+/// <summary>
+/// What a hand reaches for (camera space): its look's grip and turn, the look's own hold when it has one (degrees, the
+/// hand's canonical frame from the look's), how closed the hand is, and the point its elbow bends toward.
+/// </summary>
+internal readonly record struct HandAim(Vector3 Grip, Quaternion Look, float[]? Hold, float Closure, Vector3 Pole);

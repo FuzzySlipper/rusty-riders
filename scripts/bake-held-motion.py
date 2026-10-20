@@ -19,8 +19,11 @@ usage:
       [--slow 0.4] [--scale 1] [--seat [--blade +y] [--edge +z]] [--out content/held/motion.json] [--looks ...] [--stances ...]
 
 Each key also carries the body's lean (the upper arm's move from rest, as "shoulder"), so a lunging blow reaches as
-far as the source's. With --seat the look's nudge is set so it rests exactly where the source weapon rests (its blade
-along --blade and its up side along --edge of the weapon bone); its turns about the grip then follow the source path.
+far as the source's, and the source elbow's bend as the point the arm's elbow bends toward ("elbow"), so the forearm
+follows the source's line. With --seat the look's nudge is set so it rests exactly where the source weapon rests (its
+blade along --blade and its up side along --edge of the weapon bone; by default the axis leaving the fist past the index
+finger, and the one along the fingers), so its turns about the grip follow the source
+path, and its grips.hand to the source hand's hold on the weapon, so the wrist sits as the source's does.
 """
 import argparse
 import json
@@ -49,8 +52,9 @@ args.add_argument("--looks", type=Path, default=Path("content/held/looks.json"))
 args.add_argument("--stances", type=Path, default=Path("content/held/stances.json"))
 args.add_argument("--seat", action="store_true",
                   help="set the look's nudge so it rests where the source weapon rests (needs --look), so turns about the grip follow the source's path")
-args.add_argument("--blade", default="+y", help="the weapon bone's axis along the blade, toward the tip (+x, -x, +y, -y, +z or -z)")
-args.add_argument("--edge", default="+z", help="the weapon bone's axis toward the look's up side")
+args.add_argument("--blade", default="auto",
+                  help="the weapon bone's axis along the blade, toward the tip (+x, -x, +y, -y, +z or -z); auto: the one leaving the fist past the index finger")
+args.add_argument("--edge", default="auto", help="the weapon bone's axis toward the look's up side; auto: the one most along the fingers")
 o = args.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
 # The mannequin faces -Y with +Z up in Blender: camera right is -X, up is +Z, back is +Y.
@@ -77,6 +81,9 @@ def sample(rig, frame):
         return rig.matrix_world @ rig.pose.bones[name].matrix
     weapon, camera, shoulder = world(f"weapon_{o.hand}"), world("camera"), world(f"upperarm_{o.hand}")
     side = MIRROR if o.hand == "l" else Matrix.Identity(3)
+
+    def at(name):
+        return side @ TO_CAMERA @ (world(name).translation - camera.translation)
     grip = side @ TO_CAMERA @ (weapon.translation - camera.translation)
     # Mirroring a turn conjugates it by the mirror (the weapon's own axes stay as the bone gives them).
     turn = (side @ TO_CAMERA @ weapon.to_3x3().normalized() @ side).to_quaternion()
@@ -86,7 +93,18 @@ def sample(rig, frame):
         for i in (1, 2, 3):
             bone = rig.pose.bones[f"{finger}_0{i}_{o.hand}"]
             curl += math.degrees(bone.matrix_basis.to_quaternion().angle)
-    return grip, turn, curl / len(FINGERS), place
+    # The elbow's bend as a pole: out from the middle of shoulder and wrist through the elbow, as far again.
+    wrist, elbow = at(f"hand_{o.hand}"), at(f"lowerarm_{o.hand}")
+    pole = elbow + (elbow - (place + wrist) / 2)
+    # The hand's canonical frame (+Y to the middle knuckle, +X from the index knuckle toward the little one, +Z out of
+    # the back), mirrored to a right hand's for a left.
+    y = (at(f"middle_01_{o.hand}") - wrist).normalized()
+    across = at(f"pinky_01_{o.hand}") - at(f"index_01_{o.hand}")
+    x = (across - y * across.dot(y)).normalized()
+    hand = Matrix((x, y, x.cross(y))).transposed().to_quaternion()
+    # The weapon bone's own axes in the hand's canonical frame, to tell which runs along the blade.
+    axes = hand.inverted().to_matrix() @ side @ TO_CAMERA @ weapon.to_3x3().normalized()
+    return grip, turn, curl / len(FINGERS), place, pole, hand, axes
 
 
 def degrees(q):
@@ -100,15 +118,15 @@ def degrees(q):
 
 
 rig, action = load(o.rest)
-rest_grip, rest_turn, rest_curl, rest_place = sample(rig, int(action.frame_range[0]))
+rest_grip, rest_turn, rest_curl, rest_place, _, rest_hand, rest_axes = sample(rig, int(action.frame_range[0]))
 rig, action = load(o.clip)
 first, last = (int(f) for f in action.frame_range)
 frames = list(range(first, last + 1))
 samples = [sample(rig, f) for f in frames]
 # Each frame from rest: the grip's move (camera space) and the turn about it, left of the rest turn as a pose applies
 # it; the finger curl; and how far the body leans the shoulder (a lunge lets the arm reach further).
-poses = [((grip - rest_grip) * o.scale, (turn @ rest_turn.inverted()).normalized(), curl - rest_curl, (place - rest_place) * o.scale)
-         for grip, turn, curl, place in samples]
+poses = [((grip - rest_grip) * o.scale, (turn @ rest_turn.inverted()).normalized(), curl - rest_curl, (place - rest_place) * o.scale, pole)
+         for grip, turn, curl, place, pole, _, _ in samples]
 
 # Phases from the grip's speed (a wrist roll can turn the weapon fastest without carrying the blow).
 speed = [0.0] + [(poses[i][0] - poses[i - 1][0]).length for i in range(1, len(poses))]
@@ -163,7 +181,7 @@ for name in [n for n in motion["poses"] if n.startswith(f"{prefix}-")]:
     del motion["poses"][name]
 track = []
 for n, i in enumerate(keys, 1):
-    grip, turn, curl, lean = poses[i]
+    grip, turn, curl, lean, pole = poses[i]
     if (grip.length < 1e-3 and turn.angle < math.radians(0.5)) and i == len(frames) - 1:
         pose = "rest"
     else:
@@ -171,11 +189,20 @@ for n, i in enumerate(keys, 1):
         motion["poses"][pose] = {"position": [round(v, 3) for v in grip], "rotation": degrees(turn)}
     phase, at = timed(i)
     track.append({"pose": pose, "phase": phase, "at": at, "ease": "Linear", "grip": round(max(-1, min(1, curl / 40)), 2),
-                  "shoulder": [round(v, 3) for v in lean]})
+                  "shoulder": [round(v, 3) for v in lean], "elbow": [round(v, 3) for v in pole]})
 motion["tracks"][o.action] = track
 o.out.write_text(json.dumps(motions, indent=2) + "\n")
+NAMES = ["+x", "-x", "+y", "-y", "+z", "-z"]
+
+
 def axis(name):
     return Vector({"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[name[1]]) * (-1 if name[0] == "-" else 1)
+
+
+def most(along, exclude=None):
+    """The weapon bone's signed axis that runs most along a direction of the hand's canonical frame."""
+    names = [n for n in NAMES if exclude is None or n[1] != exclude[1]]
+    return max(names, key=lambda n: (rest_axes @ axis(n)).dot(along))
 
 
 def basis(along, hint):
@@ -199,13 +226,20 @@ if o.look:
     look["motion"] = o.motion
     if o.seat:
         # The look's own frame (length along -Z, up side +Y) in the weapon bone's axes, then the turn its stance gives.
-        tip, edge = axis(o.blade), axis(o.edge)
-        frame = Matrix((edge.cross(-tip), edge, -tip)).transposed().to_quaternion()
+        # A fist holds a hilt across the palm: the blade leaves past the index finger (-X in the hand's frame) and its
+        # edges face along the fingers (+Y).
+        blade = most(Vector((-1, 0, 0))) if o.blade == "auto" else o.blade
+        edge = most(Vector((0, 1, 0)), blade) if o.edge == "auto" else o.edge
+        tip, edge_axis = axis(blade), axis(edge)
+        edge = f"{blade} blade, {edge} edge"
+        frame = Matrix((edge_axis.cross(-tip), edge_axis, -tip)).transposed().to_quaternion()
         stance = json.loads(o.stances.read_text())["stances"][look["stance"]]
         grip, toward, up = (Vector(stance[k]) for k in ("grip", "toward", "up"))
         turn = (rest_turn @ frame @ between(Vector((0, 0, -1)), Vector((0, 1, 0)), toward - grip, up).inverted()).normalized()
         look["nudge"] = {"grip": [round(v, 3) for v in rest_grip - grip], "turn": degrees(turn)}
-        seated = f"; {o.look} seated where the source rests (nudge {look['nudge']})"
+        # The hand holds the look as the source hand holds its weapon: its canonical frame from the look's.
+        look["grips"]["hand"] = degrees((rest_turn @ frame).inverted() @ rest_hand)
+        seated = f"; {o.look} seated where the source rests ({edge}; nudge {look['nudge']}, hand {look['grips']['hand']})"
     o.looks.write_text(json.dumps(looks, indent=2) + "\n")
 print(f"BAKED {o.clip.name} -> motions.{o.motion}.tracks.{o.action}: {len(frames)} frames at "
       f"{bpy.context.scene.render.fps} fps, strike frame {frames[strike]}, commit to {frames[end]}, {len(track)} keys{seated}")

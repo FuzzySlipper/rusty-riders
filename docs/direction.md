@@ -232,14 +232,20 @@ Two things keep the hands on a baked weapon:
   main hand's; mirrored for the off hand), and the arms move with it. Beyond that, `ArmsView` leans the body in by
   itself when a grip still lies past an arm's length (at most 0.3 m), so a motion holds on rigs with shorter arms.
   `riders.arms` reports both leans and the wrists' shortfall.
-- **The look rests where the source rests.** Turns are baked from rest, so they follow the source's path only if the
-  look starts where the source weapon does. `--seat` sets the look's nudge to the source's rest (blade along the weapon
-  bone's `--blade` axis, `+y` for the FPP set, up side `--edge`, `+z`); for the rift blade that levels its blade
-  forward, as the source holds it.
+- **The look rests where the source rests, held as the source holds it.** Turns are baked from rest, so they follow
+  the source's path only if the look starts where the source weapon does. `--seat` sets the look's nudge to the source's
+  rest and its `grips.hand` to the source hand's hold on the weapon (the hand's canonical frame from the look's, measured
+  from the source's knuckles as `ArmsView` measures rigs). The blade is the weapon bone's axis leaving the fist past the
+  index finger and its up side the axis along the fingers (`--blade`, `--edge` override): for the FPP set that is +Z,
+  with +Y along the fingers. The axis that travels furthest in a swing is not the blade (it runs along the fingers);
+  taking it turned the sword a quarter turn in the hand and folded the wrist back.
+- **The elbow follows the source's.** Each key carries the source elbow's bend as `elbow`, the point the holding arm's
+  elbow bends toward (camera space, mirrored for the off hand), so the forearm keeps the source's line.
 
 The source's rest grip, (0.28, -0.19, -0.38) from its camera, sits within a few centimetres of the blade stance, so its
-moves carry over at scale 1. Compared against a render of the source from its camera at the same moments, the hand and
-blade agree at rest, at the strike and through recovery, and both leave the view in the windup. Its 1.5 s recovery is
+moves carry over at scale 1. Compared against a render of the source from its camera at the same moments (its blade drawn
+along the weapon bone's +Z), the hand, wrist and blade agree at rest, at the strike and through recovery, and both
+leave the view in the windup. Its 1.5 s recovery is
 squeezed into the action's 0.25 s. The keys are ordinary held motion: step, retime and edit them in the workbench. A
 clip set's own idle is the rest; the `_Start`, `_Loop` and `_End` parts of a heavy attack are separate clips, to bake
 one at a time or join first.

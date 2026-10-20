@@ -73,6 +73,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                     now.Adjust.Grip.CopyTo(look.Adjust.Grip, 0);
                     now.Adjust.Turn.CopyTo(look.Adjust.Turn, 0);
                     now.Grips.Main.CopyTo(look.Grips.Main, 0);
+                    if (look.Grips.Hand is { } hand && now.Grips.Hand is { } newHand) newHand.CopyTo(hand, 0);
                     if (look.Model is { } model && now.Model is { } fresher)
                     {
                         fresher.Rotation.CopyTo(model.Rotation, 0);
@@ -124,7 +125,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     }
 
     // What a look draws and what it refers to, beyond the placement values a reload takes.
-    private static string Drawn(HeldLookDefinition look) => string.Join("|", look.Id, look.Motion, look.Stance,
+    private static string Drawn(HeldLookDefinition look) => string.Join("|", look.Id, look.Motion, look.Stance, look.Grips.Hand is not null,
         string.Join(",", look.Box.Size), string.Join(",", look.Box.Color),
         look.Model?.Glb ?? "");
 
@@ -139,6 +140,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             Authored.Require(Motion.Motions.ContainsKey(look.Motion), Path, $"{at}.motion", $"unknown motion '{look.Motion}' in {HeldMotionCatalog.Path}.");
             Authored.Require(Stances.Stances.ContainsKey(look.Stance), Path, $"{at}.stance", $"unknown stance '{look.Stance}' in {StanceCatalog.Path}.");
             Authored.Point(Path, $"{at}.grips.main", look.Grips.Main);
+            if (look.Grips.Hand is { } hand) Authored.Point(Path, $"{at}.grips.hand", hand);
             Authored.Point(Path, $"{at}.box.size", look.Box.Size);
             Authored.Colour(Path, $"{at}.box.color", look.Box.Color);
             Authored.Point(Path, $"{at}.nudge.grip", look.Adjust.Grip);
@@ -195,8 +197,11 @@ internal sealed record HeldModel(string Glb, float Length, float[] Rotation)
 /// <summary>The box a look is drawn as when it has no model or its model did not open: its size (look space) and colour.</summary>
 internal sealed record HeldBox(float[] Size, float[] Color);
 
-/// <summary>Where the hand holds a look, in look space.</summary>
-internal sealed record HeldGrips(float[] Main);
+/// <summary>
+/// Where the hand holds a look, in look space, and optionally how (<see cref="Hand"/>: degrees about X, Y, Z, the hand's
+/// canonical frame turned from the look's; without it the arms' hold applies). A baked look takes its source's hold.
+/// </summary>
+internal sealed record HeldGrips(float[] Main, float[]? Hand = null);
 
 /// <summary>
 /// A look's correction to its stance, judged by eye: its grip moved by <see cref="Grip"/> (camera space, metres) and the
