@@ -29,6 +29,13 @@ internal sealed class PlayerDebugCommands(PlayerVitals vitals, Walker walker, Ac
         return DebugCommandResult.Success(text.ToString().TrimEnd());
     }
 
+    [DebugCommand("riders.player.bob", Description = "Read the camera's head bob now: its sideways and up offset (metres) and roll (degrees) from the steady eye.")]
+    public DebugCommandResult Bob()
+    {
+        (float side, float up, float roll) = walker.Bob;
+        return DebugCommandResult.Success(FormattableString.Invariant($"bob side {side:0.0000} m, up {up:0.0000} m, roll {roll:0.00}°, airborne {walker.Airborne}"));
+    }
+
     [DebugCommand("riders.dev.damage", Description = "Developer override: deal <amount> damage of <kind> to the player, after resistances and wards.")]
     public DebugCommandResult Damage(int amount, string kind)
     {

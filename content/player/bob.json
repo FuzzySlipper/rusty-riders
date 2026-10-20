@@ -1,0 +1,6 @@
+{
+  "walk": { "stepMetres": 1.6, "rise": 0.03, "sway": 0.012, "rollDegrees": 0.35 },
+  "sprint": { "stepMetres": 2.6, "rise": 0.05, "sway": 0.02, "rollDegrees": 0.7 },
+  "blendSeconds": 0.15,
+  "landing": { "metresPerSpeed": 0.01, "softest": 3, "deepest": 0.12, "seconds": 0.4, "down": 0.25 }
+}

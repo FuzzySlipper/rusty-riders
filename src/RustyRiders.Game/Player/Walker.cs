@@ -9,6 +9,8 @@ internal sealed class Walker : IDisposable
 {
     private const double NearPlane = .05;
     private const float EyeBelowTop = .15f;
+    // A move longer than this between two updates is a teleport, not a stride.
+    private const float LongestStride = 1.5f;
 
     private readonly IEngineContext engine;
     private readonly WalkerTuning tuning;
@@ -18,11 +20,15 @@ internal sealed class Walker : IDisposable
     private IWalkScene scene;
     private ulong commandSequence;
     private bool cut = true;
+    private readonly HeadBob bob;
+    private Vector3? lastFeet;
+    private float? landedFalling;
 
-    internal Walker(IEngineContext engine, WalkerTuning tuning, IWalkScene scene)
+    internal Walker(IEngineContext engine, WalkerTuning tuning, HeadBobTuning bobbing, IWalkScene scene)
     {
         this.engine = engine;
         this.tuning = tuning;
+        bob = new HeadBob(bobbing);
         this.scene = scene;
         config = Configure(engine.Spatial.DefaultCharacterControllerConfig(), tuning.Speed);
         sprintConfig = Configure(config, tuning.SprintSpeed);
@@ -51,6 +57,7 @@ internal sealed class Walker : IDisposable
     internal float Height => Motion.Stance == CharacterStance.Crouched ? tuning.CrouchedHeight : tuning.Height;
     internal Vector3 Feet => Position - Vector3.UnitY * (Height / 2);
     private Vector3 Eye => Position + Vector3.UnitY * (Height / 2 - EyeBelowTop);
+    /// <summary>The steady eye actions aim from: the camera bobs about it.</summary>
     internal Vector3 EyePosition => Eye;
     /// <summary>Where the walker looks, as a unit vector (pitch included): the aim of its actions.</summary>
     internal Vector3 Forward => Look.IntegrateClamped(new LookRequest(LookState, Vector2.Zero, Input.Config.PointerLookConfig)).Forward;
@@ -84,8 +91,26 @@ internal sealed class Walker : IDisposable
             input.SprintHeld && !input.CrouchHeld ? sprintConfig : config,
             new CharacterControllerCommand(input.Movement * movementScale, LookState.YawRadians, jumpPressed && movementScale > 0,
                 input.JumpHeld, input.CrouchHeld, externalVelocity, Vector3.Zero, delta, ++commandSequence)));
+        float falling = -Motion.ControlledVelocity.Y;
+        bool wasAirborne = !Motion.Grounded;
         Position = receipt.Transform.Translation;
         Motion = receipt.Motion;
+        if (wasAirborne && Motion.Grounded) landedFalling = Math.Max(landedFalling ?? 0, falling);
+    }
+
+    /// <summary>The camera's head bob now (developer readout).</summary>
+    internal (float Side, float Up, float RollDegrees) Bob => bob.Now();
+
+    /// <summary>Moves the head bob on by an update's host seconds: presentation, after the update's steps.</summary>
+    internal void Present(double hostSeconds)
+    {
+        Vector3 feet = Feet with { Y = 0 };
+        float walked = lastFeet is { } last && Vector3.Distance(feet, last) is var stride && stride <= LongestStride ? stride : 0;
+        lastFeet = feet;
+        Vector3 velocity = Motion.ControlledVelocity;
+        bob.Advance(hostSeconds, walked, new Vector2(velocity.X, velocity.Z).Length(), !Airborne && !Flying, tuning.Speed, tuning.SprintSpeed,
+            Flying ? null : landedFalling);
+        landedFalling = null;
     }
 
     private void Fly(FpsInputFrame input, float delta)
@@ -111,7 +136,7 @@ internal sealed class Walker : IDisposable
         Position = feet + Vector3.UnitY * (Height / 2);
         Motion = default;
         LookState = new LookState(yawDegrees * MathF.PI / 180, 0);
-        cut = true;
+        Stood();
     }
 
     /// <summary>The walker yaw that faces from one point to another (positive yaw turns right; 0 faces -Z).</summary>
@@ -124,7 +149,16 @@ internal sealed class Walker : IDisposable
         Flying = false;
         LookState = new LookState(scene.SpawnYawDegrees * MathF.PI / 180, 0);
         Input.Physical.Clear();
+        Stood();
+    }
+
+    // A placement, not a move: the camera cuts and the bob starts still.
+    private void Stood()
+    {
         cut = true;
+        lastFeet = null;
+        landedFalling = null;
+        bob.Reset();
     }
 
     internal void Publish(double sampleTime)
@@ -140,10 +174,19 @@ internal sealed class Walker : IDisposable
         camera.Dispose();
     }
 
-    private CameraDescriptor Descriptor() => new(new CameraPose(Eye, LookState.PitchRadians * 180 / Math.PI, LookState.YawRadians * 180 / Math.PI),
-        CameraBasisMode.Derived, default,
-        new CameraProjection(CameraProjectionKind.Perspective, tuning.FieldOfViewDegrees, 0, NearPlane, tuning.FarPlane),
-        new CameraViewport(0, 0, 1, 1));
+    // The camera at the eye with the head bob: moved along the view's own right and up, rolled about its forward.
+    private CameraDescriptor Descriptor()
+    {
+        Vector3 forward = Forward;
+        Vector3 right = Vector3.Normalize(Vector3.Cross(forward, Vector3.UnitY));
+        Vector3 up = Vector3.Cross(right, forward);
+        (float side, float rise, float rollDegrees) = bob.Now();
+        Quaternion roll = Quaternion.CreateFromAxisAngle(forward, -rollDegrees * MathF.PI / 180);
+        return new(new CameraPose(Eye + right * side + up * rise, 0, 0), CameraBasisMode.Explicit,
+            new CameraBasis(forward, Vector3.Transform(right, roll), Vector3.Transform(up, roll)),
+            new CameraProjection(CameraProjectionKind.Perspective, tuning.FieldOfViewDegrees, 0, NearPlane, tuning.FarPlane),
+            new CameraViewport(0, 0, 1, 1));
+    }
 
     private CharacterControllerConfig Configure(CharacterControllerConfig baseline, float speed) => baseline with
     {

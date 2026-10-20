@@ -289,6 +289,12 @@ quicken the source's) bake them: every set has its Idle, Walk, Sprint (the revol
 (Hide) baked, the melee swaps at about half the source's two seconds. `riders.arms` reports each hand's sway and where
 it is in a swap; the workbench's Sway group tunes the blend, what stays under an action, and each loop's size and cycle.
 
+The camera bobs too (`Player/HeadBob`, `content/player/bob.json`): a step every `stepMetres` walked, the eye dropping
+`rise` at each footfall, swaying `sway` over the planted foot and rolling `rollDegrees` with it, walking and sprinting
+gaits blended by speed and faded in the air, and a dip on landing sized by the fall speed past `softest`. It is camera
+presentation only: actions aim from the steady eye, and the held weapons ride the camera, so they bob with the view and
+sway on top. `riders.player.bob` reads it.
+
 ### Feedback over baked motion
 
 A baked motion is a tween timeline on the weapon's object, so feedback composes with it rather than replacing it. As a

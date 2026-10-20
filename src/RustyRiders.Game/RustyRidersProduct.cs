@@ -39,7 +39,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         engine = context.Engine;
         scenes = new Scenes(engine, LevelRules.Load(engine));
         WalkerTuning walking = WalkerTuning.Load(engine);
-        walker = new Walker(engine, walking, scenes.Current);
+        walker = new Walker(engine, walking, HeadBobTuning.Load(engine), scenes.Current);
         play = new Play(engine, walker, walking.Radius);
         run = new Expedition(engine, scenes, play, walker);
         EnterScene();
@@ -99,6 +99,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         sampleTime = time.WorldSeconds;
         time.Choose(new TimeDemand(!scenes.ShowingLevel || walker.Flying, frame.Movement.Length(), frame.SprintHeld && !frame.CrouchHeld,
             walker.Airborne || jumpPending, physical.Pressed(KeyboardControl.KeyT), actionSeconds));
+        walker.Present(update.Facts.HostElapsedSeconds);
         play.Combat.Present(update.Facts.HostElapsedSeconds);
         Publish();
         return ProductUpdateResult.None;
