@@ -1,307 +1,331 @@
-[
-  {
-    "name": "rift-blade slash",
-    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Attack_RD.fbx",
-    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "motion": "sns",
-    "action": "blade-slash",
-    "look": "rift-blade",
-    "seat": true
+{
+  "tolerance": {
+    "action": {
+      "position": 20,
+      "angle": 8
+    },
+    "transition": {
+      "position": 20,
+      "angle": 8
+    },
+    "idle": {
+      "position": 1,
+      "angle": 0.5
+    },
+    "walk": {
+      "position": 3,
+      "angle": 1.5
+    },
+    "sprint": {
+      "position": 10,
+      "angle": 3
+    }
   },
-  {
-    "name": "maul smash",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Attack_D.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword",
-    "action": "maul-smash",
-    "look": "maul",
-    "seat": true,
-    "twoHanded": true
-  },
-  {
-    "name": "ember wand bolt",
-    "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Magic.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "hand": "l",
-    "motion": "dagger-magic",
-    "action": "ember-bolt",
-    "look": "ember-wand",
-    "seat": true,
-    "noClosure": true,
-    "weapon": "palm"
-  },
-  {
-    "name": "frost sigil nova",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Magic.fbx",
-    "hand": "l",
-    "motion": "longsword-magic",
-    "action": "frost-nova",
-    "look": "frost-sigil",
-    "seat": true,
-    "noClosure": true,
-    "weapon": "palm",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx"
-  },
-  {
-    "name": "flintlock shot",
-    "source": "cat",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Shot.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "weapon": "B_Gun_03_Body",
-    "hold": "pistol",
-    "motion": "revolver",
-    "action": "flintlock-shot",
-    "look": "laser-flintlock",
-    "seat": true
-  },
-  {
-    "name": "flintlock reload",
-    "source": "cat",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Reload.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "weapon": "B_Gun_03_Body",
-    "hold": "pistol",
-    "motion": "revolver",
-    "action": "flintlock-reload",
-    "strike": 0.8,
-    "commitEnd": 0.85
-  },
-  {
-    "name": "sns idle",
-    "kind": "loop",
-    "state": "idle",
-    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "motion": "sns"
-  },
-  {
-    "name": "sns walk",
-    "kind": "loop",
-    "state": "walk",
-    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Walk.fbx",
-    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "motion": "sns",
-    "speed": 5
-  },
-  {
-    "name": "sns sprint",
-    "kind": "loop",
-    "state": "sprint",
-    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Sprint.fbx",
-    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "motion": "sns",
-    "speed": 12
-  },
-  {
-    "name": "sns equip",
-    "kind": "equip",
-    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Equip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "motion": "sns",
-    "pace": 0.5
-  },
-  {
-    "name": "sns unequip",
-    "kind": "unequip",
-    "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Unequip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
-    "motion": "sns",
-    "pace": 0.45
-  },
-  {
-    "name": "longsword idle",
-    "kind": "loop",
-    "state": "idle",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword"
-  },
-  {
-    "name": "longsword walk",
-    "kind": "loop",
-    "state": "walk",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Walk1.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword",
-    "speed": 5
-  },
-  {
-    "name": "longsword sprint",
-    "kind": "loop",
-    "state": "sprint",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Sprint.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword",
-    "speed": 12
-  },
-  {
-    "name": "longsword equip",
-    "kind": "equip",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Equip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword",
-    "pace": 0.5
-  },
-  {
-    "name": "longsword unequip",
-    "kind": "unequip",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Unequip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword",
-    "pace": 0.45
-  },
-  {
-    "name": "dagger-magic idle",
-    "kind": "loop",
-    "state": "idle",
-    "clip": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "motion": "dagger-magic",
-    "hand": "l",
-    "weapon": "palm"
-  },
-  {
-    "name": "dagger-magic walk",
-    "kind": "loop",
-    "state": "walk",
-    "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Walk1.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "motion": "dagger-magic",
-    "hand": "l",
-    "weapon": "palm",
-    "speed": 5
-  },
-  {
-    "name": "dagger-magic sprint",
-    "kind": "loop",
-    "state": "sprint",
-    "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Sprint.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "motion": "dagger-magic",
-    "hand": "l",
-    "weapon": "palm",
-    "speed": 12
-  },
-  {
-    "name": "dagger-magic equip",
-    "kind": "equip",
-    "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Equip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "motion": "dagger-magic",
-    "hand": "l",
-    "weapon": "palm"
-  },
-  {
-    "name": "dagger-magic unequip",
-    "kind": "unequip",
-    "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Unequip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
-    "motion": "dagger-magic",
-    "hand": "l",
-    "weapon": "palm"
-  },
-  {
-    "name": "longsword-magic idle",
-    "kind": "loop",
-    "state": "idle",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword-magic",
-    "hand": "l",
-    "weapon": "palm"
-  },
-  {
-    "name": "longsword-magic walk",
-    "kind": "loop",
-    "state": "walk",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Walk1.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword-magic",
-    "hand": "l",
-    "weapon": "palm",
-    "speed": 5
-  },
-  {
-    "name": "longsword-magic sprint",
-    "kind": "loop",
-    "state": "sprint",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Sprint.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword-magic",
-    "hand": "l",
-    "weapon": "palm",
-    "speed": 12
-  },
-  {
-    "name": "longsword-magic equip",
-    "kind": "equip",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Equip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword-magic",
-    "hand": "l",
-    "weapon": "palm",
-    "pace": 0.5
-  },
-  {
-    "name": "longsword-magic unequip",
-    "kind": "unequip",
-    "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Unequip.fbx",
-    "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
-    "motion": "longsword-magic",
-    "hand": "l",
-    "weapon": "palm",
-    "pace": 0.45
-  },
-  {
-    "name": "revolver idle",
-    "kind": "loop",
-    "state": "idle",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "motion": "revolver",
-    "source": "cat",
-    "weapon": "B_Gun_03_Body"
-  },
-  {
-    "name": "revolver walk",
-    "kind": "loop",
-    "state": "walk",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Walk.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "motion": "revolver",
-    "source": "cat",
-    "weapon": "B_Gun_03_Body",
-    "speed": 5
-  },
-  {
-    "name": "revolver sprint",
-    "kind": "loop",
-    "state": "sprint",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Run.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "motion": "revolver",
-    "source": "cat",
-    "weapon": "B_Gun_03_Body",
-    "speed": 12
-  },
-  {
-    "name": "revolver equip",
-    "kind": "equip",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Get.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "motion": "revolver",
-    "source": "cat",
-    "weapon": "B_Gun_03_Body",
-    "pace": 0.7
-  },
-  {
-    "name": "revolver unequip",
-    "kind": "unequip",
-    "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Hide.FBX",
-    "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
-    "motion": "revolver",
-    "source": "cat",
-    "weapon": "B_Gun_03_Body",
-    "pace": 0.6
-  }
-]
+  "bakes": [
+    {
+      "name": "rift-blade slash",
+      "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Attack_RD.fbx",
+      "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "motion": "sns",
+      "action": "blade-slash",
+      "look": "rift-blade",
+      "seat": true
+    },
+    {
+      "name": "maul smash",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Attack_D.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword",
+      "action": "maul-smash",
+      "look": "maul",
+      "seat": true,
+      "twoHanded": true
+    },
+    {
+      "name": "ember wand bolt",
+      "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Magic.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "hand": "l",
+      "motion": "dagger-magic",
+      "action": "ember-bolt",
+      "look": "ember-wand",
+      "seat": true,
+      "noClosure": true,
+      "weapon": "palm"
+    },
+    {
+      "name": "frost sigil nova",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Magic.fbx",
+      "hand": "l",
+      "motion": "longsword-magic",
+      "action": "frost-nova",
+      "look": "frost-sigil",
+      "seat": true,
+      "noClosure": true,
+      "weapon": "palm",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx"
+    },
+    {
+      "name": "flintlock shot",
+      "source": "cat",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Shot.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "weapon": "B_Gun_03_Body",
+      "hold": "pistol",
+      "motion": "revolver",
+      "action": "flintlock-shot",
+      "look": "laser-flintlock",
+      "seat": true
+    },
+    {
+      "name": "flintlock reload",
+      "source": "cat",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Reload.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "weapon": "B_Gun_03_Body",
+      "hold": "pistol",
+      "motion": "revolver",
+      "action": "flintlock-reload",
+      "strike": 0.8,
+      "commitEnd": 0.85
+    },
+    {
+      "name": "sns idle",
+      "kind": "loop",
+      "state": "idle",
+      "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "motion": "sns"
+    },
+    {
+      "name": "sns walk",
+      "kind": "loop",
+      "state": "walk",
+      "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Walk.fbx",
+      "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "motion": "sns",
+      "speed": 5
+    },
+    {
+      "name": "sns sprint",
+      "kind": "loop",
+      "state": "sprint",
+      "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Sprint.fbx",
+      "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "motion": "sns",
+      "speed": 12
+    },
+    {
+      "name": "sns equip",
+      "kind": "equip",
+      "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Equip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "motion": "sns",
+      "pace": 0.5
+    },
+    {
+      "name": "sns unequip",
+      "kind": "unequip",
+      "clip": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Unequip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx",
+      "motion": "sns",
+      "pace": 0.45
+    },
+    {
+      "name": "longsword idle",
+      "kind": "loop",
+      "state": "idle",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword"
+    },
+    {
+      "name": "longsword walk",
+      "kind": "loop",
+      "state": "walk",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Walk1.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword",
+      "speed": 5
+    },
+    {
+      "name": "longsword sprint",
+      "kind": "loop",
+      "state": "sprint",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Sprint.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword",
+      "speed": 12
+    },
+    {
+      "name": "longsword equip",
+      "kind": "equip",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Equip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword",
+      "pace": 0.5
+    },
+    {
+      "name": "longsword unequip",
+      "kind": "unequip",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Unequip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword",
+      "pace": 0.45
+    },
+    {
+      "name": "dagger-magic idle",
+      "kind": "loop",
+      "state": "idle",
+      "clip": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "motion": "dagger-magic",
+      "hand": "l",
+      "weapon": "palm"
+    },
+    {
+      "name": "dagger-magic walk",
+      "kind": "loop",
+      "state": "walk",
+      "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Walk1.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "motion": "dagger-magic",
+      "hand": "l",
+      "weapon": "palm",
+      "speed": 5
+    },
+    {
+      "name": "dagger-magic sprint",
+      "kind": "loop",
+      "state": "sprint",
+      "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Sprint.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "motion": "dagger-magic",
+      "hand": "l",
+      "weapon": "palm",
+      "speed": 12
+    },
+    {
+      "name": "dagger-magic equip",
+      "kind": "equip",
+      "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Equip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "motion": "dagger-magic",
+      "hand": "l",
+      "weapon": "palm"
+    },
+    {
+      "name": "dagger-magic unequip",
+      "kind": "unequip",
+      "clip": "MoreArt/FpMelee/FPP_Dagger/FPP_Dag_Unequip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Dag_Idle.fbx",
+      "motion": "dagger-magic",
+      "hand": "l",
+      "weapon": "palm"
+    },
+    {
+      "name": "longsword-magic idle",
+      "kind": "loop",
+      "state": "idle",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword-magic",
+      "hand": "l",
+      "weapon": "palm"
+    },
+    {
+      "name": "longsword-magic walk",
+      "kind": "loop",
+      "state": "walk",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Walk1.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword-magic",
+      "hand": "l",
+      "weapon": "palm",
+      "speed": 5
+    },
+    {
+      "name": "longsword-magic sprint",
+      "kind": "loop",
+      "state": "sprint",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Sprint.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword-magic",
+      "hand": "l",
+      "weapon": "palm",
+      "speed": 12
+    },
+    {
+      "name": "longsword-magic equip",
+      "kind": "equip",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Equip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword-magic",
+      "hand": "l",
+      "weapon": "palm",
+      "pace": 0.5
+    },
+    {
+      "name": "longsword-magic unequip",
+      "kind": "unequip",
+      "clip": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Unequip.fbx",
+      "rest": "MoreArt/FpMelee/FPP_Longsword/FPP_Longs_Idle.fbx",
+      "motion": "longsword-magic",
+      "hand": "l",
+      "weapon": "palm",
+      "pace": 0.45
+    },
+    {
+      "name": "revolver idle",
+      "kind": "loop",
+      "state": "idle",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "motion": "revolver",
+      "source": "cat",
+      "weapon": "B_Gun_03_Body"
+    },
+    {
+      "name": "revolver walk",
+      "kind": "loop",
+      "state": "walk",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Walk.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "motion": "revolver",
+      "source": "cat",
+      "weapon": "B_Gun_03_Body",
+      "speed": 5
+    },
+    {
+      "name": "revolver sprint",
+      "kind": "loop",
+      "state": "sprint",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Run.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "motion": "revolver",
+      "source": "cat",
+      "weapon": "B_Gun_03_Body",
+      "speed": 12
+    },
+    {
+      "name": "revolver equip",
+      "kind": "equip",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Get.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "motion": "revolver",
+      "source": "cat",
+      "weapon": "B_Gun_03_Body",
+      "pace": 0.7
+    },
+    {
+      "name": "revolver unequip",
+      "kind": "unequip",
+      "clip": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Hide.FBX",
+      "rest": "MoreArt/FirstPersonArms/Animations/Hands_Gun_03_Idle.FBX",
+      "motion": "revolver",
+      "source": "cat",
+      "weapon": "B_Gun_03_Body",
+      "pace": 0.6
+    }
+  ]
+}

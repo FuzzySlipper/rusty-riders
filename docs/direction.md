@@ -213,8 +213,8 @@ used; confirm their licences before any public release.
 A held look's motion is the weapon alone in camera space, so an old clip becomes held motion by following its weapon
 from the eye: `scripts/bake-held-motion.py` (Blender) samples the weapon's grip and turn every frame, takes them from
 the rest pose, splits the frames into windup (to the strike, the frame the grip moves fastest), commit (until it slows)
-and recovery, keeps only the keys a straight blend between them would miss by more than 2 cm or 8 degrees, and writes
-them as poses and a track into `content/held/motion.json`, each key timed by its phase so it lands on the same beat at
+and recovery, keeps only the keys the motion needs (below), and writes them as poses and a track into
+`content/held/motion.json`, each key timed by its phase so it lands on the same beat at
 the action's own speed. Beside each key it bakes what the source arm does that our IK cannot infer: the hand's closure
 (the source fingers' curl), the body's lean (`shoulder`) and the elbow's bend (`elbow`). The arms are not baked as a
 skeleton: ours reach the grip by IK on any rig.
@@ -236,6 +236,19 @@ one), converting the CAT clips with unity-import first. An entry names:
   phases where the grip's speed does not (a reload); `noClosure` keeps the hand closed through an open-handed gesture
   (a wand would drop).
 
+The recipe's `tolerance` says how closely each kind of bake keeps to its source, as `position` (millimetres) and
+`angle` (degrees); an entry may give its own. A frame becomes a key only when the curve the game draws through the
+kept keys would otherwise stray past them: a straight blend for actions and transitions, and for loops the closed
+Catmull-Rom of `HeldLoop.At`, judged at every frame and halfway between. An action's blend starts where the game starts
+it (rest, no lean, the elbows toward the arms' pole), and its keys keep the lean and the elbows within the position
+tolerance and the hand's closure within the angle tolerance of the fingers' curl. Swings and swaps keep 20 mm and 8°
+(they are fast); a standing sway, small and always on, 1 mm and 0.5°; walking 3 mm and 1.5°; sprinting 10 mm and 3°.
+Comparing the rendered poses against an every-frame bake, every motion lands within its tolerance (sampled densely,
+a loop up to about a quarter over it between frames). The earlier bakes missed by up to 0.57 m on the elbows early in
+the windup (they ramped from the arms' pole to a late first key) and 26 mm on the sprint loops (sampled at ten keys a
+second), so those are where the rebake differs from them; elsewhere it matches them to within the tolerances. Number
+lists are written on one line, so `motion.json` went from about 13,000 lines to 5,200.
+
 Two things keep the hands on a baked weapon:
 - **The body leans.** The source character lunges: its shoulder moves 17 cm toward the slash by the strike, so its
   nearly straight arm reaches a grip 0.64 m ahead. Each key carries that move as `shoulder` (camera space, the main
@@ -256,7 +269,7 @@ baked weapon axis), with no wrist shortfall over any of them:
 
 | Look and action | Source | Notes |
 | --- | --- | --- |
-| rift-blade `blade-slash` | `FPP_sns_Attack_RD` (motion `sns`) | 30 keys; rests blade-up as the sword-and-shield idle |
+| rift-blade `blade-slash` | `FPP_sns_Attack_RD` (motion `sns`) | 40 keys; rests blade-up as the sword-and-shield idle |
 | maul `maul-smash` | `FPP_Longs_Attack_D` (`longsword`), `twoHanded` | Both hands on the handle, as the longsword is held: raise overhead, low strike, return |
 | ember-wand `ember-bolt` | `FPP_Dag_Magic`, left hand, `palm` (`dagger-magic`) | The dagger set's casting hand; the staff lies across the view |
 | frost-sigil `frost-nova` | `FPP_Longs_Magic`, left hand, `palm` (`longsword-magic`) | The off hand leaves the hilt to cast; `FPP_sns_Magic1` starts and ends out of view, so its sigil would be hidden at rest |

@@ -82,9 +82,13 @@ measured hand frame. The fitter, `axis`, `muzzle`, key `visible`, `offRest` and 
    generator as hotel's).
 3. **Hand closure.** Both use -1…1 around the grip clip. Riders keeps one scalar per hand; hotel keeps two per key.
    Renaming to `hands:[main,off]` or keeping `grip`/`offGrip` is cosmetic, so pick one.
-4. **Content density.** Riders' baked motions are densely keyed (`motion.json` is about 13k lines of linear keys), while
-   hotel's are sparse and hand-authored. Both are valid uses of one key format. Upstream, the baker should simplify
-   with a tolerance (as transitions already do), so baked files stay reviewable.
+4. **Content density.** Hotel's motions are sparse and hand-authored; riders' are baked. Both are valid uses of one
+   key format. *Settled in riders:* the baker keys every kind by tolerance against the curve the game draws (straight
+   blends for actions and transitions, the closed Catmull-Rom for loops), over every channel a key carries (grip,
+   turn, lean, elbows, closures), with per-kind millimetre and degree tolerances in the recipe, and writes number lists
+   on one line. `motion.json` went from about 13k lines to 5.2k at about the same key count (roughly 700 keys,
+   from 780): the earlier bakes were already reduced except the loops, whose sprints had been under-keyed. Upstream,
+   the baker takes the same tolerances.
 5. **Shapes are relative to each rig's base hand.** Hotel's shape is added over one grip clip. In riders it was
    added over each rig's `grip` bend, which ported the values but not their meaning: the same coach-gun and flintlock
    shapes put the index pad 18–20 mm from the trigger on the generated arms and 100–118 mm from it on the painted arms,

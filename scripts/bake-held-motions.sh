@@ -15,7 +15,7 @@ trap 'rm -rf "$staging"' EXIT
 
 mapfile -t cat_clips < <(python3 -c '
 import json, sys
-for e in json.load(open(sys.argv[1])):
+for e in json.load(open(sys.argv[1]))["bakes"]:
     if e.get("source") == "cat":
         print(e["clip"]); print(e["rest"])' "$recipe" | sort -u)
 if ((${#cat_clips[@]})); then

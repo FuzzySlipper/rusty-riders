@@ -9,9 +9,15 @@ the source fingers' curl), the body's lean (the upper arm's move from rest, "sho
 
 Frames split into the action's phases (windup up to the strike, commit while the weapon is fast, recovery to the end):
 `from` and `to` bake part of a clip. By default the strike is the frame the grip moves fastest and the commit ends when it slows below `slow` of that peak;
-`strike` and `commitEnd` (a frame, or a fraction of the clip when below 1) override. Keys are kept only where the
-motion bends more than `position` metres or `angle` degrees from a straight blend between kept keys, each timed by its
-phase and its moment through it, so it lands on the same beat whatever the action's own timing.
+`strike` and `commitEnd` (a frame, or a fraction of the clip when below 1) override. Each key is timed by its phase and
+its moment through it, so it lands on the same beat whatever the action's own timing.
+
+Every kind keeps only the keys the motion needs: a frame is dropped while the curve the game draws through the kept keys
+(a straight blend for actions and transitions, the closed Catmull-Rom of HeldLoop.At for loops) stays within the
+recipe's `tolerance` for what it bakes (`action`, `transition`, or a loop's `idle`, `walk` or `sprint`) of every source
+frame: `position` millimetres for the grip, the lean and the elbow's pole, and `angle` degrees for the turn and the
+fingers' curl behind a key's closure. An entry may give its own `tolerance`. A standing sway is small and always
+playing, so it keeps closer to its source than a sprint or a swing, which move fast and far.
 
 With `twoHanded` (a weapon held in both hands, such as the FPP longsword), the other hand is baked too: at rest its
 palm's place on the same weapon becomes the look's grips.off (look space) and its canonical frame from the look's its
@@ -35,20 +41,21 @@ usage (scripts/bake-held-motions.sh runs every bake in art/held-motion/bakes.jso
       [--assets old-game/Assets] [--converted DIR]
   blender -b --factory-startup --python scripts/bake-held-motion.py -- --clip CLIP --rest REST --motion NAME
       --action ACTION [--look LOOK] [--seat] [--hand r|l] [--source mannequin|cat] [--weapon BONE] [--hold fist|pistol]
-      [--blade AXIS] [--edge AXIS] [--strike F] [--commit-end F] [--no-closure] [--position 0.02] [--angle 8] [--slow 0.4]
+      [--blade AXIS] [--edge AXIS] [--strike F] [--commit-end F] [--no-closure] [--position MM] [--angle DEG] [--slow 0.4]
       [--scale 1]
 """
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 args = argparse.ArgumentParser()
-args.add_argument("--recipe", type=Path, help="a JSON list of bakes (art/held-motion/bakes.json)")
+args.add_argument("--recipe", type=Path, help="a recipe of bakes and their tolerance (art/held-motion/bakes.json)")
 args.add_argument("--only", help="bake only the recipe entry of this name")
 args.add_argument("--assets", type=Path, default=Path("old-game/Assets"), help="where a recipe's mannequin clips are")
 args.add_argument("--converted", type=Path, help="where unity-import put a recipe's cat clips")
@@ -67,8 +74,8 @@ args.add_argument("--blade", help="the weapon bone's axis along the look's lengt
 args.add_argument("--edge", help="the weapon bone's axis toward the look's up side; default from --hold")
 args.add_argument("--strike", type=float)
 args.add_argument("--commit-end", type=float)
-args.add_argument("--position", type=float, default=0.02)
-args.add_argument("--angle", type=float, default=8.0)
+args.add_argument("--position", type=float, default=20.0, help="how far (mm) a kept key's curve may stray from the source")
+args.add_argument("--angle", type=float, default=8.0, help="how far (degrees) a kept key's curve may turn from the source")
 args.add_argument("--slow", type=float, default=0.4)
 args.add_argument("--scale", type=float, default=1.0, help="multiplies the grip's movement")
 args.add_argument("--seat", action="store_true")
@@ -77,6 +84,7 @@ args.add_argument("--two-handed", action="store_true", help="bake the other hand
 args.add_argument("--out", type=Path, default=Path("content/held/motion.json"))
 args.add_argument("--looks", type=Path, default=Path("content/held/looks.json"))
 args.add_argument("--stances", type=Path, default=Path("content/held/stances.json"))
+args.add_argument("--arms", type=Path, default=Path("content/held/arms.json"), help="the arms' pole, where an action's elbows start")
 cli = args.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
 # Both sources face -Y with +Z up in Blender: camera right is -X, up is +Z, back is +Y.
@@ -239,29 +247,38 @@ def bake(spec):
                 return phase, round((i - a) / max(1, b - a), 3)
         return "Recovery", 1.0
 
-    position, angle = spec.get("position", 0.02), spec.get("angle", 8.0)
+    position, angle = tolerance(spec)
 
-    def bent(a, b):
-        """The frame between keys a and b furthest from a straight blend, and how far (scaled to the tolerances)."""
-        worst, at = 0.0, None
-        for i in range(a + 1, b):
-            t = (i - a) / (b - a)
-            grip = poses[a][0].lerp(poses[b][0], t)
-            turn = poses[a][1].slerp(poses[b][1], t)
-            lean = poses[a][3].lerp(poses[b][3], t)
-            off = max((poses[i][0] - grip).length / position, (poses[i][3] - lean).length / position,
-                      math.degrees(poses[i][1].rotation_difference(turn).angle) / angle)
-            if off > worst:
-                worst, at = off, i
-        return worst, at
+    def closed(curl):
+        """A key's closure as the fingers' curl (degrees) it draws: none with noClosure, clamped to -1...1 of 40 degrees."""
+        return 0.0 if spec.get("noClosure") else max(-40.0, min(40.0, curl))
 
-    # Keys: the phase ends always, then wherever a straight blend between keys bends past the tolerances.
-    keys = sorted({strike, end, len(frames) - 1})
-    while True:
-        split = next((at for a, b in zip([0] + keys, keys) for worst, at in [bent(a, b)] if worst > 1), None)
-        if split is None:
-            break
-        keys = sorted(set(keys) | {split})
+    # The game starts a track where the hands rest (HeldView.Keyed): the look at rest, the hand at its grip, no lean and
+    # the elbows toward the arms' pole (the off hand's mirrored), so the blend to the first key starts there, not at the
+    # clip's first frame.
+    arms_pole = Vector(json.loads(Path(spec.get("arms", cli.arms)).read_text())["pole"])
+    start, off_start = (Vector(), Quaternion(), 0.0, Vector(), arms_pole), (0.0, MIRROR @ arms_pole)
+
+    def off(i, a, b):
+        """How far frame i strays from a straight blend of keys a and b, scaled to the tolerances, over every channel a key carries."""
+        t = (i - a) / (b - a)
+        grip, turn, curl, lean, pole = poses[i]
+        ka = start if a == 0 else poses[a]
+        kb = poses[b]
+        worst = max((grip - ka[0].lerp(kb[0], t)).length / position,
+                    math.degrees(turn.rotation_difference(ka[1].slerp(kb[1], t)).angle) / angle,
+                    (lean - ka[3].lerp(kb[3], t)).length / position,
+                    (pole - ka[4].lerp(kb[4], t)).length / position,
+                    abs(closed(curl) - (closed(ka[2]) * (1 - t) + closed(kb[2]) * t)) / angle)
+        if two_handed:
+            off_curl, off_pole = offs[i]
+            oa = off_start if a == 0 else offs[a]
+            worst = max(worst, (off_pole - oa[1].lerp(offs[b][1], t)).length / position,
+                        abs(closed(off_curl) - (closed(oa[0]) * (1 - t) + closed(offs[b][0]) * t)) / angle)
+        return worst
+
+    # Keys: the phase ends always (the track starts at rest, frame 0), then the fewest the straight blends need.
+    keys = reduce(len(frames), lambda kept: linear_worst(kept, off), {0, strike, end, len(frames) - 1})[1:]
 
     out = Path(spec.get("out", cli.out))
     motions = json.loads(out.read_text())
@@ -286,7 +303,7 @@ def bake(spec):
                        offElbow=[round(v, 3) for v in offs[i][1]])
         track.append(key)
     motion["tracks"][spec["action"]] = track
-    out.write_text(json.dumps(motions, indent=2) + "\n")
+    write(out, motions)
 
     seated = ""
     if spec.get("look"):
@@ -339,24 +356,58 @@ def motion_of(spec):
 
 def bake_loop(spec, poses, frames):
     """
-    A sway loop (`state`: idle, walk or sprint): offsets from the set's rest, evenly around the clip (a cycle; about ten
-    keys a second unless `keys` says). Its
-    cycle is the clip's seconds for idle; walking and sprinting give theirs in metres, the clip's seconds at our `speed`
-    (m/s), so the bob keeps the source's step cadence at our pace.
+    A sway loop (`state`: idle, walk or sprint): offsets from the set's rest around the clip (a cycle, its last frame
+    its first), keyed where the closed curve the game draws through them (HeldLoop.At) would miss the source by the
+    tolerances. Its cycle is the clip's seconds for idle; walking and sprinting give theirs in metres, the clip's seconds
+    at our `speed` (m/s), so the bob keeps the source's step cadence at our pace.
     """
     seconds = (len(frames) - 1) / fps()
-    # Enough keys to keep every step's bob: a walk clip may hold several steps.
-    count = int(spec.get("keys", max(12, round(seconds * 10))))
     cycle = seconds if spec["state"] == "idle" else seconds * spec["speed"]
-    keys = []
-    for k in range(count):
-        grip, turn, _, _, _ = poses[round(k * (len(frames) - 1) / count)]
-        keys.append({"at": round(k / count, 3), "position": [round(v, 4) for v in grip], "rotation": degrees(turn)})
+    position, angle = tolerance(spec)
+    count = len(frames) - 1
+    # Each frame as a loop key stores it (tenth-of-a-millimetre and tenth-of-a-degree steps).
+    keyed = [([round(v, 4) for v in grip], [round(v, 1) for v in euler(turn)]) for grip, turn, _, _, _ in poses[:count]]
+    # The source, judged at every frame and halfway between (where a curve through fewer keys bulges most): at a frame
+    # its pose, between two the curve through every frame.
+    every = [k / count for k in range(count)]
+    source = []
+    for i in range(count):
+        source.append((i / count, i, poses[i][0], poses[i][1]))
+        move, turn = loop_at(every, keyed, (i + 0.5) / count)
+        source.append(((i + 0.5) / count, (i + 1) % count, move, turned(turn)))
+
+    def worst(kept):
+        at, values = [k / count for k in kept], [keyed[k] for k in kept]
+        far, where = 0.0, None
+        for phase, frame, move, turn in source:
+            drawn, drawn_turn = loop_at(at, values, phase)
+            off = max((drawn - move).length / position, math.degrees(turn.rotation_difference(turned(drawn_turn)).angle) / angle)
+            if off > far:
+                far, where = off, frame
+        return far, where
+    # Start from four keys evenly around (a closed curve needs a few to bend through).
+    kept = reduce(count, worst, {round(k * count / 4) for k in range(4)})
+    keys = [{"at": round(k / count, 3), "position": keyed[k][0], "rotation": keyed[k][1]} for k in kept]
     out, motions, motion = motion_of(spec)
     motion.setdefault("loops", {})[spec["state"]] = {"cycle": round(cycle, 3), "keys": keys}
-    out.write_text(json.dumps(motions, indent=2) + "\n")
-    print(f"BAKED {spec.get('name')}: {Path(spec['clip']).name} -> motions.{spec['motion']}.loops.{spec['state']}: {count} keys, "
-          f"cycle {cycle:.2f} {'s' if spec['state'] == 'idle' else 'm'}")
+    write(out, motions)
+    print(f"BAKED {spec.get('name')}: {Path(spec['clip']).name} -> motions.{spec['motion']}.loops.{spec['state']}: {len(keys)} keys "
+          f"of {count} frames, cycle {cycle:.2f} {'s' if spec['state'] == 'idle' else 'm'}")
+
+
+def loop_at(at, values, phase):
+    """HeldLoop.At: a loop's (move, Euler degrees) at a phase, on the closed Catmull-Rom curve through its keys."""
+    n = len(at)
+    i = max((k for k in range(n) if at[k] <= phase), default=n - 1)
+    a, b = at[i], at[(i + 1) % n]
+    span, into = (b - a + 1) % 1, (phase - a + 1) % 1
+    t = 0 if span <= 0 else into / span
+    p0, p1, p2, p3 = (values[(i + d) % n] for d in (-1, 0, 1, 2))
+
+    def curve(c):
+        v0, v1, v2, v3 = (Vector(p[c]) for p in (p0, p1, p2, p3))
+        return 0.5 * (2 * v1 + (v2 - v0) * t + (2 * v0 - 5 * v1 + 4 * v2 - v3) * t * t + (3 * v1 - v0 - 3 * v2 + v3) * t * t * t)
+    return curve(0), curve(1)
 
 
 def bake_transition(spec, kind, poses, frames):
@@ -365,19 +416,14 @@ def bake_transition(spec, kind, poses, frames):
     blend would miss by the tolerances, each at its fraction of the clip, over the clip's seconds times `pace` (below 1
     for a quicker swap than the source's).
     """
-    position, angle = spec.get("position", 0.02), spec.get("angle", 8.0)
+    position, angle = tolerance(spec)
 
     def off(i, a, b):
         t = (i - a) / (b - a)
         grip = poses[a][0].lerp(poses[b][0], t)
         turn = poses[a][1].slerp(poses[b][1], t)
         return max((poses[i][0] - grip).length / position, math.degrees(poses[i][1].rotation_difference(turn).angle) / angle)
-    keys = [0, len(frames) - 1]
-    while True:
-        worst = max(((off(i, a, b), i) for a, b in zip(keys, keys[1:]) for i in range(a + 1, b)), default=(0, None))
-        if worst[0] <= 1:
-            break
-        keys = sorted(set(keys) | {worst[1]})
+    keys = reduce(len(frames), lambda kept: linear_worst(kept, off), {0, len(frames) - 1})
     out, motions, motion = motion_of(spec)
     for name in [n for n in motion["poses"] if n.startswith(f"{kind}-")]:
         del motion["poses"][name]
@@ -389,15 +435,69 @@ def bake_transition(spec, kind, poses, frames):
         track.append({"pose": pose, "at": round(i / (len(frames) - 1), 3), "ease": "Linear"})
     seconds = (len(frames) - 1) / fps() * spec.get("pace", 1.0)
     motion[kind] = {"seconds": round(seconds, 3), "keys": track}
-    out.write_text(json.dumps(motions, indent=2) + "\n")
+    write(out, motions)
     print(f"BAKED {spec.get('name')}: {Path(spec['clip']).name} -> motions.{spec['motion']}.{kind}: {len(track)} keys over {seconds:.2f} s")
 
 
-def degrees(q):
+def tolerance(spec):
+    """How far (metres, degrees) a kept key's curve may stray from the source: the entry's, given in mm and degrees."""
+    given = spec["tolerance"]
+    return given["position"] / 1000, given["angle"]
+
+
+def kind_of(entry):
+    """Which of the recipe's tolerances an entry bakes by: action, transition, or its loop's state."""
+    kind = entry.get("kind", "action")
+    return "transition" if kind in ("equip", "unequip") else entry["state"] if kind == "loop" else kind
+
+
+def reduce(count, worst, fixed):
+    """
+    The fewest frames (of count) to key, as sorted indices, starting from the fixed ones: worst(kept) gives the frame the
+    curve through the kept keys strays from most and how far (scaled to the tolerances; 1 is at them). The worst frame
+    is keyed until every frame is within, then each key not fixed is dropped while the curve without it stays within.
+    """
+    kept = sorted(fixed)
+    while True:
+        far, where = worst(kept)
+        # Within, or as near as its keys' rounding lets the curve come (the worst frame is already a key).
+        if far <= 1 or where in kept:
+            break
+        kept = sorted(set(kept) | {where})
+    for k in [k for k in kept if k not in fixed]:
+        fewer = [j for j in kept if j != k]
+        if worst(fewer)[0] <= 1:
+            kept = fewer
+    return kept
+
+
+def linear_worst(kept, off):
+    """For reduce: the frame straight blends between kept keys stray from most, off(i, a, b) for frame i between a and b."""
+    return max(((off(i, a, b), i) for a, b in zip(kept, kept[1:]) for i in range(a + 1, b)), default=(0.0, None))
+
+
+def write(out, motions):
+    """motion.json as two-space JSON, with each number list (a position, rotation, lean or pole) on one line."""
+    text = json.dumps(motions, indent=2)
+    text = re.sub(r"\[\s*(-?[\d.eE+-]+(?:,\s*-?[\d.eE+-]+)*)\s*\]", lambda m: "[" + ", ".join(re.split(r",\s*", m.group(1))) + "]", text)
+    out.write_text(text + "\n")
+
+
+def euler(q):
     """Degrees about X, Y, Z that Frames.Turn (System.Numerics yaw Y, pitch X, roll Z) turns back into q, in camera axes."""
     m = q.to_matrix()
     cx, cy, cz = m.col[0], m.col[1], m.col[2]
-    return [round(math.degrees(v), 1) for v in (math.asin(max(-1, min(1, -cz.y))), math.atan2(cz.x, cz.z), math.atan2(cx.y, cy.y))]
+    return [math.degrees(v) for v in (math.asin(max(-1, min(1, -cz.y))), math.atan2(cz.x, cz.z), math.atan2(cx.y, cy.y))]
+
+
+def degrees(q):
+    return [round(v, 1) for v in euler(q)]
+
+
+def turned(d):
+    """Frames.Turn: the turn of degrees about X (pitch), Y (yaw) and Z (roll), as System.Numerics composes them."""
+    x, y, z = (math.radians(v) for v in d)
+    return (Matrix.Rotation(y, 3, "Y") @ Matrix.Rotation(x, 3, "X") @ Matrix.Rotation(z, 3, "Z")).to_quaternion()
 
 
 def axis(name):
@@ -419,15 +519,17 @@ def between(tip, up, toward, up_toward):
 
 
 if cli.recipe:
-    for entry in json.loads(cli.recipe.read_text()):
+    recipe = json.loads(cli.recipe.read_text())
+    for entry in recipe["bakes"]:
         if cli.only and entry["name"] != cli.only:
             continue
         # A cat clip is read as unity-import converted it: models/<its Assets path>.glb.
         def where(path):
             return cli.converted / "models" / Path(path).with_suffix(".glb") if entry.get("source") == "cat" else cli.assets / path
-        bake(dict(entry, clip=str(where(entry["clip"])), rest=str(where(entry["rest"])) if entry.get("rest") else None))
+        bake(dict(entry, clip=str(where(entry["clip"])), rest=str(where(entry["rest"])) if entry.get("rest") else None,
+                  tolerance=entry.get("tolerance", recipe["tolerance"][kind_of(entry)])))
 else:
     bake({"clip": str(cli.clip), "rest": str(cli.rest) if cli.rest else None, "from": cli.start, "to": cli.stop, "motion": cli.motion, "action": cli.action, "look": cli.look,
           "hand": cli.hand, "source": cli.source, "weapon": cli.weapon, "hold": cli.hold, "blade": cli.blade, "edge": cli.edge,
-          "strike": cli.strike, "commitEnd": cli.commit_end, "position": cli.position, "angle": cli.angle, "slow": cli.slow,
+          "strike": cli.strike, "commitEnd": cli.commit_end, "tolerance": {"position": cli.position, "angle": cli.angle}, "slow": cli.slow,
           "scale": cli.scale, "seat": cli.seat, "noClosure": cli.no_closure, "twoHanded": cli.two_handed})
