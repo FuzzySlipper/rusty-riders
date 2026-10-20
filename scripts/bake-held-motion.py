@@ -16,7 +16,11 @@ phase and its moment through it, so it lands on the same beat whatever the actio
 usage:
   blender -b --factory-startup --python scripts/bake-held-motion.py -- CLIP.fbx --rest REST.fbx --motion NAME
       --action ACTION [--look LOOK] [--hand r|l] [--strike F] [--commit-end F] [--position 0.02] [--angle 8]
-      [--slow 0.4] [--scale 1] [--out content/held/motion.json] [--looks content/held/looks.json]
+      [--slow 0.4] [--scale 1] [--seat [--blade +y] [--edge +z]] [--out content/held/motion.json] [--looks ...] [--stances ...]
+
+Each key also carries the body's lean (the upper arm's move from rest, as "shoulder"), so a lunging blow reaches as
+far as the source's. With --seat the look's nudge is set so it rests exactly where the source weapon rests (its blade
+along --blade and its up side along --edge of the weapon bone); its turns about the grip then follow the source path.
 """
 import argparse
 import json
@@ -42,10 +46,17 @@ args.add_argument("--slow", type=float, default=0.4)
 args.add_argument("--scale", type=float, default=1.0, help="multiplies the grip's movement")
 args.add_argument("--out", type=Path, default=Path("content/held/motion.json"))
 args.add_argument("--looks", type=Path, default=Path("content/held/looks.json"))
+args.add_argument("--stances", type=Path, default=Path("content/held/stances.json"))
+args.add_argument("--seat", action="store_true",
+                  help="set the look's nudge so it rests where the source weapon rests (needs --look), so turns about the grip follow the source's path")
+args.add_argument("--blade", default="+y", help="the weapon bone's axis along the blade, toward the tip (+x, -x, +y, -y, +z or -z)")
+args.add_argument("--edge", default="+z", help="the weapon bone's axis toward the look's up side")
 o = args.parse_args(sys.argv[sys.argv.index("--") + 1:])
 
 # The mannequin faces -Y with +Z up in Blender: camera right is -X, up is +Z, back is +Y.
 TO_CAMERA = Matrix(((-1, 0, 0), (0, 0, 1), (0, 1, 0)))
+# The camera-space mirror across the view's centre line: held motion is authored for the main (right) hand.
+MIRROR = Matrix(((-1, 0, 0), (0, 1, 0), (0, 0, 1)))
 FINGERS = ["index", "middle", "ring", "pinky"]
 
 
@@ -57,19 +68,25 @@ def load(path):
 
 
 def sample(rig, frame):
-    """The weapon bone's grip and turn in camera axes, relative to the camera bone, and the hand's finger curl (degrees)."""
+    """
+    The weapon bone's grip and turn and the upper arm's place, in camera axes relative to the camera bone (a left
+    hand's mirrored into the right's), and the hand's finger curl (degrees).
+    """
     bpy.context.scene.frame_set(frame)
     def world(name):
         return rig.matrix_world @ rig.pose.bones[name].matrix
-    weapon, camera = world(f"weapon_{o.hand}"), world("camera")
-    grip = TO_CAMERA @ (weapon.translation - camera.translation)
-    turn = (TO_CAMERA @ weapon.to_3x3().normalized()).to_quaternion()
+    weapon, camera, shoulder = world(f"weapon_{o.hand}"), world("camera"), world(f"upperarm_{o.hand}")
+    side = MIRROR if o.hand == "l" else Matrix.Identity(3)
+    grip = side @ TO_CAMERA @ (weapon.translation - camera.translation)
+    # Mirroring a turn conjugates it by the mirror (the weapon's own axes stay as the bone gives them).
+    turn = (side @ TO_CAMERA @ weapon.to_3x3().normalized() @ side).to_quaternion()
+    place = side @ TO_CAMERA @ (shoulder.translation - camera.translation)
     curl = 0.0
     for finger in FINGERS:
         for i in (1, 2, 3):
             bone = rig.pose.bones[f"{finger}_0{i}_{o.hand}"]
             curl += math.degrees(bone.matrix_basis.to_quaternion().angle)
-    return grip, turn, curl / len(FINGERS)
+    return grip, turn, curl / len(FINGERS), place
 
 
 def degrees(q):
@@ -83,13 +100,15 @@ def degrees(q):
 
 
 rig, action = load(o.rest)
-rest_grip, rest_turn, rest_curl = sample(rig, int(action.frame_range[0]))
+rest_grip, rest_turn, rest_curl, rest_place = sample(rig, int(action.frame_range[0]))
 rig, action = load(o.clip)
 first, last = (int(f) for f in action.frame_range)
 frames = list(range(first, last + 1))
 samples = [sample(rig, f) for f in frames]
-# Each frame from rest: the grip's move (camera space) and the turn about it, left of the rest turn as a pose applies it.
-poses = [((grip - rest_grip) * o.scale, (turn @ rest_turn.inverted()).normalized(), curl - rest_curl) for grip, turn, curl in samples]
+# Each frame from rest: the grip's move (camera space) and the turn about it, left of the rest turn as a pose applies
+# it; the finger curl; and how far the body leans the shoulder (a lunge lets the arm reach further).
+poses = [((grip - rest_grip) * o.scale, (turn @ rest_turn.inverted()).normalized(), curl - rest_curl, (place - rest_place) * o.scale)
+         for grip, turn, curl, place in samples]
 
 # Phases from the grip's speed (a wrist roll can turn the weapon fastest without carrying the blow).
 speed = [0.0] + [(poses[i][0] - poses[i - 1][0]).length for i in range(1, len(poses))]
@@ -117,7 +136,9 @@ def bent(a, b):
         t = (i - a) / (b - a)
         grip = poses[a][0].lerp(poses[b][0], t)
         turn = poses[a][1].slerp(poses[b][1], t)
-        off = max((poses[i][0] - grip).length / o.position, math.degrees(poses[i][1].rotation_difference(turn).angle) / o.angle)
+        lean = poses[a][3].lerp(poses[b][3], t)
+        off = max((poses[i][0] - grip).length / o.position, (poses[i][3] - lean).length / o.position,
+                  math.degrees(poses[i][1].rotation_difference(turn).angle) / o.angle)
         if off > worst:
             worst, at = off, i
     return worst, at
@@ -142,19 +163,49 @@ for name in [n for n in motion["poses"] if n.startswith(f"{prefix}-")]:
     del motion["poses"][name]
 track = []
 for n, i in enumerate(keys, 1):
-    grip, turn, curl = poses[i]
+    grip, turn, curl, lean = poses[i]
     if (grip.length < 1e-3 and turn.angle < math.radians(0.5)) and i == len(frames) - 1:
         pose = "rest"
     else:
         pose = f"{prefix}-{n}"
         motion["poses"][pose] = {"position": [round(v, 3) for v in grip], "rotation": degrees(turn)}
     phase, at = timed(i)
-    track.append({"pose": pose, "phase": phase, "at": at, "ease": "Linear", "grip": round(max(-1, min(1, curl / 40)), 2)})
+    track.append({"pose": pose, "phase": phase, "at": at, "ease": "Linear", "grip": round(max(-1, min(1, curl / 40)), 2),
+                  "shoulder": [round(v, 3) for v in lean]})
 motion["tracks"][o.action] = track
 o.out.write_text(json.dumps(motions, indent=2) + "\n")
+def axis(name):
+    return Vector({"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[name[1]]) * (-1 if name[0] == "-" else 1)
+
+
+def basis(along, hint):
+    a = along.normalized()
+    b = (hint - a * hint.dot(a)).normalized()
+    return a, b, a.cross(b)
+
+
+def between(tip, up, toward, up_toward):
+    """Frames.Between: the turn taking tip to toward and up as near up_toward as it can."""
+    a, b, c = basis(tip, up)
+    x, y, z = basis(toward, up_toward)
+    image = [x * e.dot(a) + y * e.dot(b) + z * e.dot(c) for e in (Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)))]
+    return Matrix((image[0], image[1], image[2])).transposed().to_quaternion()
+
+
+seated = ""
 if o.look:
     looks = json.loads(o.looks.read_text())
-    next(look for look in looks["looks"] if look["id"] == o.look)["motion"] = o.motion
+    look = next(look for look in looks["looks"] if look["id"] == o.look)
+    look["motion"] = o.motion
+    if o.seat:
+        # The look's own frame (length along -Z, up side +Y) in the weapon bone's axes, then the turn its stance gives.
+        tip, edge = axis(o.blade), axis(o.edge)
+        frame = Matrix((edge.cross(-tip), edge, -tip)).transposed().to_quaternion()
+        stance = json.loads(o.stances.read_text())["stances"][look["stance"]]
+        grip, toward, up = (Vector(stance[k]) for k in ("grip", "toward", "up"))
+        turn = (rest_turn @ frame @ between(Vector((0, 0, -1)), Vector((0, 1, 0)), toward - grip, up).inverted()).normalized()
+        look["nudge"] = {"grip": [round(v, 3) for v in rest_grip - grip], "turn": degrees(turn)}
+        seated = f"; {o.look} seated where the source rests (nudge {look['nudge']})"
     o.looks.write_text(json.dumps(looks, indent=2) + "\n")
 print(f"BAKED {o.clip.name} -> motions.{o.motion}.tracks.{o.action}: {len(frames)} frames at "
-      f"{bpy.context.scene.render.fps} fps, strike frame {frames[strike]}, commit to {frames[end]}, {len(track)} keys")
+      f"{bpy.context.scene.render.fps} fps, strike frame {frames[strike]}, commit to {frames[end]}, {len(track)} keys{seated}")

@@ -23,8 +23,12 @@ internal sealed class ArmsView : IDisposable
     private readonly ulong objectId;
     private readonly Side main, off;
     private AnimationInstance? instance;
-    // Where the right upper arm was last drawn (model space), which places the model so it sits at the shoulder.
-    private Vector3? upperArm;
+    // Where each upper arm was last drawn (model space); the right one places the model so it sits at the shoulder.
+    private Vector3? upperArm, offUpperArm;
+    // How far the body leans in, beyond the motion's own lean, so a hand reaches a grip past its arm's length.
+    private Vector3 reaching;
+    // A reach never quite straightens the arm, and the body leans at most this far (metres).
+    private const float Slack = .01f, MostReaching = .3f;
 
     internal ArmsView(IEngineContext engine, ArmsDefinition arms, ArmRig rig, string rigId, ulong objectId)
     {
@@ -61,6 +65,33 @@ internal sealed class ArmsView : IDisposable
     /// <summary>The rig profile drawing these arms.</summary>
     internal string Id { get; }
 
+    /// <summary>How far the motion leans the body: the shoulders' move from where the arms place them (camera space).</summary>
+    internal Vector3 Lean { get; set; }
+
+    /// <summary>How far the body leans in on its own so a hand reaches a grip past its arm's length (camera space).</summary>
+    internal Vector3 Reaching => reaching;
+
+    /// <summary>
+    /// Before the arms are published: leans the body in, beyond the motion's own <see cref="Lean"/>, when a grip lies
+    /// further from its shoulder than the arm reaches, so both hands stay on their grips whatever the rig's arm length.
+    /// The arm furthest short sets the lean; the other arm's IK takes up the move.
+    /// </summary>
+    internal void Aim((Vector3 Grip, Quaternion Look) mainHand, (Vector3 Grip, Quaternion Look) offHand)
+    {
+        reaching = Vector3.Zero;
+        if (upperArm is not { } right || offUpperArm is not { } left || ArmLength.Main <= 0) return;
+        Transform placed = Placement();
+        Vector3 Shoulder(Vector3 joint) => placed.Translation + Vector3.Transform(joint * rig.Scale, placed.Rotation);
+        Vector3 best = Vector3.Zero;
+        foreach (var (shoulder, hand, length, leftArm) in new[] { (Shoulder(right), mainHand, ArmLength.Main, false), (Shoulder(left), offHand, ArmLength.Off, true) })
+        {
+            Vector3 toward = Wrist(hand.Grip, hand.Look, leftArm).Wrist - shoulder;
+            float beyond = toward.Length() - (length - Slack);
+            if (beyond > best.Length()) best = Vector3.Normalize(toward) * beyond;
+        }
+        reaching = best.Length() > MostReaching ? Vector3.Normalize(best) * MostReaching : best;
+    }
+
     /// <summary>The published object these arms are drawn on.</summary>
     internal ulong Object => objectId;
 
@@ -95,6 +126,7 @@ internal sealed class ArmsView : IDisposable
         {
             JointPose[] joints = drawn.Joints.ToArray();
             upperArm = joints[main.Upper].Model.Translation;
+            offUpperArm = joints[off.Upper].Model.Translation;
             if (!main.Measured) main.Measure(joints, rig.Digits);
             if (!off.Measured) off.Measure(joints, rig.Digits);
             ArmLength = (main.Length(joints) * rig.Scale, off.Length(joints) * rig.Scale);
@@ -141,7 +173,7 @@ internal sealed class ArmsView : IDisposable
     private Transform Placement()
     {
         Quaternion turn = Frames.Turn(rig.Turn);
-        Vector3 at = Authored.Vector(arms.Shoulder) - Vector3.Transform((upperArm ?? Vector3.Zero) * rig.Scale, turn);
+        Vector3 at = Authored.Vector(arms.Shoulder) + Lean + reaching - Vector3.Transform((upperArm ?? Vector3.Zero) * rig.Scale, turn);
         return new(at, turn, new Vector3(rig.Scale));
     }
 

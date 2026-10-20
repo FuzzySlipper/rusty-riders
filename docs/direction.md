@@ -221,14 +221,28 @@ hand's closure comes from the source hand's finger curl. The arms are not baked:
 ```bash
 blender -b --factory-startup --python scripts/bake-held-motion.py -- \
   old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Attack_RD.fbx \
-  --rest old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx --motion sns --action blade-slash --look rift-blade
+  --rest old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx --motion sns --action blade-slash --look rift-blade --seat
 ```
 
-That is the rift blade's slash (motion `sns`, 30 keys from 121 frames). The source's rest grip, (0.28, -0.19, -0.38)
-from its camera, sits within a few centimetres of the blade stance, so its moves carry over at scale 1; its windup
-swings the sword out of view to the right, as the source does. Its 1.5 s recovery is squeezed into the action's
-0.25 s. The keys are ordinary held motion: step, retime and edit them in the workbench. A clip set's own idle is the
-rest; the `_Start`, `_Loop` and `_End` parts of a heavy attack are separate clips, to bake one at a time or join first.
+That is the rift blade's slash (motion `sns`, 30 keys from 121 frames), baked with `--seat`.
+
+Two things keep the hands on a baked weapon:
+- **The body leans.** The source character lunges: its shoulder moves 17 cm toward the blow by the strike, so its
+  nearly straight arm reaches a grip 0.64 m ahead. Each baked key carries that move as `shoulder` (camera space, the
+  main hand's; mirrored for the off hand), and the arms move with it. Beyond that, `ArmsView` leans the body in by
+  itself when a grip still lies past an arm's length (at most 0.3 m), so a motion holds on rigs with shorter arms.
+  `riders.arms` reports both leans and the wrists' shortfall.
+- **The look rests where the source rests.** Turns are baked from rest, so they follow the source's path only if the
+  look starts where the source weapon does. `--seat` sets the look's nudge to the source's rest (blade along the weapon
+  bone's `--blade` axis, `+y` for the FPP set, up side `--edge`, `+z`); for the rift blade that levels its blade
+  forward, as the source holds it.
+
+The source's rest grip, (0.28, -0.19, -0.38) from its camera, sits within a few centimetres of the blade stance, so its
+moves carry over at scale 1. Compared against a render of the source from its camera at the same moments, the hand and
+blade agree at rest, at the strike and through recovery, and both leave the view in the windup. Its 1.5 s recovery is
+squeezed into the action's 0.25 s. The keys are ordinary held motion: step, retime and edit them in the workbench. A
+clip set's own idle is the rest; the `_Start`, `_Loop` and `_End` parts of a heavy attack are separate clips, to bake
+one at a time or join first.
 
 ## Backups of generated art
 

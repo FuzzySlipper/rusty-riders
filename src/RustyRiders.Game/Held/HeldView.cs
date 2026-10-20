@@ -110,6 +110,9 @@ internal sealed class HeldView : IDisposable
             yield return new AppearanceFact(firstObject + (ulong)h, false, 0, new Transform(at, turn, Fit(look).Scale),
                 looks[look.Id].Appearance, visible, RenderLayer.Viewmodel);
         }
+        // The body leans with a blow: the arms move by the acting hand's motion (only one hand acts at a time).
+        arms.Lean = Keyed(MainHand).Lean + Keyed(OffHand).Lean;
+        arms.Aim(Grip(MainHand), Grip(OffHand));
         yield return arms.Fact(visible);
         // Replaced arms are published hidden once, then left out; they are released after that snapshot.
         if (retired is { Published: false }) yield return retired.Fact(false);
@@ -128,7 +131,8 @@ internal sealed class HeldView : IDisposable
         {
             Hand hand = hands[h];
             if (hand.Tween is not { } playing) continue;
-            bool cutShort = hand.Action is not null && playing.Started == user.Started && (user.Current is null || h != actingHand);
+            // Only an action's own motion is cut short (a settle and the viewer's playback start no action: 0).
+            bool cutShort = playing.Started != 0 && playing.Started == user.Started && (user.Current is null || h != actingHand);
             if (playing.Look != hand.Look) Cancel(hand);
             else if (cutShort && Running(playing.Handle)) Begin(h, held.Motion.Settle(Offset(hand)), TweenClock.World);
         }
@@ -159,7 +163,7 @@ internal sealed class HeldView : IDisposable
         }
         (Vector3 mainGrip, Quaternion mainLook) = Grip(MainHand);
         (Vector3 offGrip, Quaternion offLook) = Grip(OffHand);
-        arms.Reach((mainGrip, mainLook, Closure(MainHand)), (offGrip, offLook, Closure(OffHand)));
+        arms.Reach((mainGrip, mainLook, Keyed(MainHand).Grip), (offGrip, offLook, Keyed(OffHand).Grip));
     }
 
     /// <summary>Ends every motion (a level or the kit changes).</summary>
@@ -259,29 +263,31 @@ internal sealed class HeldView : IDisposable
         return (at + Vector3.Transform(Authored.Vector(look.Grips.Main) - fit.Translation, lookTurn), lookTurn);
     }
 
-    // How closed a hand is now (-1 open, 0 its grip, 1 squeezed): the viewer's held key, or the playing action's keys
-    // where the Engine reports its tween has got to, eased by each key's curve as the Engine eases them.
-    private float Closure(int index)
+    // How closed a hand is now (-1 open, 0 its grip, 1 squeezed) and how far its motion leans the arms (camera space,
+    // mirrored for the off hand): the viewer's held key, or the playing action's keys where the Engine reports its
+    // tween has got to, eased by each key's curve as the Engine eases them.
+    private (float Grip, Vector3 Lean) Keyed(int index)
     {
         Hand hand = hands[index];
+        Vector3 Lean(MotionKey key) => key.Shoulder is { } lean ? (index == OffHand ? Frames.Mirror(Authored.Vector(lean)) : Authored.Vector(lean)) : Vector3.Zero;
         if (viewing is { } view && view.Hand == index && viewingKey is { } key)
-            return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? keys[key.Key].Grip : 0;
-        if (hand.Tween is not { } playing || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return 0;
+            return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? (keys[key.Key].Grip, Lean(keys[key.Key])) : (0, Vector3.Zero);
+        if (hand.Tween is not { } playing || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return (0, Vector3.Zero);
         TweenReadout readout = engine.Tween.Read(playing.Handle);
-        if (readout.State == TweenState.Ended) return 0;
+        if (readout.State == TweenState.Ended) return (0, Vector3.Zero);
         float time = (float)readout.ElapsedSeconds * hand.Speed / hand.Scale;
-        (float from, float start) = (0, 0);
-        foreach ((float at, float grip, TweenEasingKind curve) in track.Select(k => (k.Time(action.Timing), k.Grip, k.Ease))
-            .Append((action.Duration, 0f, held.Motion.SettleEase)))
+        (float grip, Vector3 lean, float start) from = (0, Vector3.Zero, 0);
+        foreach ((float at, float grip, Vector3 lean, TweenEasingKind curve) in track.Select(k => (k.Time(action.Timing), k.Grip, Lean(k), k.Ease))
+            .Append((action.Duration, 0f, Vector3.Zero, held.Motion.SettleEase)))
         {
             if (time <= at)
             {
-                float t = at - start <= 0 ? 1 : engine.Tween.Evaluate(curve, Math.Clamp((time - start) / (at - start), 0, 1));
-                return from + (grip - from) * t;
+                float t = at - from.start <= 0 ? 1 : engine.Tween.Evaluate(curve, Math.Clamp((time - from.start) / (at - from.start), 0, 1));
+                return (from.grip + (grip - from.grip) * t, Vector3.Lerp(from.lean, lean, t));
             }
-            (from, start) = (grip, at);
+            from = (grip, lean, at);
         }
-        return 0;
+        return (0, Vector3.Zero);
     }
 
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);

@@ -720,210 +720,360 @@
             "phase": "Windup",
             "at": 0.056,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              0.001,
+              0.001,
+              -0.002
+            ]
           },
           {
             "pose": "blade-slash-2",
             "phase": "Windup",
             "at": 0.167,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              0.007,
+              0.006,
+              -0.018
+            ]
           },
           {
             "pose": "blade-slash-3",
             "phase": "Windup",
             "at": 0.389,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              0.014,
+              0.032,
+              -0.044
+            ]
           },
           {
             "pose": "blade-slash-4",
             "phase": "Windup",
             "at": 0.444,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              0.014,
+              0.03,
+              -0.046
+            ]
           },
           {
             "pose": "blade-slash-5",
             "phase": "Windup",
             "at": 0.556,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              0.013,
+              0.013,
+              -0.075
+            ]
           },
           {
             "pose": "blade-slash-6",
             "phase": "Windup",
             "at": 0.667,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.002,
+              -0.013,
+              -0.113
+            ]
           },
           {
             "pose": "blade-slash-7",
             "phase": "Windup",
             "at": 0.778,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.022,
+              -0.028,
+              -0.139
+            ]
           },
           {
             "pose": "blade-slash-8",
             "phase": "Windup",
             "at": 0.889,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.039,
+              -0.033,
+              -0.158
+            ]
           },
           {
             "pose": "blade-slash-9",
             "phase": "Windup",
             "at": 1.0,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.053,
+              -0.034,
+              -0.169
+            ]
           },
           {
             "pose": "blade-slash-10",
             "phase": "Commit",
             "at": 0.111,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.058,
+              -0.034,
+              -0.172
+            ]
           },
           {
             "pose": "blade-slash-11",
             "phase": "Commit",
             "at": 0.222,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.061,
+              -0.034,
+              -0.175
+            ]
           },
           {
             "pose": "blade-slash-12",
             "phase": "Commit",
             "at": 0.333,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.065,
+              -0.034,
+              -0.177
+            ]
           },
           {
             "pose": "blade-slash-13",
             "phase": "Commit",
             "at": 0.556,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.071,
+              -0.033,
+              -0.181
+            ]
           },
           {
             "pose": "blade-slash-14",
             "phase": "Commit",
             "at": 0.778,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.073,
+              -0.034,
+              -0.181
+            ]
           },
           {
             "pose": "blade-slash-15",
             "phase": "Commit",
             "at": 1.0,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.071,
+              -0.04,
+              -0.175
+            ]
           },
           {
             "pose": "blade-slash-16",
             "phase": "Recovery",
             "at": 0.043,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.052,
+              -0.044,
+              -0.158
+            ]
           },
           {
             "pose": "blade-slash-17",
             "phase": "Recovery",
             "at": 0.075,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.043,
+              -0.046,
+              -0.148
+            ]
           },
           {
             "pose": "blade-slash-18",
             "phase": "Recovery",
             "at": 0.097,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.037,
+              -0.045,
+              -0.141
+            ]
           },
           {
             "pose": "blade-slash-19",
             "phase": "Recovery",
             "at": 0.161,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.028,
+              -0.039,
+              -0.137
+            ]
           },
           {
             "pose": "blade-slash-20",
             "phase": "Recovery",
             "at": 0.204,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.031,
+              -0.028,
+              -0.15
+            ]
           },
           {
             "pose": "blade-slash-21",
             "phase": "Recovery",
             "at": 0.247,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.021,
+              -0.023,
+              -0.142
+            ]
           },
           {
             "pose": "blade-slash-22",
             "phase": "Recovery",
             "at": 0.312,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.006,
+              -0.041,
+              -0.077
+            ]
           },
           {
             "pose": "blade-slash-23",
             "phase": "Recovery",
             "at": 0.366,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.014,
+              -0.054,
+              -0.052
+            ]
           },
           {
             "pose": "blade-slash-24",
             "phase": "Recovery",
             "at": 0.409,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.019,
+              -0.06,
+              -0.046
+            ]
           },
           {
             "pose": "blade-slash-25",
             "phase": "Recovery",
             "at": 0.452,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.02,
+              -0.058,
+              -0.032
+            ]
           },
           {
             "pose": "blade-slash-26",
             "phase": "Recovery",
             "at": 0.495,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.019,
+              -0.05,
+              -0.015
+            ]
           },
           {
             "pose": "blade-slash-27",
             "phase": "Recovery",
             "at": 0.527,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.017,
+              -0.04,
+              -0.004
+            ]
           },
           {
             "pose": "blade-slash-28",
             "phase": "Recovery",
             "at": 0.602,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.011,
+              -0.017,
+              0.01
+            ]
           },
           {
             "pose": "blade-slash-29",
             "phase": "Recovery",
             "at": 0.774,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.002,
+              0.0,
+              0.004
+            ]
           },
           {
             "pose": "blade-slash-30",
             "phase": "Recovery",
             "at": 1.0,
             "ease": "Linear",
-            "grip": -0.0
+            "grip": -0.0,
+            "shoulder": [
+              -0.0,
+              -0.0,
+              -0.0
+            ]
           }
         ]
       }

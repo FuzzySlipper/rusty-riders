@@ -46,6 +46,7 @@ internal sealed record HeldMotionCatalog(float SettleSeconds, TweenEasingKind Se
                     Authored.Require(motion.Poses.ContainsKey(keys[i].Pose), Path, $"{key}.pose", $"unknown pose '{keys[i].Pose}'.");
                     Authored.Within(Path, $"{key}.at", keys[i].At, 0, 1);
                     Authored.Within(Path, $"{key}.grip", keys[i].Grip, -1, 1);
+                    if (keys[i].Shoulder is { } shoulder) Authored.Point(Path, $"{key}.shoulder", shoulder);
                     Ease(Path, $"{key}.ease", keys[i].Ease);
                 }
         }
@@ -143,9 +144,11 @@ internal sealed record HeldPose(float[] Position, float[] Rotation);
 
 /// <summary>
 /// A key: the look reaches <see cref="Pose"/> at <see cref="At"/> (0 to 1) through <see cref="Phase"/>, easing in by
-/// <see cref="Ease"/>, with the holding hand closed to <see cref="Grip"/> (-1 open, 0 its grip, 1 squeezed).
+/// <see cref="Ease"/>, with the holding hand closed to <see cref="Grip"/> (-1 open, 0 its grip, 1 squeezed) and, when
+/// given, the body leaning the shoulders by <see cref="Shoulder"/> (camera space metres, the main hand's; mirrored for
+/// the off hand), so a lunging blow can reach further than the arms from where they rest.
 /// </summary>
-internal sealed record MotionKey(string Pose, MotionPhase Phase, float At, TweenEasingKind Ease, float Grip = 0)
+internal sealed record MotionKey(string Pose, MotionPhase Phase, float At, TweenEasingKind Ease, float Grip = 0, float[]? Shoulder = null)
 {
     /// <summary>Seconds from the action's start at its authored timing: windup, then commit (whose start is the strike), then recovery.</summary>
     internal float Time(ActionTiming timing) => Phase switch
