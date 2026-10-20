@@ -1,12 +1,13 @@
 using Rusty.Engine;
+using Rusty.Engine.FirstPerson;
 
 namespace RustyRiders.Game.Held;
 
 /// <summary>
-/// The arms drawn now, by one rig profile, and the switch to another: each rig is drawn on its own object (an object
-/// keeps one animation instance), alternating between two, and replaced arms are published hidden once, then left out,
-/// and released after that snapshot. A rig whose model does not open (an old-game model not imported here) is reported
-/// and the generated arms draw instead. Split from <see cref="HeldView"/>.
+/// The arms drawn now, by one rig profile (Engine <see cref="FirstPersonArms"/>), and the switch to another: each rig is
+/// drawn on its own object (an object keeps one animation instance), alternating between two, and replaced arms are
+/// published hidden once, then left out, and released after that snapshot. A rig whose model does not open (an
+/// old-game model not imported here) is reported and the generated arms draw instead.
 /// </summary>
 internal sealed class ArmsSlot : IDisposable
 {
@@ -17,7 +18,7 @@ internal sealed class ArmsSlot : IDisposable
     private readonly HeldCatalog held;
     private readonly ulong firstObject;
     private readonly List<string> problems = [];
-    private ArmsView? retired;
+    private (FirstPersonArms Arms, bool Published)? retired;
 
     /// <param name="firstObject">The first of the two objects the arms alternate between.</param>
     internal ArmsSlot(IEngineContext engine, HeldCatalog held, ulong firstObject)
@@ -25,12 +26,16 @@ internal sealed class ArmsSlot : IDisposable
         this.engine = engine;
         this.held = held;
         this.firstObject = firstObject;
-        Drawn = Open(held.Arms.Rig, firstObject) ?? Open(FallbackRig, firstObject)
-            ?? throw new InvalidOperationException($"The fallback arms did not open: {string.Join("; ", problems)}");
+        (Id, Drawn) = Open(held.Arms.Rig, firstObject) is { } chosen ? (held.Arms.Rig, chosen)
+            : Open(FallbackRig, firstObject) is { } fallback ? (FallbackRig, fallback)
+            : throw new InvalidOperationException($"The fallback arms did not open: {string.Join("; ", problems)}");
     }
 
     /// <summary>The arms drawn now.</summary>
-    internal ArmsView Drawn { get; private set; }
+    internal FirstPersonArms Drawn { get; private set; }
+
+    /// <summary>The rig profile drawing the arms now.</summary>
+    internal string Id { get; private set; }
 
     /// <summary>Rigs whose model did not open.</summary>
     internal IReadOnlyList<string> Problems => problems;
@@ -42,46 +47,47 @@ internal sealed class ArmsSlot : IDisposable
     internal string? Show(string id)
     {
         if (!held.Rigs.ContainsKey(id)) return $"Unknown rig '{id}'. Rigs: {string.Join(", ", held.Rigs.Keys)}.";
-        if (id == Drawn.Id) return null;
+        if (id == Id) return null;
         int known = problems.Count;
         if (Open(id, Drawn.Object == firstObject ? firstObject + 1 : firstObject) is not { } next) return problems[known];
-        retired?.Dispose();
-        (retired, Drawn) = (Drawn, next);
+        retired?.Arms.Dispose();
+        retired = (Drawn, false);
+        (Id, Drawn) = (id, next);
         held.Arms.Rig = id;
         return null;
     }
 
     /// <summary>The replaced arms' fact while they still need publishing hidden, once.</summary>
-    internal AppearanceFact? Retired => retired is { Published: false } arms ? arms.Fact(false) : null;
+    internal AppearanceFact? Retired => retired is { Published: false } old ? old.Arms.Fact(false) : null;
 
     /// <summary>After a snapshot is published: marks replaced arms published hidden, or releases them once they were.</summary>
     internal void Published()
     {
-        if (retired is null) return;
-        if (!retired.Published)
+        if (retired is not { } old) return;
+        if (!old.Published)
         {
-            retired.Published = true;
+            retired = old with { Published = true };
             return;
         }
-        retired.Dispose();
+        old.Arms.Dispose();
         retired = null;
     }
 
     public void Dispose()
     {
         Drawn.Dispose();
-        retired?.Dispose();
+        retired?.Arms.Dispose();
     }
 
-    private ArmsView? Open(string id, ulong objectId)
+    private FirstPersonArms? Open(string id, ulong objectId)
     {
         try
         {
-            return new ArmsView(engine, held.Arms, held.Rigs[id], id, objectId);
+            return new FirstPersonArms(engine, held.Arms, held.Rigs[id], objectId);
         }
         catch (Exception error) when (error is EngineCallException or InvalidOperationException)
         {
-            problems.Add($"arms rig {id}: {error.Message}");
+            problems.Add($"arms rig {id} ({ArmRigs.PathOf(id)}): {error.Message}");
             return null;
         }
     }

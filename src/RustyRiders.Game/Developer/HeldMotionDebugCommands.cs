@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Rusty.Engine.Debugging;
+using Rusty.Engine.FirstPerson;
 using RustyRiders.Game.Actions;
 using RustyRiders.Game.Combat;
 using RustyRiders.Game.Held;
@@ -102,8 +103,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
         if (!Motion.Poses.TryGetValue(name, out HeldPose? pose))
             return Failure($"Motion '{Held.Look(look)!.Motion}' has no pose '{name}'. Poses: {string.Join(", ", Motion.Poses.Keys)}.");
-        (pose.Position[0], pose.Position[1], pose.Position[2]) = (x, y, z);
-        (pose.Rotation[0], pose.Rotation[1], pose.Rotation[2]) = (rx, ry, rz);
+        (pose.Position, pose.Rotation) = (new(x, y, z), new(rx, ry, rz));
         View.Hold(pose);
         publish();
         return DebugCommandResult.Success($"\"{name}\": {JsonSerializer.Serialize(pose, HeldJson.Default.HeldPose)}  (in {HeldMotionCatalog.Path} motions.{Held.Look(look)!.Motion}.poses)");
@@ -114,8 +114,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
     {
         if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
         HeldLookDefinition shown = Held.Look(look)!;
-        (shown.Adjust.Grip[0], shown.Adjust.Grip[1], shown.Adjust.Grip[2]) = (x, y, z);
-        (shown.Adjust.Turn[0], shown.Adjust.Turn[1], shown.Adjust.Turn[2]) = (rx, ry, rz);
+        (shown.Adjust.Grip, shown.Adjust.Turn) = (new(x, y, z), new(rx, ry, rz));
         Held.Seat(shown);
         publish();
         return DebugCommandResult.Success($"\"nudge\": {{\"grip\": [{x}, {y}, {z}], \"turn\": [{rx}, {ry}, {rz}]}}  (in {HeldCatalog.Path}, look '{look}')");
@@ -127,7 +126,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
         if (Held.Look(look)!.Model is not { } model) return Failure($"'{look}' has no converted model; it is drawn as its box.");
         if (!(length > 0.01f)) return Failure("The length is positive metres.");
-        (model.Rotation[0], model.Rotation[1], model.Rotation[2]) = (rx, ry, rz);
+        model.Rotation = new(rx, ry, rz);
         model.Length = length;
         publish();
         return DebugCommandResult.Success($"\"rotation\": [{rx}, {ry}, {rz}], \"length\": {length}  (in {HeldCatalog.Path}, look '{look}' model)");
@@ -139,9 +138,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
         string id = Held.Look(look)!.Stance;
         HeldStance stance = Held.Stances.Stances[id];
-        (stance.Grip[0], stance.Grip[1], stance.Grip[2]) = (gx, gy, gz);
-        (stance.Toward[0], stance.Toward[1], stance.Toward[2]) = (tx, ty, tz);
-        (stance.Up[0], stance.Up[1], stance.Up[2]) = (ux, uy, uz);
+        (stance.Grip, stance.Toward, stance.Up) = (new(gx, gy, gz), new(tx, ty, tz), new(ux, uy, uz));
         foreach (HeldLookDefinition each in Held.Looks.Where(l => l.Stance == id)) Held.Seat(each);
         publish();
         return DebugCommandResult.Success($"\"{id}\": {{\"grip\": [{gx}, {gy}, {gz}], \"toward\": [{tx}, {ty}, {tz}], \"up\": [{ux}, {uy}, {uz}]}}  (in {StanceCatalog.Path})");
@@ -150,14 +147,14 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
     [DebugCommand("riders.arms", Description = "Read the arms: the rig drawing them, how far each wrist was last drawn from its grip as the Engine IK solve reports it (metres; more than a centimetre is a grip out of reach), each arm's drawn length, and each hand's measured frame.")]
     public DebugCommandResult Arms()
     {
-        ArmsView arms = View.DrawnArms;
+        FirstPersonArms arms = View.DrawnArms;
         var (main, off) = arms.Shortfall;
         var (mainLength, offLength) = arms.ArmLength;
         string frames = arms.HandFrames is { } f ? $"hand frames main [{f.Main.X:0}, {f.Main.Y:0}, {f.Main.Z:0}] off [{f.Off.X:0}, {f.Off.Y:0}, {f.Off.Z:0}] degrees" : "hand frames not measured yet";
         var (mainFelt, offFelt) = View.Felt;
         var (mainSway, offSway) = View.Swaying;
         string Sway((System.Numerics.Vector3 Move, Swap Swap) s) => FormattableString.Invariant($"[{s.Move.X:0.###}, {s.Move.Y:0.###}, {s.Move.Z:0.###}] {s.Swap}");
-        return DebugCommandResult.Success($"Rig {arms.Id}. Sway main {Sway(mainSway)}, off {Sway(offSway)}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
+        return DebugCommandResult.Success($"Rig {View.Rig}. Sway main {Sway(mainSway)}, off {Sway(offSway)}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
     }
 
     [DebugCommand("riders.dev.hands.contact", Description = "Developer grip check: how the drawn hands meet the main hand's look's grip landmarks (content/held/looks.json landmarks), as the Engine measured them on the poses it drew: the main index pad on the trigger, the web under the back strap, the little finger at the butt, the off palm on the fore-end, and each palm facing what it holds. Drawn as the overlay set held.landmarks.")]
@@ -175,9 +172,9 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
     [DebugCommand("riders.dev.hands.knuckles", Description = "Developer hand calibration: each drawn hand's knuckle angles in the hand's canonical frame (each finger joint's curl, each thumb joint's [curl, swing], degrees) on the rig's clip alone and as now drawn, against the arms' canonical holding pose (content/held/arms.json hands.pose), and the rig grip that brings this clip to that pose.")]
     public DebugCommandResult Knuckles()
     {
-        ArmsView arms = View.DrawnArms;
+        FirstPersonArms arms = View.DrawnArms;
         HandShape pose = Held.Arms.Hands.Pose;
-        List<string> lines = [$"Knuckles on rig {arms.Id} (canonical pose {HandKnuckles.Json(pose)}):"];
+        List<string> lines = [$"Knuckles on rig {View.Rig} (canonical pose {HandKnuckles.Json(pose)}):"];
         List<string> grips = [];
         foreach (var (name, offHand) in new[] { ("main", false), ("off", true) })
         {
@@ -186,7 +183,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
             lines.Add($"  {name} drawn {HandKnuckles.Json(drawn)}");
             grips.Add($"\"{name}\": {HandKnuckles.Json(HandKnuckles.Difference(pose, clip))}");
         }
-        lines.Add($"  to the pose: \"grip\": {{{string.Join(", ", grips)}}}  (in {ArmRig.PathOf(arms.Id)}; leave out \"off\" when it is the main's)");
+        lines.Add($"  to the pose: \"grip\": {{{string.Join(", ", grips)}}}  (in {ArmRigs.PathOf(View.Rig)}; leave out \"off\" when it is the main's)");
         return DebugCommandResult.Success(string.Join("\n", lines));
     }
 
@@ -202,7 +199,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
             return Failure($"Rig '{View.Rig}' gives no off grip; its off hand takes the main's mirrored.");
         (hand.Fingers[f][0], hand.Fingers[f][1], hand.Fingers[f][2]) = (b, m, t);
         publish();
-        return DebugCommandResult.Success($"\"{inHand}\": {HandKnuckles.Json(hand)}  (in {ArmRig.PathOf(View.Rig)} grip)");
+        return DebugCommandResult.Success($"\"{inHand}\": {HandKnuckles.Json(hand)}  (in {ArmRigs.PathOf(View.Rig)} grip)");
     }
 
     [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]
@@ -216,19 +213,17 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
     [DebugCommand("riders.dev.arms.hold", Description = "Developer arms tuning: set how a hand holds a look (its canonical frame's turn from the look, x y z degrees; every rig, the left mirrored) and the drawing rig's palm offset from its hand joint (x y z metres), in the loaded content, and print their JSON.")]
     public DebugCommandResult ArmsHold(float rx, float ry, float rz, float px, float py, float pz)
     {
-        float[] hold = Held.Arms.Hold, palm = Held.Rigs[Held.Arms.Rig].Palm;
-        (hold[0], hold[1], hold[2]) = (rx, ry, rz);
-        (palm[0], palm[1], palm[2]) = (px, py, pz);
+        Held.Arms.Hold = new(rx, ry, rz);
+        Held.Rigs[Held.Arms.Rig].Palm = new(px, py, pz);
         publish();
-        return DebugCommandResult.Success($"\"hold\": [{rx}, {ry}, {rz}]  (in {ArmsDefinition.Path}); \"palm\": [{px}, {py}, {pz}]  (in {ArmRig.PathOf(Held.Arms.Rig)})");
+        return DebugCommandResult.Success($"\"hold\": [{rx}, {ry}, {rz}]  (in {ArmsDefinition.Path}); \"palm\": [{px}, {py}, {pz}]  (in {ArmRigs.PathOf(Held.Arms.Rig)})");
     }
 
     [DebugCommand("riders.dev.arms.reach", Description = "Developer arms tuning: set where the right shoulder sits and the point the right elbow bends toward (camera space x y z each; the left mirrors them) in the loaded content, and print their JSON.")]
     public DebugCommandResult ArmsReach(float sx, float sy, float sz, float px, float py, float pz)
     {
         ArmsDefinition arms = Held.Arms;
-        (arms.Shoulder[0], arms.Shoulder[1], arms.Shoulder[2]) = (sx, sy, sz);
-        (arms.Pole[0], arms.Pole[1], arms.Pole[2]) = (px, py, pz);
+        (arms.Shoulder, arms.Pole) = (new(sx, sy, sz), new(px, py, pz));
         publish();
         return DebugCommandResult.Success($"\"shoulder\": [{sx}, {sy}, {sz}], \"pole\": [{px}, {py}, {pz}]  (in {ArmsDefinition.Path})");
     }
@@ -263,7 +258,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
     {
         MotionKey k = Keys[i];
         HeldPose pose = Motion.Poses[k.Pose];
-        return $"{i}: {k.Pose} at {k.Phase} {k.At:0.##} = {k.Time(action!.Timing):0.###} s, {k.Ease}, grip {k.Grip}; position [{string.Join(", ", pose.Position)}] rotation [{string.Join(", ", pose.Rotation)}]";
+        return $"{i}: {k.Pose} at {k.Phase} {k.At:0.##} = {k.Time(HeldMotionCatalog.Timing(action!)):0.###} s, {k.Ease}, grip {k.Grip}; position [{pose.Position.X}, {pose.Position.Y}, {pose.Position.Z}] rotation [{pose.Rotation.X}, {pose.Rotation.Y}, {pose.Rotation.Z}]";
     }
 
     private static DebugCommandResult Failure(string message) => DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, message);

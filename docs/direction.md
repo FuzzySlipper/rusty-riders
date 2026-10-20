@@ -252,13 +252,13 @@ lists are written on one line, so `motion.json` went from about 13,000 lines to 
 Two things keep the hands on a baked weapon:
 - **The body leans.** The source character lunges: its shoulder moves 17 cm toward the slash by the strike, so its
   nearly straight arm reaches a grip 0.64 m ahead. Each key carries that move as `shoulder` (camera space, the main
-  hand's; mirrored for the off hand), and the arms move with it. Beyond that, `ArmsView` leans the body in by itself
+  hand's; mirrored for the off hand), and the arms move with it. Beyond that, the Engine's `FirstPersonArms` leans the body in by itself
   when a grip still lies past an arm's length (at most 0.3 m), so a motion holds on rigs with shorter arms.
   `riders.arms` reports both leans and the wrists' shortfall.
 - **The look rests where the source rests, held as the source holds it.** Turns are baked from rest, so they follow the
   source's path only if the look starts where the source weapon does. `seat` sets the look's nudge to the source's rest
   and its `grips.hand` to the source hand's hold on the weapon (the hand's canonical frame from the look's, measured
-  from the source's knuckles as `ArmsView` measures rigs). Which weapon-bone axes are the look's length and up side
+  from the source's knuckles as `FirstPersonArms` measures rigs). Which weapon-bone axes are the look's length and up side
   follows from the hold: a `fist`'s blade leaves past the index finger with its edges along the fingers; a `pistol`'s
   barrel runs along the hand with its sights toward the index finger (`blade` and `edge` name axes outright). The axis
   that travels furthest in a swing is not the blade (on the FPP set it runs along the fingers); taking it turned the
@@ -289,7 +289,7 @@ A motion may also say how its looks sway and how they are drawn and put away, bo
 - **Loops** (`loops.idle`, `.walk`, `.sprint`): offsets from rest around one cycle, played as a smooth closed curve.
   The standing loop runs on time (seconds); walking and sprinting run on distance walked (metres), so the bob keeps step
   at any pace: a baked loop's cycle is its clip's seconds at our walking or sprinting speed, keeping the source's step
-  cadence. `HeldSway` blends the three by speed (eased over `content/held/sway.json` `blendSeconds`), fades walking out
+  cadence. the Engine's `HeldSway` blends the three by speed (eased over `content/held/sway.json` `blendSeconds`), fades walking out
   in the air, and keeps `acting` of it under a hand's own action. The sway is part of where the look is published, so
   actions, punches and the arms' reach compose over it; it runs in real time (the rider breathes while the world holds).
 - **Transitions** (`equip`, `unequip`): seconds and keys through the motion's poses, in real time. Swapping what a hand
@@ -302,7 +302,7 @@ quicken the source's) bake them: every set has its Idle, Walk, Sprint (the revol
 (Hide) baked, the melee swaps at about half the source's two seconds. `riders.arms` reports each hand's sway and where
 it is in a swap; the workbench's Sway group tunes the blend, what stays under an action, and each loop's size and cycle.
 
-The camera bobs too (`Player/HeadBob`, `content/player/bob.json`): a step every `stepMetres` walked, the eye dropping
+The camera bobs too (the Engine's `HeadBob`, tuned in `content/player/bob.json`): a step every `stepMetres` walked, the eye dropping
 `rise` at each footfall, swaying `sway` over the planted foot and rolling `rollDegrees` with it, walking and sprinting
 gaits blended by speed and faded in the air, and a dip on landing sized by the fall speed past `softest`. It is camera
 presentation only: actions aim from the steady eye, and the held weapons ride the camera, so they bob with the view and
@@ -363,7 +363,7 @@ gun clip already points the index forward; no single index curl tried served all
 
 A shape was relative to each rig's base hand, so it only meant the same hand once every rig started from the same
 pose (convergence doc, conflict 5). Now `content/held/arms.json` `hands.pose` names the **canonical holding pose**:
-each finger joint's curl and each thumb joint's [curl, swing], read in the hand's canonical frame (`HandKnuckles`).
+each finger joint's curl and each thumb joint's [curl, swing], read in the hand's canonical frame (the Engine's `HandKnuckles`).
 A finger joint's curl is its bend from the previous bone, or from +Y at the knuckle, toward the palm. A thumb joint's
 curl is its rise out of the palm's plane, and its swing is its turn about the palm's normal. No tip joint is named,
 so a finger's last bone runs as the bone before it does in its own frame. The pose is the generated arms' `grip` clip

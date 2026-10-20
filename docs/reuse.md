@@ -63,6 +63,11 @@ Do not change or clean donor repositories to make them easier to copy.
 | rusty-fptester | `61f58a91103e6fed1a2bb3a6cac7457f02122b53` | `src/ui/developer.js` | `src/ui/developer.js`: availability probe and the docked Engine developer shell on its `onClose`, with hotel's grip inspection views and the motion viewer reset on close. |
 | rusty-hotel | `82451c5dfb7b457654940c5822d832a19be9eef8` | `src/Hotel.Game/Content/Template.cs` | `Content/Template.cs`: `Fill`, `Check` and `Plain`, as written |
 
+The reusable part of the held presentation adapted above (motion format and timelines, stances and frames, sway,
+head bob, feedback layers, the arms and their rig profiles, hand shapes and knuckles, grip landmarks) has since moved
+upstream into the Engine as `Rusty.Engine.FirstPerson` (rusty-engine #10188); riders keeps its content, loading and
+policy in `Held/`.
+
 ## Old game art in the UI
 
 The DOM UI uses Rift Riders' own UI art (`old-game/Assets/Art/Sprites/UI/RiftRiders`, `GameData/Icons`,

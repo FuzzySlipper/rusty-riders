@@ -1,4 +1,5 @@
 using Rusty.Engine;
+using Rusty.Engine.FirstPerson;
 using Rusty.Engine.Debugging;
 using RustyRiders.Game.Combat;
 using RustyRiders.Game.Held;
@@ -39,7 +40,7 @@ internal sealed class HeldWorkbench(IContentSourceService source, PlayerCombat c
                 new("action", "Action", action.Id, Uses(look)),
                 new("hand", "Hand", Hands[hand], Hands)
             ],
-            Timeline = new([.. keys.Select((k, i) => new TunableKey(i, k.Pose, k.Time(action.Timing)))], action.Duration, key),
+            Timeline = new([.. keys.Select((k, i) => new TunableKey(i, k.Pose, k.Time(HeldMotionCatalog.Timing(action))))], action.Duration, key),
             Commands = new Dictionary<string, string>
             {
                 ["key"] = "riders.dev.motion.key {key}",

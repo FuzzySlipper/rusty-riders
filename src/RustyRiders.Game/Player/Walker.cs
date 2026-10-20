@@ -1,5 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
+using Rusty.Engine.FirstPerson;
 using Rusty.Engine.Input;
 
 namespace RustyRiders.Game.Player;
@@ -177,13 +178,8 @@ internal sealed class Walker : IDisposable
     // The camera at the eye with the head bob: moved along the view's own right and up, rolled about its forward.
     private CameraDescriptor Descriptor()
     {
-        Vector3 forward = Forward;
-        Vector3 right = Vector3.Normalize(Vector3.Cross(forward, Vector3.UnitY));
-        Vector3 up = Vector3.Cross(right, forward);
-        (float side, float rise, float rollDegrees) = bob.Now();
-        Quaternion roll = Quaternion.CreateFromAxisAngle(forward, -rollDegrees * MathF.PI / 180);
-        return new(new CameraPose(Eye + right * side + up * rise, 0, 0), CameraBasisMode.Explicit,
-            new CameraBasis(forward, Vector3.Transform(right, roll), Vector3.Transform(up, roll)),
+        (Vector3 eye, CameraBasis basis) = bob.Apply(Eye, Forward);
+        return new(new CameraPose(eye, 0, 0), CameraBasisMode.Explicit, basis,
             new CameraProjection(CameraProjectionKind.Perspective, tuning.FieldOfViewDegrees, 0, NearPlane, tuning.FarPlane),
             new CameraViewport(0, 0, 1, 1));
     }

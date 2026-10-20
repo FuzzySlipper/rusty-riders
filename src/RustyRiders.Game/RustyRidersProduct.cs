@@ -39,7 +39,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         engine = context.Engine;
         scenes = new Scenes(engine, LevelRules.Load(engine));
         WalkerTuning walking = WalkerTuning.Load(engine);
-        walker = new Walker(engine, walking, HeadBobTuning.Load(engine), scenes.Current);
+        walker = new Walker(engine, walking, HeadBobFile.Load(engine), scenes.Current);
         play = new Play(engine, walker, walking.Radius);
         run = new Expedition(engine, scenes, play, walker);
         EnterScene();

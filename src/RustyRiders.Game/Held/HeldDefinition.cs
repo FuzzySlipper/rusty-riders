@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Rusty.Engine;
+using Rusty.Engine.FirstPerson;
 using RustyRiders.Game.Content;
 
 namespace RustyRiders.Game.Held;
@@ -19,15 +20,15 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     [JsonIgnore] internal ArmsDefinition Arms { get; init; } = null!;
     /// <summary>What a hand feels as its action lands (<see cref="HeldFeedback.Path"/>).</summary>
     [JsonIgnore] internal HeldFeedback Feedback { get; init; } = null!;
-    /// <summary>How the weapons sway between and under actions (<see cref="SwayTuning.Path"/>).</summary>
+    /// <summary>How the weapons sway between and under actions (<see cref="SwayFile.Path"/>).</summary>
     [JsonIgnore] internal SwayTuning Sway { get; init; } = null!;
-    /// <summary>The arms models the arms can be drawn by, by profile id (<see cref="ArmRig.Directory"/>).</summary>
+    /// <summary>The arms models the arms can be drawn by, by profile id (<see cref="ArmRigs.Directory"/>).</summary>
     [JsonIgnore] internal Dictionary<string, ArmRig> Rigs { get; init; } = null!;
 
     internal const string Path = "held/looks.json";
 
     /// <summary>The content files the held presentation reads, reloaded in place under <c>rusty dev</c> (RustyEngineLiveContent).</summary>
-    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, SwayTuning.Path, .. ArmRigs.Ids.Select(ArmRig.PathOf)];
+    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, SwayFile.Path, .. ArmRigs.Ids.Select(ArmRigs.PathOf)];
 
     internal static HeldCatalog Load(IEngineContext engine)
     {
@@ -35,7 +36,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
         HeldCatalog catalog = Authored.Read(engine, Path, HeldJson.Default.HeldCatalog) with
         {
             Motion = HeldMotionCatalog.Load(engine), Stances = StanceCatalog.Load(engine), Arms = arms, Rigs = ArmRigs.Load(engine, arms),
-            Feedback = HeldFeedback.Load(engine), Sway = SwayTuning.Load(engine)
+            Feedback = HeldFeedback.Load(engine), Sway = SwayFile.Load(engine)
         };
         catalog.Validate();
         foreach (HeldLookDefinition look in catalog.Looks) catalog.Seat(look);
@@ -54,9 +55,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     /// </summary>
     internal void Seat(HeldLookDefinition look)
     {
-        HeldStance stance = Stances.Stances[look.Stance];
-        look.Seated = (Authored.Vector(stance.Grip) + Authored.Vector(look.Adjust.Grip),
-            Quaternion.Normalize(Frames.Turn(look.Adjust.Turn) * stance.Turn()));
+        look.Seated = Stances.Stances[look.Stance].Seat(look.Adjust.Grip, look.Adjust.Turn);
     }
 
     /// <summary>
@@ -75,11 +74,11 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             foreach (HeldLookDefinition look in Looks)
                 if (fresh.Look(look.Id) is { } now)
                 {
-                    now.Adjust.Grip.CopyTo(look.Adjust.Grip, 0);
-                    now.Adjust.Turn.CopyTo(look.Adjust.Turn, 0);
-                    now.Grips.Main.CopyTo(look.Grips.Main, 0);
-                    foreach (var (into, from) in new[] { (look.Grips.Hand, now.Grips.Hand), (look.Grips.Off, now.Grips.Off), (look.Grips.OffHand, now.Grips.OffHand) })
-                        if (into is not null && from is not null) from.CopyTo(into, 0);
+                    (look.Adjust.Grip, look.Adjust.Turn) = (now.Adjust.Grip, now.Adjust.Turn);
+                    // Whether a look has a hand hold or an off grip is how it is drawn (a restart); their values follow the file.
+                    look.Grips.Main = now.Grips.Main;
+                    if (look.Grips.Hand is not null && now.Grips.Hand is not null) look.Grips.Hand = now.Grips.Hand;
+                    if (look.Grips.Off is not null && now.Grips.Off is not null) (look.Grips.Off, look.Grips.OffHand) = (now.Grips.Off, now.Grips.OffHand);
                     if (look.Shape is { } shape && now.Shape is { } shaped) shape.Take(shaped);
                     else look.Shape = now.Shape;
                     // Landmarks follow the file: points edited in place, a point or the whole set added or removed taken too.
@@ -87,8 +86,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                     else look.Landmarks = now.Landmarks;
                     if (look.Model is { } model && now.Model is { } fresher)
                     {
-                        fresher.Rotation.CopyTo(model.Rotation, 0);
-                        model.Length = fresher.Length;
+                        (model.Rotation, model.Length) = (fresher.Rotation, fresher.Length);
                     }
                 }
         }
@@ -98,9 +96,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             foreach (var (id, stance) in fresh.Stances.Stances)
                 if (Stances.Stances.TryGetValue(id, out HeldStance? live))
                 {
-                    stance.Grip.CopyTo(live.Grip, 0);
-                    stance.Toward.CopyTo(live.Toward, 0);
-                    stance.Up.CopyTo(live.Up, 0);
+                    (live.Grip, live.Toward, live.Up) = (stance.Grip, stance.Toward, stance.Up);
                 }
         }
         if (changed.Contains(HeldMotionCatalog.Path))
@@ -115,8 +111,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                 foreach (var (name, pose) in motion.Poses)
                     if (live.Poses.TryGetValue(name, out HeldPose? held))
                     {
-                        pose.Position.CopyTo(held.Position, 0);
-                        pose.Rotation.CopyTo(held.Rotation, 0);
+                        (held.Position, held.Rotation) = (pose.Position, pose.Rotation);
                     }
                     else live.Poses[name] = pose;
                 foreach (string gone in live.Poses.Keys.Except(motion.Poses.Keys).ToArray()) live.Poses.Remove(gone);
@@ -128,11 +123,11 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
         }
         if (changed.Contains(ArmsDefinition.Path)) Arms.Take(fresh.Arms);
         if (changed.Contains(HeldFeedback.Path)) Feedback.Take(fresh.Feedback);
-        if (changed.Contains(SwayTuning.Path)) Sway.Take(fresh.Sway);
+        if (changed.Contains(SwayFile.Path)) Sway.Take(fresh.Sway);
         foreach (var (id, rig) in Rigs)
         {
-            if (!changed.Contains(ArmRig.PathOf(id))) continue;
-            Same(rig.SameDrawing(fresh.Rigs[id]), $"{ArmRig.PathOf(id)} model, clip, joints or digit frames");
+            if (!changed.Contains(ArmRigs.PathOf(id))) continue;
+            Same(rig.SameDrawing(fresh.Rigs[id]), $"{ArmRigs.PathOf(id)} model, clip, joints or digit frames");
             rig.Take(fresh.Rigs[id]);
         }
         foreach (HeldLookDefinition look in Looks) Seat(look);
@@ -141,7 +136,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
 
     // What a look draws and what it refers to, beyond the placement values a reload takes.
     private static string Drawn(HeldLookDefinition look) => string.Join("|", look.Id, look.Motion, look.Stance, look.Grips.Hand is not null, look.Grips.Off is not null,
-        string.Join(",", look.Box.Size), string.Join(",", look.Box.Color),
+        look.Box.Size, string.Join(",", look.Box.Color),
         look.Model?.Glb ?? "");
 
     private void Validate()
@@ -154,23 +149,15 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             string at = $"looks[{i}]";
             Authored.Require(Motion.Motions.ContainsKey(look.Motion), Path, $"{at}.motion", $"unknown motion '{look.Motion}' in {HeldMotionCatalog.Path}.");
             Authored.Require(Stances.Stances.ContainsKey(look.Stance), Path, $"{at}.stance", $"unknown stance '{look.Stance}' in {StanceCatalog.Path}.");
-            Authored.Point(Path, $"{at}.grips.main", look.Grips.Main);
-            if (look.Grips.Hand is { } hand) Authored.Point(Path, $"{at}.grips.hand", hand);
-            if (look.Grips.Off is { } off) Authored.Point(Path, $"{at}.grips.off", off);
             Authored.Require((look.Grips.Off is null) == (look.Grips.OffHand is null), Path, $"{at}.grips.offHand",
                 "comes with grips.off: a look held in both hands says where the off hand holds it and how.");
-            if (look.Grips.OffHand is { } offHand) Authored.Point(Path, $"{at}.grips.offHand", offHand);
-            Authored.Point(Path, $"{at}.box.size", look.Box.Size);
             Authored.Colour(Path, $"{at}.box.color", look.Box.Color);
-            Authored.Point(Path, $"{at}.nudge.grip", look.Adjust.Grip);
-            Authored.Point(Path, $"{at}.nudge.turn", look.Adjust.Turn);
-            look.Shape?.Validate(Path, $"{at}.shape", look.Grips.Off is not null);
-            look.Landmarks?.Validate(Path, $"{at}.landmarks", look.Grips.Off is not null);
+            if (look.Shape is { } shape) Authored.Require(Path, $"{at}.shape", shape.Problems(offAllowed: look.Grips.Off is not null));
+            if (look.Landmarks is { } marks) Authored.Require(Path, $"{at}.landmarks", marks.Problems(look.Grips.Off is not null));
             if (look.Model is { } model)
             {
                 Authored.Require(model.Glb.EndsWith(".glb", StringComparison.Ordinal), Path, $"{at}.model.glb", "names a .glb file.");
                 Authored.Positive(Path, $"{at}.model.length", model.Length);
-                Authored.Point(Path, $"{at}.model.rotation", model.Rotation);
             }
         }
     }
@@ -196,7 +183,7 @@ internal sealed record HeldLookDefinition(string Id, string Motion, string Stanc
     [JsonIgnore] internal (Vector3 Grip, Quaternion Turn) Seated { get; set; }
 
     /// <summary>This look's nudge from its stance (none when it has none).</summary>
-    [JsonIgnore] internal HeldNudge Adjust { get; } = Nudge ?? new([0, 0, 0], [0, 0, 0]);
+    [JsonIgnore] internal HeldNudge Adjust { get; } = Nudge ?? new(Vector3.Zero, Vector3.Zero);
 
     /// <summary>
     /// Where the look is and how it is turned in <paramref name="pose"/> (camera space), its grip moved and turned as
@@ -204,10 +191,10 @@ internal sealed record HeldLookDefinition(string Id, string Motion, string Stanc
     /// </summary>
     internal (Vector3 At, Quaternion Turn) Place(HeldPose pose, bool offHand)
     {
-        Quaternion turn = Quaternion.Normalize(Frames.Turn(pose.Rotation) * Seated.Turn);
-        Vector3 grip = Seated.Grip + Authored.Vector(pose.Position);
-        Vector3 at = grip - Vector3.Transform(Authored.Vector(Grips.Main), turn);
-        return offHand ? (Frames.Mirror(at), Frames.Mirror(turn)) : (at, turn);
+        Quaternion turn = Quaternion.Normalize(HeldFrames.Turn(pose.Rotation) * Seated.Turn);
+        Vector3 grip = Seated.Grip + pose.Position;
+        Vector3 at = grip - Vector3.Transform(Grips.Main, turn);
+        return offHand ? (HeldFrames.Mirror(at), HeldFrames.Mirror(turn)) : (at, turn);
     }
 }
 
@@ -216,14 +203,16 @@ internal sealed record HeldLookDefinition(string Id, string Motion, string Stanc
 /// longest side is <see cref="Length"/> metres, and turned by <see cref="Rotation"/> (degrees about X, Y, Z) so its
 /// length runs along -Z with its up side +Y.
 /// </summary>
-internal sealed record HeldModel(string Glb, float Length, float[] Rotation)
+internal sealed record HeldModel(string Glb, float Length, Vector3 Rotation)
 {
+    public Vector3 Rotation { get; set; } = Rotation;
+
     /// <summary>The fitted length; tuned live and taken by a reload in place.</summary>
     public float Length { get; set; } = Length;
 }
 
 /// <summary>The box a look is drawn as when it has no model or its model did not open: its size (look space) and colour.</summary>
-internal sealed record HeldBox(float[] Size, float[] Color);
+internal sealed record HeldBox(Vector3 Size, float[] Color);
 
 /// <summary>
 /// Where the hands hold a look, in look space: the main hand at <see cref="Main"/>, optionally how
@@ -232,16 +221,26 @@ internal sealed record HeldBox(float[] Size, float[] Color);
 /// <see cref="OffHand"/> (the left hand's canonical frame, +X toward its thumb, turned from the look's; given as is, not
 /// mirrored). A baked look takes its source's holds.
 /// </summary>
-internal sealed record HeldGrips(float[] Main, float[]? Hand = null, float[]? Off = null, float[]? OffHand = null);
+internal sealed record HeldGrips(Vector3 Main, Vector3? Hand = null, Vector3? Off = null, Vector3? OffHand = null)
+{
+    public Vector3 Main { get; set; } = Main;
+    public Vector3? Hand { get; set; } = Hand;
+    public Vector3? Off { get; set; } = Off;
+    public Vector3? OffHand { get; set; } = OffHand;
+}
 
 /// <summary>
 /// A look's correction to its stance, judged by eye: its grip moved by <see cref="Grip"/> (camera space, metres) and the
 /// look turned further by <see cref="Turn"/> (degrees about camera X, Y, Z) about that grip.
 /// </summary>
-internal sealed record HeldNudge(float[] Grip, float[] Turn);
+internal sealed record HeldNudge(Vector3 Grip, Vector3 Turn)
+{
+    public Vector3 Grip { get; set; } = Grip;
+    public Vector3 Turn { get; set; } = Turn;
+}
 
 // Authored: missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, UseStringEnumConverter = true,
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, UseStringEnumConverter = true, Converters = [typeof(Vector3Json)],
     RespectRequiredConstructorParameters = true, RespectNullableAnnotations = true,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(HeldCatalog))]

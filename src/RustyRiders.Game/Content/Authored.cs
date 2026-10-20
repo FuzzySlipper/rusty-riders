@@ -57,6 +57,16 @@ internal static class Authored
         if (!condition) throw new InvalidOperationException($"content/{path} {field}: {problem}");
     }
 
+    /// <summary>Fails the first problem an Engine first-person value reports, its field under <paramref name="field"/>.</summary>
+    internal static void Require(string path, string field, IEnumerable<Rusty.Engine.FirstPerson.HeldProblem> problems)
+    {
+        foreach (var problem in problems)
+        {
+            var at = field.Length == 0 ? problem : problem.Under(field);
+            Require(false, path, at.Field, at.Message);
+        }
+    }
+
     internal static void Positive(string path, string field, float value) =>
         Require(float.IsFinite(value) && value > 0, path, field, $"must be a positive number; found {value}.");
 

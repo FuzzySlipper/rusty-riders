@@ -1,6 +1,7 @@
 using System.Numerics;
 using Rusty.Engine;
 using Rusty.Engine.Debugging;
+using Rusty.Engine.FirstPerson;
 using RustyRiders.Game.Actions;
 using RustyRiders.Game.Art;
 using RustyRiders.Game.Content;
@@ -21,6 +22,8 @@ internal sealed class HeldView : IDisposable
     private const string OldArtRoot = "old-art";
     // How far around a grip its inspection view frames (metres).
     private const float GripFrame = .35f;
+    // The overlay set the developer grip check publishes its landmark pairs in.
+    internal const string LandmarkSet = "held.landmarks";
 
     private readonly IEngineContext engine;
     private readonly HeldCatalog held;
@@ -48,7 +51,7 @@ internal sealed class HeldView : IDisposable
         art = new ConvertedArt(engine, OldArtRoot);
         hands = [new(engine, firstObject), new(engine, firstObject + 1)];
         arms = new ArmsSlot(engine, held, firstObject + 2);
-        grips = new GripLandmarks(engine);
+        grips = new GripLandmarks(engine, LandmarkSet);
         sway = new HeldSway(held.Sway);
         foreach (HeldLookDefinition look in held.Looks)
             looks[look.Id] = look.Model is { } model && art.Model(model.Glb) is { } mesh ? (mesh.Appearance, mesh) : (Box(look.Box), null);
@@ -64,15 +67,15 @@ internal sealed class HeldView : IDisposable
 
     /// <summary>Each hand's sway now (its grip's move, metres) and where it is in swapping what it holds.</summary>
     internal ((Vector3 Sway, Swap Swap) Main, (Vector3 Sway, Swap Swap) Off) Swaying =>
-        ((Authored.Vector(hands[MainHand].Sway.Position), hands[MainHand].Swap), (Authored.Vector(hands[OffHand].Sway.Position), hands[OffHand].Swap));
+        ((hands[MainHand].Sway.Position, hands[MainHand].Swap), (hands[OffHand].Sway.Position, hands[OffHand].Swap));
 
     /// <summary>The rig profile drawing the arms now.</summary>
-    internal string Rig => arms.Drawn.Id;
+    internal string Rig => arms.Id;
 
     /// <summary>The arms as drawn now: wrist shortfall, arm lengths and the measured hand frames.</summary>
-    internal ArmsView DrawnArms => arms.Drawn;
+    internal FirstPersonArms DrawnArms => arms.Drawn;
 
-    /// <summary>How far each wrist was drawn from its grip (see <see cref="ArmsView.Shortfall"/>).</summary>
+    /// <summary>How far each wrist was drawn from its grip (see <see cref="FirstPersonArms.Shortfall"/>).</summary>
     internal (float Main, float Off) ArmsShortfall => arms.Drawn.Shortfall;
 
     /// <summary>Developer arms comparison: draws the arms by another rig profile (see <see cref="ArmsSlot.Show"/>).</summary>
@@ -160,7 +163,7 @@ internal sealed class HeldView : IDisposable
         sway.Advance(hostSeconds, feet, speed, grounded, speeds.Walk, speeds.Sprint,
             hands[MainHand].Action is not null && hands[MainHand].Running, hands[OffHand].Action is not null && hands[OffHand].Running);
         for (int h = 0; h < hands.Length; h++)
-            hands[h].Sway = sway.Pose(hands[h].Look == "" ? null : held.Motion.Motions[held.Look(hands[h].Look)!.Motion].Loops, h);
+            hands[h].Sway = sway.Pose(hands[h].Look == "" ? null : held.Motion.Motions[held.Look(hands[h].Look)!.Motion].Loops, h == OffHand);
     }
 
     // A hand swapping what it holds: puts the look it shows away (its motion's unequip, in real time), shows the one it
@@ -175,7 +178,7 @@ internal sealed class HeldView : IDisposable
             case Swap.None when hand.Look != hand.Wanted:
                 if (motion.Unequip is { } away)
                 {
-                    hand.Begin(HeldMotionCatalog.Timeline(motion, away, false, pose => Drawn(look, pose, offHand), hand.Offset(), PutAwayHold),
+                    hand.Begin(HeldTimelines.Transition(motion, away, false, pose => Drawn(look, pose, offHand), hand.Offset(), PutAwayHold),
                         TweenClock.Realtime);
                     hand.Swap = Swap.PuttingAway;
                 }
@@ -187,7 +190,7 @@ internal sealed class HeldView : IDisposable
             case Swap.DrawNext:
                 if (motion.Equip is { } draw)
                 {
-                    hand.Begin(HeldMotionCatalog.Timeline(motion, draw, true, pose => Drawn(look, pose, offHand)), TweenClock.Realtime);
+                    hand.Begin(HeldTimelines.Transition(motion, draw, true, pose => Drawn(look, pose, offHand)), TweenClock.Realtime);
                     hand.Swap = Swap.Drawing;
                 }
                 else hand.Swap = Swap.None;
@@ -204,7 +207,7 @@ internal sealed class HeldView : IDisposable
         arms.Published();
         arms.Drawn.Reach(Aim(MainHand), Aim(OffHand));
         if (held.Look(hands[MainHand].Look) is { } shown)
-            grips.Publish(shown, hands[MainHand].Object, Fit(shown), arms.Drawn, twoHanded, held.Arms.Landmarks);
+            grips.Publish(shown.Landmarks, shown.Grips.Main, hands[MainHand].Object, Fit(shown), arms.Drawn, twoHanded, held.Arms.Landmarks);
     }
 
     /// <summary>
@@ -324,51 +327,38 @@ internal sealed class HeldView : IDisposable
 
     // A hand's grip where its look is drawn now (camera space) and the look's turn there; or another point of the look
     // (look space), such as its off grip.
-    private (Vector3 Grip, Quaternion Look) Grip(int hand, float[]? point = null)
+    private (Vector3 Grip, Quaternion Look) Grip(int hand, Vector3? point = null)
     {
         HeldLookDefinition look = held.Look(hands[hand].Look)!;
         Transform fit = Fit(look);
         (Vector3 at, Quaternion turn) = Now(hand);
         // The drawn model is the look turned by its fit, so the look's own turn is the drawn turn less the fit's.
         Quaternion lookTurn = Quaternion.Normalize(turn * Quaternion.Inverse(fit.Rotation));
-        return (at + Vector3.Transform(Authored.Vector(point ?? look.Grips.Main) - fit.Translation, lookTurn), lookTurn);
+        return (at + Vector3.Transform((point ?? look.Grips.Main) - fit.Translation, lookTurn), lookTurn);
     }
 
     // How closed a hand is now (-1 open, 0 its grip, 1 squeezed), how far its motion leans the arms and where its
     // elbow bends toward (camera space, mirrored for the off hand): the viewer's held key, or the playing action's keys
-    // where the Engine reports its tween has got to, eased by each key's curve as the Engine eases them. The off hand on
-    // a look held in both hands reads the main hand's keys for the off hand, as they are.
-    private (float Grip, Vector3 Lean, Vector3 Elbow) Keyed(int index)
+    // where the Engine reports its tween has got to. The off hand on a look held in both hands reads the main hand's keys
+    // for the off hand, as they are.
+    private HandKeying Keyed(int index)
     {
-        Vector3 Side(Vector3 point) => index == OffHand ? Frames.Mirror(point) : point;
-        Vector3 pole = Side(Authored.Vector(held.Arms.Pole));
+        Vector3 Side(Vector3 point) => index == OffHand ? HeldFrames.Mirror(point) : point;
+        Vector3 pole = Side(held.Arms.Pole);
         if (index == OffHand && twoHanded)
-            return Keyed(MainHand, k => (k.OffGrip, Vector3.Zero, k.OffElbow is { } elbow ? Authored.Vector(elbow) : pole), pole);
-        return Keyed(index, k => (k.Grip, k.Shoulder is { } lean ? Side(Authored.Vector(lean)) : Vector3.Zero,
-            k.Elbow is { } elbow ? Side(Authored.Vector(elbow)) : pole), pole);
+            return Keyed(MainHand, k => new(k.OffGrip, Vector3.Zero, k.OffElbow ?? pole), pole);
+        return Keyed(index, k => new(k.Grip, k.Shoulder is { } lean ? Side(lean) : Vector3.Zero, k.Elbow is { } elbow ? Side(elbow) : pole), pole);
     }
 
     // A hand's keys read by read, at the viewer's held key or where its playing action has got to; at rest, idle.
-    private (float Grip, Vector3 Lean, Vector3 Elbow) Keyed(int index, Func<MotionKey, (float Grip, Vector3 Lean, Vector3 Elbow)> read, Vector3 pole)
+    private HandKeying Keyed(int index, Func<MotionKey, HandKeying> read, Vector3 pole)
     {
         HeldHand hand = hands[index];
-        (float, Vector3, Vector3) idle = (0, Vector3.Zero, pole);
+        HandKeying idle = new(0, Vector3.Zero, pole);
         if (viewing is { } view && view.Hand == index && viewingKey is { } key)
             return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? read(keys[key.Key]) : idle;
         if (hand.ActionTime() is not { } time || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return idle;
-        (float grip, Vector3 lean, Vector3 elbow, float start) from = (0, Vector3.Zero, pole, 0);
-        foreach ((float at, (float grip, Vector3 lean, Vector3 elbow), TweenEasingKind curve) in track
-            .Select(k => (k.Time(action.Timing), read(k), k.Ease))
-            .Append((action.Duration, idle, held.Motion.SettleEase)))
-        {
-            if (time <= at)
-            {
-                float t = at - from.start <= 0 ? 1 : engine.Tween.Evaluate(curve, Math.Clamp((time - from.start) / (at - from.start), 0, 1));
-                return (from.grip + (grip - from.grip) * t, Vector3.Lerp(from.lean, lean, t), Vector3.Lerp(from.elbow, elbow, t));
-            }
-            from = (grip, lean, elbow, at);
-        }
-        return idle;
+        return HeldTimelines.Keyed(engine, track, HeldMotionCatalog.Timing(action), time, read, idle, held.Motion.SettleEase);
     }
 
     // What a hand reaches for now: its look's grip and turn, the look's own hold, and its motion's closure and elbow. The
@@ -390,7 +380,7 @@ internal sealed class HeldView : IDisposable
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);
 
     // Where a hand's look is published: at rest, swayed (the viewer's look does not sway).
-    private HeldPose Placed(int hand) => viewing is { } view && view.Hand == hand ? held.Motion.Motions[held.Look(hands[hand].Look)!.Motion].Poses[HeldMotionCatalog.Rest]
+    private HeldPose Placed(int hand) => viewing is { } view && view.Hand == hand ? held.Motion.Motions[held.Look(hands[hand].Look)!.Motion].Poses[HeldMotion.Rest]
         : hands[hand].Sway;
 
     // The pose the viewer holds: the held key's, as its track says now (rest once the key is gone), or the pose it was given.
@@ -424,10 +414,10 @@ internal sealed class HeldView : IDisposable
     private Transform Fit(HeldLookDefinition look)
     {
         if (looks[look.Id].Mesh is not { } mesh || look.Model is not { } model)
-            return new Transform(Vector3.Zero, Quaternion.Identity, Authored.Vector(look.Box.Size));
+            return new Transform(Vector3.Zero, Quaternion.Identity, look.Box.Size);
         Vector3 extent = mesh.BoundsMax - mesh.BoundsMin, centre = (mesh.BoundsMax + mesh.BoundsMin) / 2;
         float scale = model.Length / MathF.Max(1e-4f, MathF.Max(extent.X, MathF.Max(extent.Y, extent.Z)));
-        Quaternion rotation = Frames.Turn(model.Rotation);
+        Quaternion rotation = HeldFrames.Turn(model.Rotation);
         return new Transform(Vector3.Transform(-centre * scale, rotation), rotation, new Vector3(scale));
     }
 

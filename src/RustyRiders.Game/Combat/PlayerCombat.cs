@@ -1,5 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
+using Rusty.Engine.FirstPerson;
 using RustyRiders.Game.Actions;
 using RustyRiders.Game.Content;
 using RustyRiders.Game.Held;

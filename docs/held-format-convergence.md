@@ -1,5 +1,11 @@
 # Held format: riders and hotel
 
+> **Upstreamed.** The converged format and its mechanisms now live in the Engine as `Rusty.Engine.FirstPerson`
+> (rusty-engine #10188, Engine docs `first-person-held.md`). Records there carry `Vector3` values (a product gives its
+> JSON context a `[x, y, z]` converter, as `Content/Vector3Json`) and list their own problems by field. Grip space
+> stays riders' fitted look space for now; the hand hold frame is the canonical one. Hotel can adopt it by loading its
+> content into those records.
+
 Rusty Hotel (`../rusty-hotel`, `content/combat/{held,stances,held-motion,arms}.json`, `src/Hotel.Game/Combat/`) and
 riders (`content/held/`, `src/RustyRiders.Game/Held/`) grew from the same fptester port. Before the first-person arms and
 held motion go upstream to the Engine, this records where the two formats agree, where each says more, and where their

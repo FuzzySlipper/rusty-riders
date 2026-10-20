@@ -35,6 +35,8 @@
     <RustyEngineLiveContent Include="held/rigs/generated.json" />
     <RustyEngineLiveContent Include="held/rigs/painted.json" />
     <RustyEngineLiveContent Include="held/rigs/leather.json" />
-    <PackageReference Include="Rusty.Engine" Version="[$(RustyEnginePackageVersion)]" />
+    <PackageReference Include="Rusty.Engine" Version="[$(RustyEnginePackageVersion)]">
+      <ExcludeAssets Condition="'$(RustyEngineUseSourceDevelopment)' == 'true'">compile;runtime</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 </Project>

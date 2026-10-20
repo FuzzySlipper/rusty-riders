@@ -1,5 +1,6 @@
 using System.Numerics;
 using Rusty.Engine;
+using Rusty.Engine.FirstPerson;
 using RustyRiders.Game.Actions;
 
 namespace RustyRiders.Game.Held;
@@ -17,13 +18,13 @@ internal sealed class HeldHand(IEngineContext engine, ulong objectId)
     /// <summary>Where the hand is in swapping what it holds.</summary>
     internal Swap Swap;
     /// <summary>The hand's sway this update, as a pose from rest.</summary>
-    internal HeldPose Sway = new([0, 0, 0], [0, 0, 0]);
+    internal HeldPose Sway = HeldPose.Rest;
     internal (TweenHandle Handle, TweenStartRequest Request, string Look, ulong Started)? Tween;
     internal ActionDefinition? Action;
     /// <summary>The last action start of this hand's user that its motion has followed.</summary>
     internal ulong StartedSeen;
     /// <summary>Feedback punches layered over the motion.</summary>
-    internal readonly FeedbackLayers Layers = new(engine);
+    internal readonly HeldLayers Layers = new(engine);
     /// <summary>The action's time scale and the viewer's playback speed, to read the keys at the tween's elapsed time.</summary>
     internal float Scale = 1, Speed = 1;
 
