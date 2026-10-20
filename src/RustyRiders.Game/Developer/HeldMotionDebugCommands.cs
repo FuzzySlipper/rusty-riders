@@ -155,7 +155,9 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         var (mainLength, offLength) = arms.ArmLength;
         string frames = arms.HandFrames is { } f ? $"hand frames main [{f.Main.X:0}, {f.Main.Y:0}, {f.Main.Z:0}] off [{f.Off.X:0}, {f.Off.Y:0}, {f.Off.Z:0}] degrees" : "hand frames not measured yet";
         var (mainFelt, offFelt) = View.Felt;
-        return DebugCommandResult.Success($"Rig {arms.Id}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
+        var (mainSway, offSway) = View.Swaying;
+        string Sway((System.Numerics.Vector3 Move, Swap Swap) s) => FormattableString.Invariant($"[{s.Move.X:0.###}, {s.Move.Y:0.###}, {s.Move.Z:0.###}] {s.Swap}");
+        return DebugCommandResult.Success($"Rig {arms.Id}. Sway main {Sway(mainSway)}, off {Sway(offSway)}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
     }
 
     [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]

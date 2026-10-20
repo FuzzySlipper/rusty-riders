@@ -217,6 +217,12 @@ def bake(spec):
             return default
         return round(value * (len(frames) - 1)) if value < 1 else frames.index(int(value))
 
+    kind = spec.get("kind", "action")
+    if kind == "loop":
+        return bake_loop(spec, poses, frames)
+    if kind in ("equip", "unequip"):
+        return bake_transition(spec, kind, poses, frames)
+
     # Phases from the grip's speed (a wrist roll can turn the weapon fastest without carrying the blow).
     speed = [0.0] + [(poses[i][0] - poses[i - 1][0]).length for i in range(1, len(poses))]
     strike = frame_of(spec.get("strike"), max(range(len(speed)), key=speed.__getitem__))
@@ -319,6 +325,72 @@ def bake(spec):
     name = spec.get("name", Path(spec["clip"]).stem)
     print(f"BAKED {name}: {Path(spec['clip']).name} -> motions.{spec['motion']}.tracks.{spec['action']}: {len(frames)} frames at "
           f"{bpy.context.scene.render.fps} fps, strike frame {frames[strike]}, commit to {frames[end]}, {len(track)} keys{seated}")
+
+
+def fps():
+    return bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
+
+
+def motion_of(spec):
+    out = Path(spec.get("out", cli.out))
+    motions = json.loads(out.read_text())
+    return out, motions, motions["motions"].setdefault(spec["motion"], {"poses": {"rest": {"position": [0, 0, 0], "rotation": [0, 0, 0]}}, "tracks": {}})
+
+
+def bake_loop(spec, poses, frames):
+    """
+    A sway loop (`state`: idle, walk or sprint): offsets from the set's rest, evenly around the clip (a cycle; about ten
+    keys a second unless `keys` says). Its
+    cycle is the clip's seconds for idle; walking and sprinting give theirs in metres, the clip's seconds at our `speed`
+    (m/s), so the bob keeps the source's step cadence at our pace.
+    """
+    seconds = (len(frames) - 1) / fps()
+    # Enough keys to keep every step's bob: a walk clip may hold several steps.
+    count = int(spec.get("keys", max(12, round(seconds * 10))))
+    cycle = seconds if spec["state"] == "idle" else seconds * spec["speed"]
+    keys = []
+    for k in range(count):
+        grip, turn, _, _, _ = poses[round(k * (len(frames) - 1) / count)]
+        keys.append({"at": round(k / count, 3), "position": [round(v, 4) for v in grip], "rotation": degrees(turn)})
+    out, motions, motion = motion_of(spec)
+    motion.setdefault("loops", {})[spec["state"]] = {"cycle": round(cycle, 3), "keys": keys}
+    out.write_text(json.dumps(motions, indent=2) + "\n")
+    print(f"BAKED {spec.get('name')}: {Path(spec['clip']).name} -> motions.{spec['motion']}.loops.{spec['state']}: {count} keys, "
+          f"cycle {cycle:.2f} {'s' if spec['state'] == 'idle' else 'm'}")
+
+
+def bake_transition(spec, kind, poses, frames):
+    """
+    How a look is drawn (`equip`) or put away (`unequip`): keys through poses from the set's rest, kept where a straight
+    blend would miss by the tolerances, each at its fraction of the clip, over the clip's seconds times `pace` (below 1
+    for a quicker swap than the source's).
+    """
+    position, angle = spec.get("position", 0.02), spec.get("angle", 8.0)
+
+    def off(i, a, b):
+        t = (i - a) / (b - a)
+        grip = poses[a][0].lerp(poses[b][0], t)
+        turn = poses[a][1].slerp(poses[b][1], t)
+        return max((poses[i][0] - grip).length / position, math.degrees(poses[i][1].rotation_difference(turn).angle) / angle)
+    keys = [0, len(frames) - 1]
+    while True:
+        worst = max(((off(i, a, b), i) for a, b in zip(keys, keys[1:]) for i in range(a + 1, b)), default=(0, None))
+        if worst[0] <= 1:
+            break
+        keys = sorted(set(keys) | {worst[1]})
+    out, motions, motion = motion_of(spec)
+    for name in [n for n in motion["poses"] if n.startswith(f"{kind}-")]:
+        del motion["poses"][name]
+    track = []
+    for n, i in enumerate(keys, 1):
+        grip, turn, _, _, _ = poses[i]
+        pose = f"{kind}-{n}"
+        motion["poses"][pose] = {"position": [round(v, 3) for v in grip], "rotation": degrees(turn)}
+        track.append({"pose": pose, "at": round(i / (len(frames) - 1), 3), "ease": "Linear"})
+    seconds = (len(frames) - 1) / fps() * spec.get("pace", 1.0)
+    motion[kind] = {"seconds": round(seconds, 3), "keys": track}
+    out.write_text(json.dumps(motions, indent=2) + "\n")
+    print(f"BAKED {spec.get('name')}: {Path(spec['clip']).name} -> motions.{spec['motion']}.{kind}: {len(track)} keys over {seconds:.2f} s")
 
 
 def degrees(q):

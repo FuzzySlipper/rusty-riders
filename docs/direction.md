@@ -270,6 +270,25 @@ are ordinary held motion: step, retime and edit them in the workbench. A rebake 
 adds or removes a motion, is a structural change: restart the game to see it (an edited key or pose reloads in place).
 The heavy attacks' `_Start`, `_Loop` and `_End` parts are separate clips, to bake one at a time or join first.
 
+### Sway and swapping
+
+A motion may also say how its looks sway and how they are drawn and put away, both baked from the same sets' clips:
+- **Loops** (`loops.idle`, `.walk`, `.sprint`): offsets from rest around one cycle, played as a smooth closed curve.
+  The standing loop runs on time (seconds); walking and sprinting run on distance walked (metres), so the bob keeps step
+  at any pace: a baked loop's cycle is its clip's seconds at our walking or sprinting speed, keeping the source's step
+  cadence. `HeldSway` blends the three by speed (eased over `content/held/sway.json` `blendSeconds`), fades walking out
+  in the air, and keeps `acting` of it under a hand's own action. The sway is part of where the look is published, so
+  actions, punches and the arms' reach compose over it; it runs in real time (the rider breathes while the world holds).
+- **Transitions** (`equip`, `unequip`): seconds and keys through the motion's poses, in real time. Swapping what a hand
+  holds puts the old look away (its last key holds a moment past the end), shows the new look hidden for an update, then
+  draws it from its first key to rest. A motion without one swaps at once; an action begun mid-swap shows its weapon at
+  once.
+
+Recipe entries with `kind: loop` (`state`, and `speed` m/s for walking and sprinting), `equip` or `unequip` (`pace` to
+quicken the source's) bake them: every set has its Idle, Walk, Sprint (the revolver's Run), Equip (Get) and Unequip
+(Hide) baked, the melee swaps at about half the source's two seconds. `riders.arms` reports each hand's sway and where
+it is in a swap; the workbench's Sway group tunes the blend, what stays under an action, and each loop's size and cycle.
+
 ### Feedback over baked motion
 
 A baked motion is a tween timeline on the weapon's object, so feedback composes with it rather than replacing it. As a

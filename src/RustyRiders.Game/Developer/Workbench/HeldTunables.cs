@@ -106,6 +106,25 @@ internal static class HeldTunables
                 .. Vector("pose.rotation", "turn", pose.Rotation, -180, 180, 1, HeldMotionCatalog.Path, $"{posePointer}/rotation", publish)
             ]) { File = HeldMotionCatalog.Path });
         }
+        // Sway: how quickly it blends, how much stays under an action, and the shown look's loops' size and cycle.
+        SwayTuning swayTuning = held.Sway;
+        List<Tunable> swaying =
+        [
+            new(new("sway.blend", "blend seconds", TunableKind.Slider, .02f, 1, .01f, swayTuning.BlendSeconds) { Source = new(SwayTuning.Path, "/blendSeconds") },
+                v => swayTuning.BlendSeconds = v),
+            new(new("sway.acting", "kept under an action", TunableKind.Slider, 0, 1, .05f, swayTuning.Acting) { Source = new(SwayTuning.Path, "/acting") },
+                v => swayTuning.Acting = v)
+        ];
+        foreach (var (state, loop) in motion.Loops?.Named ?? [])
+        {
+            string pointer = $"{motionPointer}/loops/{state}";
+            swaying.Add(new(new($"sway.{state}.scale", $"{state} size", TunableKind.Slider, 0, 3, .05f, loop.Scale) { Source = new(HeldMotionCatalog.Path, $"{pointer}/scale") },
+                v => loop.Scale = v));
+            swaying.Add(new(new($"sway.{state}.cycle", $"{state} cycle ({(state == "idle" ? "s" : "m")})", TunableKind.Slider, .2f, 40, .1f, loop.Cycle)
+                { Source = new(HeldMotionCatalog.Path, $"{pointer}/cycle") }, v => loop.Cycle = v));
+        }
+        groups.Add(new($"sway.{model.Motion}", $"Sway · {model.Motion}", swaying) { File = HeldMotionCatalog.Path });
+
         // Feedback punches: how far each swings and turns, for how long and how often.
         List<Tunable> feel = [];
         foreach (FeedbackKind kind in Enum.GetValues<FeedbackKind>())

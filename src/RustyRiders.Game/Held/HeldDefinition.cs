@@ -19,13 +19,15 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     [JsonIgnore] internal ArmsDefinition Arms { get; init; } = null!;
     /// <summary>What a hand feels as its action lands (<see cref="HeldFeedback.Path"/>).</summary>
     [JsonIgnore] internal HeldFeedback Feedback { get; init; } = null!;
+    /// <summary>How the weapons sway between and under actions (<see cref="SwayTuning.Path"/>).</summary>
+    [JsonIgnore] internal SwayTuning Sway { get; init; } = null!;
     /// <summary>The arms models the arms can be drawn by, by profile id (<see cref="ArmRig.Directory"/>).</summary>
     [JsonIgnore] internal Dictionary<string, ArmRig> Rigs { get; init; } = null!;
 
     internal const string Path = "held/looks.json";
 
     /// <summary>The content files the held presentation reads, reloaded in place under <c>rusty dev</c> (RustyEngineLiveContent).</summary>
-    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, .. ArmRigs.Ids.Select(ArmRig.PathOf)];
+    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, SwayTuning.Path, .. ArmRigs.Ids.Select(ArmRig.PathOf)];
 
     internal static HeldCatalog Load(IEngineContext engine)
     {
@@ -33,7 +35,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
         HeldCatalog catalog = Authored.Read(engine, Path, HeldJson.Default.HeldCatalog) with
         {
             Motion = HeldMotionCatalog.Load(engine), Stances = StanceCatalog.Load(engine), Arms = arms, Rigs = ArmRigs.Load(engine, arms),
-            Feedback = HeldFeedback.Load(engine)
+            Feedback = HeldFeedback.Load(engine), Sway = SwayTuning.Load(engine)
         };
         catalog.Validate();
         foreach (HeldLookDefinition look in catalog.Looks) catalog.Seat(look);
@@ -115,10 +117,13 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                 foreach (string gone in live.Poses.Keys.Except(motion.Poses.Keys).ToArray()) live.Poses.Remove(gone);
                 live.Tracks.Clear();
                 foreach (var (track, keys) in motion.Tracks) live.Tracks[track] = keys;
+                // Loops and transitions follow the file (the poses dictionary, shared, keeps its identity).
+                Motion.Motions[id] = live with { Loops = motion.Loops, Equip = motion.Equip, Unequip = motion.Unequip };
             }
         }
         if (changed.Contains(ArmsDefinition.Path)) Arms.Take(fresh.Arms);
         if (changed.Contains(HeldFeedback.Path)) Feedback.Take(fresh.Feedback);
+        if (changed.Contains(SwayTuning.Path)) Sway.Take(fresh.Sway);
         foreach (var (id, rig) in Rigs)
         {
             if (!changed.Contains(ArmRig.PathOf(id))) continue;
@@ -232,4 +237,5 @@ internal sealed record HeldNudge(float[] Grip, float[] Turn);
 [JsonSerializable(typeof(ArmsDefinition))]
 [JsonSerializable(typeof(ArmRig))]
 [JsonSerializable(typeof(HeldFeedback))]
+[JsonSerializable(typeof(SwayTuning))]
 internal sealed partial class HeldJson : JsonSerializerContext;

@@ -41,6 +41,8 @@ internal sealed class Walker : IDisposable
     internal FpsInput Input { get; }
     /// <summary>Free flight: converted meshes do not collide, so walking cannot climb them.</summary>
     internal bool Flying { get; private set; }
+    /// <summary>The authored walking and sprinting speeds (m/s).</summary>
+    internal (float Walk, float Sprint) Speeds => (tuning.Speed, tuning.SprintSpeed);
     internal LookState LookState { get; private set; }
     /// <summary>Walking off the ground: in a jump or a fall.</summary>
     internal bool Airborne => !Flying && !Motion.Grounded;

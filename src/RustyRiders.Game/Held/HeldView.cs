@@ -31,6 +31,9 @@ internal sealed class HeldView : IDisposable
     private readonly HeldHand[] hands;
     private readonly ArmsSlot arms;
     private readonly List<(int Hand, FeedbackKind Kind)> felt = [];
+    private readonly HeldSway sway;
+    // A put-away tween holds its last pose this much past its end, so the old look never shows at rest before the swap.
+    private const float PutAwayHold = .25f;
     private (int Hand, string Look, HeldPose? Pose)? viewing;
     // The main hand's look is held in both hands.
     private bool twoHanded;
@@ -44,6 +47,7 @@ internal sealed class HeldView : IDisposable
         art = new ConvertedArt(engine, OldArtRoot);
         hands = [new(engine, firstObject), new(engine, firstObject + 1)];
         arms = new ArmsSlot(engine, held, firstObject + 2);
+        sway = new HeldSway(held.Sway);
         foreach (HeldLookDefinition look in held.Looks)
             looks[look.Id] = look.Model is { } model && art.Model(model.Glb) is { } mesh ? (mesh.Appearance, mesh) : (Box(look.Box), null);
     }
@@ -55,6 +59,10 @@ internal sealed class HeldView : IDisposable
 
     /// <summary>How many feedback punches each hand has had since its motion last started (ended ones are counted until sampled).</summary>
     internal (int Main, int Off) Felt => (hands[MainHand].Layers.Count, hands[OffHand].Layers.Count);
+
+    /// <summary>Each hand's sway now (its grip's move, metres) and where it is in swapping what it holds.</summary>
+    internal ((Vector3 Sway, Swap Swap) Main, (Vector3 Sway, Swap Swap) Off) Swaying =>
+        ((Authored.Vector(hands[MainHand].Sway.Position), hands[MainHand].Swap), (Authored.Vector(hands[OffHand].Sway.Position), hands[OffHand].Swap));
 
     /// <summary>The rig profile drawing the arms now.</summary>
     internal string Rig => arms.Drawn.Id;
@@ -76,16 +84,24 @@ internal sealed class HeldView : IDisposable
     internal IEnumerable<AppearanceFact> Facts(string mainLook, string offLook, bool twoHanded, bool visible)
     {
         // The motion viewer shows a look with an off grip in both hands when it shows it in the main hand.
-        this.twoHanded = viewing is { } viewed ? viewed.Hand == MainHand && held.Look(viewed.Look)!.Grips.Off is not null : twoHanded;
-        hands[MainHand].Look = viewing is { Hand: MainHand } v ? v.Look : mainLook;
-        hands[OffHand].Look = viewing is { Hand: OffHand } w ? w.Look : offLook;
+        // Each hand shows what it holds once a swap has drawn it (see Swaps); the viewer shows its look at once.
+        foreach (var (hand, wanted) in new[] { (hands[MainHand], mainLook), (hands[OffHand], offLook) })
+        {
+            hand.Wanted = wanted;
+            if (hand.Look == "") hand.Look = wanted;
+        }
+        if (viewing is { } viewed) hands[viewed.Hand].Look = viewed.Look;
+        // A look held in both hands takes the off hand once it is drawn.
+        this.twoHanded = viewing is { } shownLook ? shownLook.Hand == MainHand && held.Look(shownLook.Look)!.Grips.Off is not null
+            : twoHanded && hands[MainHand].Look == mainLook;
         for (int h = 0; h < hands.Length; h++)
         {
             HeldLookDefinition look = held.Look(hands[h].Look)!;
-            HeldPose pose = viewing is { } view && view.Hand == h && Viewed() is { } shown ? shown : Rest(look);
+            HeldPose pose = viewing is { } view && view.Hand == h && Viewed() is { } shown ? shown : Placed(h);
             (Vector3 at, Quaternion turn) = Drawn(look, pose, h == OffHand);
+            bool drawn = !(h == OffHand && this.twoHanded) && hands[h].Swap != Swap.DrawNext;
             yield return new AppearanceFact(hands[h].Object, false, 0, new Transform(at, turn, Fit(look).Scale),
-                looks[look.Id].Appearance, visible && !(h == OffHand && this.twoHanded), RenderLayer.Viewmodel);
+                looks[look.Id].Appearance, visible && drawn, RenderLayer.Viewmodel);
         }
         // The body leans with a blow: the arms move by both hands' motions together (two blows at once lean as their sum;
         // the arms' own reach then keeps each hand on its grip).
@@ -113,9 +129,16 @@ internal sealed class HeldView : IDisposable
                 if (playing.Look != hand.Look) hand.Cancel();
                 else if (cutShort && hand.Running) hand.Begin(held.Motion.Settle(hand.Offset()), TweenClock.World);
             }
-            if (viewing is not null || user.Started == hand.StartedSeen) continue;
+            if (viewing is not null) continue;
+            if (user.Started == hand.StartedSeen || user.Current is not { } action)
+            {
+                hand.StartedSeen = user.Started;
+                if (!hand.Running || hand.Action is null) Swaps(hand, h == OffHand);
+                continue;
+            }
             hand.StartedSeen = user.Started;
-            if (user.Current is not { } action) continue;
+            // An action begun mid-swap shows the weapon it is made with at once.
+            (hand.Look, hand.Swap) = (hand.Wanted, Swap.None);
             HeldLookDefinition look = held.Look(hand.Look)!;
             bool offHand = h == OffHand;
             TweenSegment[] timeline = held.Motion.Timeline(held.Motion.Motions[look.Motion], action, pose => Drawn(look, pose, offHand),
@@ -124,6 +147,53 @@ internal sealed class HeldView : IDisposable
         }
         Punch();
         Reach();
+    }
+
+    /// <summary>
+    /// Advances the weapons' sway by an update's host seconds over the rider's movement (feet, horizontal speed, ground,
+    /// walking and sprinting speeds), turned down under each hand's own action; the viewer shows its look without sway.
+    /// </summary>
+    internal void Present(double hostSeconds, Vector3 feet, float speed, bool grounded, (float Walk, float Sprint) speeds)
+    {
+        sway.Advance(hostSeconds, feet, speed, grounded, speeds.Walk, speeds.Sprint,
+            hands[MainHand].Action is not null && hands[MainHand].Running, hands[OffHand].Action is not null && hands[OffHand].Running);
+        for (int h = 0; h < hands.Length; h++)
+            hands[h].Sway = sway.Pose(hands[h].Look == "" ? null : held.Motion.Motions[held.Look(hands[h].Look)!.Motion].Loops, h);
+    }
+
+    // A hand swapping what it holds: puts the look it shows away (its motion's unequip, in real time), shows the one it
+    // holds hidden for an update, then draws it (its equip) from where the draw starts. A motion without a transition
+    // swaps at once; a change of mind while drawing puts the new look away again.
+    private void Swaps(HeldHand hand, bool offHand)
+    {
+        HeldMotion motion = held.Motion.Motions[held.Look(hand.Look)!.Motion];
+        HeldLookDefinition look = held.Look(hand.Look)!;
+        switch (hand.Swap)
+        {
+            case Swap.None when hand.Look != hand.Wanted:
+                if (motion.Unequip is { } away)
+                {
+                    hand.Begin(HeldMotionCatalog.Timeline(motion, away, false, pose => Drawn(look, pose, offHand), hand.Offset(), PutAwayHold),
+                        TweenClock.Realtime);
+                    hand.Swap = Swap.PuttingAway;
+                }
+                else (hand.Look, hand.Swap) = (hand.Wanted, Swap.DrawNext);
+                break;
+            case Swap.PuttingAway when (hand.Elapsed ?? double.MaxValue) >= (motion.Unequip?.Seconds ?? 0):
+                (hand.Look, hand.Swap) = (hand.Wanted, Swap.DrawNext);
+                break;
+            case Swap.DrawNext:
+                if (motion.Equip is { } draw)
+                {
+                    hand.Begin(HeldMotionCatalog.Timeline(motion, draw, true, pose => Drawn(look, pose, offHand)), TweenClock.Realtime);
+                    hand.Swap = Swap.Drawing;
+                }
+                else hand.Swap = Swap.None;
+                break;
+            case Swap.Drawing when hand.Look != hand.Wanted || !hand.Running:
+                hand.Swap = Swap.None;
+                break;
+        }
     }
 
     /// <summary>Reaches the arms for both hands' grips where their looks are drawn now, each hand closed as its motion says.</summary>
@@ -142,7 +212,12 @@ internal sealed class HeldView : IDisposable
     /// <summary>Ends every motion (a level or the kit changes).</summary>
     internal void Reset()
     {
-        foreach (HeldHand hand in hands) hand.Cancel();
+        sway.Moved();
+        foreach (HeldHand hand in hands)
+        {
+            hand.Cancel();
+            (hand.Look, hand.Swap) = (hand.Wanted, Swap.None);
+        }
         viewing = null;
         viewingKey = null;
     }
@@ -156,7 +231,12 @@ internal sealed class HeldView : IDisposable
     /// <summary>Developer motion viewer: shows a look in a hand in place of what it holds, at rest; null returns to play.</summary>
     internal void View(int hand, string? look)
     {
-        foreach (HeldHand each in hands) each.Cancel();
+        foreach (HeldHand each in hands)
+        {
+            each.Cancel();
+            // The viewer shows its look at once; off, each hand shows what it holds again.
+            if (look is null) (each.Look, each.Swap) = (each.Wanted, Swap.None);
+        }
         viewing = look is null ? null : (hand, look, null);
         viewingKey = null;
     }
@@ -205,7 +285,7 @@ internal sealed class HeldView : IDisposable
     {
         HeldLookDefinition look = held.Look(hands[hand].Look)!;
         if (viewing is { } view && view.Hand == hand && Viewed() is { } pose) return Drawn(look, pose, hand == OffHand);
-        (Vector3 at, Quaternion turn) = Drawn(look, Rest(look), hand == OffHand);
+        (Vector3 at, Quaternion turn) = Drawn(look, Placed(hand), hand == OffHand);
         (Vector3 move, Quaternion offset) = hands[hand].Offset();
         return (at + move, Quaternion.Normalize(turn * offset));
     }
@@ -298,7 +378,9 @@ internal sealed class HeldView : IDisposable
 
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);
 
-    private HeldPose Rest(HeldLookDefinition look) => held.Motion.Motions[look.Motion].Poses[HeldMotionCatalog.Rest];
+    // Where a hand's look is published: at rest, swayed (the viewer's look does not sway).
+    private HeldPose Placed(int hand) => viewing is { } view && view.Hand == hand ? held.Motion.Motions[held.Look(hands[hand].Look)!.Motion].Poses[HeldMotionCatalog.Rest]
+        : hands[hand].Sway;
 
     // The pose the viewer holds: the held key's, as its track says now (rest once the key is gone), or the pose it was given.
     private HeldPose? Viewed()

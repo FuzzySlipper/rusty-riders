@@ -192,7 +192,12 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     /// <summary>Counts down the hit notice in host seconds (it is presentation, not world state).</summary>
-    internal void Present(double hostSeconds) => noticeLeft = Math.Max(0, noticeLeft - hostSeconds);
+    internal void Present(double hostSeconds)
+    {
+        noticeLeft = Math.Max(0, noticeLeft - hostSeconds);
+        Vector3 velocity = walker.Motion.ControlledVelocity;
+        held.Present(hostSeconds, walker.Feet, new Vector2(velocity.X, velocity.Z).Length(), !walker.Airborne && !walker.Flying, walker.Speeds);
+    }
 
     /// <summary>Held weapons (camera space, viewmodel layer), projectiles and dummies as they stand now.</summary>
     internal IEnumerable<AppearanceFact> Facts()

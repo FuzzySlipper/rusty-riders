@@ -12,7 +12,12 @@ namespace RustyRiders.Game.Held;
 /// </summary>
 internal sealed class HeldHand(IEngineContext engine, ulong objectId)
 {
-    internal string Look = "";
+    /// <summary>The look the hand shows, and the one it holds (they differ while it swaps).</summary>
+    internal string Look = "", Wanted = "";
+    /// <summary>Where the hand is in swapping what it holds.</summary>
+    internal Swap Swap;
+    /// <summary>The hand's sway this update, as a pose from rest.</summary>
+    internal HeldPose Sway = new([0, 0, 0], [0, 0, 0]);
     internal (TweenHandle Handle, TweenStartRequest Request, string Look, ulong Started)? Tween;
     internal ActionDefinition? Action;
     /// <summary>The last action start of this hand's user that its motion has followed.</summary>
@@ -70,4 +75,7 @@ internal sealed class HeldHand(IEngineContext engine, ulong objectId)
     }
 
     internal bool Running => Tween is { } playing && engine.Tween.Read(playing.Handle).State != TweenState.Ended;
+
+    /// <summary>Seconds the hand's tween has played, or null when none plays.</summary>
+    internal double? Elapsed => Tween is { } playing && engine.Tween.Read(playing.Handle) is { State: not TweenState.Ended } readout ? readout.ElapsedSeconds : null;
 }

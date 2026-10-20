@@ -33,6 +33,36 @@ internal sealed record HeldMotionCatalog(float SettleSeconds, TweenEasingKind Se
             string at = $"motions.{id}";
             Authored.Require(motion.Poses.TryGetValue(Rest, out HeldPose? rest) && rest.Position.All(v => v == 0) && rest.Rotation.All(v => v == 0),
                 Path, $"{at}.poses.{Rest}", "is required and must be no change ([0, 0, 0] both): a look rests where its stance seats it.");
+            if (motion.Loops is { } loops)
+                foreach (var (name, loop) in loops.Named)
+                {
+                    string field = $"{at}.loops.{name}";
+                    Authored.Positive(Path, $"{field}.cycle", loop.Cycle);
+                    Authored.AtLeast(Path, $"{field}.scale", loop.Scale, 0);
+                    Authored.Require(loop.Keys.Length >= 2, Path, $"{field}.keys", "needs at least two keys around the cycle.");
+                    for (int i = 0; i < loop.Keys.Length; i++)
+                    {
+                        Authored.Within(Path, $"{field}.keys[{i}].at", loop.Keys[i].At, 0, 1);
+                        Authored.Require(i == 0 || loop.Keys[i].At > loop.Keys[i - 1].At, Path, $"{field}.keys[{i}].at", "keys go around the cycle in order.");
+                        Authored.Point(Path, $"{field}.keys[{i}].position", loop.Keys[i].Position);
+                        Authored.Point(Path, $"{field}.keys[{i}].rotation", loop.Keys[i].Rotation);
+                    }
+                }
+            foreach (var (name, transition) in new[] { ("equip", motion.Equip), ("unequip", motion.Unequip) })
+            {
+                if (transition is null) continue;
+                string field = $"{at}.{name}";
+                Authored.Positive(Path, $"{field}.seconds", transition.Seconds);
+                Authored.Require(transition.Keys.Length >= 1, Path, $"{field}.keys", "needs at least one key.");
+                for (int i = 0; i < transition.Keys.Length; i++)
+                {
+                    TransitionKey key = transition.Keys[i];
+                    Authored.Require(motion.Poses.ContainsKey(key.Pose), Path, $"{field}.keys[{i}].pose", $"unknown pose '{key.Pose}'.");
+                    Authored.Within(Path, $"{field}.keys[{i}].at", key.At, 0, 1);
+                    Authored.Require(i == 0 || key.At > transition.Keys[i - 1].At, Path, $"{field}.keys[{i}].at", "keys fall in time order.");
+                    Ease(Path, $"{field}.keys[{i}].ease", key.Ease);
+                }
+            }
             foreach (var (name, pose) in motion.Poses)
             {
                 Authored.Point(Path, $"{at}.poses.{name}.position", pose.Position);
@@ -123,6 +153,44 @@ internal sealed record HeldMotionCatalog(float SettleSeconds, TweenEasingKind Se
         return [.. segments];
     }
 
+    /// <summary>
+    /// The tween timeline of a look being drawn or put away, as offsets from rest (<paramref name="place"/> as for an
+    /// action): drawing starts at its first key's pose and ends at rest; putting away starts from <paramref name="from"/>
+    /// (the offset shown) and ends at its last key's pose, where the look is swapped, held there <paramref name="hold"/>
+    /// seconds past its end so the look never shows at rest before the swap.
+    /// </summary>
+    internal static TweenSegment[] Timeline(HeldMotion motion, HeldTransition transition, bool drawing, Func<HeldPose, (Vector3 At, Quaternion Turn)> place,
+        (Vector3 Move, Quaternion Turn) from = default, float hold = 0)
+    {
+        (Vector3 restAt, Quaternion restTurn) = place(motion.Poses[Rest]);
+        (Vector3 Move, Quaternion Turn) Offset(HeldPose pose)
+        {
+            (Vector3 at, Quaternion turn) = place(pose);
+            return (at - restAt, Quaternion.Normalize(Quaternion.Inverse(restTurn) * turn));
+        }
+        List<TweenSegment> segments = [];
+        (Vector3 Move, Quaternion Turn) last = drawing ? Offset(motion.Poses[transition.Keys[0].Pose])
+            : from.Turn == default ? (Vector3.Zero, Quaternion.Identity) : from;
+        float start = 0;
+        void Ease((Vector3 Move, Quaternion Turn) to, float time, TweenEasingKind ease)
+        {
+            if (time - start <= 0) { last = to; return; }
+            segments.Add(TweenSegment.Move(last.Move, to.Move, time - start, ease).At(start));
+            segments.Add(TweenSegment.Rotate(last.Turn, to.Turn, time - start, ease).At(start));
+            (last, start) = (to, time);
+        }
+        foreach (TransitionKey key in transition.Keys) Ease(Offset(motion.Poses[key.Pose]), key.At * transition.Seconds, key.Ease);
+        if (drawing) Ease((Vector3.Zero, Quaternion.Identity), transition.Seconds, transition.Keys[^1].Ease);
+        else Ease(last, transition.Seconds + hold, TweenEasingKind.Linear);
+        // A timeline whose keys all sit at its start still holds its pose for its length.
+        if (segments.Count == 0)
+        {
+            segments.Add(TweenSegment.Move(last.Move, last.Move, transition.Seconds, TweenEasingKind.Linear));
+            segments.Add(TweenSegment.Rotate(last.Turn, last.Turn, transition.Seconds, TweenEasingKind.Linear));
+        }
+        return [.. segments];
+    }
+
     /// <summary>The settle back to rest from <paramref name="from"/>, the offset a cut-short action left the model at.</summary>
     internal TweenSegment[] Settle((Vector3 Move, Quaternion Turn) from) =>
     [
@@ -132,7 +200,13 @@ internal sealed record HeldMotionCatalog(float SettleSeconds, TweenEasingKind Se
 }
 
 /// <summary>One family of held motion: its poses and its tracks by action id (with a default for the rest).</summary>
-internal sealed record HeldMotion(Dictionary<string, HeldPose> Poses, Dictionary<string, MotionKey[]> Tracks)
+/// <summary>
+/// One family of held motion: its poses, its tracks by action id (with a default for the rest), the loops it sways by
+/// between and under actions (<see cref="Loops"/>), and how a look of it is drawn and put away (<see cref="Equip"/>,
+/// <see cref="Unequip"/>).
+/// </summary>
+internal sealed record HeldMotion(Dictionary<string, HeldPose> Poses, Dictionary<string, MotionKey[]> Tracks, HeldLoops? Loops = null,
+    HeldTransition? Equip = null, HeldTransition? Unequip = null)
 {
     internal MotionKey[]? Track(string action) =>
         Tracks.GetValueOrDefault(action) ?? Tracks.GetValueOrDefault(HeldMotionCatalog.DefaultTrack);
@@ -169,3 +243,55 @@ internal sealed record MotionKey(string Pose, MotionPhase Phase, float At, Tween
 /// <summary>The action phase a key is timed through.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<MotionPhase>))]
 internal enum MotionPhase { Windup, Commit, Recovery }
+
+/// <summary>A motion's sway loops: standing (<see cref="Idle"/>), walking and sprinting, each optional.</summary>
+internal sealed record HeldLoops(HeldLoop? Idle = null, HeldLoop? Walk = null, HeldLoop? Sprint = null)
+{
+    internal IEnumerable<(string Name, HeldLoop Loop)> Named =>
+        new[] { ("idle", Idle), ("walk", Walk), ("sprint", Sprint) }.Where(p => p.Item2 is not null).Select(p => (p.Item1, p.Item2!));
+}
+
+/// <summary>
+/// A sway loop: offsets from rest (a grip move, camera metres, and a turn about it, degrees about camera X, Y, Z) at
+/// moments around one cycle, drawn as a smooth closed curve through them and scaled by <see cref="Scale"/>. Its
+/// <see cref="Cycle"/> is seconds for standing and metres walked for walking and sprinting, so the bob keeps step.
+/// </summary>
+internal sealed record HeldLoop(float Cycle, LoopKey[] Keys)
+{
+    public float Cycle { get; set; } = Cycle;
+    public float Scale { get; set; } = 1;
+
+    /// <summary>The loop's offset at a phase (0 to 1, wrapping), through its keys on a closed Catmull-Rom curve.</summary>
+    internal (Vector3 Move, Vector3 Turn) At(float phase)
+    {
+        phase -= MathF.Floor(phase);
+        int n = Keys.Length;
+        int i = Array.FindLastIndex(Keys, k => k.At <= phase);
+        if (i < 0) i = n - 1;
+        LoopKey a = Keys[i], b = Keys[(i + 1) % n];
+        float span = (b.At - a.At + 1) % 1, into = (phase - a.At + 1) % 1;
+        float t = span <= 0 ? 0 : into / span;
+        LoopKey before = Keys[(i - 1 + n) % n], after = Keys[(i + 2) % n];
+        Vector3 Curve(Func<LoopKey, float[]> value) => CatmullRom(Authored.Vector(value(before)), Authored.Vector(value(a)),
+            Authored.Vector(value(b)), Authored.Vector(value(after)), t);
+        return (Curve(k => k.Position) * Scale, Curve(k => k.Rotation) * Scale);
+    }
+
+    private static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t) =>
+        0.5f * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (3 * p1 - p0 - 3 * p2 + p3) * t * t * t);
+}
+
+/// <summary>A sway loop's key: its moment around the cycle (0 to 1) and its offset from rest.</summary>
+internal sealed record LoopKey(float At, float[] Position, float[] Rotation);
+
+/// <summary>
+/// How a look is drawn or put away: keys through the motion's poses over <see cref="Seconds"/>, played in real time
+/// (a swap shows while the world holds). Drawing ends at rest; putting away ends at its last key, out of the way.
+/// </summary>
+internal sealed record HeldTransition(float Seconds, TransitionKey[] Keys)
+{
+    public float Seconds { get; set; } = Seconds;
+}
+
+/// <summary>A transition key: the look reaches <see cref="Pose"/> at <see cref="At"/> (0 to 1) of the transition, easing in by <see cref="Ease"/>.</summary>
+internal sealed record TransitionKey(string Pose, float At, TweenEasingKind Ease);
