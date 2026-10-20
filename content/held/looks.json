@@ -2,7 +2,7 @@
   "looks": [
     {
       "id": "rift-blade",
-      "motion": "swing",
+      "motion": "sns",
       "stance": "blade",
       "grips": {
         "main": [

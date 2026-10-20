@@ -198,8 +198,8 @@ The old arms turned up in `old-game/Assets/MoreArt` (2026-10-19), with a lot of 
   as `painted.glb` from `Hands_Gun_03_Mesh` (both arms; the revolver is removed). Blender does not read ASCII FBX, so
   unity-import (Assimp) converts it first.
 - `FpMelee/FPP_*`: melee clips (sword and shield, longsword, dagger, halberd, spear) on the same mannequin skeleton,
-  with `weapon_l`/`weapon_r` bones, attack start/loop/end, blocks, equips, hits and locomotion. Not converted: they are
-  reference for held motion (a weapon bone track is a held look's motion).
+  with `weapon_l`/`weapon_r` bones, attack start/loop/end, blocks, equips, hits and locomotion. They are not played as
+  skeletal clips; `scripts/bake-held-motion.py` bakes one into held motion (below).
 - `Animations/`: third-person character clips (Mixamo and others), not first person.
 
 `scripts/import-fp-arms.sh` builds both into the ignored `content/old-art/fp-arms/`. Each is a rig profile in
@@ -207,6 +207,28 @@ The old arms turned up in `old-game/Assets/MoreArt` (2026-10-19), with a lot of 
 and base grip. Hand frames and digit axes are measured from the drawn model, so the arms' hold and the motion keys'
 closure (`content/held/arms.json`) serve every rig unchanged. The packs are third-party store assets the old game
 used; confirm their licences before any public release.
+
+### Baking old clips into held motion
+
+A held look's motion is the weapon alone in camera space, so an old clip becomes held motion by following its weapon
+bone from the camera bone: `scripts/bake-held-motion.py` samples `weapon_r` (or `--hand l`) every frame, takes its move
+and turn from the set's idle (`--rest`), splits the frames into windup (to the strike, the frame the grip moves
+fastest), commit (until it slows below `--slow` of that) and recovery, keeps only the keys a straight blend between
+them would miss by more than `--position` metres or `--angle` degrees, and writes them as poses and a track into
+`content/held/motion.json`, each key timed by its phase so it lands on the same beat at the action's own speed. The
+hand's closure comes from the source hand's finger curl. The arms are not baked: ours reach the grip by IK on any rig.
+
+```bash
+blender -b --factory-startup --python scripts/bake-held-motion.py -- \
+  old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Attack_RD.fbx \
+  --rest old-game/Assets/MoreArt/FpMelee/FPP_SnS/FPP_sns_Idle.fbx --motion sns --action blade-slash --look rift-blade
+```
+
+That is the rift blade's slash (motion `sns`, 30 keys from 121 frames). The source's rest grip, (0.28, -0.19, -0.38)
+from its camera, sits within a few centimetres of the blade stance, so its moves carry over at scale 1; its windup
+swings the sword out of view to the right, as the source does. Its 1.5 s recovery is squeezed into the action's
+0.25 s. The keys are ordinary held motion: step, retime and edit them in the workbench. A clip set's own idle is the
+rest; the `_Start`, `_Loop` and `_End` parts of a heavy attack are separate clips, to bake one at a time or join first.
 
 ## Backups of generated art
 

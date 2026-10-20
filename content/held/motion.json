@@ -337,6 +337,596 @@
           }
         ]
       }
+    },
+    "sns": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "blade-slash-1": {
+          "position": [
+            0.012,
+            -0.001,
+            0.008
+          ],
+          "rotation": [
+            -2.5,
+            -0.6,
+            1.6
+          ]
+        },
+        "blade-slash-2": {
+          "position": [
+            0.073,
+            0.021,
+            0.057
+          ],
+          "rotation": [
+            -3.2,
+            -9.8,
+            13.4
+          ]
+        },
+        "blade-slash-3": {
+          "position": [
+            0.195,
+            0.143,
+            0.214
+          ],
+          "rotation": [
+            28.2,
+            -40.4,
+            20.9
+          ]
+        },
+        "blade-slash-4": {
+          "position": [
+            0.2,
+            0.176,
+            0.236
+          ],
+          "rotation": [
+            37.1,
+            -49.0,
+            11.8
+          ]
+        },
+        "blade-slash-5": {
+          "position": [
+            0.178,
+            0.236,
+            0.226
+          ],
+          "rotation": [
+            44.9,
+            -64.5,
+            -15.1
+          ]
+        },
+        "blade-slash-6": {
+          "position": [
+            0.126,
+            0.285,
+            0.151
+          ],
+          "rotation": [
+            45.1,
+            -65.7,
+            -37.0
+          ]
+        },
+        "blade-slash-7": {
+          "position": [
+            0.051,
+            0.307,
+            0.027
+          ],
+          "rotation": [
+            42.3,
+            -53.6,
+            -51.8
+          ]
+        },
+        "blade-slash-8": {
+          "position": [
+            -0.053,
+            0.263,
+            -0.129
+          ],
+          "rotation": [
+            30.6,
+            -25.6,
+            -52.2
+          ]
+        },
+        "blade-slash-9": {
+          "position": [
+            -0.209,
+            0.162,
+            -0.253
+          ],
+          "rotation": [
+            2.3,
+            8.7,
+            -55.6
+          ]
+        },
+        "blade-slash-10": {
+          "position": [
+            -0.29,
+            0.09,
+            -0.29
+          ],
+          "rotation": [
+            -17.1,
+            29.5,
+            -61.3
+          ]
+        },
+        "blade-slash-11": {
+          "position": [
+            -0.368,
+            0.016,
+            -0.293
+          ],
+          "rotation": [
+            -31.7,
+            54.3,
+            -72.4
+          ]
+        },
+        "blade-slash-12": {
+          "position": [
+            -0.437,
+            -0.051,
+            -0.266
+          ],
+          "rotation": [
+            -43.7,
+            81.6,
+            -89.6
+          ]
+        },
+        "blade-slash-13": {
+          "position": [
+            -0.521,
+            -0.172,
+            -0.166
+          ],
+          "rotation": [
+            -53.1,
+            149.6,
+            -135.0
+          ]
+        },
+        "blade-slash-14": {
+          "position": [
+            -0.592,
+            -0.238,
+            -0.066
+          ],
+          "rotation": [
+            -63.4,
+            -142.6,
+            179.0
+          ]
+        },
+        "blade-slash-15": {
+          "position": [
+            -0.621,
+            -0.239,
+            0.019
+          ],
+          "rotation": [
+            -60.2,
+            -42.3,
+            106.3
+          ]
+        },
+        "blade-slash-16": {
+          "position": [
+            -0.643,
+            -0.154,
+            0.154
+          ],
+          "rotation": [
+            -33.4,
+            47.4,
+            84.2
+          ]
+        },
+        "blade-slash-17": {
+          "position": [
+            -0.667,
+            -0.067,
+            0.213
+          ],
+          "rotation": [
+            6.3,
+            63.6,
+            96.2
+          ]
+        },
+        "blade-slash-18": {
+          "position": [
+            -0.676,
+            -0.009,
+            0.232
+          ],
+          "rotation": [
+            23.7,
+            64.7,
+            97.5
+          ]
+        },
+        "blade-slash-19": {
+          "position": [
+            -0.658,
+            0.167,
+            0.223
+          ],
+          "rotation": [
+            39.1,
+            63.9,
+            80.8
+          ]
+        },
+        "blade-slash-20": {
+          "position": [
+            -0.602,
+            0.252,
+            0.19
+          ],
+          "rotation": [
+            43.9,
+            58.7,
+            66.9
+          ]
+        },
+        "blade-slash-21": {
+          "position": [
+            -0.512,
+            0.304,
+            0.133
+          ],
+          "rotation": [
+            46.4,
+            51.2,
+            53.1
+          ]
+        },
+        "blade-slash-22": {
+          "position": [
+            -0.368,
+            0.29,
+            0.007
+          ],
+          "rotation": [
+            43.0,
+            33.3,
+            32.7
+          ]
+        },
+        "blade-slash-23": {
+          "position": [
+            -0.231,
+            0.186,
+            -0.064
+          ],
+          "rotation": [
+            29.5,
+            19.2,
+            22.6
+          ]
+        },
+        "blade-slash-24": {
+          "position": [
+            -0.129,
+            0.06,
+            -0.07
+          ],
+          "rotation": [
+            16.0,
+            7.8,
+            16.7
+          ]
+        },
+        "blade-slash-25": {
+          "position": [
+            -0.058,
+            -0.066,
+            -0.044
+          ],
+          "rotation": [
+            2.0,
+            -1.6,
+            13.2
+          ]
+        },
+        "blade-slash-26": {
+          "position": [
+            -0.018,
+            -0.166,
+            0.003
+          ],
+          "rotation": [
+            -10.8,
+            -7.9,
+            11.8
+          ]
+        },
+        "blade-slash-27": {
+          "position": [
+            -0.005,
+            -0.206,
+            0.035
+          ],
+          "rotation": [
+            -16.9,
+            -10.1,
+            10.3
+          ]
+        },
+        "blade-slash-28": {
+          "position": [
+            0.004,
+            -0.197,
+            0.061
+          ],
+          "rotation": [
+            -20.1,
+            -10.5,
+            3.5
+          ]
+        },
+        "blade-slash-29": {
+          "position": [
+            0.015,
+            -0.043,
+            0.009
+          ],
+          "rotation": [
+            -3.8,
+            -4.3,
+            1.1
+          ]
+        },
+        "blade-slash-30": {
+          "position": [
+            0.003,
+            0.002,
+            0.001
+          ],
+          "rotation": [
+            0.4,
+            -0.4,
+            -0.3
+          ]
+        }
+      },
+      "tracks": {
+        "blade-slash": [
+          {
+            "pose": "blade-slash-1",
+            "phase": "Windup",
+            "at": 0.056,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-2",
+            "phase": "Windup",
+            "at": 0.167,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-3",
+            "phase": "Windup",
+            "at": 0.389,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-4",
+            "phase": "Windup",
+            "at": 0.444,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-5",
+            "phase": "Windup",
+            "at": 0.556,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-6",
+            "phase": "Windup",
+            "at": 0.667,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-7",
+            "phase": "Windup",
+            "at": 0.778,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-8",
+            "phase": "Windup",
+            "at": 0.889,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-9",
+            "phase": "Windup",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-10",
+            "phase": "Commit",
+            "at": 0.111,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-11",
+            "phase": "Commit",
+            "at": 0.222,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-12",
+            "phase": "Commit",
+            "at": 0.333,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-13",
+            "phase": "Commit",
+            "at": 0.556,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-14",
+            "phase": "Commit",
+            "at": 0.778,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-15",
+            "phase": "Commit",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-16",
+            "phase": "Recovery",
+            "at": 0.043,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-17",
+            "phase": "Recovery",
+            "at": 0.075,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-18",
+            "phase": "Recovery",
+            "at": 0.097,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-19",
+            "phase": "Recovery",
+            "at": 0.161,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-20",
+            "phase": "Recovery",
+            "at": 0.204,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-21",
+            "phase": "Recovery",
+            "at": 0.247,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-22",
+            "phase": "Recovery",
+            "at": 0.312,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-23",
+            "phase": "Recovery",
+            "at": 0.366,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-24",
+            "phase": "Recovery",
+            "at": 0.409,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-25",
+            "phase": "Recovery",
+            "at": 0.452,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-26",
+            "phase": "Recovery",
+            "at": 0.495,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-27",
+            "phase": "Recovery",
+            "at": 0.527,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-28",
+            "phase": "Recovery",
+            "at": 0.602,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-29",
+            "phase": "Recovery",
+            "at": 0.774,
+            "ease": "Linear",
+            "grip": -0.0
+          },
+          {
+            "pose": "blade-slash-30",
+            "phase": "Recovery",
+            "at": 1.0,
+            "ease": "Linear",
+            "grip": -0.0
+          }
+        ]
+      }
     }
   }
 }
