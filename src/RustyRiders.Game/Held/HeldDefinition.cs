@@ -76,7 +76,8 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                     now.Adjust.Grip.CopyTo(look.Adjust.Grip, 0);
                     now.Adjust.Turn.CopyTo(look.Adjust.Turn, 0);
                     now.Grips.Main.CopyTo(look.Grips.Main, 0);
-                    if (look.Grips.Hand is { } hand && now.Grips.Hand is { } newHand) newHand.CopyTo(hand, 0);
+                    foreach (var (into, from) in new[] { (look.Grips.Hand, now.Grips.Hand), (look.Grips.Off, now.Grips.Off), (look.Grips.OffHand, now.Grips.OffHand) })
+                        if (into is not null && from is not null) from.CopyTo(into, 0);
                     if (look.Model is { } model && now.Model is { } fresher)
                     {
                         fresher.Rotation.CopyTo(model.Rotation, 0);
@@ -129,7 +130,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     }
 
     // What a look draws and what it refers to, beyond the placement values a reload takes.
-    private static string Drawn(HeldLookDefinition look) => string.Join("|", look.Id, look.Motion, look.Stance, look.Grips.Hand is not null,
+    private static string Drawn(HeldLookDefinition look) => string.Join("|", look.Id, look.Motion, look.Stance, look.Grips.Hand is not null, look.Grips.Off is not null,
         string.Join(",", look.Box.Size), string.Join(",", look.Box.Color),
         look.Model?.Glb ?? "");
 
@@ -145,6 +146,10 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             Authored.Require(Stances.Stances.ContainsKey(look.Stance), Path, $"{at}.stance", $"unknown stance '{look.Stance}' in {StanceCatalog.Path}.");
             Authored.Point(Path, $"{at}.grips.main", look.Grips.Main);
             if (look.Grips.Hand is { } hand) Authored.Point(Path, $"{at}.grips.hand", hand);
+            if (look.Grips.Off is { } off) Authored.Point(Path, $"{at}.grips.off", off);
+            Authored.Require((look.Grips.Off is null) == (look.Grips.OffHand is null), Path, $"{at}.grips.offHand",
+                "comes with grips.off: a look held in both hands says where the off hand holds it and how.");
+            if (look.Grips.OffHand is { } offHand) Authored.Point(Path, $"{at}.grips.offHand", offHand);
             Authored.Point(Path, $"{at}.box.size", look.Box.Size);
             Authored.Colour(Path, $"{at}.box.color", look.Box.Color);
             Authored.Point(Path, $"{at}.nudge.grip", look.Adjust.Grip);
@@ -202,10 +207,13 @@ internal sealed record HeldModel(string Glb, float Length, float[] Rotation)
 internal sealed record HeldBox(float[] Size, float[] Color);
 
 /// <summary>
-/// Where the hand holds a look, in look space, and optionally how (<see cref="Hand"/>: degrees about X, Y, Z, the hand's
-/// canonical frame turned from the look's; without it the arms' hold applies). A baked look takes its source's hold.
+/// Where the hands hold a look, in look space: the main hand at <see cref="Main"/>, optionally how
+/// (<see cref="Hand"/>: degrees about X, Y, Z, the hand's canonical frame turned from the look's; without it the arms'
+/// hold applies); and for a look held in both hands, the off hand at <see cref="Off"/> on the same look, held by
+/// <see cref="OffHand"/> (the left hand's canonical frame, +X toward its thumb, turned from the look's; given as is, not
+/// mirrored). A baked look takes its source's holds.
 /// </summary>
-internal sealed record HeldGrips(float[] Main, float[]? Hand = null);
+internal sealed record HeldGrips(float[] Main, float[]? Hand = null, float[]? Off = null, float[]? OffHand = null);
 
 /// <summary>
 /// A look's correction to its stance, judged by eye: its grip moved by <see cref="Grip"/> (camera space, metres) and the

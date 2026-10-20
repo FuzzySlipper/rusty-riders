@@ -43,10 +43,11 @@ internal sealed record AmmoDefinition(string Track, int Amount);
 internal sealed record SupplyDefinition(int Value);
 
 /// <summary>
-/// What a weapon in a hand does: the action it uses, the action that reloads it and its magazine (guns), and the held
-/// look it is drawn as (content/held/looks.json).
+/// What a weapon in a hand does: the action it uses, the action that reloads it and its magazine (guns), the held look
+/// it is drawn as (content/held/looks.json), and whether it takes both hands (<see cref="TwoHanded"/>: it is held in the
+/// main hand with the off hand on its look's off grip, and the off hand's own weapon is stowed while it is).
 /// </summary>
-internal sealed record WeaponDefinition(string Action, string Look, string? Reload = null, MagazineDefinition? Magazine = null);
+internal sealed record WeaponDefinition(string Action, string Look, string? Reload = null, MagazineDefinition? Magazine = null, bool TwoHanded = false);
 
 /// <summary>A magazine of <see cref="Size"/> rounds, refilled from a track (the ammunition carried) by the reload action.</summary>
 internal sealed record MagazineDefinition(int Size, string Track);

@@ -15,7 +15,8 @@
     "motion": "longsword",
     "action": "maul-smash",
     "look": "maul",
-    "seat": true
+    "seat": true,
+    "twoHanded": true
   },
   {
     "name": "ember wand bolt",

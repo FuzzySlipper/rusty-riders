@@ -230,7 +230,9 @@ one), converting the CAT clips with unity-import first. An entry names:
   weapon bone is not always at its hand: the dagger set's `weapon_l` hangs half a metre away, beside the other hand);
 - `hand`: `l` bakes a left hand, mirrored into the main hand's space;
 - `motion`, `action` and `look`; `seat` seats the look where the source weapon rests and holds it as the source hand
-  does (below); `hold` (`fist` or `pistol`) says how; `strike` and `commitEnd` (a frame, or a fraction below 1) set the
+  does (below); `twoHanded` bakes the other hand on the same weapon too (a two-handed source such as the FPP longsword):
+  at rest its palm's place on the seated look becomes `grips.off` (look space) and its canonical frame from the look's
+  `grips.offHand`, and each key gains its closure (`offGrip`) and elbow's bend (`offElbow`); `hold` (`fist` or `pistol`) says how; `strike` and `commitEnd` (a frame, or a fraction below 1) set the
   phases where the grip's speed does not (a reload); `noClosure` keeps the hand closed through an open-handed gesture
   (a wand would drop).
 
@@ -255,10 +257,13 @@ baked weapon axis), with no wrist shortfall over any of them:
 | Look and action | Source | Notes |
 | --- | --- | --- |
 | rift-blade `blade-slash` | `FPP_sns_Attack_RD` (motion `sns`) | 30 keys; rests blade-up as the sword-and-shield idle |
-| maul `maul-smash` | `FPP_Longs_Attack_D` (`longsword`) | A two-handed chop, held one-handed: raise, low strike, return |
+| maul `maul-smash` | `FPP_Longs_Attack_D` (`longsword`), `twoHanded` | Both hands on the handle, as the longsword is held: raise overhead, low strike, return |
 | ember-wand `ember-bolt` | `FPP_Dag_Magic`, left hand, `palm` (`dagger-magic`) | The dagger set's casting hand; the staff lies across the view |
 | frost-sigil `frost-nova` | `FPP_Longs_Magic`, left hand, `palm` (`longsword-magic`) | The off hand leaves the hilt to cast; `FPP_sns_Magic1` starts and ends out of view, so its sigil would be hidden at rest |
 | laser-flintlock `flintlock-shot`, `flintlock-reload` | Hands pack `Hands_Gun_03_Shot`, `_Reload` (`revolver`) | The painted arms' own revolver set; the reload's strike at 80 % |
+
+The maul's main grip sits 0.15 m behind its centre so both hands fit on its handle: on the longsword the off hand holds
+15 cm below the main hand, toward the pommel, and with the main grip at 0.30 the off grip fell past the handle's end.
 
 A source's 1 to 2 s clip is squeezed into the action's own timing (the slash's 1.5 s recovery into 0.25 s). The keys
 are ordinary held motion: step, retime and edit them in the workbench. A rebake that gives a look another motion, or

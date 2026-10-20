@@ -159,7 +159,10 @@ internal sealed class ArmsView : IDisposable
         (Vector3 grip, Quaternion look) = (hand.Grip, hand.Look);
         Quaternion hold = Frames.Turn(hand.Hold ?? arms.Hold);
         Vector3 palm = Authored.Vector(rig.Palm);
-        if (left) (hold, palm) = (Frames.Mirror(hold), Frames.Mirror(palm));
+        // The left hand's frame mirrors the right's, so its palm offset is the right's mirrored; its hold is the right
+        // hand's mirrored too when it holds its own (mirrored) look, but given as is on a look held in both hands.
+        if (left) palm = Frames.Mirror(palm);
+        if (left && hand.HoldMirrored) hold = Frames.Mirror(hold);
         Quaternion turn = Quaternion.Normalize(look * hold);
         return (grip - Vector3.Transform(palm, turn), turn);
     }
@@ -251,6 +254,8 @@ internal sealed class ArmsView : IDisposable
 
 /// <summary>
 /// What a hand reaches for (camera space): its look's grip and turn, the look's own hold when it has one (degrees, the
-/// hand's canonical frame from the look's), how closed the hand is, and the point its elbow bends toward.
+/// hand's canonical frame from the look's), how closed the hand is, the point its elbow bends toward, and whether a left
+/// hand's hold is the right hand's mirrored (its own mirrored look) or given as is (the off grip of a look held in both
+/// hands).
 /// </summary>
-internal readonly record struct HandAim(Vector3 Grip, Quaternion Look, float[]? Hold, float Closure, Vector3 Pole);
+internal readonly record struct HandAim(Vector3 Grip, Quaternion Look, float[]? Hold, float Closure, Vector3 Pole, bool HoldMirrored = true);

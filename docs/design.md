@@ -165,6 +165,10 @@ cooldown. An action begun while the other hand's is still being paid for in worl
 overlapping actions cost the longer, not the sum. Taking, using an item and swapping weapons wait until both hands are
 free. When both hands' motions lean the body, it leans by both together.
 
+A weapon may take both hands (`twoHanded` on the weapon item, such as the maul). It is always the main hand's: the
+off hand holds it too, on its look's off grip, and the off hand's own weapon is stowed (kept, hidden and unused) until
+the main hand takes a one-handed weapon again. While it is held, the off hand's button does nothing.
+
 ### Spells
 
 The prototype has no separate spell system: spells are actions granted by a focus item or an equipment

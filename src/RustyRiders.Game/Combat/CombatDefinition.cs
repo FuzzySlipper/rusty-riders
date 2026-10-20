@@ -26,6 +26,7 @@ internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items
         Authored.Require(kit.Carried.All(id => items.Item(id)!.Weapon is not null), Kit.Path, "carried", "carried lists weapons; other starting items go in items.");
         Authored.Require(kit.Carried.Contains(kit.MainHand) && kit.Carried.Contains(kit.OffHand) && kit.MainHand != kit.OffHand,
             Kit.Path, "mainHand", "both hands hold different carried weapons.");
+        Authored.Require(!items.Item(kit.OffHand)!.Weapon!.TwoHanded, Kit.Path, "offHand", "a weapon held in both hands starts in the main hand.");
         items.Require(Kit.Path, "items", kit.Items.Select(s => s.Item).ToArray());
         Authored.Require(kit.Items.All(s => s.Count >= 1), Kit.Path, "items", "counts are at least 1.");
         Authored.Require(kit.Slots >= kit.Carried.Length + kit.Items.Length, Kit.Path, "slots", "must hold the kit's weapons and items.");
@@ -50,6 +51,8 @@ internal sealed record CombatDefinition(ActionCatalog Actions, ItemCatalog Items
             string at = $"items[{i}].weapon";
             held.Require(ItemCatalog.Path, $"{at}.look", weapon.Look);
             HeldLookDefinition look = held.Look(weapon.Look)!;
+            Authored.Require(!weapon.TwoHanded || look.Grips.Off is not null, ItemCatalog.Path, $"{at}.twoHanded",
+                $"a weapon held in both hands needs its look '{weapon.Look}' to give grips.off and grips.offHand in content/{HeldCatalog.Path}.");
             uses.Add(($"{at}.action", look, actions.Action(weapon.Action)!));
             if (weapon.Reload is { } reload) uses.Add(($"{at}.reload", look, actions.Action(reload)!));
         }

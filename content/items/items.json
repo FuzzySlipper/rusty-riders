@@ -27,7 +27,8 @@
       "icon": "maul",
       "weapon": {
         "action": "maul-smash",
-        "look": "maul"
+        "look": "maul",
+        "twoHanded": true
       }
     },
     {

@@ -32,6 +32,8 @@ internal sealed class HeldView : IDisposable
     private readonly ArmsSlot arms;
     private readonly List<(int Hand, FeedbackKind Kind)> felt = [];
     private (int Hand, string Look, HeldPose? Pose)? viewing;
+    // The main hand's look is held in both hands.
+    private bool twoHanded;
     private (ActionDefinition Action, int Key)? viewingKey;
 
     /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' two are the next three.</param>
@@ -70,8 +72,11 @@ internal sealed class HeldView : IDisposable
     /// The hands' looks as published (camera space, viewmodel layer): each at rest, or in the pose the motion viewer
     /// holds; an action's motion plays over them as the Engine tween.
     /// </summary>
-    internal IEnumerable<AppearanceFact> Facts(string mainLook, string offLook, bool visible)
+    /// <param name="twoHanded">The main hand's look is held in both hands: the off hand's own look is hidden and the off hand holds the main look's off grip.</param>
+    internal IEnumerable<AppearanceFact> Facts(string mainLook, string offLook, bool twoHanded, bool visible)
     {
+        // The motion viewer shows a look with an off grip in both hands when it shows it in the main hand.
+        this.twoHanded = viewing is { } viewed ? viewed.Hand == MainHand && held.Look(viewed.Look)!.Grips.Off is not null : twoHanded;
         hands[MainHand].Look = viewing is { Hand: MainHand } v ? v.Look : mainLook;
         hands[OffHand].Look = viewing is { Hand: OffHand } w ? w.Look : offLook;
         for (int h = 0; h < hands.Length; h++)
@@ -80,7 +85,7 @@ internal sealed class HeldView : IDisposable
             HeldPose pose = viewing is { } view && view.Hand == h && Viewed() is { } shown ? shown : Rest(look);
             (Vector3 at, Quaternion turn) = Drawn(look, pose, h == OffHand);
             yield return new AppearanceFact(hands[h].Object, false, 0, new Transform(at, turn, Fit(look).Scale),
-                looks[look.Id].Appearance, visible, RenderLayer.Viewmodel);
+                looks[look.Id].Appearance, visible && !(h == OffHand && this.twoHanded), RenderLayer.Viewmodel);
         }
         // The body leans with a blow: the arms move by both hands' motions together (two blows at once lean as their sum;
         // the arms' own reach then keeps each hand on its grip).
@@ -214,8 +219,8 @@ internal sealed class HeldView : IDisposable
         List<InspectionTarget> targets = [];
         foreach (var (hand, id) in new[] { (MainHand, "main-grip"), (OffHand, "off-grip") })
         {
-            (Vector3 grip, Quaternion lookTurn) = Grip(hand);
-            targets.Add(new(id, OverlayPlace.Camera, grip) { Rotation = lookTurn, Radius = GripFrame, Framing = "side" });
+            HandAim aim = Aim(hand);
+            targets.Add(new(id, OverlayPlace.Camera, aim.Grip) { Rotation = aim.Look, Radius = GripFrame, Framing = "side" });
         }
         return targets;
     }
@@ -227,34 +232,44 @@ internal sealed class HeldView : IDisposable
         foreach (Appearance box in boxes) box.Dispose();
     }
 
-    // A hand's grip where its look is drawn now (camera space) and the look's turn there.
-    private (Vector3 Grip, Quaternion Look) Grip(int hand)
+    // A hand's grip where its look is drawn now (camera space) and the look's turn there; or another point of the look
+    // (look space), such as its off grip.
+    private (Vector3 Grip, Quaternion Look) Grip(int hand, float[]? point = null)
     {
         HeldLookDefinition look = held.Look(hands[hand].Look)!;
         Transform fit = Fit(look);
         (Vector3 at, Quaternion turn) = Now(hand);
         // The drawn model is the look turned by its fit, so the look's own turn is the drawn turn less the fit's.
         Quaternion lookTurn = Quaternion.Normalize(turn * Quaternion.Inverse(fit.Rotation));
-        return (at + Vector3.Transform(Authored.Vector(look.Grips.Main) - fit.Translation, lookTurn), lookTurn);
+        return (at + Vector3.Transform(Authored.Vector(point ?? look.Grips.Main) - fit.Translation, lookTurn), lookTurn);
     }
 
     // How closed a hand is now (-1 open, 0 its grip, 1 squeezed), how far its motion leans the arms and where its
     // elbow bends toward (camera space, mirrored for the off hand): the viewer's held key, or the playing action's keys
-    // where the Engine reports its tween has got to, eased by each key's curve as the Engine eases them.
+    // where the Engine reports its tween has got to, eased by each key's curve as the Engine eases them. The off hand on
+    // a look held in both hands reads the main hand's keys for the off hand, as they are.
     private (float Grip, Vector3 Lean, Vector3 Elbow) Keyed(int index)
     {
-        HeldHand hand = hands[index];
         Vector3 Side(Vector3 point) => index == OffHand ? Frames.Mirror(point) : point;
         Vector3 pole = Side(Authored.Vector(held.Arms.Pole));
-        Vector3 Lean(MotionKey key) => key.Shoulder is { } lean ? Side(Authored.Vector(lean)) : Vector3.Zero;
-        Vector3 Elbow(MotionKey key) => key.Elbow is { } elbow ? Side(Authored.Vector(elbow)) : pole;
+        if (index == OffHand && twoHanded)
+            return Keyed(MainHand, k => (k.OffGrip, Vector3.Zero, k.OffElbow is { } elbow ? Authored.Vector(elbow) : pole), pole);
+        return Keyed(index, k => (k.Grip, k.Shoulder is { } lean ? Side(Authored.Vector(lean)) : Vector3.Zero,
+            k.Elbow is { } elbow ? Side(Authored.Vector(elbow)) : pole), pole);
+    }
+
+    // A hand's keys read by read, at the viewer's held key or where its playing action has got to; at rest, idle.
+    private (float Grip, Vector3 Lean, Vector3 Elbow) Keyed(int index, Func<MotionKey, (float Grip, Vector3 Lean, Vector3 Elbow)> read, Vector3 pole)
+    {
+        HeldHand hand = hands[index];
+        (float, Vector3, Vector3) idle = (0, Vector3.Zero, pole);
         if (viewing is { } view && view.Hand == index && viewingKey is { } key)
-            return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? (keys[key.Key].Grip, Lean(keys[key.Key]), Elbow(keys[key.Key])) : (0, Vector3.Zero, pole);
-        if (hand.ActionTime() is not { } time || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return (0, Vector3.Zero, pole);
+            return Keys(view.Look, key.Action) is { } keys && key.Key < keys.Length ? read(keys[key.Key]) : idle;
+        if (hand.ActionTime() is not { } time || hand.Action is not { } action || Keys(hand.Look, action) is not { } track) return idle;
         (float grip, Vector3 lean, Vector3 elbow, float start) from = (0, Vector3.Zero, pole, 0);
-        foreach ((float at, float grip, Vector3 lean, Vector3 elbow, TweenEasingKind curve) in track
-            .Select(k => (k.Time(action.Timing), k.Grip, Lean(k), Elbow(k), k.Ease))
-            .Append((action.Duration, 0f, Vector3.Zero, pole, held.Motion.SettleEase)))
+        foreach ((float at, (float grip, Vector3 lean, Vector3 elbow), TweenEasingKind curve) in track
+            .Select(k => (k.Time(action.Timing), read(k), k.Ease))
+            .Append((action.Duration, idle, held.Motion.SettleEase)))
         {
             if (time <= at)
             {
@@ -263,14 +278,21 @@ internal sealed class HeldView : IDisposable
             }
             from = (grip, lean, elbow, at);
         }
-        return (0, Vector3.Zero, pole);
+        return idle;
     }
 
-    // What a hand reaches for now: its look's grip and turn, the look's own hold, and its motion's closure and elbow.
+    // What a hand reaches for now: its look's grip and turn, the look's own hold, and its motion's closure and elbow. The
+    // off hand on a look held in both hands reaches the main look's off grip, held as the look says (not mirrored).
     private HandAim Aim(int index)
     {
-        (Vector3 grip, Quaternion look) = Grip(index);
         (float closure, _, Vector3 elbow) = Keyed(index);
+        if (index == OffHand && twoHanded)
+        {
+            HeldLookDefinition main = held.Look(hands[MainHand].Look)!;
+            (Vector3 offGrip, Quaternion mainTurn) = Grip(MainHand, main.Grips.Off!);
+            return new(offGrip, mainTurn, main.Grips.OffHand, closure, elbow, HoldMirrored: false);
+        }
+        (Vector3 grip, Quaternion look) = Grip(index);
         return new(grip, look, held.Look(hands[index].Look)!.Grips.Hand, closure, elbow);
     }
 

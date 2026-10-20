@@ -13,6 +13,11 @@ Frames split into the action's phases (windup up to the strike, commit while the
 motion bends more than `position` metres or `angle` degrees from a straight blend between kept keys, each timed by its
 phase and its moment through it, so it lands on the same beat whatever the action's own timing.
 
+With `twoHanded` (a weapon held in both hands, such as the FPP longsword), the other hand is baked too: at rest its
+palm's place on the same weapon becomes the look's grips.off (look space) and its canonical frame from the look's its
+grips.offHand; per key, its closure (offGrip) and its elbow's bend (offElbow). It needs `seat`, which measures them on
+the seated look.
+
 With `seat`, the look's nudge is set so it rests where the source weapon rests, and its grips.hand to the source hand's
 hold on the weapon, so turns about the grip follow the source path and the wrist sits as the source's does. Which
 weapon-bone axes are the look's length and up side follows from how the hand holds it (`hold`): a `fist` holds a hilt
@@ -68,6 +73,7 @@ args.add_argument("--slow", type=float, default=0.4)
 args.add_argument("--scale", type=float, default=1.0, help="multiplies the grip's movement")
 args.add_argument("--seat", action="store_true")
 args.add_argument("--no-closure", action="store_true", help="keep the hand on its grip (a gesture's open hand would drop a wand)")
+args.add_argument("--two-handed", action="store_true", help="bake the other hand on the same weapon too (its off grip, hold, closure and elbow)")
 args.add_argument("--out", type=Path, default=Path("content/held/motion.json"))
 args.add_argument("--looks", type=Path, default=Path("content/held/looks.json"))
 args.add_argument("--stances", type=Path, default=Path("content/held/stances.json"))
@@ -155,6 +161,30 @@ def bake(spec):
         curl = sum(math.degrees(rig.pose.bones[f].matrix_basis.to_quaternion().angle) for f in src.fingers) / 4
         return grip, turn, curl, place, pole, hand, axes
 
+    two_handed = bool(spec.get("twoHanded"))
+    if two_handed and not (spec.get("look") and spec.get("seat")):
+        raise SystemExit(f"{spec.get('name', spec['clip'])}: a two-handed bake seats its look (look and seat): the off grip is measured on it.")
+    off = Source(spec.get("source", "mannequin"), "l" if hand_side == "r" else "r") if two_handed else None
+
+    def sample_off(rig, frame):
+        """
+        The other hand on the same weapon (a two-handed source): its palm (camera axes, between the wrist and the middle
+        knuckle), its canonical frame as a left hand's (+X toward its thumb; a right hand's mirrored when the main hand
+        is a left), its elbow's bend as a pole and its fingers' curl.
+        """
+        bpy.context.scene.frame_set(frame)
+        eye = (rig.matrix_world @ rig.pose.bones[off.eye_bone].matrix).translation if off.eye_bone else off.eye
+
+        def at(name):
+            return side @ TO_CAMERA @ ((rig.matrix_world @ rig.pose.bones[name].matrix).translation - eye)
+        place, wrist, elbow = at(off.upper), at(off.hand), at(off.lower)
+        y = (at(off.knuckles["middle"]) - wrist).normalized()
+        across = at(off.knuckles["index"]) - at(off.knuckles["pinky"])
+        x = (across - y * across.dot(y)).normalized()
+        frame_turn = Matrix((x, y, x.cross(y))).transposed().to_quaternion()
+        curl = sum(math.degrees(rig.pose.bones[f].matrix_basis.to_quaternion().angle) for f in off.fingers) / 4
+        return (wrist + at(off.knuckles["middle"])) / 2, frame_turn, elbow + (elbow - (place + wrist) / 2), curl
+
     rig, action = Source.load(Path(spec["clip"]))
     first, last = (int(f) for f in action.frame_range)
     # A part of the clip only (a cast whose hand starts and ends out of view); its first frame is the rest without a
@@ -163,18 +193,24 @@ def bake(spec):
     if spec.get("rest"):
         rest_rig, rest_action = Source.load(Path(spec["rest"]))
         rest_grip, rest_turn, rest_curl, rest_place, _, rest_hand, rest_axes = sample(rest_rig, int(rest_action.frame_range[0]))
+        rest_off = sample_off(rest_rig, int(rest_action.frame_range[0])) if two_handed else None
         rig, action = Source.load(Path(spec["clip"]))
     else:
         rest_grip, rest_turn, rest_curl, rest_place, _, rest_hand, rest_axes = sample(rig, first)
+        rest_off = sample_off(rig, first) if two_handed else None
     frames = list(range(first, last + 1))
     scale = spec.get("scale", 1.0)
     # Each frame from rest: the grip's move and the turn about it (left of the rest turn, as a pose applies it), the
     # fingers' curl, the shoulder's lean and the elbow's pole.
-    poses = []
+    # A two-handed source's other hand: its closure (curl from rest) and its elbow's pole, per frame.
+    poses, offs = [], []
     for frame in frames:
         grip, turn, curl, place, pole, _, _ = sample(rig, frame)
         poses.append(((grip - rest_grip) * scale, (turn @ rest_turn.inverted()).normalized(), curl - rest_curl,
                       (place - rest_place) * scale, pole))
+        if two_handed:
+            _, _, off_pole, off_curl = sample_off(rig, frame)
+            offs.append((off_curl - rest_off[3], off_pole))
 
     def frame_of(value, default):
         if value is None:
@@ -237,8 +273,12 @@ def bake(spec):
             motion["poses"][pose] = {"position": [round(v, 3) for v in grip], "rotation": degrees(turn)}
         phase, at = timed(i)
         closure = 0 if spec.get("noClosure") else round(max(-1, min(1, curl / 40)), 2)
-        track.append({"pose": pose, "phase": phase, "at": at, "ease": "Linear", "grip": closure,
-                      "shoulder": [round(v, 3) for v in lean], "elbow": [round(v, 3) for v in pole]})
+        key = {"pose": pose, "phase": phase, "at": at, "ease": "Linear", "grip": closure,
+               "shoulder": [round(v, 3) for v in lean], "elbow": [round(v, 3) for v in pole]}
+        if two_handed:
+            key.update(offGrip=0 if spec.get("noClosure") else round(max(-1, min(1, offs[i][0] / 40)), 2),
+                       offElbow=[round(v, 3) for v in offs[i][1]])
+        track.append(key)
     motion["tracks"][spec["action"]] = track
     out.write_text(json.dumps(motions, indent=2) + "\n")
 
@@ -267,6 +307,14 @@ def bake(spec):
             # The hand holds the look as the source hand holds its weapon: its canonical frame from the look's.
             look["grips"]["hand"] = degrees((rest_turn @ frame).inverted() @ rest_hand)
             seated = f"; {spec['look']} seated where the source rests ({blade} length, {edge} up)"
+            if two_handed:
+                # The other hand's palm on the same look at rest, in look space (the look's grip at the weapon bone), and
+                # its hold: its canonical frame from the look's, as is.
+                look_turn = (rest_turn @ frame).normalized()
+                off_grip = look_turn.inverted() @ (rest_off[0] - rest_grip) + Vector(look["grips"]["main"])
+                look["grips"]["off"] = [round(v, 3) for v in off_grip]
+                look["grips"]["offHand"] = degrees(look_turn.inverted() @ rest_off[1])
+                seated += f", off grip {look['grips']['off']}"
         looks_path.write_text(json.dumps(looks, indent=2) + "\n")
     name = spec.get("name", Path(spec["clip"]).stem)
     print(f"BAKED {name}: {Path(spec['clip']).name} -> motions.{spec['motion']}.tracks.{spec['action']}: {len(frames)} frames at "
@@ -310,4 +358,4 @@ else:
     bake({"clip": str(cli.clip), "rest": str(cli.rest) if cli.rest else None, "from": cli.start, "to": cli.stop, "motion": cli.motion, "action": cli.action, "look": cli.look,
           "hand": cli.hand, "source": cli.source, "weapon": cli.weapon, "hold": cli.hold, "blade": cli.blade, "edge": cli.edge,
           "strike": cli.strike, "commitEnd": cli.commit_end, "position": cli.position, "angle": cli.angle, "slow": cli.slow,
-          "scale": cli.scale, "seat": cli.seat, "noClosure": cli.no_closure})
+          "scale": cli.scale, "seat": cli.seat, "noClosure": cli.no_closure, "twoHanded": cli.two_handed})

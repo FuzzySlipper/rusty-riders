@@ -43,6 +43,12 @@ internal static class HeldTunables
             .. Vector("nudge.grip", "nudge grip", model.Adjust.Grip, -0.2f, 0.2f, .002f, HeldCatalog.Path, $"{lookPointer}/nudge/grip", reseatLook),
             .. Vector("nudge.turn", "nudge turn", model.Adjust.Turn, -60, 60, .5f, HeldCatalog.Path, $"{lookPointer}/nudge/turn", reseatLook),
             .. Vector("grip.main", "grip (look space)", model.Grips.Main, -0.6f, 0.6f, .002f, HeldCatalog.Path, $"{lookPointer}/grips/main", reseatLook),
+            .. (model.Grips.Off is { } off
+                ? Vector("grip.off", "off grip (look space)", off, -0.6f, 0.6f, .002f, HeldCatalog.Path, $"{lookPointer}/grips/off", publish)
+                : []),
+            .. (model.Grips.OffHand is { } offHold
+                ? Vector("grip.offHand", "off hand hold", offHold, -180, 180, 1, HeldCatalog.Path, $"{lookPointer}/grips/offHand", publish)
+                : []),
             .. (model.Grips.Hand is { } hand
                 ? Vector("grip.hand", "hand hold (this look)", hand, -180, 180, 1, HeldCatalog.Path, $"{lookPointer}/grips/hand", publish)
                 : [])
@@ -76,6 +82,10 @@ internal static class HeldTunables
                 timing.Add(new(new($"key.{i}.grip", $"{i} {k.Pose} hand closed", TunableKind.Slider, -1, 1, .05f, k.Grip)
                     { Source = new(HeldMotionCatalog.Path, $"{at}/grip") },
                     v => { track[index] = track[index] with { Grip = v }; publish(); }));
+                if (model.Grips.Off is not null)
+                    timing.Add(new(new($"key.{i}.offGrip", $"{i} {k.Pose} off hand closed", TunableKind.Slider, -1, 1, .05f, k.OffGrip)
+                        { Source = new(HeldMotionCatalog.Path, $"{at}/offGrip") },
+                        v => { track[index] = track[index] with { OffGrip = v }; publish(); }));
                 timing.Add(new(new($"key.{i}.ease", $"{i} {k.Pose} ease", TunableKind.Choice, 0, HeldMotionCatalog.Named.Length - 1, 1,
                     Array.IndexOf(HeldMotionCatalog.Named, k.Ease))
                     { Options = [.. HeldMotionCatalog.Named.Select(e => e.ToString())], Source = new(HeldMotionCatalog.Path, $"{at}/ease") },

@@ -89,6 +89,12 @@ internal sealed class PlayerCombat : IDisposable
         notice = "";
     }
 
+    /// <summary>
+    /// Whether the main hand's weapon takes both hands: the off hand holds it too, and the off hand's own weapon is stowed
+    /// (kept, hidden and unused) until the main hand holds a one-handed weapon again.
+    /// </summary>
+    internal bool TwoHanded => hands[MainHand].Item.Weapon!.TwoHanded;
+
     /// <summary>Takes carried weapon <paramref name="index"/> into the main hand (swapping hands if it is in the off hand).</summary>
     internal void Select(int index)
     {
@@ -103,17 +109,24 @@ internal sealed class PlayerCombat : IDisposable
     {
         if (index < 0 || index >= inventory.Weapons.Count || Busy || hand is not (MainHand or OffHand)) return;
         ItemDefinition item = inventory.Weapons[index];
+        if (item.Weapon!.TwoHanded) hand = MainHand; // held in both hands, it is the main hand's
         int other = 1 - hand;
         if (hands[other].Item == item) hands[other] = hands[hand];
         hands[hand] = new Hand(item);
     }
 
-    /// <summary>Which hand holds carried weapon <paramref name="item"/>, or -1.</summary>
-    internal int HandOf(ItemDefinition item) => hands[MainHand].Item == item ? MainHand : hands[OffHand].Item == item ? OffHand : -1;
+    /// <summary>Which hand holds carried weapon <paramref name="item"/>, or -1 (a weapon stowed for a two-handed one is in no hand).</summary>
+    internal int HandOf(ItemDefinition item) => hands[MainHand].Item == item ? MainHand : hands[OffHand].Item == item && !TwoHanded ? OffHand : -1;
 
-    /// <summary>A hand's weapon and, for a gun, its rounds loaded and magazine size.</summary>
-    internal (ItemDefinition Item, int Loaded, int Size) Held(int hand) =>
-        (hands[hand].Item, Loaded(hands[hand].Item), hands[hand].Item.Weapon!.Magazine?.Size ?? 0);
+    /// <summary>A hand's weapon (both hands', for a two-handed one) and, for a gun, its rounds loaded and magazine size.</summary>
+    internal (ItemDefinition Item, int Loaded, int Size) Held(int hand)
+    {
+        ItemDefinition item = Holding(hand);
+        return (item, Loaded(item), item.Weapon!.Magazine?.Size ?? 0);
+    }
+
+    // What a hand holds: its own weapon, or for the off hand under a two-handed weapon, that weapon.
+    private ItemDefinition Holding(int hand) => hand == OffHand && TwoHanded ? hands[MainHand].Item : hands[hand].Item;
 
     /// <summary>A hand's action under way: its phase label and how far through it is (0 to 1), or none.</summary>
     internal (string Label, float Progress)? Acting(int hand) => users[hand] is { Current: { } current } user
@@ -127,6 +140,7 @@ internal sealed class PlayerCombat : IDisposable
     /// <summary>Uses a hand's weapon. Returns the world seconds the action costs, or null when it could not start.</summary>
     internal float? Use(int hand)
     {
+        if (hand == OffHand && TwoHanded) return null; // it holds the main hand's weapon, which the main hand uses
         WeaponDefinition weapon = hands[hand].Item.Weapon!;
         ActionDefinition action = definition.Actions.Action(weapon.Action)!;
         if (users[hand].Readiness(action) != ActionRefusal.None) return null;
@@ -144,6 +158,7 @@ internal sealed class PlayerCombat : IDisposable
     internal float? Reload(int hand)
     {
         ItemDefinition item = hands[hand].Item;
+        if (hand == OffHand && TwoHanded) return null;
         if (item.Weapon is not { Reload: { } reload, Magazine: { } magazine } || users[hand].Busy) return null;
         if (Loaded(item) >= magazine.Size || vitals.Stats.Track(magazine.Track).ValueInt <= 0) return null;
         return Begin(definition.Actions.Action(reload)!, hand);
@@ -183,7 +198,7 @@ internal sealed class PlayerCombat : IDisposable
     internal IEnumerable<AppearanceFact> Facts()
     {
         CombatPresentation p = definition.Presentation;
-        foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, walker.Flying is false))
+        foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, TwoHanded, walker.Flying is false))
             yield return fact;
         ulong id = FirstObjectId + 4;
         foreach (Projectile shot in resolution?.Projectiles ?? [])

@@ -48,6 +48,8 @@ internal sealed record HeldMotionCatalog(float SettleSeconds, TweenEasingKind Se
                     Authored.Within(Path, $"{key}.grip", keys[i].Grip, -1, 1);
                     if (keys[i].Shoulder is { } shoulder) Authored.Point(Path, $"{key}.shoulder", shoulder);
                     if (keys[i].Elbow is { } elbow) Authored.Point(Path, $"{key}.elbow", elbow);
+                    Authored.Within(Path, $"{key}.offGrip", keys[i].OffGrip, -1, 1);
+                    if (keys[i].OffElbow is { } offElbow) Authored.Point(Path, $"{key}.offElbow", offElbow);
                     Ease(Path, $"{key}.ease", keys[i].Ease);
                 }
         }
@@ -148,10 +150,12 @@ internal sealed record HeldPose(float[] Position, float[] Rotation);
 /// <see cref="Ease"/>, with the holding hand closed to <see cref="Grip"/> (-1 open, 0 its grip, 1 squeezed) and, when
 /// given, the body leaning the shoulders by <see cref="Shoulder"/> (camera space metres, the main hand's; mirrored for
 /// the off hand), so a lunging blow can reach further than the arms from where they rest, and the point the holding
-/// arm's elbow bends toward (<see cref="Elbow"/>, camera space, the main hand's; without it the arms' pole).
+/// arm's elbow bends toward (<see cref="Elbow"/>, camera space, the main hand's; without it the arms' pole). For a look
+/// held in both hands, the off hand on it closes to <see cref="OffGrip"/> and its elbow bends toward
+/// <see cref="OffElbow"/> (camera space as is: the off hand holds the main hand's look, so nothing is mirrored).
 /// </summary>
 internal sealed record MotionKey(string Pose, MotionPhase Phase, float At, TweenEasingKind Ease, float Grip = 0, float[]? Shoulder = null,
-    float[]? Elbow = null)
+    float[]? Elbow = null, float OffGrip = 0, float[]? OffElbow = null)
 {
     /// <summary>Seconds from the action's start at its authored timing: windup, then commit (whose start is the strike), then recovery.</summary>
     internal float Time(ActionTiming timing) => Phase switch
