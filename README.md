@@ -79,13 +79,15 @@ falls short of its grip, the arms' lengths and the measured hand frames. Save wr
 Editing those files by hand also reloads them into the running game. The same in the console: `riders.dev.motion
 <look> <action>`, then `.key`, `.next`, `.play <speed>`, `.at <seconds>`, `.pose`, `.hand`, `riders.dev.held.nudge`,
 `riders.dev.held.fit`, `riders.dev.stance.set`, `riders.dev.arms.hold`, `riders.dev.arms.reach` and
-`riders.dev.arms.rig <generated|painted|leather>`, which swaps the arms model live.
+`riders.dev.arms.rig <generated|painted|leather>`, which swaps the arms model live. `riders.dev.hands.contact` reports how the drawn hands
+meet the main look's grip landmarks (`trigger`, `fore-end`, ...), as the Engine measured them.
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`): `painted`, the old game's
 hand-painted gloves, and `leather`, its MedievalFPArms leather armour, both built from `old-game/Assets/MoreArt` into the
 ignored `content/old-art/fp-arms/` by `scripts/import-fp-arms.sh` (Blender 5 and `../asset-pipeline`); and `generated`,
 kept in git, from asset-pipeline's `tools/fps-arms` (`art/arms/provenance.json`). Without the import the game falls
-back to the generated arms.
+back to the generated arms. `scripts/import-hotel-held.sh` copies rusty-hotel's coach gun into the ignored
+`content/old-art/hotel/` (re-run it after `scripts/import-old-art.sh`); without it the coach gun is drawn as its box.
 
 `Directory.Build.props` pins the exact SDK/runtime pair and names the product
 (`RustyEngineProject`) that `rusty dev` and `rusty build` run when no

@@ -30,6 +30,7 @@ internal sealed class HeldView : IDisposable
     private readonly Dictionary<string, (Appearance Appearance, ArtMesh? Mesh)> looks = [];
     private readonly HeldHand[] hands;
     private readonly ArmsSlot arms;
+    private readonly GripLandmarks grips;
     private readonly List<(int Hand, FeedbackKind Kind)> felt = [];
     private readonly HeldSway sway;
     // A put-away tween holds its last pose this much past its end, so the old look never shows at rest before the swap.
@@ -47,6 +48,7 @@ internal sealed class HeldView : IDisposable
         art = new ConvertedArt(engine, OldArtRoot);
         hands = [new(engine, firstObject), new(engine, firstObject + 1)];
         arms = new ArmsSlot(engine, held, firstObject + 2);
+        grips = new GripLandmarks(engine);
         sway = new HeldSway(held.Sway);
         foreach (HeldLookDefinition look in held.Looks)
             looks[look.Id] = look.Model is { } model && art.Model(model.Glb) is { } mesh ? (mesh.Appearance, mesh) : (Box(look.Box), null);
@@ -201,7 +203,15 @@ internal sealed class HeldView : IDisposable
     {
         arms.Published();
         arms.Drawn.Reach(Aim(MainHand), Aim(OffHand));
+        if (held.Look(hands[MainHand].Look) is { } shown)
+            grips.Publish(shown, hands[MainHand].Object, Fit(shown), arms.Drawn, twoHanded, held.Arms.Landmarks);
     }
+
+    /// <summary>
+    /// The developer grip check (<see cref="GripLandmarks"/>): the main hand's look and its landmark pairs as the Engine
+    /// last measured them on the drawn hands.
+    /// </summary>
+    internal (string Look, LandmarkReadResult Measured) Grips => (hands[MainHand].Look, grips.Read());
 
     /// <summary>
     /// A hand feels its action land: a punch layered over its motion. Started once its motion for this update has
@@ -370,10 +380,11 @@ internal sealed class HeldView : IDisposable
         {
             HeldLookDefinition main = held.Look(hands[MainHand].Look)!;
             (Vector3 offGrip, Quaternion mainTurn) = Grip(MainHand, main.Grips.Off!);
-            return new(offGrip, mainTurn, main.Grips.OffHand, closure, elbow, HoldMirrored: false);
+            return new(offGrip, mainTurn, main.Grips.OffHand, closure, elbow, HoldMirrored: false, main.Shape?.Off);
         }
         (Vector3 grip, Quaternion look) = Grip(index);
-        return new(grip, look, held.Look(hands[index].Look)!.Grips.Hand, closure, elbow);
+        HeldLookDefinition own = held.Look(hands[index].Look)!;
+        return new(grip, look, own.Grips.Hand, closure, elbow, Shape: own.Shape?.Main);
     }
 
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);

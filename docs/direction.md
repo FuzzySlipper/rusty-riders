@@ -306,6 +306,47 @@ punch never pulls the hand off the hilt. A punch starts after the hand's motion 
 and land in one update, and a motion's replacing start would end it). The two hands' motions and punches are
 independent; only one action runs at a time, a combat rule, not an animation one.
 
+### Hand shapes, grip landmarks and the coach gun
+
+A look may shape each hand's digits (`shape.main`, and `shape.off` on a look held in both hands): three curls per
+finger and [curl, swing] per thumb joint, added over the drawing rig's `grip` bend through that rig's digit frames, as
+rusty-hotel's `HeldShape` does over its grip clip. Opening blends the shape toward the open bend; squeezing adds to it.
+A look may also name grip `landmarks` in look space (`trigger`, `backstrapTop`, `butt`, `foreEnd`). The main hand's look
+publishes them as Engine landmark pairs (overlay set `held.landmarks`) against the drawn hands, which are named once per
+rig as an Engine `HandRig`. `riders.dev.hands.contact` reads the Engine's measure. The tolerances and the hand points
+(pad, web, palm) are `content/held/arms.json` `landmarks`, copied from hotel.
+
+rusty-hotel's coach gun is ported as the proof that one format carries both games' looks (`coach-gun` in
+`looks.json`, item `coach-gun`, `riders.dev.give coach-gun 1`, then 3). The model is copied into the ignored
+`content/old-art/hotel/` by `scripts/import-hotel-held.sh`. The conversion was mechanical:
+
+- **Grips and landmarks:** hotel's raw model space minus the model's bounds centre (0, 0.00993, -0.14). The model
+  needs no turn, and its 0.7 m length is hotel's scale 1, so riders' fitted look space keeps its size. Riders' look
+  space stays; whether it should become hotel's raw space is still open (convergence doc, conflict 1).
+- **Holds:** hotel's `hand`/`offHand` turn its own hand joint, so each is multiplied by the inverse of the hotel arms'
+  hand frame, measured from its knuckles as riders measures a rig. That gives main [0, 82, -132] → [0.8, 81.4, -126.9]
+  and off [90, 90, 0] → [89, 5.1, -90] (the same turn near pitch 90).
+- **Shapes:** taken as written. Motion: hotel's `shot` poses and its `coach-gun-blast` track, with `hands` as
+  `grip`/`offGrip`, in riders' `longarm` motion.
+- **Stance:** hotel's `longarm` puts the gun below riders' view, so riders' `longarm` stance is higher. A stance is
+  each game's own.
+
+In play on 2026-10-20 (`docs/images/held-coach-gun-rigs.jpg`, world frames without the HUD; coach gun above,
+flintlock below), both hands hold the coach gun on all three rigs, with no wrist shortfall. The contact readout:
+
+| rig | coach gun index pad → trigger | off palm → fore-end (facing) | flintlock index pad → trigger |
+|---|---|---|---|
+| generated | 18 mm (tolerance 15) | 29 mm ok (45°) | 20 mm (70 mm without the shape) |
+| painted | 118 mm | 23 mm ok (26°) | 100 mm (38 mm without) |
+| leather | 28 mm | 23 mm ok (23°) | 54 mm (81 mm without) |
+
+The generated arms come from the same asset-pipeline generator as hotel's, and hotel's holds and shapes land within
+a few millimetres of hotel's own result there. On the other rigs the off hand still passes, but the trigger finger
+does not. The flintlock's trigger shape (index [-35, -25, -15]) helps generated and leather and hurts painted, whose
+gun clip already points the index forward; no single index curl tried served all three. A shape is relative to each
+rig's base hand, so a per-look shape is only rig-neutral once every rig's `grip` brings its clip to the same base
+pose. The flintlock's `trigger` and `butt` landmarks are estimated from a side silhouette of its vertices.
+
 ## Backups of generated art
 
 `content/old-art/` stays out of git, including Git LFS. LFS still keeps every uploaded version, and each

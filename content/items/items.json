@@ -52,6 +52,27 @@
       }
     },
     {
+      "id": "coach-gun",
+      "name": "Coach gun",
+      "kind": "Weapon",
+      "color": [
+        0.4,
+        0.3,
+        0.22
+      ],
+      "icon": "flintlock",
+      "weapon": {
+        "action": "coach-gun-blast",
+        "reload": "coach-gun-reload",
+        "magazine": {
+          "size": 2,
+          "track": "tech-ammo"
+        },
+        "look": "coach-gun",
+        "twoHanded": true
+      }
+    },
+    {
       "id": "ember-wand",
       "name": "Ember wand",
       "kind": "Weapon",

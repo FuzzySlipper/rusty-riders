@@ -160,6 +160,18 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success($"Rig {arms.Id}. Sway main {Sway(mainSway)}, off {Sway(offSway)}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
     }
 
+    [DebugCommand("riders.dev.hands.contact", Description = "Developer grip check: how the drawn hands meet the main hand's look's grip landmarks (content/held/looks.json landmarks), as the Engine measured them on the poses it drew: the main index pad on the trigger, the web under the back strap, the little finger at the butt, the off palm on the fore-end, and each palm facing what it holds. Drawn as the overlay set held.landmarks.")]
+    public DebugCommandResult Contact()
+    {
+        var (shown, read) = View.Grips;
+        if (Held.Look(shown)?.Landmarks is null)
+            return Failure($"{(shown == "" ? "Nothing" : shown)} is shown in the main hand, with no grip landmarks. Looks with them: {string.Join(", ", Held.Looks.Where(l => l.Landmarks is not null).Select(l => l.Id))}.");
+        if (!read.Measured || read.Pairs.Length == 0) return Failure("The grip landmarks are not measured yet: the renderer has not drawn them.");
+        List<string> lines = [$"Grip landmarks on {shown} (rig {View.Rig}), as drawn at step {read.Step}:"];
+        foreach (Rusty.Engine.LandmarkMeasure pair in read.Pairs.Span) lines.Add("  " + GripLandmarks.Line(pair));
+        return DebugCommandResult.Success(string.Join("\n", lines));
+    }
+
     [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]
     public DebugCommandResult Rig(string id)
     {

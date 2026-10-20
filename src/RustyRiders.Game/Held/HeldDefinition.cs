@@ -80,6 +80,11 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                     now.Grips.Main.CopyTo(look.Grips.Main, 0);
                     foreach (var (into, from) in new[] { (look.Grips.Hand, now.Grips.Hand), (look.Grips.Off, now.Grips.Off), (look.Grips.OffHand, now.Grips.OffHand) })
                         if (into is not null && from is not null) from.CopyTo(into, 0);
+                    if (look.Shape is { } shape && now.Shape is { } shaped) shape.Take(shaped);
+                    else look.Shape = now.Shape;
+                    // Landmarks follow the file: points edited in place, a point or the whole set added or removed taken too.
+                    if (look.Landmarks is { } marks && now.Landmarks is { } newer) marks.Take(newer);
+                    else look.Landmarks = now.Landmarks;
                     if (look.Model is { } model && now.Model is { } fresher)
                     {
                         fresher.Rotation.CopyTo(model.Rotation, 0);
@@ -159,6 +164,8 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             Authored.Colour(Path, $"{at}.box.color", look.Box.Color);
             Authored.Point(Path, $"{at}.nudge.grip", look.Adjust.Grip);
             Authored.Point(Path, $"{at}.nudge.turn", look.Adjust.Turn);
+            look.Shape?.Validate(Path, $"{at}.shape", look.Grips.Off is not null);
+            look.Landmarks?.Validate(Path, $"{at}.landmarks", look.Grips.Off is not null);
             if (look.Model is { } model)
             {
                 Authored.Require(model.Glb.EndsWith(".glb", StringComparison.Ordinal), Path, $"{at}.model.glb", "names a .glb file.");
@@ -173,11 +180,18 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
 /// One held look, named for the weapons that show it. It is drawn in its own look space, metres with its length along
 /// -Z and its up side +Y: its converted <see cref="Model"/> fitted there when it opens, else its <see cref="Box"/>. It
 /// moves by <see cref="Motion"/>, sits in <see cref="Stance"/> at rest with an optional <see cref="Nudge"/> from it, and
-/// is held at <see cref="Grips"/> (look space).
+/// is held at <see cref="Grips"/> (look space), optionally with its own <see cref="Shape"/> for each hand's digits and
+/// the <see cref="Landmarks"/> a correct hold puts the hand on (look space).
 /// </summary>
 internal sealed record HeldLookDefinition(string Id, string Motion, string Stance, HeldGrips Grips, HeldBox Box,
-    HeldModel? Model = null, HeldNudge? Nudge = null)
+    HeldModel? Model = null, HeldNudge? Nudge = null, HeldShape? Shape = null, HeldLandmarks? Landmarks = null)
 {
+    /// <summary>How each hand's digits sit on this look over the rig's grip (none: the grip as it is); a live reload adds or removes it.</summary>
+    public HeldShape? Shape { get; set; } = Shape;
+
+    /// <summary>The points a correct hold puts the hand on; a live reload adds, removes or edits them.</summary>
+    public HeldLandmarks? Landmarks { get; set; } = Landmarks;
+
     /// <summary>Where its stance seats it (camera space, main hand): its grip's place and its turn, set by <see cref="HeldCatalog.Seat"/>.</summary>
     [JsonIgnore] internal (Vector3 Grip, Quaternion Turn) Seated { get; set; }
 

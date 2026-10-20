@@ -10,9 +10,10 @@ namespace RustyRiders.Game.Held;
 /// the right shoulder sits in camera space and the point its elbow bends toward (the left's are mirrored), how a hand
 /// holds a look (<see cref="Hold"/>, a turn in the hand's canonical frame, so it suits every rig), and how far a hand
 /// closes or opens from its grip. The hand's canonical frame: +Y along the fingers, +Z out of the back of the hand, and
-/// +X toward the little finger on the right hand (toward the thumb on the left).
+/// +X toward the little finger on the right hand (toward the thumb on the left). <see cref="Landmarks"/> says where
+/// the developer grip check finds a hand's points and how near a look's landmarks they must come.
 /// </summary>
-internal sealed record ArmsDefinition(float[] Shoulder, float[] Pole, float[] Hold, ArmDigits Hands)
+internal sealed record ArmsDefinition(float[] Shoulder, float[] Pole, float[] Hold, ArmDigits Hands, HandLandmarks Landmarks)
 {
     internal const string Path = "held/arms.json";
 
@@ -26,6 +27,7 @@ internal sealed record ArmsDefinition(float[] Shoulder, float[] Pole, float[] Ho
         Authored.Point(Path, "shoulder", arms.Shoulder);
         Authored.Point(Path, "pole", arms.Pole);
         Authored.Point(Path, "hold", arms.Hold);
+        arms.Landmarks.Validate(Path, "landmarks");
         return arms;
     }
 
@@ -38,6 +40,7 @@ internal sealed record ArmsDefinition(float[] Shoulder, float[] Pole, float[] Ho
         fresh.Hold.CopyTo(Hold, 0);
         Hands.Close.Take(fresh.Hands.Close);
         Hands.Open.Take(fresh.Hands.Open);
+        Landmarks.Take(fresh.Landmarks);
     }
 }
 

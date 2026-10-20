@@ -272,6 +272,59 @@
       "selfEffects": [],
       "windupLabel": "Raising",
       "commitLabel": "Slam"
+    },
+    {
+      "id": "coach-gun-blast",
+      "name": "Blast",
+      "delivery": {
+        "kind": "Hitscan",
+        "range": 25
+      },
+      "cost": {
+        "tracks": {},
+        "rounds": 1
+      },
+      "timing": {
+        "windup": 0.12,
+        "commit": 0.08,
+        "recovery": 0.45,
+        "cooldown": 0
+      },
+      "damage": [
+        {
+          "kind": "physical",
+          "amount": 38,
+          "scaling": []
+        }
+      ],
+      "effects": [
+        "knocked-back"
+      ],
+      "selfEffects": [],
+      "windupLabel": "Aiming",
+      "commitLabel": "Blast"
+    },
+    {
+      "id": "coach-gun-reload",
+      "name": "Reload",
+      "delivery": {
+        "kind": "Self"
+      },
+      "cost": {
+        "tracks": {}
+      },
+      "timing": {
+        "windup": 1.4,
+        "commit": 0.1,
+        "recovery": 0.2,
+        "cooldown": 0
+      },
+      "damage": [],
+      "effects": [],
+      "selfEffects": [],
+      "windupLabel": "Reloading",
+      "commitLabel": "Loaded",
+      "reloads": true
     }
   ]
 }

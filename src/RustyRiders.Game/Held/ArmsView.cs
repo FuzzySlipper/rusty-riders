@@ -22,6 +22,7 @@ internal sealed class ArmsView : IDisposable
     private readonly Appearance appearance;
     private readonly ulong objectId;
     private readonly Side main, off;
+    private readonly HandRig mainRig, offRig;
     private AnimationInstance? instance;
     // Where each upper arm was last drawn (model space); the right one places the model so it sits at the shoulder.
     private Vector3? upperArm, offUpperArm;
@@ -54,6 +55,11 @@ internal sealed class ArmsView : IDisposable
                 [.. chain.Thumb.Select(n => Joint(n, $"{field}.thumb"))]);
             main = Arm(rig.Main, "main", false);
             off = Arm(rig.Off, "off", true);
+            // Each hand's joints named once for the Engine's hand landmarks (the grip check).
+            HandRig Hand(ArmJoints chain, HandSide side) => HandRig.FromJoints(joints, objectId, side, chain.Hand, chain.Thumb,
+                chain.Fingers[0], chain.Fingers[1], chain.Fingers[2], chain.Fingers[3]);
+            mainRig = Hand(rig.Main, HandSide.Right);
+            offRig = Hand(rig.Off, HandSide.Left);
             appearance = engine.Animation.CreateAnimatedMeshAppearance(new(model));
         }
         catch { model.Dispose(); throw; }
@@ -61,6 +67,9 @@ internal sealed class ArmsView : IDisposable
 
     /// <summary>Each hand's measured turn from its canonical frame to its joint's (degrees about X, Y, Z), once measured; null before.</summary>
     internal (Vector3 Main, Vector3 Off)? HandFrames => main.Measured ? (Frames.Degrees(main.Frame), Frames.Degrees(off.Frame)) : null;
+
+    /// <summary>A hand's rig joints for the Engine's hand landmarks: the main (right) hand or the off (left).</summary>
+    internal HandRig Hand(bool offHand) => offHand ? offRig : mainRig;
 
     /// <summary>The rig profile drawing these arms.</summary>
     internal string Id { get; }
@@ -112,8 +121,8 @@ internal sealed class ArmsView : IDisposable
 
     /// <summary>
     /// Once the arms are in the published snapshot, reaches each hand for its weapon's grip (camera space) with the hand
-    /// turned with the weapon's look, and closes each hand as given (-1 open, 0 its grip, 1 squeezed). The off hand's
-    /// grip and turn are already mirrored; its hold is the main hand's, mirrored.
+    /// turned with the weapon's look, its digits shaped as the look says and closed as given (-1 open, 0 its grip, 1
+    /// squeezed). The off hand's grip and turn are already mirrored; its hold is the main hand's, mirrored.
     /// </summary>
     internal void Reach(HandAim mainHand, HandAim offHand)
     {
@@ -144,7 +153,7 @@ internal sealed class ArmsView : IDisposable
             chains.Add(new(side.Upper, side.Lower, side.Hand, PoseSpace.Model, Into(wrist), Into(hand.Pole), 1));
             if (!side.Measured) continue;
             overrides.Add(JointOverride.Orient(side.Hand, PoseSpace.Model, Quaternion.Normalize(unturn * turn * side.Frame)));
-            overrides.AddRange(side.Close(rig, arms.Hands, hand.Closure).Select(t => JointOverride.AddLocalRotation(t.Joint, t.Turn)));
+            overrides.AddRange(side.Close(rig, arms.Hands, hand.Shape, hand.Closure).Select(t => JointOverride.AddLocalRotation(t.Joint, t.Turn)));
         }
         engine.Animation.SetPose(new(instance, chains.ToArray(), overrides.ToArray(), true));
     }
@@ -226,23 +235,26 @@ internal sealed class ArmsView : IDisposable
             Measured = true;
         }
 
-        // Each digit joint's turn over the clip: the rig's grip, then the closure toward the arms' close at 1 or open
-        // at -1. Curls are negative turns about the curl axis (toward the palm); a thumb swings about its swing axis,
-        // mirrored on the left.
-        internal IEnumerable<(uint Joint, Quaternion Turn)> Close(ArmRig rig, ArmDigits digits, float closure)
+        // Each digit joint's turn over the clip: the rig's grip, the look's shape for the hand, then the closure toward
+        // the arms' close at 1 or open at -1 (as rusty-hotel's ArmsView.Close). Opening blends the shape toward the open
+        // bend, so a shaped finger never bends back past it; squeezing adds to the shape. Curls are negative turns about
+        // the curl axis (toward the palm); a thumb swings about its swing axis, mirrored on the left.
+        internal IEnumerable<(uint Joint, Quaternion Turn)> Close(ArmRig rig, ArmDigits digits, HandShape? shape, float closure)
         {
             DigitBend bend = closure > 0 ? digits.Close : digits.Open;
             float weight = MathF.Abs(closure), side = left ? -1 : 1;
+            float Bend(float shaped, float target) => closure < 0 ? shaped * (1 - weight) + target * weight : shaped + target * weight;
             const float Radians = MathF.PI / 180;
-            foreach (uint[] finger in fingers)
+            for (int f = 0; f < fingers.Length; f++)
                 for (int i = 0; i < 3; i++)
                 {
-                    float curl = rig.Grip.Fingers[i] + bend.Fingers[i] * weight;
-                    if (curl != 0) yield return (finger[i], Quaternion.CreateFromAxisAngle(axes[finger[i]].Curl, -curl * Radians));
+                    float curl = rig.Grip.Fingers[i] + Bend(shape?.Fingers[f][i] ?? 0, bend.Fingers[i]);
+                    if (curl != 0) yield return (fingers[f][i], Quaternion.CreateFromAxisAngle(axes[fingers[f][i]].Curl, -curl * Radians));
                 }
             for (int i = 0; i < 3; i++)
             {
-                float curl = rig.Grip.Thumb[i][0] + bend.Thumb[i][0] * weight, swing = rig.Grip.Thumb[i][1] + bend.Thumb[i][1] * weight;
+                float curl = rig.Grip.Thumb[i][0] + Bend(shape?.Thumb[i][0] ?? 0, bend.Thumb[i][0]),
+                    swing = rig.Grip.Thumb[i][1] + Bend(shape?.Thumb[i][1] ?? 0, bend.Thumb[i][1]);
                 if (curl == 0 && swing == 0) continue;
                 (Vector3 curlAxis, Vector3 swingAxis) = axes[thumb[i]];
                 yield return (thumb[i], Quaternion.Normalize(
@@ -254,8 +266,9 @@ internal sealed class ArmsView : IDisposable
 
 /// <summary>
 /// What a hand reaches for (camera space): its look's grip and turn, the look's own hold when it has one (degrees, the
-/// hand's canonical frame from the look's), how closed the hand is, the point its elbow bends toward, and whether a left
+/// hand's canonical frame from the look's), how closed the hand is, the point its elbow bends toward, whether a left
 /// hand's hold is the right hand's mirrored (its own mirrored look) or given as is (the off grip of a look held in both
-/// hands).
+/// hands), and how the look shapes the hand's digits.
 /// </summary>
-internal readonly record struct HandAim(Vector3 Grip, Quaternion Look, float[]? Hold, float Closure, Vector3 Pole, bool HoldMirrored = true);
+internal readonly record struct HandAim(Vector3 Grip, Quaternion Look, float[]? Hold, float Closure, Vector3 Pole, bool HoldMirrored = true,
+    HandShape? Shape = null);

@@ -12942,6 +12942,109 @@
           }
         ]
       }
+    },
+    "longarm": {
+      "poses": {
+        "rest": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "shouldered": {
+          "position": [
+            -0.03,
+            0.025,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "shoulderKick": {
+          "position": [
+            -0.03,
+            0.05,
+            0.045
+          ],
+          "rotation": [
+            10,
+            0,
+            0
+          ]
+        },
+        "lowered": {
+          "position": [
+            -0.03,
+            -0.07,
+            -0.04
+          ],
+          "rotation": [
+            -25,
+            15,
+            30
+          ]
+        }
+      },
+      "tracks": {
+        "coach-gun-blast": [
+          {
+            "pose": "shouldered",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "SineOut",
+            "grip": 0.6,
+            "offGrip": 0.6
+          },
+          {
+            "pose": "shoulderKick",
+            "phase": "Commit",
+            "at": 0.3,
+            "ease": "QuadOut",
+            "grip": 1,
+            "offGrip": 1
+          },
+          {
+            "pose": "shouldered",
+            "phase": "Commit",
+            "at": 1,
+            "ease": "SineOut",
+            "grip": 0.6,
+            "offGrip": 0.6
+          }
+        ],
+        "coach-gun-reload": [
+          {
+            "pose": "lowered",
+            "phase": "Windup",
+            "at": 0.3,
+            "ease": "QuadOut",
+            "grip": 0
+          },
+          {
+            "pose": "lowered",
+            "phase": "Windup",
+            "at": 0.72,
+            "ease": "Linear",
+            "grip": 0
+          },
+          {
+            "pose": "rest",
+            "phase": "Windup",
+            "at": 1,
+            "ease": "SineInOut",
+            "grip": 0
+          }
+        ]
+      }
     }
   }
 }
