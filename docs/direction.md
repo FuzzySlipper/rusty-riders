@@ -309,8 +309,8 @@ independent; only one action runs at a time, a combat rule, not an animation one
 ### Hand shapes, grip landmarks and the coach gun
 
 A look may shape each hand's digits (`shape.main`, and `shape.off` on a look held in both hands): three curls per
-finger and [curl, swing] per thumb joint, added over the drawing rig's `grip` bend through that rig's digit frames, as
-rusty-hotel's `HeldShape` does over its grip clip. Opening blends the shape toward the open bend; squeezing adds to it.
+finger and [curl, swing] per thumb joint, added over the arms' canonical holding pose through the drawing rig's digit
+frames, as rusty-hotel's `HeldShape` does over its grip clip (see "One hand on every rig" below). Opening blends the shape toward the open bend; squeezing adds to it.
 A look may also name grip `landmarks` in look space (`trigger`, `backstrapTop`, `butt`, `foreEnd`). The main hand's look
 publishes them as Engine landmark pairs (overlay set `held.landmarks`) against the drawn hands, which are named once per
 rig as an Engine `HandRig`. `riders.dev.hands.contact` reads the Engine's measure. The tolerances and the hand points
@@ -343,9 +343,45 @@ flintlock below), both hands hold the coach gun on all three rigs, with no wrist
 The generated arms come from the same asset-pipeline generator as hotel's, and hotel's holds and shapes land within
 a few millimetres of hotel's own result there. On the other rigs the off hand still passes, but the trigger finger
 does not. The flintlock's trigger shape (index [-35, -25, -15]) helps generated and leather and hurts painted, whose
-gun clip already points the index forward; no single index curl tried served all three. A shape is relative to each
-rig's base hand, so a per-look shape is only rig-neutral once every rig's `grip` brings its clip to the same base
-pose. The flintlock's `trigger` and `butt` landmarks are estimated from a side silhouette of its vertices.
+gun clip already points the index forward; no single index curl tried served all three. The flintlock's `trigger` and
+`butt` landmarks are estimated from a side silhouette of its vertices.
+
+#### One hand on every rig
+
+A shape was relative to each rig's base hand, so it only meant the same hand once every rig started from the same
+pose (convergence doc, conflict 5). Now `content/held/arms.json` `hands.pose` names the **canonical holding pose**:
+each finger joint's curl and each thumb joint's [curl, swing], read in the hand's canonical frame (`HandKnuckles`).
+A finger joint's curl is its bend from the previous bone, or from +Y at the knuckle, toward the palm. A thumb joint's
+curl is its rise out of the palm's plane, and its swing is its turn about the palm's normal. No tip joint is named,
+so a finger's last bone runs as the bone before it does in its own frame. The pose is the generated arms' `grip` clip
+as drawn: fingers [62, 70, 45] each (the little [62, 69, 45]), thumb [[10, 21], [26, -72], [-23, -75]]. That is
+hotel's grip clip, so hotel's shapes keep their values. Shapes were kept relative, not made absolute curls from an
+open hand. Absolute curls would have meant rewriting every hotel shape, and each rig's clip would still need measuring
+against the open hand.
+
+Each rig's `grip` is now a shape (per finger, per hand where the clip's hands differ, as the painted gun clip's do)
+that brings its clip to the pose. `riders.dev.hands.knuckles` prints each hand's angles on the clip alone and as
+drawn, plus the grip that closes the gap. `riders.dev.arms.grip` sets one finger's grip live. Finger curls add exactly
+(a shape's -35 shows as -35), so the fingers' grip is the printed difference. The thumb's readings interact, so its
+grip took two passes on the drawn residual and ends within about 5°. The rigs' hands differ in size as well as pose:
+the painted and leather knuckles sit 117 and 123 mm from the wrist against generated's 95, and their fingers are
+20–30% longer. At the pose's angles their index pads still landed 25–37 mm from the trigger. Moving the palm deeper
+fixed the trigger finger but lifted the off palm 40–60 mm off the fore-end. Scaling curls by finger length overshot
+(48–63 mm). So each of those rigs keeps a measured index trim, searched until both guns' pads land as on the reference
+hand: painted's index grip [60, 48, 20], leather's [35, 75, 89]. The palm stays shared.
+
+In play on 2026-10-20 (`docs/images/held-hand-shapes-rigs.jpg`; columns generated, painted, leather; coach gun above,
+flintlock below), `riders.dev.hands.contact` reads:
+
+| rig | coach gun index pad → trigger | off palm → fore-end (facing) | flintlock index pad → trigger |
+|---|---|---|---|
+| generated | 18 mm (was 18) | 29 mm ok (45°) | 20 mm (was 20) |
+| painted | 18 mm (was 118) | 23 mm ok (33°) | 18 mm (was 100) |
+| leather | 20 mm (was 28) | 23 mm ok (34°) | 20 mm (was 54) |
+
+All three still sit just outside the 15 mm tolerance, the reference hand included. That remainder is in hotel's
+holds and shapes, not the rigs. The little finger at the butt stays 70–100 mm off on every rig, which is also
+unchanged. Finger splay is not part of the pose.
 
 ## Backups of generated art
 

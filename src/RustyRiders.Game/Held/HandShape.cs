@@ -3,7 +3,8 @@ using RustyRiders.Game.Content;
 namespace RustyRiders.Game.Held;
 
 /// <summary>
-/// How each hand's digits sit on a look, added over the drawing rig's <see cref="ArmRig.Grip"/> bend: the main hand,
+/// How each hand's digits sit on a look, added over the arms' canonical holding pose (<see cref="ArmDigits.Pose"/>, where
+/// each rig's <see cref="ArmRig.Grip"/> brings its clip): the main hand,
 /// and the off hand when the look is held in both hands. A look in the off hand alone takes its main shape, mirrored as
 /// the hand is. From rusty-hotel's <c>HeldShape</c> (docs/reuse.md).
 /// </summary>
@@ -25,9 +26,10 @@ internal sealed record HeldShape(HandShape Main, HandShape? Off = null)
 }
 
 /// <summary>
-/// Degrees added to one hand's digits over the rig's grip, under the motion keys' closure: each finger's three joints'
-/// curl (the index, middle, ring and little fingers, base to tip; positive toward the palm) and each thumb joint's
-/// [curl, swing]. Applied through each rig's digit frames, so one shape suits every rig profile.
+/// Degrees for one hand's digits: each finger's three joints' curl (the index, middle, ring and little fingers, base to
+/// tip; positive toward the palm) and each thumb joint's [curl, swing]. As a look's shape, added over the canonical
+/// holding pose under the motion keys' closure, through each rig's digit frames, so one shape suits every rig profile;
+/// the same terms give the pose itself (<see cref="HandKnuckles"/>) and each rig's grip toward it.
 /// </summary>
 internal sealed record HandShape(float[][] Fingers, float[][] Thumb)
 {

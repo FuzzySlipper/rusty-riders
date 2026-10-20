@@ -78,8 +78,8 @@ the sway between and under actions (`content/held/sway.json`, and each motion's 
 falls short of its grip, the arms' lengths and the measured hand frames. Save writes the changed values into `content/held/`.
 Editing those files by hand also reloads them into the running game. The same in the console: `riders.dev.motion
 <look> <action>`, then `.key`, `.next`, `.play <speed>`, `.at <seconds>`, `.pose`, `.hand`, `riders.dev.held.nudge`,
-`riders.dev.held.fit`, `riders.dev.stance.set`, `riders.dev.arms.hold`, `riders.dev.arms.reach` and
-`riders.dev.arms.rig <generated|painted|leather>`, which swaps the arms model live. `riders.dev.hands.contact` reports how the drawn hands
+`riders.dev.held.fit`, `riders.dev.stance.set`, `riders.dev.arms.hold`, `riders.dev.arms.reach`, `riders.dev.arms.grip` and
+`riders.dev.arms.rig <generated|painted|leather>`, which swaps the arms model live. `riders.dev.hands.knuckles` reads each hand's knuckle angles against the canonical holding pose (calibrating a rig's `grip`), and `riders.dev.hands.contact` reports how the drawn hands
 meet the main look's grip landmarks (`trigger`, `fore-end`, ...), as the Engine measured them.
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`): `painted`, the old game's

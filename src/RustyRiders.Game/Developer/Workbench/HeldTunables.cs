@@ -159,15 +159,27 @@ internal static class HeldTunables
             new(new("rig.scale", "model scale", TunableKind.Slider, 0.1f, 3, .01f, rig.Scale) { Source = new(rigPath, "/scale") }, v => { rig.Scale = v; publish(); }),
             .. Vector("rig.palm", "palm", rig.Palm, -0.15f, 0.15f, .002f, rigPath, "/palm", publish)
         ];
-        for (int i = 0; i < 3; i++)
+        // The rig's grip toward the canonical holding pose, for each hand it gives (the off hand's only where it differs).
+        string[] fingers = ["index", "middle", "ring", "little"];
+        foreach (var (name, shape) in new[] { ("main", rig.Grip.Main), ("off", rig.Grip.Off) })
         {
-            int joint = i;
-            rigControls.Add(new(new($"rig.grip.finger.{i}", $"grip finger {joints[i]} curl", TunableKind.Slider, -90, 120, 1, rig.Grip.Fingers[i])
-                { Source = new(rigPath, $"/grip/fingers/{i}") }, v => { rig.Grip.Fingers[joint] = v; publish(); }));
-            rigControls.Add(new(new($"rig.grip.thumb.{i}.curl", $"grip thumb {joints[i]} curl", TunableKind.Slider, -90, 120, 1, rig.Grip.Thumb[i][0])
-                { Source = new(rigPath, $"/grip/thumb/{i}/0") }, v => { rig.Grip.Thumb[joint][0] = v; publish(); }));
-            rigControls.Add(new(new($"rig.grip.thumb.{i}.swing", $"grip thumb {joints[i]} swing", TunableKind.Slider, -90, 90, 1, rig.Grip.Thumb[i][1])
-                { Source = new(rigPath, $"/grip/thumb/{i}/1") }, v => { rig.Grip.Thumb[joint][1] = v; publish(); }));
+            if (shape is null) continue;
+            for (int f = 0; f < 4; f++)
+                for (int i = 0; i < 3; i++)
+                {
+                    float[] finger = shape.Fingers[f];
+                    int joint = i;
+                    rigControls.Add(new(new($"rig.grip.{name}.{fingers[f]}.{i}", $"{name} grip {fingers[f]} {joints[i]} curl", TunableKind.Slider, -120, 120, 1, finger[i])
+                        { Source = new(rigPath, $"/grip/{name}/fingers/{f}/{i}") }, v => { finger[joint] = v; publish(); }));
+                }
+            for (int i = 0; i < 3; i++)
+            {
+                float[] thumb = shape.Thumb[i];
+                rigControls.Add(new(new($"rig.grip.{name}.thumb.{i}.curl", $"{name} grip thumb {joints[i]} curl", TunableKind.Slider, -120, 120, 1, thumb[0])
+                    { Source = new(rigPath, $"/grip/{name}/thumb/{i}/0") }, v => { thumb[0] = v; publish(); }));
+                rigControls.Add(new(new($"rig.grip.{name}.thumb.{i}.swing", $"{name} grip thumb {joints[i]} swing", TunableKind.Slider, -180, 180, 1, thumb[1])
+                    { Source = new(rigPath, $"/grip/{name}/thumb/{i}/1") }, v => { thumb[1] = v; publish(); }));
+            }
         }
         groups.Add(new($"rig.{arms.Rig}", $"Rig · {arms.Rig}", rigControls) { File = rigPath });
         return groups;

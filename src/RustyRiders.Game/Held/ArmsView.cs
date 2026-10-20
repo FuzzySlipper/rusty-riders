@@ -28,6 +28,8 @@ internal sealed class ArmsView : IDisposable
     private Vector3? upperArm, offUpperArm;
     // How far the body leans in, beyond the motion's own lean, so a hand reaches a grip past its arm's length.
     private Vector3 reaching;
+    // The joints as last drawn, for the knuckle readout.
+    private JointPose[]? drawnJoints;
     // A reach never quite straightens the arm, and the body leans at most this far (metres).
     private const float Slack = .01f, MostReaching = .3f;
 
@@ -67,6 +69,13 @@ internal sealed class ArmsView : IDisposable
 
     /// <summary>Each hand's measured turn from its canonical frame to its joint's (degrees about X, Y, Z), once measured; null before.</summary>
     internal (Vector3 Main, Vector3 Off)? HandFrames => main.Measured ? (Frames.Degrees(main.Frame), Frames.Degrees(off.Frame)) : null;
+
+    /// <summary>
+    /// A hand's knuckle angles (<see cref="HandKnuckles"/>): on the rig's clip alone, as first drawn, and as last drawn
+    /// (with the rig's grip, the look's shape and the closure); null before the hands are measured.
+    /// </summary>
+    internal (HandShape Clip, HandShape Drawn)? Knuckles(bool offHand) =>
+        (offHand ? off : main) is { Clip: { } clip } side && drawnJoints is { } joints ? (clip, side.Knuckles(joints)) : null;
 
     /// <summary>A hand's rig joints for the Engine's hand landmarks: the main (right) hand or the off (left).</summary>
     internal HandRig Hand(bool offHand) => offHand ? offRig : mainRig;
@@ -134,6 +143,7 @@ internal sealed class ArmsView : IDisposable
         if (engine.Animation.ReadJointPose(instance) is { Reported: true } drawn)
         {
             JointPose[] joints = drawn.Joints.ToArray();
+            drawnJoints = joints;
             upperArm = joints[main.Upper].Model.Translation;
             offUpperArm = joints[off.Upper].Model.Translation;
             if (!main.Measured) main.Measure(joints, rig.Digits);
@@ -202,6 +212,7 @@ internal sealed class ArmsView : IDisposable
         internal uint Hand => hand;
         internal bool Measured { get; private set; }
         internal Quaternion Frame { get; private set; } = Quaternion.Identity;
+        internal HandShape? Clip { get; private set; }
         private readonly Dictionary<uint, (Vector3 Curl, Vector3 Swing)> axes = [];
 
         internal float Length(JointPose[] joints) =>
@@ -232,29 +243,34 @@ internal sealed class ArmsView : IDisposable
                 Vector3 curl = Vector3.Normalize(Vector3.Cross(-z, along));
                 axes[thumb[i]] = (Vector3.Transform(curl, Quaternion.Inverse(own)), Vector3.Transform(z, Quaternion.Inverse(own)));
             }
+            Clip = Knuckles(joints);
             Measured = true;
         }
 
-        // Each digit joint's turn over the clip: the rig's grip, the look's shape for the hand, then the closure toward
-        // the arms' close at 1 or open at -1 (as rusty-hotel's ArmsView.Close). Opening blends the shape toward the open
+        internal HandShape Knuckles(JointPose[] joints) =>
+            HandKnuckles.Read(joints, Quaternion.Normalize(joints[hand].Model.Rotation * Quaternion.Inverse(Frame)), fingers, thumb, left);
+
+        // Each digit joint's turn over the clip: the rig's grip (to the canonical holding pose), the look's shape for the
+        // hand, then the closure toward the arms' close at 1 or open at -1 (as rusty-hotel's ArmsView.Close). Opening blends the shape toward the open
         // bend, so a shaped finger never bends back past it; squeezing adds to the shape. Curls are negative turns about
         // the curl axis (toward the palm); a thumb swings about its swing axis, mirrored on the left.
         internal IEnumerable<(uint Joint, Quaternion Turn)> Close(ArmRig rig, ArmDigits digits, HandShape? shape, float closure)
         {
             DigitBend bend = closure > 0 ? digits.Close : digits.Open;
+            HandShape grip = left ? rig.Grip.Off ?? rig.Grip.Main : rig.Grip.Main;
             float weight = MathF.Abs(closure), side = left ? -1 : 1;
             float Bend(float shaped, float target) => closure < 0 ? shaped * (1 - weight) + target * weight : shaped + target * weight;
             const float Radians = MathF.PI / 180;
             for (int f = 0; f < fingers.Length; f++)
                 for (int i = 0; i < 3; i++)
                 {
-                    float curl = rig.Grip.Fingers[i] + Bend(shape?.Fingers[f][i] ?? 0, bend.Fingers[i]);
+                    float curl = grip.Fingers[f][i] + Bend(shape?.Fingers[f][i] ?? 0, bend.Fingers[i]);
                     if (curl != 0) yield return (fingers[f][i], Quaternion.CreateFromAxisAngle(axes[fingers[f][i]].Curl, -curl * Radians));
                 }
             for (int i = 0; i < 3; i++)
             {
-                float curl = rig.Grip.Thumb[i][0] + Bend(shape?.Thumb[i][0] ?? 0, bend.Thumb[i][0]),
-                    swing = rig.Grip.Thumb[i][1] + Bend(shape?.Thumb[i][1] ?? 0, bend.Thumb[i][1]);
+                float curl = grip.Thumb[i][0] + Bend(shape?.Thumb[i][0] ?? 0, bend.Thumb[i][0]),
+                    swing = grip.Thumb[i][1] + Bend(shape?.Thumb[i][1] ?? 0, bend.Thumb[i][1]);
                 if (curl == 0 && swing == 0) continue;
                 (Vector3 curlAxis, Vector3 swingAxis) = axes[thumb[i]];
                 yield return (thumb[i], Quaternion.Normalize(

@@ -85,13 +85,20 @@ measured hand frame. The fitter, `axis`, `muzzle`, key `visible`, `offRest` and 
 4. **Content density.** Riders' baked motions are densely keyed (`motion.json` is about 13k lines of linear keys), while
    hotel's are sparse and hand-authored. Both are valid uses of one key format. Upstream, the baker should simplify
    with a tolerance (as transitions already do), so baked files stay reviewable.
-5. **Shapes are relative to each rig's base hand.** Hotel's shape is added over one grip clip. In riders it is
-   added over each rig's `grip` bend through that rig's digit frames, which ports the values but not their meaning:
-   the same coach-gun and flintlock shapes put the index pad 18–20 mm from the trigger on the generated arms and
-   100–118 mm from it on the painted arms, whose gun clip already points the index forward. Before shapes go upstream,
-   either every rig profile's base grip must bring its clip to one canonical holding pose (per-finger, which riders'
-   `grip`, one curl set for all fingers, cannot yet express), or shapes must be absolute curls from a canonical open
-   hand. Landmarks and the fitter then work per rig.
+5. **Shapes are relative to each rig's base hand.** Hotel's shape is added over one grip clip. In riders it was
+   added over each rig's `grip` bend, which ported the values but not their meaning: the same coach-gun and flintlock
+   shapes put the index pad 18–20 mm from the trigger on the generated arms and 100–118 mm from it on the painted arms,
+   whose gun clip already points the index forward. *Settled:* a shape is added over one **canonical holding pose**,
+   `arms.json` `hands.pose`: knuckle angles per finger joint and [curl, swing] per thumb joint, read in the hand's
+   canonical frame. That pose is the generated (hotel's) grip clip as drawn, so hotel's shapes keep their values. Each
+   rig's `grip` is now a per-finger, per-hand shape that brings its own clip there. It is calibrated with
+   `riders.dev.hands.knuckles`, which prints the clip's angles and the grip that closes the gap. Hands of other
+   proportions keep a measured index trim, so the pad lands where the reference hand's does. The index pad then sits
+   within about 20 mm of the trigger on every rig for both guns (see
+   [direction.md](direction.md#hand-shapes-grip-landmarks-and-the-coach-gun)). Shapes as absolute curls from an open
+   hand were rejected because they would have meant rewriting every hotel shape, and an open hand is no closer to
+   rig-neutral: each rig's clip still has to be measured against it. Upstream, the pose belongs with the Engine's
+   arms format, each rig profile carries its grip, and the knuckle readout is the calibration tool.
 6. **Required fields.** Hotel requires `shape` on every look; riders requires `box` (the fallback drawn without a model).
    Upstream, both should be optional, each with a stated fallback.
 

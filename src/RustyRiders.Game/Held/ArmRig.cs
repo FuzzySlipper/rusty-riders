@@ -24,6 +24,7 @@ internal sealed record ArmsDefinition(float[] Shoulder, float[] Pole, float[] Ho
     {
         ArmsDefinition arms = Authored.Read(engine, Path, HeldJson.Default.ArmsDefinition);
         foreach (var (field, bend) in new[] { ("close", arms.Hands.Close), ("open", arms.Hands.Open) }) bend.Validate(Path, $"hands.{field}");
+        arms.Hands.Pose.Validate(Path, "hands.pose");
         Authored.Point(Path, "shoulder", arms.Shoulder);
         Authored.Point(Path, "pole", arms.Pole);
         Authored.Point(Path, "hold", arms.Hold);
@@ -40,12 +41,18 @@ internal sealed record ArmsDefinition(float[] Shoulder, float[] Pole, float[] Ho
         fresh.Hold.CopyTo(Hold, 0);
         Hands.Close.Take(fresh.Hands.Close);
         Hands.Open.Take(fresh.Hands.Open);
+        Hands.Pose.Take(fresh.Hands.Pose);
         Landmarks.Take(fresh.Landmarks);
     }
 }
 
-/// <summary>How far each finger joint (base to tip, alike for every finger) and each thumb joint ([curl, swing]) bend, in degrees, at full closure (<see cref="Close"/>) and fully open (<see cref="Open"/>).</summary>
-internal sealed record ArmDigits(DigitBend Close, DigitBend Open);
+/// <summary>
+/// How far each finger joint (base to tip, alike for every finger) and each thumb joint ([curl, swing]) bend, in degrees,
+/// at full closure (<see cref="Close"/>) and fully open (<see cref="Open"/>); and the canonical holding pose
+/// (<see cref="Pose"/>): every hand's knuckle angles (<see cref="HandKnuckles"/>) at its grip, before a look's shape.
+/// Each rig's <see cref="ArmRig.Grip"/> brings its clip there, so a shape means the same hand on every rig.
+/// </summary>
+internal sealed record ArmDigits(DigitBend Close, DigitBend Open, HandShape Pose);
 
 /// <summary>Degrees added to each finger joint's curl (base to tip, the same for every finger; positive toward the palm) and each thumb joint's [curl, swing].</summary>
 internal sealed record DigitBend(float[] Fingers, float[][] Thumb)
@@ -67,11 +74,13 @@ internal sealed record DigitBend(float[] Fingers, float[][] Thumb)
 /// One arms model and how to drive it (content/held/rigs/&lt;id&gt;.json): the GLB and the clip played under the IK; how
 /// the model is turned and scaled so it faces -Z in metres (it is placed so its right upper arm joint sits at the arms'
 /// shoulder); each arm's joints; how the digits turn (<see cref="Digits"/>); the palm's offset from the hand joint in
-/// the hand's canonical frame (right hand; the left mirrors it); and the curl added to the clip's hands so they hold
-/// (<see cref="Grip"/>). A rig's hand frames and digit axes are measured from the drawn model, so the arms' hold and
-/// the motion keys' closure suit every rig.
+/// the hand's canonical frame (right hand; the left mirrors it); and each digit joint's turn added to the clip's hands
+/// to bring them to the arms' canonical holding pose (<see cref="Grip"/>, per finger, and per hand where the clip's
+/// hands differ, calibrated against
+/// <see cref="ArmDigits.Pose"/> with <c>riders.dev.hands.knuckles</c>). A rig's hand frames and digit axes are measured
+/// from the drawn model, so the arms' hold, the looks' shapes and the motion keys' closure suit every rig.
 /// </summary>
-internal sealed record ArmRig(string Model, string Clip, float[] Turn, ArmJoints Main, ArmJoints Off, DigitFrames Digits, float[] Palm, DigitBend Grip)
+internal sealed record ArmRig(string Model, string Clip, float[] Turn, ArmJoints Main, ArmJoints Off, DigitFrames Digits, float[] Palm, HeldShape Grip)
 {
     /// <summary>The model's uniform scale into metres (1 for a model already in metres); tuned live.</summary>
     public float Scale { get; set; } = 1;
@@ -88,7 +97,7 @@ internal sealed record ArmRig(string Model, string Clip, float[] Turn, ArmJoints
         Authored.Point(path, "turn", rig.Turn);
         Authored.Positive(path, "scale", rig.Scale);
         Authored.Point(path, "palm", rig.Palm);
-        rig.Grip.Validate(path, "grip");
+        rig.Grip.Validate(path, "grip", offGrip: true);
         foreach (var (field, joints) in new[] { ("main", rig.Main), ("off", rig.Off) })
         {
             Authored.Require(joints.Fingers.Length == 4 && joints.Fingers.All(f => f.Length == 3), path, $"{field}.fingers",

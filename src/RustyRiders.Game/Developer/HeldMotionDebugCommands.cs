@@ -172,6 +172,39 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success(string.Join("\n", lines));
     }
 
+    [DebugCommand("riders.dev.hands.knuckles", Description = "Developer hand calibration: each drawn hand's knuckle angles in the hand's canonical frame (each finger joint's curl, each thumb joint's [curl, swing], degrees) on the rig's clip alone and as now drawn, against the arms' canonical holding pose (content/held/arms.json hands.pose), and the rig grip that brings this clip to that pose.")]
+    public DebugCommandResult Knuckles()
+    {
+        ArmsView arms = View.DrawnArms;
+        HandShape pose = Held.Arms.Hands.Pose;
+        List<string> lines = [$"Knuckles on rig {arms.Id} (canonical pose {HandKnuckles.Json(pose)}):"];
+        List<string> grips = [];
+        foreach (var (name, offHand) in new[] { ("main", false), ("off", true) })
+        {
+            if (arms.Knuckles(offHand) is not var (clip, drawn)) return Failure("The hands are not measured yet: the arms have not been drawn.");
+            lines.Add($"  {name} clip  {HandKnuckles.Json(clip)}");
+            lines.Add($"  {name} drawn {HandKnuckles.Json(drawn)}");
+            grips.Add($"\"{name}\": {HandKnuckles.Json(HandKnuckles.Difference(pose, clip))}");
+        }
+        lines.Add($"  to the pose: \"grip\": {{{string.Join(", ", grips)}}}  (in {ArmRig.PathOf(arms.Id)}; leave out \"off\" when it is the main's)");
+        return DebugCommandResult.Success(string.Join("\n", lines));
+    }
+
+    [DebugCommand("riders.dev.arms.grip", Description = "Developer hand calibration: set one finger's grip curls (base, middle, tip degrees) on the drawing rig, for the main or off hand (where the rig gives the off hand its own), in the loaded content, and print the hand's JSON.")]
+    public DebugCommandResult ArmsGrip(string inHand, string finger, float b, float m, float t)
+    {
+        string[] fingers = ["index", "middle", "ring", "little"];
+        int f = Array.IndexOf(fingers, finger);
+        if (f < 0) return Failure($"The finger is {string.Join(", ", fingers)}.");
+        if (inHand is not ("main" or "off")) return Failure("The hand is main or off.");
+        ArmRig rig = Held.Rigs[View.Rig];
+        if ((inHand == "main" ? rig.Grip.Main : rig.Grip.Off) is not { } hand)
+            return Failure($"Rig '{View.Rig}' gives no off grip; its off hand takes the main's mirrored.");
+        (hand.Fingers[f][0], hand.Fingers[f][1], hand.Fingers[f][2]) = (b, m, t);
+        publish();
+        return DebugCommandResult.Success($"\"{inHand}\": {HandKnuckles.Json(hand)}  (in {ArmRig.PathOf(View.Rig)} grip)");
+    }
+
     [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]
     public DebugCommandResult Rig(string id)
     {
