@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the old game's first-person arms into the ignored content/old-art/fp-arms/ (docs/direction.md, "First-person
+# Builds the old game's first-person arms into the ignored content/art/fp-arms/ (docs/direction.md, "First-person
 # arms"): painted.glb (the Hands pack's arms with the hand-painted texture) and leather.glb (MedievalFPArms' male
 # leather armour arms). Their rig profiles are content/held/rigs/. Needs old-game/Assets/MoreArt, Blender 5 and a
 # sibling ../asset-pipeline (or ASSET_PIPELINE=) for unity-import, which reads the Hands pack's ASCII FBX.
@@ -10,7 +10,7 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 pipeline=${ASSET_PIPELINE:-$root/../asset-pipeline}
 producer=$pipeline/tools/unity-import/unity_import.py
 assets=$root/old-game/Assets
-out=$root/content/old-art/fp-arms
+out=$root/content/art/fp-arms
 [[ -d $assets/MoreArt/FirstPersonArms && -d $assets/MoreArt/FpMelee/MedievalFPArms ]] || { echo "old-game/Assets/MoreArt is missing" >&2; exit 1; }
 [[ -f $producer ]] || { echo "unity-import not found at $producer (set ASSET_PIPELINE)" >&2; exit 1; }
 

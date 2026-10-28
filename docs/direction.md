@@ -202,7 +202,7 @@ The old arms turned up in `old-game/Assets/MoreArt` (2026-10-19), with a lot of 
   skeletal clips; `scripts/bake-held-motion.py` bakes one into held motion (below).
 - `Animations/`: third-person character clips (Mixamo and others), not first person.
 
-`scripts/import-fp-arms.sh` builds both into the ignored `content/old-art/fp-arms/`. Each is a rig profile in
+`scripts/import-fp-arms.sh` builds both into the ignored `content/art/fp-arms/`. Each is a rig profile in
 `content/held/rigs/`: the model, the clip played under the IK, its turn and scale, each arm's joints, and per-rig palm
 and base grip. Hand frames and digit axes are measured from the drawn model, so the arms' hold and the motion keys'
 closure (`content/held/arms.json`) serve every rig unchanged. The packs are third-party store assets the old game
@@ -331,7 +331,7 @@ rig as an Engine `HandRig`. `riders.dev.hands.contact` reads the Engine's measur
 
 rusty-hotel's coach gun is ported as the proof that one format carries both games' looks (`coach-gun` in
 `looks.json`, item `coach-gun`, `riders.dev.give coach-gun 1`, then 3). The model is copied into the ignored
-`content/old-art/hotel/` by `scripts/import-hotel-held.sh`. The conversion was mechanical:
+`content/art/hotel/` by `scripts/import-hotel-held.sh`. The conversion was mechanical:
 
 - **Grips and landmarks:** hotel's raw model space minus the model's bounds centre (0, 0.00993, -0.14). The model
   needs no turn, and its 0.7 m length is hotel's scale 1, so riders' fitted look space keeps its size. Riders' look
@@ -396,10 +396,17 @@ All three still sit just outside the 15 mm tolerance, the reference hand include
 holds and shapes, not the rigs. The little finger at the butt stays 70–100 mm off on every rig, which is also
 unchanged. Finger splay is not part of the pose.
 
-## Backups of generated art
+## Where the art lives
 
-`content/old-art/` stays out of git, including Git LFS. LFS still keeps every uploaded version, and each
-re-import is about 1 GB, more than GitHub's free LFS allowance has historically been. The output is fully
-regenerable from `old-game/`, `old-game-fbx2013/` (the FBX 6 files re-saved as FBX 2013 on den-win11) and
-the scripts, so back up those inputs. If the output itself must be kept, put a tarball outside git history,
-such as on a NAS or attached to a GitHub release.
+Every art file the game draws is in `content/art/`, whoever made it: the converted old-game GLBs and placements,
+the first-person arms (`fp-arms/`), hotel's held models (`hotel/`), generated textures (`textures/`) and UI art
+(`ui/`). Art the game draws and that is ready for the Engine is the game's art, not "old" art, wherever it came
+from. Each producer replaces only its own entries.
+
+`content/art/` stays out of git, Git LFS included; only each folder's `sources.json` (how its art was made) is
+tracked. The art does not need versions, and most of it is third-party store packs that may ship inside the game but
+should not be published as raw files, which a public repository's LFS would do. `scripts/art-sync.sh push`
+copies it to the den NAS (`/mnt/den-nas-backup/data/rusty-riders/art`) after a change, as the backup; `pull`
+fills a new Linux checkout, and `scripts/art-sync.ps1` fills a Windows one from den-agents' checkout over `P:`.
+The converted part can still be regenerated from `old-game/`, `old-game-fbx2013/` (the FBX 6 files re-saved as FBX
+2013 on den-win11) and the scripts.

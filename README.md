@@ -22,12 +22,16 @@ Then, from this repository:
 ```bash
 rusty status
 rusty install
-scripts/import-old-art.sh
+scripts/art-sync.sh pull
 rusty dev --port 8787
 ```
 
-`scripts/import-old-art.sh` converts the level tileset tiles and the combat
-tilesets and levels into the ignored `content/old-art/`. That is about 1 GB at
+The game's art is in the ignored `content/art/` (about 1.1 GB); `scripts/art-sync.sh pull` copies it from the den
+NAS, and on Windows `scripts\art-sync.ps1` copies it from den-agents' checkout over `P:`. After changing art, run
+`scripts/art-sync.sh push` ([direction.md](docs/direction.md#where-the-art-lives)).
+
+To rebuild the converted part instead, `scripts/import-old-art.sh` converts the level tileset tiles and the combat
+tilesets and levels into the ignored `content/art/`. That is about 1 GB at
 the default 1024 px texture cap, copied again into each staged build;
 `MAX_TEXTURE=512` roughly halves it. The import takes about ten minutes. It
 needs a sibling `../asset-pipeline` checkout (or `ASSET_PIPELINE=`),
@@ -84,10 +88,10 @@ meet the main look's grip landmarks (`trigger`, `fore-end`, ...), as the Engine 
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`): `painted`, the old game's
 hand-painted gloves, and `leather`, its MedievalFPArms leather armour, both built from `old-game/Assets/MoreArt` into the
-ignored `content/old-art/fp-arms/` by `scripts/import-fp-arms.sh` (Blender 5 and `../asset-pipeline`); and `generated`,
+ignored `content/art/fp-arms/` by `scripts/import-fp-arms.sh` (Blender 5 and `../asset-pipeline`); and `generated`,
 kept in git, from asset-pipeline's `tools/fps-arms` (`art/arms/provenance.json`). Without the import the game falls
 back to the generated arms. `scripts/import-hotel-held.sh` copies rusty-hotel's coach gun into the ignored
-`content/old-art/hotel/` (re-run it after `scripts/import-old-art.sh`); without it the coach gun is drawn as its box.
+`content/art/hotel/`; without it the coach gun is drawn as its box.
 
 `Directory.Build.props` pins the exact SDK/runtime pair and names the product
 (`RustyEngineProject`) that `rusty dev` and `rusty build` run when no
@@ -121,8 +125,8 @@ rusty build --aot
 | `src/ui/main.js` | DOM panel: scene status, problems, what is underfoot, controls |
 | `content/levels/` | The old generator's chunks, layouts, styles, tilesets and tile templates as JSON |
 | `content/level.json`, `content/walker.json`, `content/gallery.json` | Which level to stamp, walker tuning, gallery exhibits |
-| `content/old-art/` | Generated, ignored: converted GLBs and placement files |
-| `scripts/import-old-art.sh` | Regenerates `content/old-art/` with asset-pipeline unity-import |
+| `content/art/` | Ignored, synced to the NAS by `scripts/art-sync.sh`: converted GLBs and placement files, arms, hotel's held models, textures, UI art (each `sources.json` stays in git) |
+| `scripts/import-old-art.sh` | Regenerates `content/art/` with asset-pipeline unity-import |
 | `scripts/texture-gen/` | Generated textures: tiling and normal maps, checks, contact sheets and judge merging, LoRA dataset, captions and training through ComfyUI |
 | `scripts/review/` | A LAN web app for a human pass over an image folder (flag, keep, note, crop), and applying its results |
 | `docs/texture-style.md`, `.claude/skills/texture-batch/` | House texture style, judging rubric, and the generate–filter–judge workflow |

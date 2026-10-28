@@ -199,7 +199,7 @@ internal sealed record HeldLookDefinition(string Id, string Motion, string Stanc
 }
 
 /// <summary>
-/// A look's converted model (a GLB under content/old-art) fitted into look space: centred on its bounds, scaled so its
+/// A look's converted model (a GLB under content/art) fitted into look space: centred on its bounds, scaled so its
 /// longest side is <see cref="Length"/> metres, and turned by <see cref="Rotation"/> (degrees about X, Y, Z) so its
 /// length runs along -Z with its up side +Y.
 /// </summary>

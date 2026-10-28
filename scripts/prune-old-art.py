@@ -33,6 +33,6 @@ pruned = [glb for glb in out.glob("**/*.glb") if (rel := glb.relative_to(out).as
 for glb in pruned:
     glb.unlink()
 summary = json.loads((out / "summary.json").read_text())
-print(f"content/old-art: {len(summary['converted'])} models, {summary['parts']} parts, {summary['placementFiles']} placement"
+print(f"content/art: {len(summary['converted'])} models, {summary['parts']} parts, {summary['placementFiles']} placement"
       f" files; {len(summary['failed'])} failed, {len(summary['engineRefused'])} refused by the Engine check;"
       f" {len(used)} GLBs placed, {len(kept)} animated models kept, {len(pruned)} unplaced GLBs removed")

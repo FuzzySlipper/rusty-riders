@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# Copies rusty-hotel's held models that riders draws into the ignored content/old-art/hotel/ (docs/reuse.md): the coach
+# Copies rusty-hotel's held models that riders draws into the ignored content/art/hotel/ (docs/reuse.md): the coach
 # gun, the proof that one held format carries both games' looks (docs/held-format-convergence.md). Needs a sibling
-# ../rusty-hotel (or RUSTY_HOTEL=); it is read, never changed. Re-run after scripts/import-old-art.sh, which replaces
-# content/old-art.
+# ../rusty-hotel (or RUSTY_HOTEL=); it is read, never changed.
 #
 #   scripts/import-hotel-held.sh
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 hotel=${RUSTY_HOTEL:-$root/../rusty-hotel}
-out=$root/content/old-art/hotel
+out=$root/content/art/hotel
 models=(coach-gun.glb)
 [[ -d $hotel/content/models/held ]] || { echo "rusty-hotel not found at $hotel (set RUSTY_HOTEL)" >&2; exit 1; }
 

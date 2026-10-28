@@ -97,7 +97,7 @@ a LoRA. Stop the server when the pass is done.
 ## 6. Pick and land
 
 Look at the top three yourself, in a contact sheet and, for a level surface, in game (the generated builds'
-`floorTextures` and V key). Show the user the finalists. Add the winner under `content/art/textures/<set>/`,
+`floorTextures` and V key). Show the user the finalists. Add the winner under `content/art/textures/<set>/` (ignored by git: commit its `sources.json` and run `scripts/art-sync.sh push`),
 record its brief, route, seed and reference in that folder's `sources.json`, and wire it into the recipe.
 
 ## Calibration

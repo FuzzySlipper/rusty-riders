@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Converts the old Unity game's art the product uses into content/old-art/ with asset-pipeline's unity-import
+# Converts the old Unity game's art the product uses into content/art/ with asset-pipeline's unity-import
 # producer: the combat tilesets and levels, the procedural-level tileset tiles, the starter weapons (their item
 # prefabs) and one animated creature per starter enemy kind. It writes the GLBs placement files draw (whole models
 # and per-mesh parts), the animated enemy models, the placement files and per-model reports. The output is
@@ -13,7 +13,7 @@ pipeline=${ASSET_PIPELINE:-$root/../asset-pipeline}
 producer=$pipeline/tools/unity-import/unity_import.py
 assets=$root/old-game/Assets
 overlay=$root/old-game-fbx2013/Assets
-out=$root/content/old-art
+out=$root/content/art
 staging=$root/.runtime/old-art-import  # outside the watched content root until complete
 view=$root/.runtime/old-art-view       # hard-linked Assets with the enemy clips beside their models
 
@@ -71,5 +71,7 @@ python3 "$producer" convert --assets "$view/Assets" --overlay "$overlay" --max-t
   --placement-prefabs "$prefabs" --material-prefabs "$(IFS=,; echo "${npcs[*]}")" "${selects[@]}" \
   "${rusty_args[@]}" --out "$staging" >/dev/null
 python3 "$root/scripts/prune-old-art.py" "$staging" "${keep[@]}"
-rm -rf "$view" "$out"
-mv "$staging" "$out"
+# content/art also holds other producers' art (fp-arms, hotel, textures, ui): replace only what unity-import wrote.
+rm -rf "$view"; mkdir -p "$out"
+for entry in "$staging"/*; do rm -rf "$out/${entry##*/}"; mv "$entry" "$out/"; done
+rmdir "$staging"

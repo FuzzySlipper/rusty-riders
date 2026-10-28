@@ -1,5 +1,5 @@
 {
-  "artRoot": "old-art",
+  "artRoot": "art",
   "tileset": "LavaMap",
   "layout": "LevelLayout 3",
   "seed": 1,

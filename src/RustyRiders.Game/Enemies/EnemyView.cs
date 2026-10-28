@@ -14,7 +14,7 @@ namespace RustyRiders.Game.Enemies;
 /// </summary>
 internal sealed class EnemyView : IDisposable
 {
-    private const string OldArtRoot = "old-art";
+    private const string ArtRoot = "art";
     private const ulong FirstObjectId = 4_000_000;
     // How fast an enemy must move for its walk to play (m/s), the crossfade between looping clips (s), and the share of
     // the attack clip after the strike that belongs to the commit (the rest is recovery).
@@ -36,7 +36,7 @@ internal sealed class EnemyView : IDisposable
             RenderResource? resource = null;
             try
             {
-                resource = engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest($"{OldArtRoot}/{model.Glb}"));
+                resource = engine.Animation.OpenAnimatedMesh(new AnimatedMeshResourceRequest($"{ArtRoot}/{model.Glb}"));
                 string[] clips = engine.Animation.ReadClips(resource).ToArray().Select(c => c.Id).ToArray();
                 string[] wanted = [model.Clips.Idle, model.Clips.Walk, model.Clips.Attack, model.Clips.Hit, model.Clips.Death];
                 if (wanted.FirstOrDefault(c => !clips.Contains(c)) is { } missing)

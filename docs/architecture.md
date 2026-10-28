@@ -3,7 +3,7 @@
 > The product decides. The Engine guarantees.
 
 ```text
-content/levels/ (old generator data) + content/level.json + content/old-art/ (converted GLBs, placement files)
+content/levels/ (old generator data) + content/level.json + content/art/ (ignored, NAS-synced: converted GLBs, placement files, textures)
   -> level generation and stamping, gallery layout, walker and HUD facts (C#)
   -> Rusty.Engine safe SDK
   -> SDK-generated bind entry point and ABI
@@ -45,7 +45,7 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 | `src/RustyRiders.Game/Ui/` | The DOM companion's facts: `Hud` (one structured projection per update), `InventoryFacts`, `SheetFacts`, `UiValueWriter` (from rusty-hotel), and `UiFonts` (the title font granted through `Ui.OpenFont`) |
 | `src/ui/` | The DOM companion (docs/ui.md): HUD and screens in the old game's UI art (`src/ui/art/`, from `scripts/import-ui-art.py`), drawing facts and sending inventory claims |
 | `scripts/extract-level-data.py` | Regenerating `content/levels/` from `old-game/` |
-| `scripts/import-old-art.sh`, `scripts/prune-old-art.py` | Regenerating `content/old-art/` from `old-game/` with asset-pipeline `unity-import` |
+| `scripts/import-old-art.sh`, `scripts/prune-old-art.py` | Regenerating `content/art/` from `old-game/` with asset-pipeline `unity-import` |
 | Engine SDK/runtime | Generated interop, admitted updates/input, GLB admission and drawing, collision and character steps, camera, UI transport, host and browser shell |
 
 ## Data flow
@@ -54,7 +54,7 @@ content/levels/ (old generator data) + content/level.json + content/old-art/ (co
 game's level tileset tiles (`GameData/Levels/TileSets`) and its combat
 tilesets and levels. It writes GLBs and one placement file per prefab
 (glTF-space transforms, LOD levels tagged, every GLB checked by the Engine's
-`rusty asset check`) to the ignored `content/old-art/`, keeping only GLBs a
+`rusty asset check`) to the ignored `content/art/`, keeping only GLBs a
 placement draws. `scripts/extract-level-data.py` translates the old
 generator's data into the checked-in `content/levels/` (see
 [levels.md](levels.md)).

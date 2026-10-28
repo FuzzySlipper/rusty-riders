@@ -19,7 +19,7 @@ namespace RustyRiders.Game.Held;
 internal sealed class HeldView : IDisposable
 {
     internal const int MainHand = 0, OffHand = 1;
-    private const string OldArtRoot = "old-art";
+    private const string ArtRoot = "art";
     // How far around a grip its inspection view frames (metres).
     private const float GripFrame = .35f;
     // The overlay set the developer grip check publishes its landmark pairs in.
@@ -48,7 +48,7 @@ internal sealed class HeldView : IDisposable
     {
         this.engine = engine;
         this.held = held;
-        art = new ConvertedArt(engine, OldArtRoot);
+        art = new ConvertedArt(engine, ArtRoot);
         hands = [new(engine, firstObject), new(engine, firstObject + 1)];
         arms = new ArmsSlot(engine, held, firstObject + 2);
         grips = new GripLandmarks(engine, LandmarkSet);

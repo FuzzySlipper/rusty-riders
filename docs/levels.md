@@ -14,7 +14,7 @@ Riders keeps those pieces as content and stamps levels from them the same way.
 | `content/levels/styles.json` | Styles: faction and tileset | `Levels/Styles/*.asset` |
 | `content/levels/tilesets/<id>.json` | Tile prefabs per tile kind (variants are equally likely), each prefab's 9x9 walkability grid, and the tileset's colour palettes | `Levels/TileSets/*.asset`, each tile prefab's `CombatPrefabPathfinding`, `Levels/TileSets/*/_Colors*.asset` |
 | `content/level.json` | Which tileset, layout, seed and (optionally) palette to stamp, wall collision height, background | authored here |
-| `content/old-art/placements/GameData/Levels/TileSets/...` | Each tile prefab's converted art: GLB placements inside the 15 m tile | generated, `scripts/import-old-art.sh` |
+| `content/art/placements/GameData/Levels/TileSets/...` | Each tile prefab's converted art: GLB placements inside the 15 m tile | generated, `scripts/import-old-art.sh` |
 
 `scripts/extract-level-data.py` regenerates everything under
 `content/levels/` from `old-game/`. The JSON is checked in and is the product's
