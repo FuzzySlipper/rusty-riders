@@ -42,7 +42,7 @@ internal static class ArmRigs
     internal const string Directory = "held/rigs";
 
     /// <summary>The profiles the product knows; a new arms model is a new file and its id here.</summary>
-    internal static readonly string[] Ids = ["generated", "painted", "leather"];
+    internal static readonly string[] Ids = ["generated", "painted", "leather", "shared"];
 
     internal static string PathOf(string id) => $"{Directory}/{id}.json";
 

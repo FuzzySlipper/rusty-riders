@@ -202,7 +202,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success($"\"{inHand}\": {HandKnuckles.Json(hand)}  (in {ArmRigs.PathOf(View.Rig)} grip)");
     }
 
-    [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted or leather; content/held/rigs) with the same hold, in the loaded content.")]
+    [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted, leather or shared; content/held/rigs) with the same hold, in the loaded content.")]
     public DebugCommandResult Rig(string id)
     {
         if (View.ShowRig(id) is { } refusal) return Failure(refusal);
