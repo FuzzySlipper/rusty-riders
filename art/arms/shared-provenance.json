@@ -1,13 +1,13 @@
 {
  "asset": "shared first-person arm set, riders look (leather sleeve, cuff and glove)",
  "source": "asset-pipeline tools/fps-arms/sets/riders.json over sets/base.json; hand from MPFB (CC0) via tools/fps-arms/hands/mpfb-default.json",
- "method": "asset-pipeline tools/fps-arms/generate.py at commit 03f69e6c09cf0d45f33dde57cba383261ad9fef5, headless Blender 5.2.2",
+ "method": "asset-pipeline tools/fps-arms/generate.py at commit f829f57be39d8bddf138c52dcde39d784135bb42, headless Blender 5.2.2",
  "command": "blender -b --factory-startup --python <asset-pipeline>/tools/fps-arms/generate.py -- --params <asset-pipeline>/tools/fps-arms/sets/riders.json --out content/held/models/shared-arms.glb",
  "checks": "rusty asset check admitted; stress and riders readouts in asset-pipeline task #10481",
  "files": [
   {
    "path": "content/held/models/shared-arms.glb",
-   "sha256": "2382a53aa1f6412c2807e99001e6d1a3fb8e72c98021c9fe64c21030efde8718"
+   "sha256": "a614dba9bfa3f8978b7ac7bab6a3a534454c7afdb9575a25c7cfee0f7b3a176d"
   }
  ]
 }
