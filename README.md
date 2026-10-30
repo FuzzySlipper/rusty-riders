@@ -110,8 +110,16 @@ Two scripts drive a running host (`rusty dev start --live-debug ... --instance c
 - `scripts/held-check.sh ORIGIN OUT [--rig RIG] [LOOK...]` steps every look (or those named) at rest in held time and
   writes the arms, wrist, knuckle, haft and landmark readouts and a 1920x1080 frame of each, with one wrist line per
   look.
-- `scripts/held-wrist-fit.py ORIGIN LOOK [--rig RIG] --tune hand|offhand|nudge` searches that value to bring both
+- `scripts/held-wrist-fit.py ORIGIN LOOK [--rig RIG[,RIG]] --tune hand|offhand|nudge` searches that value to bring both
   wrists inside the range (less `--margin`) with the landmarks kept, and prints the JSON for `content/held/looks.json`.
+  Several rigs are judged together, since a hold applies to all of them. Use `--margin 10`: the readouts it fits on
+  come early, and a look still settling can clamp a few degrees more.
+
+A look's `grips.main` and `landmarks` are points on its fitted model (look space: centred on its bounds, length along
+-Z). Measure them on the model, not by eye in the game: a grip point off the handle shows as a hand held beside the
+weapon that a `nudge` then hides. `butt` is where the little finger's middle joint wraps the front of the handle, not
+the butt cap. Rigs differ in where the hand lands about the same grip: on the flintlock and coach gun, `painted`'s
+fingers sit 15 to 25 mm further forward than `shared`'s, and holds are fitted on `shared`.
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`): `painted`, the old game's
 hand-painted gloves, and `leather`, its MedievalFPArms leather armour, both built from `old-game/Assets/MoreArt` into the

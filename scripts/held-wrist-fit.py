@@ -2,7 +2,7 @@
 """Fits a held look's tuning so both wrists hold it within the drawing rig's wrist range, on a running rusty dev host
 with live debug, by the game's own readout (riders.dev.arms.wrist).
 
-    scripts/held-wrist-fit.py http://127.0.0.1:PORT LOOK [--rig shared] [--tune hand|offhand|nudge] [--margin 5]
+    scripts/held-wrist-fit.py http://127.0.0.1:PORT LOOK [--rig shared[,painted]] [--tune hand|offhand|nudge] [--margin 5]
 
 The look is shown at rest by the motion viewer (its motion's first action at 0 s, in held time). The tuned value is the
 look's main hold (grips.hand, riders.dev.held.hand), its off hold on a look held in both hands (grips.offHand,
@@ -11,6 +11,8 @@ in steps from 16 degrees down to 1, to bring each wrist's asked bend (with the e
 elbow swing and clamp) inside the rig's range less --margin, while keeping the look's grip landmarks
 (riders.dev.hands.contact) within their tolerances, preferring the smallest change. It prints the JSON to put
 in content/held/looks.json; the loaded content keeps the fitted value until the host restarts or the file reloads.
+A hold applies to every rig, and rigs place their digits differently: with several rigs (--rig shared,painted) each
+value is judged on each rig and the costs summed, so the fit suits them all.
 """
 import argparse
 import json
@@ -34,7 +36,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("origin")
     p.add_argument("look")
-    p.add_argument("--rig")
+    p.add_argument("--rig", help="the rig to fit on, or several separated by commas to fit on all of them")
     p.add_argument("--tune", choices=("hand", "offhand", "nudge"), default="hand")
     p.add_argument("--margin", type=float, default=5.0, help="degrees kept inside each edge of the range")
     p.add_argument("--landmarks", type=float, default=1.0,
@@ -52,8 +54,9 @@ def main():
     look = looks[a.look]
     action = next(iter(json.load(open(os.path.join(held, "motion.json")))["motions"][look["motion"]]["tracks"]))
     run("engine.time.mode manual")
+    rigs = a.rig.split(",") if a.rig else [None]
     if a.rig:
-        print(run(f"riders.dev.arms.rig {a.rig}").strip())
+        print(run(f"riders.dev.arms.rig {rigs[0]}").strip())
     print(run(f"riders.dev.motion {a.look} {action}").splitlines()[0])
     run("riders.dev.motion.at 0")
 
@@ -87,6 +90,12 @@ def main():
         hands = [[float(x) for x in m] for m in bend.findall(out)]
         return hands, out
 
+    def switch(rig):
+        # The new rig's arms are measured once drawn: let them reach before reading.
+        run(f"riders.dev.arms.rig {rig}")
+        run("engine.time.advance 100")
+        run("engine.time.advance 100")
+
     def excess(h):
         flex, ext, radial, ulnar, roll = (r - a.margin for r in rng)
         f, u, r = h[0], h[1], h[2]
@@ -94,9 +103,13 @@ def main():
 
     def cost(v):
         put(v)
-        hands, _ = read()
-        over = sum(excess(h) for h in hands)
-        miss = misses() if a.landmarks else 0.0
+        over = miss = 0.0
+        for rig in rigs:
+            if rig and len(rigs) > 1:
+                switch(rig)
+            hands, _ = read()
+            over += sum(excess(h) for h in hands)
+            miss += misses() if a.landmarks else 0.0
         return over + a.landmarks * miss + 0.01 * sum(abs(x - s) for x, s in zip(v, start)), over, hands
 
     best = list(start)
@@ -115,11 +128,14 @@ def main():
         if not improved:
             step /= 2
     put(best)
-    hands, out = read()
     print("fitted", [round(x, 1) for x in best], "over", round(over, 1))
-    print("\n".join(out.strip().splitlines()[1:]))
-    if a.landmarks:
-        print(run("riders.dev.hands.contact").strip())
+    for rig in rigs:
+        if rig and len(rigs) > 1:
+            switch(rig)
+        hands, out = read()
+        print("\n".join(out.strip().splitlines()[1:]))
+        if a.landmarks:
+            print(run("riders.dev.hands.contact").strip())
     key = {"hand": '"grips": {"hand"', "offhand": '"grips": {"offHand"', "nudge": '"nudge": {"turn"'}[a.tune]
     print(f"{key}: {json.dumps([round(x, 1) for x in best])}  (look '{a.look}' in content/held/looks.json)")
     return 0 if over == 0 else 1
