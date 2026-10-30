@@ -85,6 +85,33 @@ Editing those files by hand also reloads them into the running game. The same in
 `riders.dev.held.fit`, `riders.dev.stance.set`, `riders.dev.arms.hold`, `riders.dev.arms.reach`, `riders.dev.arms.grip` and
 `riders.dev.arms.rig <generated|painted|leather|shared>`, which swaps the arms model live. `riders.dev.hands.knuckles` reads each hand's knuckle angles against the canonical holding pose (calibrating a rig's `grip`), and `riders.dev.hands.contact` reports how the drawn hands
 meet the main look's grip landmarks (`trigger`, `fore-end`, ...), as the Engine measured them.
+`riders.dev.held.hand` and `riders.dev.held.offhand` set the shown look's own holds (`grips.hand`, `grips.offHand`).
+
+Each wrist bends only within its rig's range (the Engine's `ArmRig.Wrist`: 70° flexion, 60° extension, 20° radial,
+35° ulnar, 90° roll by default); a hold that asks past it is drawn at the range's edge. `riders.dev.arms.wrist` shows
+each wrist's asked bend and how far it was turned back (`Clamped`, 0 in range). A look can also be held by a grip
+solved by contact around its model (asset-pipeline `tools/fps-arms/grip.py`, the Engine's `SolvedGrip`): its
+`solvedGrips` names a file under `content/held/grips/` per rig, which places the look in the main hand in place of
+`grips.hand` on that rig only (a solve fits the hand it was solved on). A grip file listed in the project's
+`RustyEngineLiveContent` reloads in place, so a new solve shows at once. The maul's is solved on `shared`:
+
+```sh
+blender -b --factory-startup --python ../asset-pipeline/tools/fps-arms/grip.py -- \
+  --params ../asset-pipeline/tools/fps-arms/sets/riders.json --engine-pose content/held/arms.json \
+  --object content/art/parts/Art/Models/Weapons/Prefabs/BattleHammer/Battle_hammer-b2842784.glb \
+  --fit '{"length": 0.75, "rotation": [-90, 0, 0]}' --grip 0,0,0.15 --roll 90 --out content/held/grips/maul-shared.json
+```
+
+`--fit` and `--grip` are the look's `model` and `grips.main`; `--roll 90` turns the look's up side (the maul's face)
+the way the knuckles point, which keeps the heavy stance's wrist in range. `riders.dev.hands.haft` lists each main
+digit joint's distance from the main grip's line, so a joint nearer than the handle's radius is inside it.
+
+Two scripts drive a running host (`rusty dev start --live-debug ... --instance check`):
+- `scripts/held-check.sh ORIGIN OUT [--rig RIG] [LOOK...]` steps every look (or those named) at rest in held time and
+  writes the arms, wrist, knuckle, haft and landmark readouts and a 1920x1080 frame of each, with one wrist line per
+  look.
+- `scripts/held-wrist-fit.py ORIGIN LOOK [--rig RIG] --tune hand|offhand|nudge` searches that value to bring both
+  wrists inside the range (less `--margin`) with the landmarks kept, and prints the JSON for `content/held/looks.json`.
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`): `painted`, the old game's
 hand-painted gloves, and `leather`, its MedievalFPArms leather armour, both built from `old-game/Assets/MoreArt` into the

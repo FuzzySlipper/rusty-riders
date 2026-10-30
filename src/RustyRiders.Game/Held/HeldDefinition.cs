@@ -26,6 +26,8 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     [JsonIgnore] internal Dictionary<string, ArmRig> Rigs { get; init; } = null!;
 
     internal const string Path = "held/looks.json";
+    /// <summary>Where looks' solved grips live (<see cref="HeldLookDefinition.SolvedGrips"/>); any file there reloads in place.</summary>
+    internal const string GripsDirectory = "held/grips/";
 
     /// <summary>The content files the held presentation reads, reloaded in place under <c>rusty dev</c> (RustyEngineLiveContent).</summary>
     internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, SwayFile.Path, .. ArmRigs.Ids.Select(ArmRigs.PathOf)];
@@ -39,7 +41,12 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             Feedback = HeldFeedback.Load(engine), Sway = SwayFile.Load(engine)
         };
         catalog.Validate();
-        foreach (HeldLookDefinition look in catalog.Looks) catalog.Seat(look);
+        foreach (HeldLookDefinition look in catalog.Looks)
+        {
+            catalog.Seat(look);
+            foreach (var (rig, path) in look.SolvedGrips ?? [])
+                look.Solved[rig] = Authored.Read(engine, path, SolvedGripJson.Default.SolvedGrip);
+        }
         return catalog;
     }
 
@@ -84,12 +91,17 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
                     // Landmarks follow the file: points edited in place, a point or the whole set added or removed taken too.
                     if (look.Landmarks is { } marks && now.Landmarks is { } newer) marks.Take(newer);
                     else look.Landmarks = now.Landmarks;
+                    look.Solved = now.Solved;
                     if (look.Model is { } model && now.Model is { } fresher)
                     {
                         (model.Rotation, model.Length) = (fresher.Rotation, fresher.Length);
                     }
                 }
         }
+        // A solved grip file changes no other value.
+        if (!changed.Contains(Path) && changed.Any(c => c.StartsWith(GripsDirectory, StringComparison.Ordinal)))
+            foreach (HeldLookDefinition look in Looks)
+                if (fresh.Look(look.Id) is { } now) look.Solved = now.Solved;
         if (changed.Contains(StanceCatalog.Path))
         {
             Same(Stances.Stances.Keys.Order().SequenceEqual(fresh.Stances.Stances.Keys.Order()), $"{StanceCatalog.Path} stance ids");
@@ -154,6 +166,12 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
             Authored.Colour(Path, $"{at}.box.color", look.Box.Color);
             if (look.Shape is { } shape) Authored.Require(Path, $"{at}.shape", shape.Problems(offAllowed: look.Grips.Off is not null));
             if (look.Landmarks is { } marks) Authored.Require(Path, $"{at}.landmarks", marks.Problems(look.Grips.Off is not null));
+            foreach (var (rig, grip) in look.Solved)
+            {
+                Authored.Require(Rigs.ContainsKey(rig), Path, $"{at}.solvedGrips.{rig}", $"unknown rig '{rig}'; profiles: {string.Join(", ", ArmRigs.Ids)}.");
+                Authored.Require(look.SolvedGrips![rig].StartsWith(GripsDirectory, StringComparison.Ordinal), Path, $"{at}.solvedGrips.{rig}", $"names a file under content/{GripsDirectory}.");
+                Authored.Require(look.SolvedGrips[rig], "grip", grip.Problems());
+            }
             if (look.Model is { } model)
             {
                 Authored.Require(model.Glb.EndsWith(".glb", StringComparison.Ordinal), Path, $"{at}.model.glb", "names a .glb file.");
@@ -171,8 +189,15 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
 /// the <see cref="Landmarks"/> a correct hold puts the hand on (look space).
 /// </summary>
 internal sealed record HeldLookDefinition(string Id, string Motion, string Stance, HeldGrips Grips, HeldBox Box,
-    HeldModel? Model = null, HeldNudge? Nudge = null, HeldShape? Shape = null, HeldLandmarks? Landmarks = null)
+    HeldModel? Model = null, HeldNudge? Nudge = null, HeldShape? Shape = null, HeldLandmarks? Landmarks = null, Dictionary<string, string>? SolvedGrips = null)
 {
+    /// <summary>
+    /// The main hand's grip solved by contact around this look (asset-pipeline's tools/fps-arms/grip.py output, read
+    /// from the files <see cref="SolvedGrips"/> names), by arm rig id: a solve places the look in the hand it was solved
+    /// on, so a rig without one holds the look by its grips. A live reload takes them.
+    /// </summary>
+    [JsonIgnore] internal Dictionary<string, SolvedGrip> Solved { get; set; } = [];
+
     /// <summary>How each hand's digits sit on this look over the rig's grip (none: the grip as it is); a live reload adds or removes it.</summary>
     public HeldShape? Shape { get; set; } = Shape;
 
@@ -252,3 +277,8 @@ internal sealed record HeldNudge(Vector3 Grip, Vector3 Turn)
 [JsonSerializable(typeof(HeldFeedback))]
 [JsonSerializable(typeof(SwayTuning))]
 internal sealed partial class HeldJson : JsonSerializerContext;
+
+// A solver's output carries its diagnostics beside the grip.
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, Converters = [typeof(Vector3Json)], UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip)]
+[JsonSerializable(typeof(SolvedGrip))]
+internal sealed partial class SolvedGripJson : JsonSerializerContext;

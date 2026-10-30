@@ -156,7 +156,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         HashSet<string> changed = [];
         foreach (ContentReferenceInfo change in changes)
-            if (Held.HeldCatalog.Files.Contains(change.Path)) changed.Add(change.Path);
+            if (Held.HeldCatalog.Files.Contains(change.Path) || change.Path.StartsWith(Held.HeldCatalog.GripsDirectory, StringComparison.Ordinal)) changed.Add(change.Path);
         if (changed.Count == 0) return;
         foreach (string problem in play.Combat.ReloadHeld(changed)) Console.Error.WriteLine($"Held presentation {problem}");
         Publish();

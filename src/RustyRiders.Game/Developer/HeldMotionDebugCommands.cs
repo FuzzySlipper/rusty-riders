@@ -120,6 +120,24 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success($"\"nudge\": {{\"grip\": [{x}, {y}, {z}], \"turn\": [{rx}, {ry}, {rz}]}}  (in {HeldCatalog.Path}, look '{look}')");
     }
 
+    [DebugCommand("riders.dev.held.hand", Description = "Developer held tuning: set how the shown look's main hand holds it (grips.hand: the hand's canonical frame turned from the look, x y z degrees; in the off hand, mirrored) in the loaded content, and print its JSON. A look held by a solved grip on the drawing rig ignores it.")]
+    public DebugCommandResult Hand(float rx, float ry, float rz) => Hold(false, new(rx, ry, rz));
+
+    [DebugCommand("riders.dev.held.offhand", Description = "Developer held tuning: set how the off hand holds the shown look when it is held in both hands (grips.offHand, x y z degrees, not mirrored) in the loaded content, and print its JSON.")]
+    public DebugCommandResult OffHand(float rx, float ry, float rz) => Hold(true, new(rx, ry, rz));
+
+    private DebugCommandResult Hold(bool off, System.Numerics.Vector3 turn)
+    {
+        if (look is null) return Failure("Choose a look first: riders.dev.motion <look> <action>.");
+        HeldLookDefinition shown = Held.Look(look)!;
+        if (off && shown.Grips.OffHand is null) return Failure($"'{look}' is not held in both hands.");
+        if (!off && shown.Grips.Hand is null) return Failure($"'{look}' has no hold of its own; it is held as content/{ArmsDefinition.Path} holds every look.");
+        if (off) shown.Grips.OffHand = turn;
+        else shown.Grips.Hand = turn;
+        publish();
+        return DebugCommandResult.Success(FormattableString.Invariant($"\"{(off ? "offHand" : "hand")}\": [{turn.X}, {turn.Y}, {turn.Z}]  (in {HeldCatalog.Path}, look '{look}' grips)"));
+    }
+
     [DebugCommand("riders.dev.held.fit", Description = "Developer held tuning: turn the shown look's converted model in look space (x y z degrees, so its length runs along -Z and its up side +Y) and set its length in metres, in the loaded content, and print its JSON.")]
     public DebugCommandResult FitModel(float rx, float ry, float rz, float length)
     {
@@ -167,6 +185,28 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         List<string> lines = [$"Grip landmarks on {shown} (rig {View.Rig}), as drawn at step {read.Step}:"];
         foreach (Rusty.Engine.LandmarkMeasure pair in read.Pairs.Span) lines.Add("  " + GripLandmarks.Line(pair));
         return DebugCommandResult.Success(string.Join("\n", lines));
+    }
+
+    [DebugCommand("riders.dev.hands.haft", Description = "Developer grip check: each main-hand digit joint's distance from the main grip's line along the look's length (look Z), radially and along it (mm), as last drawn. A joint nearer the line than the handle's radius is inside the handle.")]
+    public DebugCommandResult Haft()
+    {
+        Rusty.Engine.LandmarkReadResult read = View.Haft;
+        if (!read.Measured) return Failure("not measured yet");
+        List<string> lines = [$"Main digit joints from the haft's line (look Z) at step {read.Step}:"];
+        foreach (Rusty.Engine.LandmarkMeasure pair in read.Pairs.Span)
+        {
+            System.Numerics.Vector3 d = pair.Offset;
+            lines.Add(FormattableString.Invariant($"  {pair.Name}: radial {MathF.Sqrt(d.X * d.X + d.Y * d.Y) * 1000:0.0} mm, along {d.Z * 1000:0.0} mm"));
+        }
+        return DebugCommandResult.Success(string.Join("\n", lines));
+    }
+
+    [DebugCommand("riders.dev.arms.wrist", Description = "Developer wrist check: each wrist's asked bend on the last reach (flexion, negative is extension; ulnar, negative is radial; roll, positive turns the palm up; degrees), how far the Engine turned it back into the rig's wrist range (Clamped, 0 in range) and how far the elbow swung to help, with the look each hand holds.")]
+    public DebugCommandResult Wrist()
+    {
+        var (main, off) = View.DrawnArms.WristClamp;
+        return DebugCommandResult.Success(FormattableString.Invariant(
+            $"Wrist range of rig {View.Rig}: {View.DrawnArms.Rig.Wrist}.\n  main ({View.Holding(HeldView.MainHand)}) {main}\n  off ({View.Holding(HeldView.OffHand)}) {off}"));
     }
 
     [DebugCommand("riders.dev.hands.knuckles", Description = "Developer hand calibration: each drawn hand's knuckle angles in the hand's canonical frame (each finger joint's curl, each thumb joint's [curl, swing], degrees) on the rig's clip alone and as now drawn, against the arms' canonical holding pose (content/held/arms.json hands.pose), and the rig grip that brings this clip to that pose.")]

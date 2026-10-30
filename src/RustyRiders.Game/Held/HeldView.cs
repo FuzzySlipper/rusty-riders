@@ -72,6 +72,13 @@ internal sealed class HeldView : IDisposable
     /// <summary>The rig profile drawing the arms now.</summary>
     internal string Rig => arms.Id;
 
+    /// <summary>The look a hand holds, and whether it holds it by a solved grip on the drawing rig.</summary>
+    internal string Holding(int hand)
+    {
+        if (hand == OffHand && twoHanded) return $"{hands[MainHand].Look}, both hands";
+        return held.Look(hands[hand].Look) is { } look && look.Solved.ContainsKey(Rig) ? $"{look.Id}, solved grip" : hands[hand].Look;
+    }
+
     /// <summary>The arms as drawn now: wrist shortfall, arm lengths and the measured hand frames.</summary>
     internal FirstPersonArms DrawnArms => arms.Drawn;
 
@@ -208,6 +215,26 @@ internal sealed class HeldView : IDisposable
         arms.Drawn.Reach(Aim(MainHand), Aim(OffHand));
         if (held.Look(hands[MainHand].Look) is { } shown)
             grips.Publish(shown.Landmarks, shown.Grips.Main, hands[MainHand].Object, Fit(shown), arms.Drawn, twoHanded, held.Arms.Landmarks);
+        if (held.Look(hands[MainHand].Look) is { } look) PublishHaft(look);
+    }
+
+    // Every main digit joint against the look's main grip point, its offset along the look's axes (riders.dev.hands.haft).
+    private string haftKey = "";
+    internal LandmarkReadResult Haft => engine.Graphics.ReadLandmarks("held.haft");
+    private void PublishHaft(HeldLookDefinition shown)
+    {
+        Transform fit = Fit(shown);
+        string key = string.Join("|", shown.Id, hands[MainHand].Object, arms.Drawn.Object, fit.Translation, fit.Rotation, fit.Scale, shown.Grips.Main);
+        if (key == haftKey) return;
+        haftKey = key;
+        Quaternion unturn = Quaternion.Inverse(fit.Rotation);
+        Vector3 point = Vector3.Transform(shown.Grips.Main - fit.Translation, unturn) / fit.Scale;
+        Landmark at = Landmark.At(OverlayPlace.Model(hands[MainHand].Object), point, default, unturn);
+        HandRig main = arms.Drawn.Hand(false);
+        List<LandmarkPair> pairs = [];
+        foreach (Digit digit in new[] { Digit.Thumb, Digit.Index, Digit.Middle, Digit.Ring, Digit.Pinky })
+            for (int j = 0; j < 3; j++) pairs.Add(LandmarkPair.Distance($"{digit}{j + 1}", main.Joint(digit, j), at, 1));
+        engine.Graphics.PublishOverlaySet(new("held.haft", Array.Empty<OverlayItem>(), [.. pairs]));
     }
 
     /// <summary>
@@ -374,7 +401,7 @@ internal sealed class HeldView : IDisposable
         }
         (Vector3 grip, Quaternion look) = Grip(index);
         HeldLookDefinition own = held.Look(hands[index].Look)!;
-        return new(grip, look, own.Grips.Hand, closure, elbow, Shape: own.Shape?.Main);
+        return new(grip, look, own.Grips.Hand, closure, elbow, Shape: own.Shape?.Main, Solved: index == MainHand || !twoHanded ? own.Solved.GetValueOrDefault(Rig) : null);
     }
 
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);

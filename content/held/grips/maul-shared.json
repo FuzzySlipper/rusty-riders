@@ -1,0 +1,197 @@
+{
+ "params": "/home/agent/dev/asset-pipeline/tools/fps-arms/sets/riders.json",
+ "object": {
+  "source": "/home/agent/dev/rusty-riders/content/art/parts/Art/Models/Weapons/Prefabs/BattleHammer/Battle_hammer-b2842784.glb",
+  "fit": {
+   "length": 0.75,
+   "rotation": [
+    -90,
+    0,
+    0
+   ]
+  },
+  "grip": [
+   0.0,
+   0.0,
+   0.15
+  ],
+  "axis": "z",
+  "at": 0.0,
+  "angle": 15.0,
+  "along": 0.78,
+  "across": 0.0,
+  "roll": 90.0,
+  "palm_offset_mm": 27.5,
+  "seat_tilt": -9.75,
+  "in_canonical": {
+   "position": [
+    0.0,
+    0.0743,
+    -0.0275
+   ],
+   "rotation": [
+    0.63894,
+    0.09981,
+    0.7581,
+    -0.08412
+   ]
+  },
+  "in_hand_joint": {
+   "position": [
+    0.0002,
+    0.0743,
+    -0.0275
+   ],
+   "rotation": [
+    0.64136,
+    0.10007,
+    0.75605,
+    -0.0838
+   ]
+  }
+ },
+ "clip": {
+  "curl": {
+   "Index": [
+    70.0,
+    58.0,
+    40.6
+   ],
+   "Middle": [
+    84.0,
+    52.0,
+    36.4
+   ],
+   "Ring": [
+    80.0,
+    31.0,
+    21.7
+   ],
+   "Pinky": [
+    74.0,
+    4.0,
+    2.8
+   ]
+  },
+  "spread": {
+   "Index": -0.0,
+   "Middle": -0.0,
+   "Ring": -0.0,
+   "Pinky": -0.0
+  },
+  "thumb": [
+   [
+    -24.0,
+    26.0
+   ],
+   [
+    28.0,
+    0.0
+   ],
+   [
+    32.4,
+    0
+   ]
+  ]
+ },
+ "thumb_roll": [
+  -0.85,
+  0.5
+ ],
+ "knuckles": {
+  "fingers": [
+   [
+    70.3,
+    57.5,
+    40.7
+   ],
+   [
+    82.8,
+    52.5,
+    37.1
+   ],
+   [
+    75.4,
+    30.6,
+    23.1
+   ],
+   [
+    65.6,
+    3.5,
+    2.5
+   ]
+  ],
+  "thumb": [
+   [
+    50.1,
+    16.4
+   ],
+   [
+    -26.5,
+    -11.8
+   ],
+   [
+    -31.3,
+    -8.7
+   ]
+  ]
+ },
+ "thumb_miss_mm": 11.6,
+ "gap_mm": {
+  "ForearmTwist2": 52.0,
+  "Hand": -1.5,
+  "Index1": 0.4,
+  "Index2": -1.3,
+  "Index3": 0.1,
+  "Middle1": 1.6,
+  "Middle2": -1.5,
+  "Middle3": 2.5,
+  "Pinky1": -0.0,
+  "Pinky2": -1.4,
+  "Pinky3": 1.8,
+  "Ring1": 0.2,
+  "Ring2": -1.4,
+  "Ring3": 1.0,
+  "Thumb1": 12.8,
+  "Thumb2": -0.3,
+  "Thumb3": 3.7
+ },
+ "shape": {
+  "fingers": [
+   [
+    8,
+    -12,
+    -4
+   ],
+   [
+    21,
+    -18,
+    -8
+   ],
+   [
+    13,
+    -39,
+    -22
+   ],
+   [
+    4,
+    -66,
+    -42
+   ]
+  ],
+  "thumb": [
+   [
+    40,
+    -5
+   ],
+   [
+    -52,
+    60
+   ],
+   [
+    -8,
+    66
+   ]
+  ]
+ }
+}
