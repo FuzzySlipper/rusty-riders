@@ -2,12 +2,12 @@
 """Fits a held look's tuning so both wrists hold it within the drawing rig's wrist range, on a running rusty dev host
 with live debug, by the game's own readout (riders.dev.arms.wrist).
 
-    scripts/held-wrist-fit.py http://127.0.0.1:PORT LOOK [--rig shared[,painted]] [--tune hand|offhand|nudge] [--margin 5]
+    scripts/held-wrist-fit.py http://127.0.0.1:PORT LOOK [--rig shared[,painted]] [--tune hand|offhand|nudge|nudge-grip] [--margin 5]
 
 The look is shown at rest by the motion viewer (its motion's first action at 0 s, in held time). The tuned value is the
 look's main hold (grips.hand, riders.dev.held.hand), its off hold on a look held in both hands (grips.offHand,
-riders.dev.held.offhand), or its nudge's turn with its grip kept (riders.dev.held.nudge). A coordinate search turns it,
-in steps from 16 degrees down to 1, to bring each wrist's asked bend (with the elbow at its pole, before the Engine's
+riders.dev.held.offhand), its nudge's turn with its grip kept (riders.dev.held.nudge), or its nudge's grip with its turn
+kept (nudge-grip). A coordinate search turns it in steps from 16 degrees down to 1 (moves it from 4 cm to 2.5 mm), to bring each wrist's asked bend (with the elbow at its pole, before the Engine's
 elbow swing and clamp) inside the rig's range less --margin, while keeping the look's grip landmarks
 (riders.dev.hands.contact) within their tolerances, preferring the smallest change. It prints the JSON to put
 in content/held/looks.json; the loaded content keeps the fitted value until the host restarts or the file reloads.
@@ -37,7 +37,7 @@ def main():
     p.add_argument("origin")
     p.add_argument("look")
     p.add_argument("--rig", help="the rig to fit on, or several separated by commas to fit on all of them")
-    p.add_argument("--tune", choices=("hand", "offhand", "nudge"), default="hand")
+    p.add_argument("--tune", choices=("hand", "offhand", "nudge", "nudge-grip"), default="hand")
     p.add_argument("--margin", type=float, default=5.0, help="degrees kept inside each edge of the range")
     p.add_argument("--landmarks", type=float, default=1.0,
                    help="weight per millimetre a grip landmark (riders.dev.hands.contact) lies past its tolerance, "
@@ -66,15 +66,21 @@ def main():
     print(show().splitlines()[0])
 
     nudge = look.get("nudge", {"grip": [0, 0, 0], "turn": [0, 0, 0]})
-    start = {"hand": look["grips"].get("hand"), "offhand": look["grips"].get("offHand"), "nudge": nudge["turn"]}[a.tune]
+    start = {"hand": look["grips"].get("hand"), "offhand": look["grips"].get("offHand"), "nudge": nudge["turn"],
+             "nudge-grip": nudge["grip"]}[a.tune]
+    # The nudge's grip is in metres, searched in steps of 4 cm down to 2.5 mm; the turns in degrees.
+    unit = 0.0025 if a.tune == "nudge-grip" else 1.0
     if start is None:
         raise SystemExit(f"'{a.look}' has no {a.tune} to tune")
 
     def put(v):
-        v = [round(c, 1) for c in v]
+        v = [round(c, 4 if a.tune == "nudge-grip" else 1) for c in v]
         if a.tune == "nudge":
             g = nudge["grip"]
             return run(f"riders.dev.held.nudge {g[0]} {g[1]} {g[2]} {v[0]} {v[1]} {v[2]}")
+        if a.tune == "nudge-grip":
+            t = nudge["turn"]
+            return run(f"riders.dev.held.nudge {v[0]} {v[1]} {v[2]} {t[0]} {t[1]} {t[2]}")
         return run(f"riders.dev.held.{a.tune} {v[0]} {v[1]} {v[2]}")
 
     bend = re.compile(r"Flexion = (\S+), Ulnar = (\S+), Roll = (\S+), Clamped = (\S+), Elbow = (\S+) }")
@@ -87,7 +93,9 @@ def main():
 
     def read():
         nonlocal rng
-        run("engine.time.advance 50")
+        # The arms re-reach over a few frames: read them settled, as held-check.sh does.
+        for _ in range(3):
+            run("engine.time.advance 150")
         out = run("riders.dev.arms.wrist")
         if rng is None:
             m = re.search(r"Flexion = (\S+), Extension = (\S+), Radial = (\S+), Ulnar = (\S+), Roll = (\S+),", out)
@@ -116,7 +124,7 @@ def main():
             hands, _ = read()
             over += sum(excess(h) for h in hands)
             miss += misses() if a.landmarks else 0.0
-        return over + a.landmarks * miss + 0.01 * sum(abs(x - s) for x, s in zip(v, start)), over, hands
+        return over + a.landmarks * miss + 0.01 * sum(abs(x - s) / unit for x, s in zip(v, start)), over, hands
 
     best = list(start)
     c, over, hands = cost(best)
@@ -127,14 +135,14 @@ def main():
         for i in range(3):
             for d in (-step, step):
                 v = list(best)
-                v[i] += d
+                v[i] += d * unit
                 cv, ov, hv = cost(v)
                 if cv < c - 1e-6:
                     best, c, over, hands, improved = v, cv, ov, hv, True
         if not improved:
             step /= 2
     put(best)
-    print("fitted", [round(x, 1) for x in best], "over", round(over, 1))
+    print("fitted", [round(x, 4) for x in best], "over", round(over, 1))
     for rig in rigs:
         if rig and len(rigs) > 1:
             switch(rig)
@@ -142,8 +150,8 @@ def main():
         print("\n".join(out.strip().splitlines()[1:]))
         if a.landmarks:
             print(run("riders.dev.hands.contact").strip())
-    key = {"hand": '"grips": {"hand"', "offhand": '"grips": {"offHand"', "nudge": '"nudge": {"turn"'}[a.tune]
-    print(f"{key}: {json.dumps([round(x, 1) for x in best])}  (look '{a.look}' in content/held/looks.json)")
+    key = {"hand": '"grips": {"hand"', "offhand": '"grips": {"offHand"', "nudge": '"nudge": {"turn"', "nudge-grip": '"nudge": {"grip"'}[a.tune]
+    print(f"{key}: {json.dumps([round(x, 4 if a.tune == 'nudge-grip' else 1) for x in best])}  (look '{a.look}' in content/held/looks.json)")
     return 0 if over == 0 else 1
 
 

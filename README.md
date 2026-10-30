@@ -110,10 +110,16 @@ Two scripts drive a running host (`rusty dev start --live-debug ... --instance c
 - `scripts/held-check.sh ORIGIN OUT [--rig RIG] [LOOK...]` steps every look (or those named) at rest in held time and
   writes the arms, wrist, knuckle, haft and landmark readouts and a 1920x1080 frame of each, with one wrist line per
   look.
-- `scripts/held-wrist-fit.py ORIGIN LOOK [--rig RIG[,RIG]] --tune hand|offhand|nudge` searches that value to bring both
-  wrists inside the range (less `--margin`) with the landmarks kept, and prints the JSON for `content/held/looks.json`.
-  Several rigs are judged together, since a hold applies to all of them. Use `--margin 10`: the readouts it fits on
-  come early, and a look still settling can clamp a few degrees more.
+- `scripts/held-wrist-fit.py ORIGIN LOOK [--rig RIG[,RIG]] --tune hand|offhand|nudge|nudge-grip` searches that value
+  to bring both wrists inside the range (less `--margin`) with the landmarks kept, and prints the JSON for
+  `content/held/looks.json`. Several rigs are judged together, since a hold applies to all of them. It reads the arms
+  settled, as `held-check.sh` does.
+
+A hold that puts the fingers on their landmarks may ask more of the wrist than its range, and the clamp then pulls the
+fingers off again, so fitting the hold alone stalls. Separate the two: widen the rig's `wrist` range for a moment
+(each angle 179) and fit the hold for the landmarks; restore the range, then turn and move the whole look (`nudge`)
+so the wrist comes back in range, since the nudge carries the hands with the look. The coach gun was fitted this way;
+its nudge turns it 16° and seats it 6 cm right and lower, which keeps it aimed down the view.
 
 A look's `grips.main` and `landmarks` are points on its fitted model (look space: centred on its bounds, length along
 -Z). Measure them on the model, not by eye in the game: a grip point off the handle shows as a hand held beside the
