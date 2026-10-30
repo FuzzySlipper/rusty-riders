@@ -118,8 +118,15 @@ Two scripts drive a running host (`rusty dev start --live-debug ... --instance c
 A look's `grips.main` and `landmarks` are points on its fitted model (look space: centred on its bounds, length along
 -Z). Measure them on the model, not by eye in the game: a grip point off the handle shows as a hand held beside the
 weapon that a `nudge` then hides. `butt` is where the little finger's middle joint wraps the front of the handle, not
-the butt cap. Rigs differ in where the hand lands about the same grip: on the flintlock and coach gun, `painted`'s
-fingers sit 15 to 25 mm further forward than `shared`'s, and holds are fitted on `shared`.
+the butt cap.
+
+A rig's `palm` (the grip's offset from its hand joint, in the hand's canonical frame) is calibrated against `shared`'s
+from where its knuckles sit: the canonical frame starts at the hand joint with +Y toward the middle knuckle, so a rig
+whose knuckles sit further out puts its fingers further along the weapon unless its palm moves out with them. Its palm
+is `shared`'s plus the difference between the two rigs' knuckle centroids in that frame (measured in Blender from the
+GLB's bone heads, times the rig's `scale`): `painted` +23 mm and `leather` +26 mm along the fingers; `generated` matches
+`shared`. A hold then lands the hand alike on every rig, apart from the hands' widths (`painted`'s knuckles span 86 mm
+against `shared`'s 59), so holds are fitted on `shared,painted` together.
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`): `painted`, the old game's
 hand-painted gloves, and `leather`, its MedievalFPArms leather armour, both built from `old-game/Assets/MoreArt` into the

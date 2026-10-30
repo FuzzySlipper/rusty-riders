@@ -57,8 +57,13 @@ def main():
     rigs = a.rig.split(",") if a.rig else [None]
     if a.rig:
         print(run(f"riders.dev.arms.rig {rigs[0]}").strip())
-    print(run(f"riders.dev.motion {a.look} {action}").splitlines()[0])
-    run("riders.dev.motion.at 0")
+
+    def show():
+        shown = run(f"riders.dev.motion {a.look} {action}")
+        run("riders.dev.motion.at 0")
+        return shown
+
+    print(show().splitlines()[0])
 
     nudge = look.get("nudge", {"grip": [0, 0, 0], "turn": [0, 0, 0]})
     start = {"hand": look["grips"].get("hand"), "offhand": look["grips"].get("offHand"), "nudge": nudge["turn"]}[a.tune]
@@ -91,8 +96,9 @@ def main():
         return hands, out
 
     def switch(rig):
-        # The new rig's arms are measured once drawn: let them reach before reading.
+        # A rig swap shows the loadout again: show the look again, and measure the new arms once drawn.
         run(f"riders.dev.arms.rig {rig}")
+        show()
         run("engine.time.advance 100")
         run("engine.time.advance 100")
 
