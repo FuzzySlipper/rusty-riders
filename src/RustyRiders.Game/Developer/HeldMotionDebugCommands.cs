@@ -172,8 +172,12 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         var (mainFelt, offFelt) = View.Felt;
         var (mainSway, offSway) = View.Swaying;
         string Sway((System.Numerics.Vector3 Move, Swap Swap) s) => FormattableString.Invariant($"[{s.Move.X:0.###}, {s.Move.Y:0.###}, {s.Move.Z:0.###}] {s.Swap}");
-        return DebugCommandResult.Success($"Rig {View.Rig}. Sway main {Sway(mainSway)}, off {Sway(offSway)}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}.");
+        return DebugCommandResult.Success($"Rig {View.Rig}. Sway main {Sway(mainSway)}, off {Sway(offSway)}. Feedback punches main {mainFelt}, off {offFelt}. Lean [{arms.Lean.X:0.###}, {arms.Lean.Y:0.###}, {arms.Lean.Z:0.###}] m, reaching in [{arms.Reaching.X:0.###}, {arms.Reaching.Y:0.###}, {arms.Reaching.Z:0.###}] m. Wrist shortfall: main {main:0.###} m, off {off:0.###} m. Arm length main {mainLength:0.###} m, off {offLength:0.###} m; {frames}. {Clip(arms.Clip)}");
     }
+
+    // What clip-led arms sample (content/held/clips.json), or that they are weapon-led.
+    private static string Clip(ArmClipReading clip) => clip.Led <= 0 ? "Weapon-led." : FormattableString.Invariant(
+        $"Clip-led {clip.Led:0.##}: {clip.Playing?.Clip ?? "none"} at {clip.Playing?.Time ?? 0:0.###} ({clip.Playing?.Phase?.ToString() ?? "loop"}), blend {clip.Blend:0.##}{(clip.From is { } from ? $" over {from} at {clip.FromTime:0.###}" : "")}.");
 
     [DebugCommand("riders.dev.hands.contact", Description = "Developer grip check: how the drawn hands meet the main hand's look's grip landmarks (content/held/looks.json landmarks), as the Engine measured them on the poses it drew: the main index pad on the trigger, the web under the back strap, the little finger at the butt, the off palm on the fore-end, and each palm facing what it holds. Drawn as the overlay set held.landmarks.")]
     public DebugCommandResult Contact()
@@ -242,7 +246,7 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success($"\"{inHand}\": {HandKnuckles.Json(hand)}  (in {ArmRigs.PathOf(View.Rig)} grip)");
     }
 
-    [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted, leather or shared; content/held/rigs) with the same hold, in the loaded content.")]
+    [DebugCommand("riders.dev.arms.rig", Description = "Developer arms comparison: draw the arms by another rig profile (generated, painted, leather, shared or psx; content/held/rigs) with the same hold, in the loaded content.")]
     public DebugCommandResult Rig(string id)
     {
         if (View.ShowRig(id) is { } refusal) return Failure(refusal);

@@ -1,0 +1,127 @@
+{
+  "model": "held/models/psx-arms.glb",
+  "clip": "rest",
+  "turn": [
+    0,
+    180,
+    0
+  ],
+  "scale": 1,
+  "main": {
+    "upper": "upper_arm.R",
+    "lower": "forearm.R",
+    "hand": "hand.R",
+    "fingers": [
+      [
+        "f_index.01.R",
+        "f_index.02.R",
+        "f_index.03.R"
+      ],
+      [
+        "f_middle.01.R",
+        "f_middle.02.R",
+        "f_middle.03.R"
+      ],
+      [
+        "f_ring.01.R",
+        "f_ring.02.R",
+        "f_ring.03.R"
+      ],
+      [
+        "f_pinky.01.R",
+        "f_pinky.02.R",
+        "f_pinky.03.R"
+      ]
+    ],
+    "thumb": [
+      "thumb.01.R",
+      "thumb.02.R",
+      "thumb.03.R"
+    ]
+  },
+  "off": {
+    "upper": "upper_arm.L",
+    "lower": "forearm.L",
+    "hand": "hand.L",
+    "fingers": [
+      [
+        "f_index.01.L",
+        "f_index.02.L",
+        "f_index.03.L"
+      ],
+      [
+        "f_middle.01.L",
+        "f_middle.02.L",
+        "f_middle.03.L"
+      ],
+      [
+        "f_ring.01.L",
+        "f_ring.02.L",
+        "f_ring.03.L"
+      ],
+      [
+        "f_pinky.01.L",
+        "f_pinky.02.L",
+        "f_pinky.03.L"
+      ]
+    ],
+    "thumb": [
+      "thumb.01.L",
+      "thumb.02.L",
+      "thumb.03.L"
+    ]
+  },
+  "digits": "Measured",
+  "palm": [
+    0,
+    0.08,
+    -0.03
+  ],
+  "grip": {
+    "main": {
+      "fingers": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "thumb": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  "packs": [
+    {
+      "path": "held/models/psx-arms.knife.glb",
+      "producer": "Drillimpact",
+      "license": "CC0-1.0"
+    }
+  ]
+}

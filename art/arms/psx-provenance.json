@@ -1,0 +1,16 @@
+{
+ "asset": "PSX First Person Arms by Drillimpact (CC0 1.0, version 1.1.0, https://drillimpact.itch.io/psx-first-person-arms-free)",
+ "source": "asset-pipeline tools/fps-arms/packs/psx-drillimpact/arms_rig.glb at commit b283c5cc630d584edf29fee900955ca6fee7044a",
+ "method": "split by rusty-engine fixtures/csharp-first-person-clips/make_arms.py at commit f1dc697e4899 into the arms with their resting, guard and idle clips and a skeleton-only clip pack of the knife and jab clips (byte-identical to that fixture's content)",
+ "command": "python3 <rusty-engine>/fixtures/csharp-first-person-clips/make_arms.py <asset-pipeline>/tools/fps-arms/packs/psx-drillimpact/arms_rig.glb content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb",
+ "files": [
+  {
+   "path": "content/held/models/psx-arms.glb",
+   "sha256": "f7a5d933a7cba668e26c752ab16100ef9ef919909faed9b804373d70a4c680c3"
+  },
+  {
+   "path": "content/held/models/psx-arms.knife.glb",
+   "sha256": "8bbbee1754dd509ebfee4568540ba77e8c1dc59c4c9d25db0cb63f27d7f61df8"
+  }
+ ]
+}

@@ -36,6 +36,8 @@
     <RustyEngineLiveContent Include="held/rigs/painted.json" />
     <RustyEngineLiveContent Include="held/rigs/leather.json" />
     <RustyEngineLiveContent Include="held/rigs/shared.json" />
+    <RustyEngineLiveContent Include="held/rigs/psx.json" />
+    <RustyEngineLiveContent Include="held/clips.json" />
     <!-- Looks' solved grips (held/looks.json solvedGrips); list each one here so a new solve reloads in place. -->
     <RustyEngineLiveContent Include="held/grips/maul-shared.json" />
     <PackageReference Include="Rusty.Engine" Version="[$(RustyEnginePackageVersion)]">

@@ -179,6 +179,7 @@ internal sealed class PlayerCombat : IDisposable
     /// </summary>
     internal void Step(float seconds, IReadOnlyList<IActionActor> others)
     {
+        held.Step(seconds);
         if (resolution is null) return;
         IActionActor[] targets = [.. dummies.Where(d => d.Alive), .. others];
         for (int hand = 0; hand < users.Length; hand++)
@@ -204,7 +205,7 @@ internal sealed class PlayerCombat : IDisposable
     internal IEnumerable<AppearanceFact> Facts()
     {
         CombatPresentation p = definition.Presentation;
-        foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, TwoHanded, walker.Flying is false))
+        foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, TwoHanded, walker.Flying is false, users))
             yield return fact;
         ulong id = FirstObjectId + 4;
         foreach (Projectile shot in resolution?.Projectiles ?? [])

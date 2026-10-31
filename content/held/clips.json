@@ -1,0 +1,31 @@
+{
+  "rigs": {
+    "psx": {
+      "carry": [
+        -0.003,
+        0.116,
+        -0.023
+      ],
+      "motions": {
+        "sns": {
+          "idle": {
+            "clip": "knife_idle",
+            "seconds": 1.6667
+          },
+          "actions": {
+            "blade-slash": {
+              "clip": "knife_hit_01",
+              "marks": {
+                "start": 0,
+                "strike": 0.3,
+                "recover": 0.55,
+                "end": 1
+              },
+              "fade": 0.1
+            }
+          }
+        }
+      }
+    }
+  }
+}

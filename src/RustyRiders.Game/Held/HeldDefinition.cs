@@ -24,21 +24,25 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
     [JsonIgnore] internal SwayTuning Sway { get; init; } = null!;
     /// <summary>The arms models the arms can be drawn by, by profile id (<see cref="ArmRigs.Directory"/>).</summary>
     [JsonIgnore] internal Dictionary<string, ArmRig> Rigs { get; init; } = null!;
+    /// <summary>The looks the arms play baked clips for, per rig (<see cref="ArmClipCatalog.Path"/>).</summary>
+    [JsonIgnore] internal ArmClipCatalog Clips { get; init; } = null!;
 
     internal const string Path = "held/looks.json";
     /// <summary>Where looks' solved grips live (<see cref="HeldLookDefinition.SolvedGrips"/>); any file there reloads in place.</summary>
     internal const string GripsDirectory = "held/grips/";
 
     /// <summary>The content files the held presentation reads, reloaded in place under <c>rusty dev</c> (RustyEngineLiveContent).</summary>
-    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, SwayFile.Path, .. ArmRigs.Ids.Select(ArmRigs.PathOf)];
+    internal static readonly string[] Files = [Path, StanceCatalog.Path, HeldMotionCatalog.Path, ArmsDefinition.Path, HeldFeedback.Path, SwayFile.Path, ArmClipCatalog.Path, .. ArmRigs.Ids.Select(ArmRigs.PathOf)];
 
     internal static HeldCatalog Load(IEngineContext engine)
     {
         ArmsDefinition arms = ArmsDefinition.Load(engine);
+        HeldMotionCatalog motion = HeldMotionCatalog.Load(engine);
+        Dictionary<string, ArmRig> rigs = ArmRigs.Load(engine, arms);
         HeldCatalog catalog = Authored.Read(engine, Path, HeldJson.Default.HeldCatalog) with
         {
-            Motion = HeldMotionCatalog.Load(engine), Stances = StanceCatalog.Load(engine), Arms = arms, Rigs = ArmRigs.Load(engine, arms),
-            Feedback = HeldFeedback.Load(engine), Sway = SwayFile.Load(engine)
+            Motion = motion, Stances = StanceCatalog.Load(engine), Arms = arms, Rigs = rigs,
+            Feedback = HeldFeedback.Load(engine), Sway = SwayFile.Load(engine), Clips = ArmClipCatalog.Load(engine, rigs, motion)
         };
         catalog.Validate();
         foreach (HeldLookDefinition look in catalog.Looks)
@@ -136,6 +140,7 @@ internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
         if (changed.Contains(ArmsDefinition.Path)) Arms.Take(fresh.Arms);
         if (changed.Contains(HeldFeedback.Path)) Feedback.Take(fresh.Feedback);
         if (changed.Contains(SwayFile.Path)) Sway.Take(fresh.Sway);
+        if (changed.Contains(ArmClipCatalog.Path)) Clips.Take(fresh.Clips);
         foreach (var (id, rig) in Rigs)
         {
             if (!changed.Contains(ArmRigs.PathOf(id))) continue;

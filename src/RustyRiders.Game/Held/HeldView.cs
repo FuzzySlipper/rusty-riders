@@ -42,6 +42,9 @@ internal sealed class HeldView : IDisposable
     // The main hand's look is held in both hands.
     private bool twoHanded;
     private (ActionDefinition Action, int Key)? viewingKey;
+    private readonly ArmsLead lead = new();
+    // Where the main hand holds its look this update while the arms are clip-led (it rides the hand), or null.
+    private (Vector3 Grip, Quaternion Look)? ridden;
 
     /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' two are the next three.</param>
     internal HeldView(IEngineContext engine, HeldCatalog held, ulong firstObject)
@@ -93,7 +96,8 @@ internal sealed class HeldView : IDisposable
     /// holds; an action's motion plays over them as the Engine tween.
     /// </summary>
     /// <param name="twoHanded">The main hand's look is held in both hands: the off hand's own look is hidden and the off hand holds the main look's off grip.</param>
-    internal IEnumerable<AppearanceFact> Facts(string mainLook, string offLook, bool twoHanded, bool visible)
+    /// <param name="users">Each hand's actions; the main hand's leads clip-led arms.</param>
+    internal IEnumerable<AppearanceFact> Facts(string mainLook, string offLook, bool twoHanded, bool visible, IReadOnlyList<ActionUser> users)
     {
         // The motion viewer shows a look with an off grip in both hands when it shows it in the main hand.
         // Each hand shows what it holds once a swap has drawn it (see Swaps); the viewer shows its look at once.
@@ -106,11 +110,12 @@ internal sealed class HeldView : IDisposable
         // A look held in both hands takes the off hand once it is drawn.
         this.twoHanded = viewing is { } shownLook ? shownLook.Hand == MainHand && held.Look(shownLook.Look)!.Grips.Off is not null
             : twoHanded && hands[MainHand].Look == mainLook;
+        Lead(users[MainHand]);
         for (int h = 0; h < hands.Length; h++)
         {
             HeldLookDefinition look = held.Look(hands[h].Look)!;
             HeldPose pose = viewing is { } view && view.Hand == h && Viewed() is { } shown ? shown : Placed(h);
-            (Vector3 at, Quaternion turn) = Drawn(look, pose, h == OffHand);
+            (Vector3 at, Quaternion turn) = h == MainHand && ridden is { } hold ? Held(look, hold) : Drawn(look, pose, h == OffHand);
             bool drawn = !(h == OffHand && this.twoHanded) && hands[h].Swap != Swap.DrawNext;
             yield return new AppearanceFact(hands[h].Object, false, 0, new Transform(at, turn, Fit(look).Scale),
                 looks[look.Id].Appearance, visible && drawn, RenderLayer.Viewmodel);
@@ -118,10 +123,30 @@ internal sealed class HeldView : IDisposable
         // The body leans with a blow: the arms move by both hands' motions together (two blows at once lean as their sum;
         // the arms' own reach then keeps each hand on its grip).
         arms.Drawn.Lean = Keyed(MainHand).Lean + Keyed(OffHand).Lean;
-        arms.Drawn.Aim(Aim(MainHand), Aim(OffHand));
+        // A clip-led main hand reaches for nothing; while the arms fade it reaches the blend.
+        if (arms.Drawn.Clip.Led < 1) arms.Drawn.Aim(Aim(MainHand), Aim(OffHand));
         yield return arms.Drawn.Fact(visible);
         if (arms.Retired is { } retired) yield return retired;
     }
+
+    /// <summary>World seconds admitted, on which clip-led arms play and fade.</summary>
+    internal void Step(float seconds) => lead.Step(seconds);
+
+    // Clip-led arms (Engine FirstPersonArms.Lead): the main hand's action clip, or its look's idle loop, where the drawing
+    // rig has clips for the look's motion; then where the look rides the hand. The arms are carried to the rig's clip
+    // framing, and by the hand's sway while clip-led.
+    private void Lead(ActionUser user)
+    {
+        ArmClipFrame? frame = lead.Frame(MainClips(), user);
+        arms.Drawn.Lead(frame, lead.Take());
+        arms.Drawn.Carry = held.Clips.Carry(Rig) + (frame is null ? Vector3.Zero : hands[MainHand].Sway.Position);
+        ridden = null;
+        if (arms.Drawn.Clip.Led > 0) ridden = arms.Drawn.Ride(Aim(MainHand));
+    }
+
+    // The clips the main hand's look plays on the drawing rig, or null where it is weapon-led (and in the motion viewer).
+    private MotionClips? MainClips() =>
+        viewing is null && held.Look(hands[MainHand].Look) is { } look ? held.Clips.For(Rig, look.Motion) : null;
 
     /// <summary>
     /// Once the looks are in the published snapshot: starts a hand's motion as its action starts (that far along
@@ -142,6 +167,13 @@ internal sealed class HeldView : IDisposable
                 else if (cutShort && hand.Running) hand.Begin(held.Motion.Settle(hand.Offset()), TweenClock.World);
             }
             if (viewing is not null) continue;
+            // A clip-led main hand's look rides the hand: no tween moves it, and it swaps what it holds at once.
+            if (h == MainHand && MainClips() is { } clips && (user.Current is not { } current || ArmsLead.Plays(clips, current)))
+            {
+                hand.Cancel();
+                (hand.Look, hand.Swap, hand.StartedSeen) = (hand.Wanted, Swap.None, user.Started);
+                continue;
+            }
             if (user.Started == hand.StartedSeen || user.Current is not { } action)
             {
                 hand.StartedSeen = user.Started;
@@ -325,6 +357,7 @@ internal sealed class HeldView : IDisposable
     {
         HeldLookDefinition look = held.Look(hands[hand].Look)!;
         if (viewing is { } view && view.Hand == hand && Viewed() is { } pose) return Drawn(look, pose, hand == OffHand);
+        if (hand == MainHand && ridden is { } hold) return Held(look, hold);
         (Vector3 at, Quaternion turn) = Drawn(look, Placed(hand), hand == OffHand);
         (Vector3 move, Quaternion offset) = hands[hand].Offset();
         return (at + move, Quaternion.Normalize(turn * offset));
@@ -425,6 +458,13 @@ internal sealed class HeldView : IDisposable
         (Vector3 at, Quaternion turn) = look.Place(pose, offHand);
         Transform fit = Fit(look);
         return (at + Vector3.Transform(fit.Translation, turn), Quaternion.Normalize(turn * fit.Rotation));
+    }
+
+    // Where a look's drawn model is when its main grip is held at a point and turn (camera space), as a hand holds it.
+    private (Vector3 At, Quaternion Turn) Held(HeldLookDefinition look, (Vector3 Grip, Quaternion Look) hold)
+    {
+        Transform fit = Fit(look);
+        return (hold.Grip - Vector3.Transform(look.Grips.Main - fit.Translation, hold.Look), Quaternion.Normalize(hold.Look * fit.Rotation));
     }
 
     // Starts the punches felt since the last update over each hand's motion as now drawn.
