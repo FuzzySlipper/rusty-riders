@@ -14,11 +14,11 @@
           },
           "actions": {
             "blade-slash": {
-              "clip": "knife_hit_01",
+              "clip": "h3_slash",
               "marks": {
-                "start": 0,
-                "strike": 0.3,
-                "recover": 0.55,
+                "start": 0.1,
+                "strike": 0.435,
+                "recover": 0.61,
                 "end": 1
               },
               "fade": 0.1

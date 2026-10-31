@@ -122,6 +122,11 @@
       "path": "held/models/psx-arms.knife.glb",
       "producer": "Drillimpact",
       "license": "CC0-1.0"
+    },
+    {
+      "path": "held/models/psx-arms.h3-slash.glb",
+      "producer": "rusty-riders: MiniMax H3 video, MediaPipe pose (art/arms/h3-slash/provenance.json)",
+      "license": "own work"
     }
   ]
 }

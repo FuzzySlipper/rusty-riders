@@ -1,0 +1,31 @@
+{
+ "asset": "h3_slash: a one-handed cross-body sword slash for the PSX arms (clip pack content/held/models/psx-arms.h3-slash.glb)",
+ "source": {
+  "video": "art/arms/h3-slash/cross-41011.mp4",
+  "generator": "MiniMax H3 text-to-video (minimax_h3_fl2va_pruned_int8_convrot) on the owner's 5090 ComfyUI, asset-pipeline legacy/tools/asset-cli/operators/video/minimax_h3_t2v_api.json at b3905a25005b",
+  "seed": 41011,
+  "frames": "124 at 24 fps, 768x448, 20 steps",
+  "prompt": "Fixed camera, full body motion reference on a plain light grey studio backdrop with a flat grey floor. A man in a fitted plain dark grey long-sleeve shirt and dark trousers stands squarely facing the camera, his whole body from head to feet in frame the entire time. He holds a one-handed sword in his right hand only; his left hand stays empty. He raises the sword high above his right shoulder, then cuts in one fast diagonal slash down across the front of his body, the blade passing in front of his chest and ending low by his left hip with his right arm across his body. He holds that finish for a moment, then brings the sword back up in front of him to a ready guard. One clean cross-body slash, realistic weight, no camera movement, no cuts, the man stays in place facing the camera."
+ },
+ "method": [
+  "scripts/arm-clips/extract.py: MediaPipe Pose Landmarker heavy (mediapipe 1.2.0, Apache-2.0), world landmarks per frame -> art/arms/h3-slash/cross-41011.landmarks.json",
+  "scripts/arm-clips/retarget.py: arms aimed at the video's upper arm, forearm and hand (bend plane from the elbow, roll from index and pinky), fingers and clavicles from knife_idle; view facing frames 0-16, staging pitch 25, forward 1.2, smoothing sigma 1.2"
+ ],
+ "command": "python scripts/arm-clips/retarget.py art/arms/h3-slash/cross-41011.landmarks.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/held/models/psx-arms.h3-slash.glb h3_slash --facing 0:16 --pitch 25 --forward 1.2",
+ "marks": "content/held/clips.json blade-slash: start 0.1 (frame 12, the raise begins), strike 0.435 (frame 54, top of the raise), recover 0.61 (frame 76, the cut across the body done), end 1",
+ "rejected": "seeds 41001-41003 (an earlier prompt) cut to the man's right and finish low beside him, out of a first-person view; 41012 circles first, 41013 turns",
+ "files": [
+  {
+   "path": "content/held/models/psx-arms.h3-slash.glb",
+   "sha256": "d20169d2e0495bf0948576405fc198b8fe703f62089b20a46b245e3d1813927a"
+  },
+  {
+   "path": "art/arms/h3-slash/cross-41011.mp4",
+   "sha256": "f97b3773740d7e3f3e52a4949889b6996adef3ca75e299dc856d4860607a7288"
+  },
+  {
+   "path": "art/arms/h3-slash/cross-41011.landmarks.json",
+   "sha256": "bc191e16d8b94e527c740b5b440dd3972eb0db3fac8e6b16d3046d412adb449e"
+  }
+ ]
+}
