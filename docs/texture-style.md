@@ -58,14 +58,14 @@ The judges' rankings are merged by mean rank across shuffled orders. Calibration
 
 `rrink_zimage_v5_seg6_3000_steps_00001_.safetensors` (v5 at 3000 steps) is the house Z-Image base LoRA, at strength
 1.0 with the house prompt below and `generate.py --seamless`:
-- **Trained on:** the 43 old-game texture crops, plus 17 surfaces the user favoured: the seamless-patch round's keeps,
+- **Trained on:** the 43 old-game texture crops, plus 17 surfaces Patch favoured: the seamless-patch round's keeps,
   the two palace-tile keeps, and the five tiled Lava and Forest floors now in `content/art/textures/`. Each is whole
   and zoomed, captioned "seamless floor texture seen from above, …": 77 images.
 - **Settings:** 1024 px, rank 32, learning rate 3e-4, 3000 steps in six segments, on den-m5 (2026-10-11, about
   10.5 h; a first attempt on den-nimo was killed when the machine ran out of memory).
 - **Copies:** v5-2000 and v5-3000 on den-m5 and den-nimo.
 
-In the user's blind review (2026-10-11, 40 images over cave slabs, palace mosaic, palace tiles, lava rock and
+In Patch's blind review (2026-10-11, 40 images over cave slabs, palace mosaic, palace tiles, lava rock and
 forest ground, seeds 7–8) they rejected only images with errors or tiling problems:
 
 | Set | Rejected |
@@ -77,7 +77,7 @@ forest ground, seeds 7–8) they rejected only images with errors or tiling prob
 
 - **The seamless patch is still required.** Without it, v5 still draws frames, angled views and centred
   compositions, and half its images show seams; training on surfaces alone did not teach it to make them.
-- **Style:** v5's ink is a little bolder and its colours warmer than v4's; the user said the style came through well.
+- **Style:** v5's ink is a little bolder and its colours warmer than v4's; Patch said the style came through well.
   At 3000 steps v5 loosens palace tiles toward irregular flagstones, so use ControlNet layouts when a strict grid
   matters.
 - **Seamless failures:** the rejected seamless images (three lava, one forest) have a hard break *inside* the image,
@@ -88,7 +88,7 @@ forest ground, seeds 7–8) they rejected only images with errors or tiling prob
 v4 (`rrink_zimage_v4_seg4_2000_steps_00001_.safetensors`) was the house LoRA before:
 - **Trained on:** the same 43 crops plus 26 keeps from the first two reviews (mostly v2 output with Moebius wording).
 - **Settings:** 1024 px, rank 32, 3000 steps, on den-m5.
-- **Result:** the user's blind review of 2026-10-08 (no seamless patch) called it the best so far: v4-2000 drew 5/8
+- **Result:** Patch's blind review of 2026-10-08 (no seamless patch) called it the best so far: v4-2000 drew 5/8
   favourites, v4-3000 3/8, v2 4/8. Both rejects were palace floors drawn as scenes with cast shadows.
 - **Frames:** seed 4 drew a thin ink border on most images for every LoRA (`checks.py` flags them `framed`). Trim
   them (`make_tileable.py --trim-frame`) before tiling.
@@ -98,16 +98,16 @@ Earlier runs:
 | Run | Settings | Result |
 | --- | --- | --- |
 | v1 | rank 16, learning rate 1e-4, 1500 steps | Barely moved anything but stone |
-| v2 | 768 px, two golds, 2000 steps | Hand-inked detail the user liked; still competitive with v4 |
+| v2 | 768 px, two golds, 2000 steps | Hand-inked detail Patch liked; still competitive with v4 |
 | v3 at 1500–2000 steps | 1024 px, six GPT golds | Uneven: sepia casts, and a forest that slid back toward photos |
-| v3 at 3000 steps | as above | Consistent flat cel fills; judges tied it with the GPT golds, the user rejected 10/12 |
+| v3 at 3000 steps | as above | Consistent flat cel fills; judges tied it with the GPT golds, Patch rejected 10/12 |
 
 The comparisons are in Den #9420, and the tools are in `scripts/texture-gen/` (`lora_dataset.py`, `caption.py`,
 `train_lora.py`).
 
 ## Human review calibration
 
-The user's review pass (2026-10-06, review app) is the ground truth the judges are checked against. It covered
+Patch's review pass (2026-10-06, review app) is the ground truth the judges are checked against. It covered
 48 floors: v2-2000 and v3 at 1500, 2000 and 3000 steps, over cave cells, cave rock, lava and forest.
 
 | Set | Rejected |
@@ -126,7 +126,7 @@ marks before trusting their rankings again.
 
 ## House prompt
 
-For Z-Image base with the house LoRA (v5 or v4 at 1.0; earlier v2 at 1.0 and v3 at 0.75), the user's second review (2026-10-07, 24 images)
+For Z-Image base with the house LoRA (v5 or v4 at 1.0; earlier v2 at 1.0 and v3 at 0.75), Patch's second review (2026-10-07, 24 images)
 kept every image with the Moebius wording (12/12) and fewer than half of the plain ones (5/12):
 
 | Prompt | v2 at 1.0 | v3 at 0.75 |
@@ -167,7 +167,7 @@ prompt and "cast shadow, drop shadow, walls, pillars, steps, scene" to the negat
 
 **Generate surfaces with `generate.py --seamless`** (den-m5's ComfyUI-Universal-Seamless-Tiles nodes: the model and
 VAE wrap at the image edges). Without it, about 14 of 16 cave and palace images in the round above were scenes, by
-the user's marks. In the next round (2026-10-09, 18 images, seeds 5–6, viewed tiled 2x2 in review):
+Patch's marks. In the next round (2026-10-09, 18 images, seeds 5–6, viewed tiled 2x2 in review):
 
 | Variant | Favourites | Rejected |
 | --- | --- | --- |
@@ -199,13 +199,13 @@ Sonnet judges pre-screen batches with `scripts/review/prompts/keep-reject-judge.
 sheet of 12 (`contact_sheet.py --tile 1 --cell 400 --per-sheet 12`), replacing SHEET with the sheet's path.
 `scripts/review/agreement.py` scores their verdicts against a human review pass.
 
-On the 72 images of the two reviews above, the first version agreed with the user on 81% (58/72):
+On the 72 images of the two reviews above, the first version agreed with Patch on 81% (58/72):
 - it caught 30 of 39 rejects (all 12 cave-cells images);
 - it wrongly rejected 5 of 33 keeps;
 - it missed rejects mostly among lava and forest.
 
 The rubric was written from these same reviews, so validate it on the next fresh batch before relying on it.
-As a pre-filter, the judges drop the obvious rejects, and the user's pass decides.
+As a pre-filter, the judges drop the obvious rejects, and Patch's pass decides.
 
 **Fresh validation (v4 review, 2026-10-08): 62% (15/24), no better than chance on that batch.** The first
 version caught neither of the two rejects (shadowed palace floors: shadows were not in its rubric) and rejected
@@ -222,4 +222,4 @@ casting strong shadows) as a reject, and says a plain but hand-inked image is a 
 
 Both rows are in-sample: version 2's shadow cue was written from the v4 review's two rejects. Version 2 is more
 lenient, which suits a pre-filter, but neither version ranks a good batch: use it to drop obvious failures from
-weak or mixed batches, and leave the choice among good images to the user's pass.
+weak or mixed batches, and leave the choice among good images to Patch's pass.

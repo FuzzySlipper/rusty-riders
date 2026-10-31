@@ -5,7 +5,7 @@ third-person MiniMax H3 video: the video model supplies the motion, a pose model
 aimed where the video's arms point. The video's look does not matter, only its motion.
 
 1. **Generate** a full-body, fixed-camera video of the action (`h3.py`, on a ComfyUI host with the H3 models, such as
-   the owner's 5090). Ask for the action to be staged for a first-person view: the man facing the camera, the cut
+   Patch's 5090). Ask for the action to be staged for a first-person view: the man facing the camera, the cut
    crossing in front of his body. Cuts that finish beside or behind the body leave the view. Try a few seeds and
    pick by eye.
 2. **Read the pose** (`extract.py`, MediaPipe Pose Landmarker heavy, CPU): 33 world landmarks per frame. Check the

@@ -130,7 +130,7 @@ Notes on the process:
   (`Comfy-Org/Qwen-Image-2.1`: int8 model, Qwen3-VL 8B encoder, VAE, and the t2i/i2i prompt enhancers).
 
 **Lava and Forest** got generated builds too (2026-10-08, `content/levels/shells/LavaMap.json` and `ForestMap.json`,
-copied from the Cave's recipe with each tileset's floor, wall and prop names). Their floors are the user's favourites
+copied from the Cave's recipe with each tileset's floor, wall and prop names). Their floors are Patch's favourites
 from the v4 LoRA review (`content/art/textures/lava/`, `forest/`; see texture-style.md):
 - They are colour textures (`"colour": true`), drawn without the material's palette tint and glow. The Lava ground
   material's red tint and glow turned them into red mush; greyscale textures keep the tint.

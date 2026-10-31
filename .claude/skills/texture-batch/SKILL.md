@@ -1,6 +1,6 @@
 ---
 name: texture-batch
-description: Generate a batch of tiling textures in the Rusty Riders house style and pick the best automatically. Generate with GPT image (best quality) or ComfyUI on the user's 5090 (fast batches), make them tile, filter them with deterministic checks, rank the survivors with parallel Sonnet vision judges, then give the user a quick click-through pass in the review web app. Use when a level, tileset or prop needs a new texture, or to compare generators or LoRAs.
+description: Generate a batch of tiling textures in the Rusty Riders house style and pick the best automatically. Generate with GPT image (best quality) or ComfyUI on Patch's 5090 (fast batches), make them tile, filter them with deterministic checks, rank the survivors with parallel Sonnet vision judges, then give Patch a quick click-through pass in the review web app. Use when a level, tileset or prop needs a new texture, or to compare generators or LoRAs.
 ---
 
 # Texture batch: generate, filter, judge, pick
@@ -8,7 +8,7 @@ description: Generate a batch of tiling textures in the Rusty Riders house style
 The house style and the judging rubric are in `docs/texture-style.md`. Read both sections before writing
 prompts or judging. The tools are in `scripts/texture-gen/`. The 5090's ComfyUI is reached only through its
 HTTP API (`comfy.py`, `COMFY_URL`, default `http://192.168.1.20:8188`); check `/queue` first and never
-disturb the owner's own jobs.
+disturb Patch's own jobs.
 
 ## 1. Generate
 
@@ -85,7 +85,7 @@ Put the candidates (or just the judges' top third) in one folder and start the r
 scripts/review/review_server.py <dir> --title "<what this is>" --info checks.json --order ranking.txt
 ```
 
-The user opens `http://192.168.1.10:8790/` and clicks through pages of thumbnails:
+Patch opens `http://192.168.1.10:8790/` and clicks through pages of thumbnails:
 - click or `x` to reject, `k` to keep;
 - space for full size, `t` to see it tiled 2x2;
 - drag to mark crops (several per image for sprite sheets).
@@ -97,7 +97,7 @@ a LoRA. Stop the server when the pass is done.
 ## 6. Pick and land
 
 Look at the top three yourself, in a contact sheet and, for a level surface, in game (the generated builds'
-`floorTextures` and V key). Show the user the finalists. Add the winner under `content/art/textures/<set>/` (ignored by git: commit its `sources.json` and run `scripts/art-sync.sh push`),
+`floorTextures` and V key). Show Patch the finalists. Add the winner under `content/art/textures/<set>/` (ignored by git: commit its `sources.json` and run `scripts/art-sync.sh push`),
 record its brief, route, seed and reference in that folder's `sources.json`, and wire it into the recipe.
 
 ## Calibration
