@@ -472,7 +472,8 @@ internal sealed class HeldView : IDisposable
         }
         (Vector3 grip, Quaternion look) = Grip(index);
         HeldLookDefinition own = held.Look(hands[index].Look)!;
-        return new(grip, look, own.Grips.Hand, closure, elbow, Shape: own.Shape?.Main, Solved: index == MainHand || !twoHanded ? own.Solved.GetValueOrDefault(Rig) : null);
+        return new(grip, look, own.Grips.Hand, closure, elbow, Shape: own.Shape?.Main, Solved: index == MainHand || !twoHanded ? own.Solved.GetValueOrDefault(Rig) : null,
+            ShapeClip: index == MainHand && held.Clips.ShapesHand(Rig));
     }
 
     // Whether a hand holds no look (the off hand, but for the motion viewer).

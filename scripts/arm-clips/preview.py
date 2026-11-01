@@ -1,11 +1,13 @@
-"""A clip pack's clip on the PSX arms, seen from the game's view, as one contact sheet. Runs in Blender:
+"""A clip pack's clip on a rig's arms, seen from the game's view, as one contact sheet. Runs in Blender:
 
-    blender -b --factory-startup --python scripts/arm-clips/preview.py -- PACK.glb CLIP SHEET.png [--frames N] [--blade X,Y,Z] [--from game|side|front|above]
+    blender -b --factory-startup --python scripts/arm-clips/preview.py -- PACK.glb CLIP SHEET.png [--rig psx] [--frames N]
+        [--blade X,Y,Z] [--from game|side|front|above]
 
-The camera is the PSX pack's own (1.743 m up, looking along the arms' +Z), which is where the game puts the view for
-clip-led psx arms (shared shoulder plus the rig's carry in content/held/clips.json), with the walker's 75 degree
-vertical field of view. A thin bar from the right hand's palm stands in for a blade so its path reads. Frames are
-evenly spaced over the clip and labelled by phase (0..1) for placing ClipMarks.
+The rig (content/held/rigs/<rig>.json, psx by default) gives the arms model, the main hand and the palm. The camera is
+where the game puts the view for the rig's clip-led arms (shared shoulder plus the rig's carry in
+content/held/clips.json, rig.py), looking along the arms' +Z, with the walker's 75 degree vertical field of view. A
+thin bar from the right hand's palm stands in for a blade so its path reads; --blade is its direction in the hand
+bone's own frame. Frames are evenly spaced over the clip and labelled by phase (0..1) for placing ClipMarks.
 """
 import math, os, subprocess, sys, tempfile
 import bpy
@@ -15,10 +17,14 @@ args = sys.argv[sys.argv.index("--") + 1:]
 pack, clip, sheet = args[0], args[1], args[2]
 opt = dict(zip(args[3::2], args[4::2]))
 count = int(opt.get("--frames", 12))
-root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from rig import Rig
+rig = Rig(opt.get("--rig", "psx"))
+hand = rig.profile["main"]["hand"]
+eye = rig.camera()
 
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)  # the factory scene's cube, light and camera
-bpy.ops.import_scene.gltf(filepath=os.path.join(root, "content/held/models/psx-arms.glb"))
+bpy.ops.import_scene.gltf(filepath=rig.model)
 arms = next(o for o in bpy.data.objects if o.type == "ARMATURE")
 before = set(bpy.data.actions)
 bpy.ops.import_scene.gltf(filepath=pack)
@@ -29,26 +35,28 @@ if action is None: sys.exit(f"preview: no clip {clip!r} in {pack}; new actions {
 arms.animation_data_create(); arms.animation_data.action = action
 if hasattr(arms.animation_data, "action_slot") and action.slots: arms.animation_data.action_slot = action.slots[0]
 
-# Blade stand-in: 70 cm out of the fist along the hand bone's BLADE_AXIS, from the palm (psx.json palm).
+# Blade stand-in: 70 cm out of the fist along the hand bone's --blade axis, from near the palm. Bone-parented
+# objects sit at the bone's tail, in its frame, in the armature's units (a rig imported at a scale divides by it).
 axis = Vector([float(v) for v in opt.get("--blade", "1,0,0").split(",")])
+units = 1 / arms.matrix_world.to_scale().x
 bpy.ops.mesh.primitive_cube_add(size=1)
-blade = bpy.context.object; blade.scale = Vector((0.012, 0.012, 0.012)) + axis * 0.7
-blade.parent = arms; blade.parent_type = "BONE"; blade.parent_bone = "hand.R"
+blade = bpy.context.object; blade.scale = (Vector((0.012, 0.012, 0.012)) + axis * 0.7) * units
+blade.parent = arms; blade.parent_type = "BONE"; blade.parent_bone = hand
 blade.matrix_parent_inverse.identity()
-blade.location = Vector((0, 0.08 - arms.pose.bones["hand.R"].length, -0.03)) + axis * 0.35
+blade.location = Vector((0, 0.08 * units - arms.pose.bones[hand].length, -0.03 * units)) + axis * 0.35 * units
 
 cam_data = bpy.data.cameras.new("view"); cam_data.sensor_fit = "VERTICAL"; cam_data.angle_y = math.radians(75); cam_data.clip_start = 0.01
 cam = bpy.data.objects.new("view", cam_data); bpy.context.scene.collection.objects.link(cam)
 # --from side/front/above look at the arms from outside (with a marker where the game's view is) to see where they go.
 view = opt.get("--from", "game")
 if view == "game":
-    cam.location = (0, 0, 1.743); cam.rotation_euler = (math.radians(90), 0, math.radians(180))
+    cam.location = (eye[0], -eye[2], eye[1]); cam.rotation_euler = (math.radians(90), 0, math.radians(180))
 else:
     cam.location = {"side": (-2.4, -0.5, 1.6), "front": (0.4, -2.6, 1.9), "above": (0, -0.5, 4.2)}[view]
     cam_data.angle_y = math.radians(40)
     target = bpy.data.objects.new("target", None); bpy.context.scene.collection.objects.link(target); target.location = (0, -0.45, 1.5)
     track = cam.constraints.new("TRACK_TO"); track.target = target; track.track_axis = "TRACK_NEGATIVE_Z"; track.up_axis = "UP_Y"
-    bpy.ops.mesh.primitive_cone_add(radius1=0.05, depth=0.12, location=(0, -0.06, 1.743), rotation=(math.radians(90), 0, 0))
+    bpy.ops.mesh.primitive_cone_add(radius1=0.05, depth=0.12, location=(eye[0], -eye[2] - 0.06, eye[1]), rotation=(math.radians(90), 0, 0))
 scene = bpy.context.scene; scene.camera = cam
 scene.render.engine = "BLENDER_WORKBENCH"; scene.render.resolution_x, scene.render.resolution_y = 480, 270
 scene.display.shading.light = "STUDIO"; scene.display.shading.color_type = "OBJECT"

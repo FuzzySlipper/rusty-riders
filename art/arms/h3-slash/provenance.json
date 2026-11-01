@@ -11,7 +11,7 @@
   "scripts/arm-clips/extract.py: MediaPipe Pose Landmarker heavy (mediapipe 1.2.0, Apache-2.0), world landmarks per frame -> art/arms/h3-slash/cross-41011.landmarks.json",
   "scripts/arm-clips/retarget.py: arms aimed at the video's upper arm, forearm and hand (bend plane from the elbow, roll from index and pinky), fingers and clavicles from knife_idle; view facing frames 0-16, staging pitch 25, forward 1.2, smoothing sigma 1.2"
  ],
- "command": "python scripts/arm-clips/retarget.py art/arms/h3-slash/cross-41011.landmarks.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/held/models/psx-arms.h3-slash.glb h3_slash --facing 0:16 --pitch 25 --forward 1.2",
+ "command": "python scripts/arm-clips/retarget.py art/arms/h3-slash/cross-41011.landmarks.json psx content/held/models/psx-arms.h3-slash.glb h3_slash --base knife_idle --camera 0,1.743,0 --facing 0:16 --pitch 25 --forward 1.2",
  "marks": "content/held/clips.json blade-slash: start 0.1 (frame 12, the raise begins), strike 0.435 (frame 54, top of the raise), recover 0.61 (frame 76, the cut across the body done), end 1",
  "rejected": "seeds 41001-41003 (an earlier prompt) cut to the man's right and finish low beside him, out of a first-person view; 41012 circles first, 41013 turns",
  "files": [

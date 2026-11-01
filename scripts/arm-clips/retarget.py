@@ -1,14 +1,18 @@
-"""A joint track -> a PSX-arms clip pack (skeleton-only GLB with one animation).
+"""A joint track -> a clip pack for any arms rig profile (skeleton-only GLB with one animation).
 
 The track is either sample.py's (any authored clip: Mixamo, UAL, BVH mocap...) or extract.py's MediaPipe landmarks
 from a video; both give each arm's shoulder, elbow, wrist and index/pinky knuckles, the hips and a point in front.
 
 The camera is one fixed frame for the whole clip, from the body's facing over the first frames (a first-person view
 looks at the target, it does not turn with the swing). Each arm's upper arm and forearm point where the video's do,
-bent in the video's elbow plane; the hand turns to the video's wrist->knuckles line and index->pinky side. Everything
-else (clavicles, fingers, root) holds the base clip's first frame (knife_idle: the fist closed on a grip).
+bent in the video's elbow plane; the hand turns to the video's wrist->knuckles line and index->pinky side. A forearm
+twist joint the rig lists (content/held/rigs/<rig>.json main.twist, off.twist) turns by its share of the hand's roll
+about the forearm, as the Engine shares a weapon-led hand's. Everything else (collarbones, fingers, root) holds the base
+clip's first frame: the rig's own clip by default, so the digits are the rig's and a clip-led hand takes its look's
+shape over them (clips.json "digits": "Look"). The rig's joint names, model and framing come from its profile; the
+pack is the model's skeleton (its nodes and skin, no mesh) with this one clip.
 
-    retarget.py TRACK.json ARMS.glb PACK_IN.glb PACK_OUT.glb CLIP_NAME [--start F] [--end F] [--sigma S]
+    retarget.py TRACK.json RIG PACK_OUT.glb CLIP_NAME [--base CLIP] [--start F] [--end F] [--sigma S]
         [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--cone DEGREES] [--aim YAW,PITCH] [--reach FRACTION] [--clear METRES] [--camera X,Y,Z]
         [--band YAW,PITCH,HALF_YAW,HALF_PITCH] [--gain G] [--sides R,L]
         [--report REPORT.json]
@@ -21,7 +25,8 @@ shoulder-wrist line lies within a soft cone of that half-angle around --aim (deg
 forward); the elbow's bend and plane and the wrist's turn ride along, so a third-person wind-up behind the head is
 pulled into view with its shape kept. --reach opens the elbow so the wrist is at least that fraction of the arm's
 length from the shoulder (FPS arms hold the hands out where they can be seen). --clear keeps the elbow and
-forearm at least that far from the view (--camera, in the arms model's space; the PSX pack's own camera by default):
+forearm at least that far from the view (--camera, in the arms model's space; by default where the game puts the view
+for this rig, rig.py):
 a frame whose arm passes closer turns, again rigidly about the shoulder, away from the view until it clears, so an
 overhead wind-up does not sweep the elbow across the lens. --band is staging from the camera instead of the shoulder: where our camera would see the wrist if the arm did
 the source's motion, its bearing is pulled into a soft elliptical band (centre bearing and half-widths, degrees
@@ -31,21 +36,13 @@ as measured first-person melee does (README, "Reference"). --sides names the arm
 """
 import argparse, json, struct
 import numpy as np
+from rig import Rig, q2m
 
 ap = argparse.ArgumentParser()
-ap.add_argument("track"); ap.add_argument("arms"); ap.add_argument("pack_in"); ap.add_argument("pack_out"); ap.add_argument("clip")
-ap.add_argument("--base", default="knife_idle"); ap.add_argument("--start", type=int, default=0); ap.add_argument("--end", type=int, default=-1)
-ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera", default="0,1.743,0"); ap.add_argument("--band"); ap.add_argument("--gain", type=float, default=1); ap.add_argument("--push", default="0,0,2")
+ap.add_argument("track"); ap.add_argument("rig"); ap.add_argument("pack_out"); ap.add_argument("clip")
+ap.add_argument("--base"); ap.add_argument("--start", type=int, default=0); ap.add_argument("--end", type=int, default=-1)
+ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera"); ap.add_argument("--band"); ap.add_argument("--gain", type=float, default=1); ap.add_argument("--push", default="0,0,2")
 a = ap.parse_args()
-
-
-def read_glb(path):
-    data = open(path, "rb").read()
-    n = struct.unpack_from("<I", data, 12)[0]
-    doc = json.loads(data[20:20 + n])
-    off = 20 + n
-    blen = struct.unpack_from("<I", data, off)[0]
-    return doc, bytearray(data[off + 8: off + 8 + blen])
 
 
 def write_glb(path, doc, blob):
@@ -57,22 +54,6 @@ def write_glb(path, doc, blob):
         out.write(b"glTF" + struct.pack("<II", 2, 12 + 8 + len(text) + 8 + len(blob)))
         out.write(struct.pack("<I", len(text)) + b"JSON" + text)
         out.write(struct.pack("<I", len(blob)) + b"BIN\0" + blob)
-
-
-def accessor(doc, blob, i):
-    acc = doc["accessors"][i]; bv = doc["bufferViews"][acc["bufferView"]]
-    comps = {"SCALAR": 1, "VEC3": 3, "VEC4": 4}[acc["type"]]
-    start = bv.get("byteOffset", 0) + acc.get("byteOffset", 0)
-    arr = np.frombuffer(bytes(blob[start:start + 4 * comps * acc["count"]]), dtype="<f4")
-    return arr.reshape(acc["count"], comps) if comps > 1 else arr
-
-
-# Quaternions as (x, y, z, w) like glTF.
-def q2m(q):
-    x, y, z, w = q
-    return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
-                     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
-                     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
 
 
 def m2q(m):
@@ -105,7 +86,8 @@ yaw, pitch = (np.radians(float(v)) for v in a.aim.split(","))
 AIM = np.array([np.sin(yaw) * np.cos(pitch) * -1, np.sin(pitch), np.cos(yaw) * np.cos(pitch)])  # model space: right is -X
 
 
-CAMERA = np.array([float(v) for v in a.camera.split(",")])
+rig = Rig(a.rig, a.base)
+CAMERA = np.array([float(v) for v in a.camera.split(",")]) if a.camera else rig.camera()
 PUSH = np.array([float(v) for v in a.push.split(",")])
 
 
@@ -171,43 +153,26 @@ def into_cone(d):
     limit = np.radians(a.cone); return rotation(axis, limit * np.tanh(theta / limit) - theta)
 
 
-# --- base pose: the arms GLB's nodes with the base clip's first frame ---
-arms, ablob = read_glb(a.arms)
-nodes = arms["nodes"]; names = [n.get("name", "") for n in nodes]; idx = {n: i for i, n in enumerate(names)}
-parent = {c: i for i, n in enumerate(nodes) for c in n.get("children", [])}
-T = {i: np.array(n.get("translation", [0, 0, 0]), float) for i, n in enumerate(nodes)}
-R = {i: np.array(n.get("rotation", [0, 0, 0, 1]), float) for i, n in enumerate(nodes)}
-S = {i: np.array(n.get("scale", [1, 1, 1]), float) for i, n in enumerate(nodes)}
-base = next(an for an in arms["animations"] if an["name"] == a.base)
-for ch in base["channels"]:
-    smp = base["samplers"][ch["sampler"]]; v = accessor(arms, ablob, smp["output"])[0]
-    {"translation": T, "rotation": R, "scale": S}[ch["target"]["path"]][ch["target"]["node"]] = np.array(v, float)
+# --- base pose: the rig's model at its base clip's first frame ---
+nodes = rig.doc["nodes"]; names = rig.names; parent = rig.parent
+T, R, S = rig.T, rig.R, rig.S
+world = rig.world
 
-
-def world(i, rot):
-    """World rotation (3x3) and position of node i under local rotations rot."""
-    chain = []
-    while True:
-        chain.append(i)
-        if i not in parent: break
-        i = parent[i]
-    m = np.eye(4)
-    for j in reversed(chain):
-        l = np.eye(4); l[:3, :3] = q2m(rot[j]) * S[j]; l[:3, 3] = T[j]; m = m @ l
-    return m[:3, :3] / np.linalg.norm(m[:3, 0]), m[:3, 3]
-
-
-# Rest relations measured on the base pose, per side.
+# Rest relations measured on the base pose, per side (R the rig's main arm, L its off arm).
 SIDES = [side for side in a.sides.split(",") if side]
 rest = {}
 for s in SIDES:
-    up, fo, ha = idx[f"upper_arm.{s}"], idx[f"forearm.{s}"], idx[f"hand.{s}"]
-    Ru, pu = world(up, R); Rf, pf = world(fo, R); Rh, ph = world(ha, R)
-    _, pix = world(idx[f"f_index.01.{s}"], R); _, ppi = world(idx[f"f_pinky.01.{s}"], R)
+    arm = rig.arm({"R": "main", "L": "off"}[s])
+    up, fo, ha = arm["upper"], arm["lower"], arm["hand"]
+    Ru, pu = world(up); Rf, pf = world(fo); Rh, ph = world(ha)
+    _, pix = world(arm["fingers"][0][0]); _, ppi = world(arm["fingers"][-1][0])
     u0, f0 = pf - pu, ph - pf; n0 = unit(np.cross(u0, f0))
-    rest[s] = dict(up=up, fo=fo, ha=ha, shoulder=pu,
+    # Twist joints under the forearm: their base turn from it, and the forearm's axis in its own frame.
+    for t, _ in arm["twist"]:
+        if parent.get(t) != fo: raise SystemExit(f"retarget: twist joint {names[t]} is not a child of {names[fo]}")
+    rest[s] = dict(up=up, fo=fo, ha=ha, shoulder=pu, twist=arm["twist"],
                    u_axis=Ru.T @ u0, u_hinge=Ru.T @ n0, f_axis=Rf.T @ f0, f_hinge=Rf.T @ n0,
-                   h_axis=Rh.T @ ((pix + ppi) / 2 - ph), h_side=Rh.T @ (pix - ppi))
+                   h_axis=Rh.T @ ((pix + ppi) / 2 - ph), h_side=Rh.T @ (pix - ppi), h_rel=Rf.T @ Rh)
 
 # --- the track into the rig's model space ---
 # MediaPipe Pose landmark indices for the track's points (extract.py output); "front" is the nose.
@@ -266,10 +231,18 @@ for p in P:
         Wu = basis(u, n) @ basis(r["u_axis"], r["u_hinge"]).T
         rot[r["up"]] = m2q(Wp.T @ Wu)
         Wf = basis(f, n) @ basis(r["f_axis"], r["f_hinge"]).T
-        rot[r["fo"]] = m2q(Wu.T @ Wf)
+        Wpu, _ = world(parent[r["fo"]], rot)
+        rot[r["fo"]] = m2q(Wpu.T @ Wf)
         hand_axis = C @ to_model @ ((p[m["index"]] + p[m["pinky"]]) / 2 - p[m["wrist"]]); hand_side = C @ to_model @ (p[m["index"]] - p[m["pinky"]])
         Wh = basis(hand_axis, hand_side) @ basis(r["h_axis"], r["h_side"]).T
-        rot[r["ha"]] = m2q(Wf.T @ Wh)
+        # The hand's roll about the forearm from where its base turn would put it, shared by the twist joints.
+        if r["twist"]:
+            axis = unit(f); d = Wh @ (Wf @ r["h_rel"]).T; qd = m2q(d)
+            roll = 2 * np.arctan2(np.dot(qd[:3], axis), qd[3])
+            for t, share in r["twist"]:
+                rot[t] = m2q(Wf.T @ rotation(axis, share * roll) @ Wf @ q2m(R[t]))
+        Wpar, _ = world(parent[r["ha"]], rot)
+        rot[r["ha"]] = m2q(Wpar.T @ Wh)
         rot[("n", s)] = n
     rot_frames.append(rot)
 
@@ -279,12 +252,15 @@ for i in joints:
     for k in range(1, len(rot_frames)):
         if np.dot(rot_frames[k][i], rot_frames[k - 1][i]) < 0: rot_frames[k][i] = -rot_frames[k][i]
 
-# --- write the pack: its skeleton, this one clip ---
-pack, pblob = read_glb(a.pack_in)
+# --- write the pack: the model's skeleton (its nodes and skin, no mesh), this one clip ---
+pack = json.loads(json.dumps(rig.doc)); pblob = rig.blob
+for k in ("meshes", "materials", "textures", "images", "samplers", "cameras"): pack.pop(k, None)
+for n in pack["nodes"]:
+    for k in ("mesh", "camera", "weights"): n.pop(k, None)
+    if "skin" in n: n.pop("skin")
+pack.pop("extensionsUsed", None); pack.pop("extensionsRequired", None)
 pidx = {n.get("name", ""): i for i, n in enumerate(pack["nodes"])}
-pack["animations"] = []; keep_acc = set()
-for sk in pack.get("skins", []):
-    if "inverseBindMatrices" in sk: keep_acc.add(sk["inverseBindMatrices"])
+pack["animations"] = []
 # Drop every accessor and view but the skin's, rebuild the blob.
 old_acc = pack["accessors"]; old_bv = pack["bufferViews"]; new_blob = bytearray(); pack["accessors"] = []; pack["bufferViews"] = []
 

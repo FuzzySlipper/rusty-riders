@@ -1,7 +1,7 @@
 # Arm clips from any humanoid motion
 
-Clip-led arms (`content/held/clips.json`) play baked clips on the PSX arms. This folder turns a full-body motion
-into one: authored clips (Mixamo, the CC0 UAL library, BVH mocap) or a pose read from a video. Every source becomes
+Clip-led arms (`content/held/clips.json`) play baked clips on an arms rig: the painted arms (the drawing rig) and the
+PSX arms. This folder turns a full-body motion into a clip pack for any rig profile (`content/held/rigs/<rig>.json`): authored clips (Mixamo, the CC0 UAL library, BVH mocap) or a pose read from a video. Every source becomes
 the same joint track, so staging and checks never depend on where a motion came from.
 
 1. **Get a motion.**
@@ -15,8 +15,13 @@ the same joint track, so staging and checks never depend on where a motion came 
    elbow, wrist and index/pinky knuckles, the hips, and a point in front of the chest. The facing comes from the
    skeleton's rest pose (toes ahead of ankles), not from how the clip stands. Bone names come from
    `skeletons.json` (Mixamo and UAL so far). A new skeleton family is one entry there.
-3. **Retarget and stage** (`retarget.py`). Each upper arm and forearm points where the track's does, bent in its
-   elbow plane, and each hand turns to the track's knuckles. Fingers and clavicles hold `knife_idle`'s first frame.
+3. **Retarget and stage** (`retarget.py TRACK RIG PACK_OUT CLIP`). Joint names, the model and the view come from the
+   rig profile (`rig.py`). Each upper arm and forearm points where the track's does, bent in its elbow plane, and each
+   hand turns to the track's knuckles. A forearm twist joint the profile lists (painted's `CATRig?Arm22`) turns by its
+   share of the hand's roll, as the Engine shares a weapon-led hand's. Fingers and collarbones hold the first frame of
+   the rig's own clip (`--base` picks another: the PSX packs keep `knife_idle`'s fist), so with `"digits": "Look"` on
+   the rig in `clips.json` a clip-led hand takes its look's hand shape over them, as a weapon-led hand does (Engine
+   `HandAim.ShapeClip`). The pack is the rig model's skeleton (nodes and skin, no mesh) with the one clip.
    Staging flags:
    - `--cone` and `--aim`: third-person clips swing behind and over the head, out of a first-person view. Each frame,
      the whole arm turns rigidly about its shoulder until the shoulder-to-wrist line lies in a soft cone around the
@@ -24,7 +29,8 @@ the same joint track, so staging and checks never depend on where a motion came 
    - `--reach`: opens a folded elbow so the hand is held out where it can be seen.
    - `--clear`: keeps the elbow and forearm at least that far from the view, about 0.3 m. A frame whose arm comes
      closer turns about the shoulder, mostly forward along the view, until it clears, so an overhead wind-up does
-     not sweep the elbow across the lens. The camera is the PSX pack's own, or set it with `--camera`. The run
+     not sweep the elbow across the lens. The camera is where the game puts the view for the rig (`arms.json` shoulder
+     plus the rig's carry, under its turn and scale; for PSX the pack's own, 1.743 m up), or set it with `--camera`. The run
      prints the closest the arm comes. Much more than 0.3 m pushes the hand out of the frame.
    - `--band YAW,PITCH,HALF_YAW,HALF_PITCH`, `--gain`: staging measured from the camera, the one the sword packs use.
      It takes where our camera would see the wrist if the arm did the source's motion. It pulls that bearing into a
@@ -36,14 +42,15 @@ the same joint track, so staging and checks never depend on where a motion came 
    - `--sides R`: drives only the right arm, for example to leave a shield arm out.
    - `--pitch` and `--forward`: the older global tilt that the H3 slash uses.
    - `--report`: gives the right wrist's speed and height per frame, for placing `ClipMarks`.
-4. **Preview** (`preview.py`, in Blender). A contact sheet of the clip on the PSX arms from the game's view: the
-   pack's camera, which the shoulder plus psx's carry reproduces, at 75 degrees vertical. A bar stands in for a
+4. **Preview** (`preview.py`, in Blender, `--rig`). A contact sheet of the clip on the rig's arms from the game's view,
+   the same camera as the retarget's, at 75 degrees vertical. A bar stands in for a
    blade. `--from side|front|above` shows where the arms go when they leave the view. The framing is close to the
    game's, not exact, so check in game before calling it done.
 5. **Measure** (`measure.py`, in Blender) where a clip puts the right hand and elbow in the view, for any first-person
    arms with a known camera: the hand's bearing and distance per frame, the closest the elbow comes, and the share of
-   frames with the hand on screen. Compare a pack against the reference below.
-6. **Use and check in game.** List the pack in `content/held/rigs/psx.json` `packs`, then set the action's clip and
+   frames with the hand on screen; `--rig` takes the hand, elbow and camera from a profile. Compare a pack against the
+   reference below.
+6. **Use and check in game.** List the pack in the rig's `content/held/rigs/<rig>.json` `packs`, then set the action's clip and
    marks in `clips.json`. `in-game.sh OUT_DIR [SLOT] [FRAMES] [STEP] [use|reload]` builds the game, runs its own
    headless host, uses or reloads the weapon once in held time and writes a contact sheet. Each tile names the
    action's landing and event cues its step passed (`riders.combat.moments`), so an action's `events` can be placed
@@ -86,7 +93,10 @@ Both stayed in the right half of the view. With `--band` (2026-10-31): UAL 41 ri
 elbow 0.31 m, on screen 68%; Mixamo 44 right to 46 left, -55 to 10 up, elbow 0.31 m, 71%.
 
 Limits:
-- The PSX arms have no twist joints.
+- The PSX arms have no twist joints; painted's second forearm bone takes its share of the roll.
+- A rig without a body (the PSX arms alone) cannot be sampled as a source, so the PSX knife clips do not carry over;
+  painted's sword idle is UAL's `Sword_Idle` instead.
+- Packs made on Asset Store or Mixamo/PINOC art or clips stay in ignored `content/art/arms/` (`content/art/LICENSE.md`).
 - The cone and clearance work frame by frame and do not look ahead. A low dip can still leave the frame for a moment.
 - Video tracks rest on one camera view, so depth is MediaPipe's estimate.
 - A clip keeps its source timing; `ClipMarks` fit it to the action's phases.

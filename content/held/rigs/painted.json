@@ -166,5 +166,32 @@
         ]
       ]
     }
-  }
+  },
+  "packs": [
+    {
+      "path": "art/arms/painted.ual-sword-idle.glb",
+      "producer": "Quaternius Universal Animation Library (Sword_Idle), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0 clip on the painted arms, which are Asset Store art: the pack stays out of git (content/art/LICENSE.md)"
+    },
+    {
+      "path": "art/arms/painted.ual-sword.glb",
+      "producer": "Quaternius Universal Animation Library (Sword_Attack), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0 clip on the painted arms, which are Asset Store art: the pack stays out of git (content/art/LICENSE.md)"
+    },
+    {
+      "path": "art/arms/painted.ual-pistol-idle.glb",
+      "producer": "Quaternius Universal Animation Library (Pistol_Idle_Loop), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0 clip on the painted arms, which are Asset Store art: the pack stays out of git (content/art/LICENSE.md)"
+    },
+    {
+      "path": "art/arms/painted.ual-pistol-shoot.glb",
+      "producer": "Quaternius Universal Animation Library (Pistol_Shoot), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0 clip on the painted arms, which are Asset Store art: the pack stays out of git (content/art/LICENSE.md)"
+    },
+    {
+      "path": "art/arms/painted.ual-pistol-reload.glb",
+      "producer": "Quaternius Universal Animation Library (Pistol_Reload), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0 clip on the painted arms, which are Asset Store art: the pack stays out of git (content/art/LICENSE.md)"
+    }
+  ]
 }

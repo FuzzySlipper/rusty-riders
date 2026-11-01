@@ -1,13 +1,14 @@
 """Where an arm clip puts the right hand and elbow in the view, frame by frame, for any first-person arms. In Blender:
 
     blender -b --factory-startup --python scripts/arm-clips/measure.py -- ARMS.glb CLIP[,CLIP...] OUT.json
-        [--hand BONE] [--elbow BONE] [--camera X,Y,Z] [--fov DEGREES] [--aspect W/H] [--pack PACK.glb]
+        [--rig ID] [--hand BONE] [--elbow BONE] [--camera X,Y,Z] [--fov DEGREES] [--aspect W/H] [--pack PACK.glb]
 
 The camera is a point in the arms model's glTF space looking along +Z (Y up, right toward -X), as both the PSX pack and
 an imported Source view model stand. For each frame: the hand's bearing from the view (degrees right and up of its
 forward), the hand's and the elbow's distance from the camera, and whether the hand is on screen at that vertical field
 of view and aspect. The summary per clip is what to compare across sources and rigs: the hand's sweep, the closest
-the elbow comes, the share of frames with the hand in view. Defaults are the PSX arms in Rusty Riders' view.
+the elbow comes, the share of frames with the hand in view. With --rig (a profile in content/held/rigs), the hand,
+elbow and camera default to that rig's in Rusty Riders' view (rig.py); without it, to the PSX arms'.
 """
 import json, math, os, sys
 import bpy
@@ -16,8 +17,15 @@ from mathutils import Vector
 args = sys.argv[sys.argv.index("--") + 1:]
 arms_path, clips, out = args[0], args[1].split(","), args[2]
 opt = dict(zip(args[3::2], args[4::2]))
-hand, elbow = opt.get("--hand", "hand.R"), opt.get("--elbow", "forearm.R")
-camera = Vector([float(v) for v in opt.get("--camera", "0,1.743,0").split(",")])
+if "--rig" in opt:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from rig import Rig
+    rig = Rig(opt["--rig"]); bones = rig.profile["main"]
+    hand, elbow = opt.get("--hand", bones["hand"]), opt.get("--elbow", bones["lower"])
+    camera = Vector([float(v) for v in opt["--camera"].split(",")]) if "--camera" in opt else Vector(rig.camera().tolist())
+else:
+    hand, elbow = opt.get("--hand", "hand.R"), opt.get("--elbow", "forearm.R")
+    camera = Vector([float(v) for v in opt.get("--camera", "0,1.743,0").split(",")])
 fov = math.radians(float(opt.get("--fov", 75))); aspect = eval(opt.get("--aspect", "16/9"), {})
 
 for o in list(bpy.data.objects): bpy.data.objects.remove(o)

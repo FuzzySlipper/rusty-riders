@@ -42,6 +42,9 @@ internal sealed record ArmClipCatalog(Dictionary<string, RigClips> Rigs)
     /// <summary>How far a rig's arms are carried to frame its clips (zero for a rig without clips).</summary>
     internal Vector3 Carry(string rig) => Rigs.GetValueOrDefault(rig)?.Carry ?? Vector3.Zero;
 
+    /// <summary>Whether a rig's clip-led hand takes its look's hand shape over its clips (Engine <see cref="HandAim.ShapeClip"/>).</summary>
+    internal bool ShapesHand(string rig) => Rigs.GetValueOrDefault(rig)?.Digits == ClipDigits.Look;
+
     /// <summary>Takes a reloaded file's clips in place.</summary>
     internal void Take(ArmClipCatalog fresh)
     {
@@ -53,11 +56,23 @@ internal sealed record ArmClipCatalog(Dictionary<string, RigClips> Rigs)
 /// <summary>
 /// One rig's clip-led motion families, by motion id, and where its clips are framed: how far (camera-space metres) the
 /// rig's arms are carried from the shared shoulder (content/held/arms.json) to where the clips were authored to be
-/// seen. The carry holds while the rig draws, clip-led or not; weapon-led hands keep their grips under it.
+/// seen. The carry holds while the rig draws, clip-led or not; weapon-led hands keep their grips under it. Its clips'
+/// digits say how a clip-led main hand is shaped.
 /// </summary>
 internal sealed record RigClips(Dictionary<string, MotionClips> Motions)
 {
     public Vector3 Carry { get; init; }
+    public ClipDigits Digits { get; init; } = ClipDigits.Clip;
+}
+
+/// <summary>
+/// How a rig's clip-led main hand is shaped: as its clips shape it (a clip pack with its own hands, such as the PSX
+/// knife clips), or by its look's hand shape over the rig's own hands, which retargeted packs keep (scripts/arm-clips).
+/// </summary>
+internal enum ClipDigits
+{
+    Clip,
+    Look,
 }
 
 /// <summary>
