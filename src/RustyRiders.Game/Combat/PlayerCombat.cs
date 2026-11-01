@@ -186,7 +186,7 @@ internal sealed class PlayerCombat : IDisposable
         {
             if (users[hand].Step(seconds) is not { } landed) continue;
             if (landed.Reloads) Refill(hands[hand].Item);
-            else Feedback(resolution.Land(landed, actor, users[hand].Aim, targets), hand);
+            else Feedback(resolution.Land(landed, actor, users[hand].Aim, targets, users[hand].Scale), hand);
         }
         Feedback(resolution.Step(seconds, [.. targets, actor]), null);
         foreach (TrainingDummy target in dummies) target.Stats.Effects.Advance(seconds);
@@ -295,14 +295,16 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     // A burst where each landed action ended, and a notice of what the player's own actions did.
-    // landedBy is the hand whose action landed now (null for shots in flight).
+    // landedBy is the hand whose action landed now (null for shots in flight and melee sweeps, which turn across the
+    // commit: a sweep's blow is the hand's whose action it is, still committing).
     private void Feedback(ActionImpact[] impacts, int? landedBy)
     {
-        bool landedNow = landedBy is not null;
         foreach (ActionImpact impact in impacts)
         {
+            int? by = landedBy ?? SweptBy(impact);
+            bool landedNow = by is not null;
             if (impact.Action.Delivery.Kind != DeliveryKind.Self) Burst(impact.End);
-            if (impact.User == actor && landedBy is { } hand && Felt(impact) is { } kind) held.Feel(hand, kind);
+            if (impact.User == actor && by is { } hand && Felt(impact) is { } kind) held.Feel(hand, kind);
             if (impact.User != actor || (!landedNow && impact.Target is null && !impact.Surface)) continue;
             string name = impact.Target is INamed named ? named.Name : "";
             CombatMessages text = definition.Text;
@@ -311,6 +313,14 @@ internal sealed class PlayerCombat : IDisposable
                 : impact.Defeated ? Template.Fill(text.Defeated, ("target", name))
                 : Template.Fill(text.Hit, ("target", name), ("damage", impact.Damage)));
         }
+    }
+
+    // The hand whose melee action a sweep's blow belongs to: the one still committing it.
+    private int? SweptBy(ActionImpact impact)
+    {
+        if (impact.User != actor || impact.Action.Delivery.Kind != DeliveryKind.Melee) return null;
+        int hand = Array.FindIndex(users, u => u.Current == impact.Action);
+        return hand >= 0 ? hand : null;
     }
 
     // What the acting hand feels as its action lands: a shot or cast fires; a blow strikes a body or is stopped by a surface.

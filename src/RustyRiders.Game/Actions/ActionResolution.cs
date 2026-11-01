@@ -45,20 +45,22 @@ internal sealed class Projectile(ActionDefinition action, IActionActor user, Vec
 /// by the user's stats, then the outgoing contributions of the user and the incoming contributions of the target, then
 /// the target's resistance and wards (<see cref="ActorStats.TakeDamage"/>), then the action's effects. Adapted from
 /// rusty-hotel's (itself from rusty-dagger's <c>CombatResolution</c>; docs/reuse.md): participants' live stats and
-/// contributions, one ordered path. Projectiles fly on the world seconds passed to <see cref="Step"/>.
+/// contributions, one ordered path. Projectiles fly, and melee sweeps turn, on the world seconds passed to <see cref="Step"/>.
+/// Melee hits are in ActionResolution.Melee.cs.
 /// </summary>
-internal sealed class ActionResolution(IEngineContext engine, SpatialSession session, MechanicsDefinition mechanics)
+internal sealed partial class ActionResolution(IEngineContext engine, SpatialSession session, MechanicsDefinition mechanics)
 {
     // Every query sees every collider; bodies are offered explicitly as the entities each query may hit.
     private static readonly SpatialQueryFilter Everything = new(0, uint.MaxValue);
     private readonly List<Projectile> projectiles = [];
-    // A sweep meeting a surface this close to its start began in contact with it.
-    private const double StartContact = .05;
 
     internal IReadOnlyList<Projectile> Projectiles => projectiles;
 
-    /// <summary>Lands an action whose windup has ended, against the bodies it may hit. A projectile takes flight instead.</summary>
-    internal ActionImpact[] Land(ActionDefinition action, IActionActor user, Vector3 aim, IReadOnlyList<IActionActor> targets)
+    /// <summary>
+    /// Lands an action whose windup has ended, against the bodies it may hit. A projectile takes flight and a melee sweep
+    /// starts turning instead, across the commit as <paramref name="scale"/> (the user's action time) stretches it.
+    /// </summary>
+    internal ActionImpact[] Land(ActionDefinition action, IActionActor user, Vector3 aim, IReadOnlyList<IActionActor> targets, float scale = 1)
     {
         foreach (string effect in action.SelfEffects) user.Stats.Effects.Apply(mechanics.Effect(effect)!, $"action.{action.Id}");
         IActionActor[] living = targets.Where(t => t.Alive && t.Entity != user.Entity).ToArray();
@@ -70,14 +72,7 @@ internal sealed class ActionResolution(IEngineContext engine, SpatialSession ses
             case DeliveryKind.Hitscan:
                 return [First(action, user, Cast(user, aim, d.Range, living), user.Eye + aim * d.Range, living)];
             case DeliveryKind.Melee:
-            {
-                SpatialHit hit = engine.Spatial.CastCapsule(new(session, user.Eye, 0, d.Width / 2, aim * d.Range, 0, Everything,
-                    living.Select(t => t.Hitbox).ToArray(), new[] { user.Entity }));
-                // A user hugging a wall starts the sweep in it; then the swing is judged along its line alone.
-                if (hit.Present && hit.Kind != SpatialHitKind.Entity && (hit.StartSolid || hit.Distance < StartContact))
-                    hit = Cast(user, aim, d.Range, living);
-                return [First(action, user, hit, user.Eye + aim * d.Range, living)];
-            }
+                return Melee(action, user, aim, living, action.Timing.Commit * scale);
             case DeliveryKind.Projectile:
                 projectiles.Add(new(action, user, user.Eye, aim, living.Select(t => t.Entity).ToHashSet()));
                 return [];
@@ -86,10 +81,10 @@ internal sealed class ActionResolution(IEngineContext engine, SpatialSession ses
         }
     }
 
-    /// <summary>Moves every projectile by admitted seconds, casting each step's segment; returns what they hit.</summary>
+    /// <summary>Moves every projectile and turns every melee sweep by admitted seconds; returns what they hit.</summary>
     internal ActionImpact[] Step(float seconds, IReadOnlyList<IActionActor> bodies)
     {
-        List<ActionImpact> impacts = [];
+        List<ActionImpact> impacts = Turn(seconds, bodies);
         foreach (Projectile shot in projectiles.ToArray())
         {
             float travel = Math.Min(shot.Action.Delivery.Speed * seconds, shot.Action.Delivery.Range - shot.Travelled);
@@ -105,7 +100,11 @@ internal sealed class ActionResolution(IEngineContext engine, SpatialSession ses
         return impacts.ToArray();
     }
 
-    internal void Clear() => projectiles.Clear();
+    internal void Clear()
+    {
+        projectiles.Clear();
+        sweeps.Clear();
+    }
 
     /// <summary>Whether a straight line between two points meets no surface.</summary>
     internal bool Clear(Vector3 from, Vector3 to) => !engine.Spatial.CastSegment(new(session, from, to, Everything,

@@ -138,7 +138,7 @@ internal sealed class EnemyDirector : IDisposable
                 enemy.User.Begin(action, Vector3.Normalize(player.Eye - enemy.Eye), (float)enemy.Stats.Stat(ActorStats.ActionTimeStat).Value);
             Move(enemy, target, distance, sees, seconds);
             if (enemy.User.Step(seconds) is { } landed && enemy.Alive)
-                resolution.Land(landed, enemy, enemy.User.Aim, [player]);
+                resolution.Land(landed, enemy, enemy.User.Aim, [player], enemy.User.Scale);
         }
         resolution.Step(seconds, [player]);
         foreach (Enemy enemy in enemies.Where(e => !e.Alive).ToArray())

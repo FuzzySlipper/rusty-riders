@@ -9,7 +9,7 @@ namespace RustyRiders.Game.Actions;
 [JsonConverter(typeof(JsonStringEnumConverter<DeliveryKind>))]
 internal enum DeliveryKind
 {
-    /// <summary>A capsule swept along the aim from the eye: the first body it meets within reach.</summary>
+    /// <summary>A blow within reach, found the way its <see cref="MeleeHit"/> says (a thrust along the aim by default).</summary>
     Melee,
     /// <summary>A ray along the aim: the first body or surface within range.</summary>
     Hitscan,
@@ -34,11 +34,15 @@ internal sealed record ActionDefinition(string Id, string Name, ActionDelivery D
     internal float Duration => Timing.Windup + Timing.Commit + Timing.Recovery;
 }
 
-/// <param name="Range">Reach (melee), distance (hitscan, projectile), or how far along the aim an area is centred (0 is the user).</param>
-/// <param name="Width">A melee sweep's or a projectile's width.</param>
-/// <param name="Radius">An area's radius.</param>
+/// <param name="Range">Reach (melee), distance (hitscan, projectile), or how far along the aim an area (or a melee sphere) is centred (0 is the user).</param>
+/// <param name="Width">A melee blow's or a projectile's width.</param>
+/// <param name="Radius">An area's or a melee sphere's radius.</param>
 /// <param name="Speed">A projectile's speed, metres per second.</param>
-internal sealed record ActionDelivery(DeliveryKind Kind, float Range = 0, float Width = 0, float Radius = 0, float Speed = 0);
+/// <param name="Hit">How a melee blow finds what it strikes; without one, a thrust.</param>
+internal sealed record ActionDelivery(DeliveryKind Kind, float Range = 0, float Width = 0, float Radius = 0, float Speed = 0, MeleeHit? Hit = null)
+{
+    internal MeleeHit Melee => Hit ?? MeleeHit.Thrust;
+}
 
 /// <summary>
 /// What an action costs, spent once when it is accepted: track points (charge, ammunition) and <see cref="Rounds"/>
@@ -90,7 +94,9 @@ internal static class ActionValidation
         {
             case DeliveryKind.Melee:
                 Authored.Positive(path, $"{at}.delivery.range", d.Range);
-                Authored.Positive(path, $"{at}.delivery.width", d.Width);
+                if (d.Melee.Kind == MeleeHitKind.Sphere) Authored.Positive(path, $"{at}.delivery.radius", d.Radius);
+                else if (d.Melee.Kind != MeleeHitKind.Ray) Authored.Positive(path, $"{at}.delivery.width", d.Width);
+                d.Melee.Validate(path, $"{at}.delivery.hit");
                 break;
             case DeliveryKind.Hitscan:
                 Authored.Positive(path, $"{at}.delivery.range", d.Range);
@@ -108,6 +114,7 @@ internal static class ActionValidation
                 Authored.Require(a.Damage.Length == 0 && a.Effects.Length == 0, path, at, "a self action deals no damage and puts no effect on a target; use selfEffects.");
                 break;
         }
+        Authored.Require(d.Hit is null || d.Kind == DeliveryKind.Melee, path, $"{at}.delivery.hit", "only a melee blow has a hit.");
         Authored.Require(!a.Reloads || d.Kind == DeliveryKind.Self, path, $"{at}.reloads", "a reload is a self action.");
         Authored.AtLeast(path, $"{at}.timing.windup", a.Timing.Windup, 0);
         Authored.Positive(path, $"{at}.timing.commit", a.Timing.Commit);

@@ -6,7 +6,13 @@
       "delivery": {
         "kind": "Melee",
         "range": 2.2,
-        "width": 0.7
+        "width": 0.5,
+        "hit": {
+          "kind": "Sweep",
+          "from": { "right": 45, "up": 0 },
+          "to": { "right": -45, "up": -25 },
+          "limit": 3
+        }
       },
       "cost": {
         "tracks": {}

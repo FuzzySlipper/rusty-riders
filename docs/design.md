@@ -144,8 +144,11 @@ Every swing, shot, cast and use is one **action**. Player and enemies share one 
 rusty-hotel's `Actions/`):
 - **Phases:** windup → commit → recovery, plus a cooldown. The total time is what an action costs in
   gameplay time.
-- **Delivery:** melee sweep (swept capsule), hitscan ray, projectile (per-step segment cast), area, or
-  self.
+- **Delivery:** melee, hitscan ray, projectile (per-step segment cast), area, or self. A melee blow
+  names how it finds what it strikes (`delivery.hit`): a thrust (a capsule along the aim, the default), a
+  ray, a sphere overlap, or a sweep (a blade turned between two bearings across the commit, striking
+  each body as it reaches it). The hit is gameplay, not read from the arms clip; a clip is staged to
+  match it.
 - **Cost:** ammo, charge, health or nothing.
 - **Payload:** damage packets by kind, scaled by stats, plus effects (burn, slow, stun, knockback).
 
