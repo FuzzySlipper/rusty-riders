@@ -33,7 +33,10 @@ the same joint track, so staging and checks never depend on where a motion came 
    pack's camera, which the shoulder plus psx's carry reproduces, at 75 degrees vertical. A bar stands in for a
    blade. `--from side|front|above` shows where the arms go when they leave the view. The framing is close to the
    game's, not exact, so check in game before calling it done.
-5. **Use and check in game.** List the pack in `content/held/rigs/psx.json` `packs`, then set the action's clip and
+5. **Measure** (`measure.py`, in Blender) where a clip puts the right hand and elbow in the view, for any first-person
+   arms with a known camera: the hand's bearing and distance per frame, the closest the elbow comes, and the share of
+   frames with the hand on screen. Compare a pack against the reference below.
+6. **Use and check in game.** List the pack in `content/held/rigs/psx.json` `packs`, then set the action's clip and
    marks in `clips.json`. `in-game.sh OUT_DIR` builds the game, runs its own headless host, uses the main hand once
    in held time and writes a contact sheet.
 
@@ -43,6 +46,26 @@ Each pack records its source, licence, commands and marks: `content/art/arms/sou
 Setup: a venv with `mediapipe opencv-python-headless numpy` (the video route), Blender 5.x on PATH, and for video the
 MediaPipe model
 `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task`.
+
+Reference: Dark Messiah's sword arms, measured with `measure.py` on the view model that rusty-bridge imports for
+analysis (`first_basic`, in its ignored `local/import`; nothing of it is copied here). The camera is 9 units above
+the eye and 2.1 ahead, the vertical field of view 69 degrees, and the screen 16:9. Bearings are degrees right and up
+of the view's forward.
+
+| Clip | Length | Hand bearing (right; up) | Hand distance | Elbow closest | Hand on screen |
+| --- | --- | --- | --- | --- | --- |
+| Rest (`idle`) | loop | 43; -49 (below the frame, the blade rising into it) | 0.71 m | 0.60 m | 0% |
+| Fast A | 0.29 s | 45 to -24; -49 to -11 | 0.50-0.71 m | 0.33 m | 75% |
+| Fast B (back across) | 0.42 s | -52 to 45; -30 to -9 | 0.46-0.69 m | 0.32 m | 73% |
+| Fast C | 0.42 s | -52 to 49; -33 to 4 | 0.33-0.71 m | 0.27 m | 64% |
+| Recovery (`end`) | 0.50 s | -44 to 44; -49 to -17 | 0.47-0.71 m | 0.33 m | 46% |
+| Power wind-up (`in`) | 0.50 s | 13 to 44; -49 to 14 | 0.42-0.71 m | 0.39 m | 54% |
+| Power release (`out`) | 1.08 s | -40 to 58; -49 to 18 | 0.44-0.72 m | 0.32 m | 15% |
+
+What it says: hands rest and finish below the frame and sweep through it. A fast cut crosses about 100 degrees
+side to side, mostly below the view's middle, in a third of a second. Elbows stay about 0.27-0.39 m from the
+camera. Ours (2026-10-31, PSX at 75 degrees): UAL slash hand bearing 3 to 51 right, -36 to 10 up, elbow 0.33 m,
+on screen 89%; Mixamo 56 to -2 right, elbow 0.33 m, on screen 49%. Our cuts stay in the right half of the view.
 
 Limits:
 - The PSX arms have no twist joints.
