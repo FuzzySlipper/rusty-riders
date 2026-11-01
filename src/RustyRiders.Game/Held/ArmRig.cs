@@ -8,10 +8,10 @@ namespace RustyRiders.Game.Held;
 /// <summary>
 /// The first-person arms apart from any one arms model (content/held/arms.json): the Engine's <see cref="HeldArms"/>
 /// (shoulder, elbow pole, default hold in the hand's canonical frame, the hands' closure and holding pose), which rig
-/// profile draws them, and where the developer grip check finds a hand's points and how near a look's landmarks they
-/// must come.
+/// profile draws them, where an empty off hand rests, and where the developer grip check finds a
+/// hand's points and how near a look's landmarks they must come.
 /// </summary>
-internal sealed record ArmsDefinition(Vector3 Shoulder, Vector3 Pole, Vector3 Hold, ArmDigits Hands, HandLandmarkTuning Landmarks)
+internal sealed record ArmsDefinition(Vector3 Shoulder, Vector3 Pole, Vector3 Hold, ArmDigits Hands, ArmRest Rest, HandLandmarkTuning Landmarks)
     : HeldArms(Shoulder, Pole, Hold, Hands)
 {
     internal const string Path = "held/arms.json";
@@ -31,9 +31,20 @@ internal sealed record ArmsDefinition(Vector3 Shoulder, Vector3 Pole, Vector3 Ho
     internal void Take(ArmsDefinition fresh)
     {
         (Rig, Shoulder, Pole, Hold) = (fresh.Rig, fresh.Shoulder, fresh.Pole, fresh.Hold);
+        (Rest.Grip, Rest.Turn) = (fresh.Rest.Grip, fresh.Rest.Turn);
         Hands.Take(fresh.Hands);
         Landmarks.Take(fresh.Landmarks);
     }
+}
+
+/// <summary>
+/// Where the off hand rests while it holds nothing (camera space, the left hand's own grip point and its turn, degrees
+/// about X, Y, Z): out of the view, below its lower left, on clip-led arms too.
+/// </summary>
+internal sealed record ArmRest(Vector3 Grip, Vector3 Turn)
+{
+    public Vector3 Grip { get; set; } = Grip;
+    public Vector3 Turn { get; set; } = Turn;
 }
 
 /// <summary>Every rig profile in content/held/rigs (Engine <see cref="ArmRig"/>s), by id: those named here, loaded at start.</summary>

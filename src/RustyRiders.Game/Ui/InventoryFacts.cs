@@ -4,7 +4,7 @@ using RustyRiders.Game.Items;
 namespace RustyRiders.Game.Ui;
 
 /// <summary>
-/// The inventory screen's facts: carried weapons (and which hand holds each), worn armour, item stacks with what
+/// The inventory screen's facts: carried weapons (and which is in hand), worn armour, item stacks with what
 /// each can do, slots used and the haul. Indices are what the screen's intents name.
 /// </summary>
 internal static class InventoryFacts
@@ -12,7 +12,7 @@ internal static class InventoryFacts
     internal static uint Write(UiValueWriter w, Inventory inventory, PlayerCombat combat)
     {
         uint[] weapons = inventory.Weapons.Select((item, index) => w.Object("", w.Number("index", index), w.Text("name", item.Name),
-            w.Text("icon", item.Icon), w.Number("hand", combat.HandOf(item)))).ToArray();
+            w.Text("icon", item.Icon), w.Flag("held", combat.Holds(item)))).ToArray();
         uint[] worn = inventory.Worn.Select((item, index) => w.Object("", w.Number("index", index), w.Text("name", item.Name),
             w.Text("icon", item.Icon), w.Text("slot", item.Armour!.Slot.ToString()), w.Text("adds", Adds(item)))).ToArray();
         uint[] stacks = inventory.Stacks.Select((stack, index) => w.Object("", w.Number("index", index), w.Text("name", stack.Item.Name),

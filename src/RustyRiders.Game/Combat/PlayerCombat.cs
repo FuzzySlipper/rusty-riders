@@ -11,15 +11,13 @@ using RustyRiders.Game.Player;
 namespace RustyRiders.Game.Combat;
 
 /// <summary>
-/// The player's fighting: two hands holding weapons the inventory carries, each running its own action through the shared
-/// pipeline (a hand is busy only with its own action, so one can strike while the other recovers), costs
-/// (charge, ammunition, rounds in a magazine) and reloads, training dummies to hit, and what it all looks like (held
+/// The player's fighting: one weapon at a time in the right hand, taken from those the inventory carries, running its
+/// action through the shared pipeline, costs (charge, ammunition, rounds in a magazine) and reloads, training dummies to hit, and what it all looks like (held
 /// weapons through <see cref="HeldView"/>, projectiles, impact bursts) and says on the HUD. A use returns the world seconds it
 /// costs; the caller buys them from gameplay time. Hits resolve in the current scene's spatial session.
 /// </summary>
 internal sealed class PlayerCombat : IDisposable
 {
-    internal const int MainHand = HeldView.MainHand, OffHand = HeldView.OffHand;
     private const ulong FirstDummyEntity = 10_000;
     // The two held looks and the arms are the first objects; projectiles and dummies follow.
     private const ulong FirstObjectId = 3_000_000;
@@ -30,9 +28,9 @@ internal sealed class PlayerCombat : IDisposable
     private readonly PlayerVitals vitals;
     private readonly Walker walker;
     private readonly PlayerActor actor;
-    // Each hand's action timing: its action in progress, its aim and its cooldowns.
-    private readonly ActionUser[] users = [new(), new()];
-    private readonly Hand[] hands = new Hand[2];
+    // The weapon's action timing: its action in progress, its aim and its cooldowns.
+    private readonly ActionUser user = new();
+    private ItemDefinition weapon = null!;
     private readonly Inventory inventory;
     private readonly Dictionary<string, int> loaded = [];
     private readonly List<TrainingDummy> dummies = [];
@@ -40,8 +38,6 @@ internal sealed class PlayerCombat : IDisposable
     private readonly HeldView held;
     private readonly Appearance projectile, dummy;
     private ActionResolution? resolution;
-    // The hand whose action began last (the HUD's progress follows it).
-    private int latestHand = MainHand;
     private ulong nextDummy = FirstDummyEntity, bursts;
     private string notice = "";
     private double noticeLeft;
@@ -64,8 +60,8 @@ internal sealed class PlayerCombat : IDisposable
 
     internal IActionActor Actor => actor;
     internal IReadOnlyList<TrainingDummy> Dummies => dummies;
-    /// <summary>Whether either hand's action is under way (what needs both hands free waits: taking, using, swapping).</summary>
-    internal bool Busy => users.Any(u => u.Busy);
+    /// <summary>Whether the weapon's action is under way (what needs the hands free waits: taking, using, swapping).</summary>
+    internal bool Busy => user.Busy;
     internal HeldView View => held;
     internal ActionDefinition? Action(string id) => definition.Actions.Action(id);
 
@@ -74,95 +70,62 @@ internal sealed class PlayerCombat : IDisposable
     {
         resolution = new ActionResolution(engine, session, mechanics);
         dummies.Clear();
-        foreach (ActionUser user in users) user.Interrupt();
+        user.Interrupt();
         held.Reset();
     }
 
-    /// <summary>The kit as it starts: its weapons in hand and every magazine full.</summary>
+    /// <summary>The kit as it starts: its weapon in hand and every magazine full.</summary>
     internal void Reset()
     {
-        foreach (ActionUser user in users) user.Reset();
+        user.Reset();
         held.Reset();
         resolution?.Clear();
-        hands[MainHand] = new Hand(definition.Items.Item(definition.Kit.MainHand)!);
-        hands[OffHand] = new Hand(definition.Items.Item(definition.Kit.OffHand)!);
+        weapon = definition.Items.Item(definition.Kit.Hand)!;
         loaded.Clear();
         notice = "";
     }
 
-    /// <summary>
-    /// Whether the main hand's weapon takes both hands: the off hand holds it too, and the off hand's own weapon is stowed
-    /// (kept, hidden and unused) until the main hand holds a one-handed weapon again.
-    /// </summary>
-    internal bool TwoHanded => hands[MainHand].Item.Weapon!.TwoHanded;
+    /// <summary>Whether the weapon in hand takes both hands: the off hand holds it too (otherwise it holds nothing).</summary>
+    internal bool TwoHanded => weapon.Weapon!.TwoHanded;
 
-    /// <summary>Takes carried weapon <paramref name="index"/> into the main hand (swapping hands if it is in the off hand).</summary>
+    /// <summary>Takes carried weapon <paramref name="index"/> in hand, putting away the one held.</summary>
     internal void Select(int index)
     {
         if (index < 0 || index >= inventory.Weapons.Count || Busy) return;
-        ItemDefinition item = inventory.Weapons[index];
-        if (hands[OffHand].Item == item) hands[OffHand] = hands[MainHand];
-        hands[MainHand] = new Hand(item);
+        weapon = inventory.Weapons[index];
     }
 
-    /// <summary>Puts carried weapon <paramref name="index"/> in a hand (the hands swap when it is in the other).</summary>
-    internal void Hold(int index, int hand)
-    {
-        if (index < 0 || index >= inventory.Weapons.Count || Busy || hand is not (MainHand or OffHand)) return;
-        ItemDefinition item = inventory.Weapons[index];
-        if (item.Weapon!.TwoHanded) hand = MainHand; // held in both hands, it is the main hand's
-        int other = 1 - hand;
-        if (hands[other].Item == item) hands[other] = hands[hand];
-        hands[hand] = new Hand(item);
-    }
+    /// <summary>Whether <paramref name="item"/> is the weapon in hand.</summary>
+    internal bool Holds(ItemDefinition item) => weapon == item;
 
-    /// <summary>Which hand holds carried weapon <paramref name="item"/>, or -1 (a weapon stowed for a two-handed one is in no hand).</summary>
-    internal int HandOf(ItemDefinition item) => hands[MainHand].Item == item ? MainHand : hands[OffHand].Item == item && !TwoHanded ? OffHand : -1;
+    /// <summary>The weapon in hand and, for a gun, its rounds loaded and magazine size.</summary>
+    internal (ItemDefinition Item, int Loaded, int Size) Held => (weapon, Loaded(weapon), weapon.Weapon!.Magazine?.Size ?? 0);
 
-    /// <summary>A hand's weapon (both hands', for a two-handed one) and, for a gun, its rounds loaded and magazine size.</summary>
-    internal (ItemDefinition Item, int Loaded, int Size) Held(int hand)
-    {
-        ItemDefinition item = Holding(hand);
-        return (item, Loaded(item), item.Weapon!.Magazine?.Size ?? 0);
-    }
-
-    // What a hand holds: its own weapon, or for the off hand under a two-handed weapon, that weapon.
-    private ItemDefinition Holding(int hand) => hand == OffHand && TwoHanded ? hands[MainHand].Item : hands[hand].Item;
-
-    /// <summary>A hand's action under way: its phase label and how far through it is (0 to 1), or none.</summary>
-    internal (string Label, float Progress)? Acting(int hand) => users[hand] is { Current: { } current } user
+    /// <summary>The weapon's action under way: its phase label and how far through it is (0 to 1), or none.</summary>
+    internal (string Label, float Progress)? Acting => user.Current is { } current
         ? (user.Phase == ActionPhase.Windup ? current.WindupLabel : current.CommitLabel, user.PhaseProgress) : null;
 
-    /// <summary>The action under way that began last, with its hand, or none.</summary>
-    internal (int Hand, string Label, float Progress)? Latest =>
-        Acting(latestHand) is { } latest ? (latestHand, latest.Label, latest.Progress)
-        : Acting(1 - latestHand) is { } other ? (1 - latestHand, other.Label, other.Progress) : null;
-
-    /// <summary>Uses a hand's weapon. Returns the world seconds the action costs, or null when it could not start.</summary>
-    internal float? Use(int hand)
+    /// <summary>Uses the weapon in hand. Returns the world seconds the action costs, or null when it could not start.</summary>
+    internal float? Use()
     {
-        if (hand == OffHand && TwoHanded) return null; // it holds the main hand's weapon, which the main hand uses
-        WeaponDefinition weapon = hands[hand].Item.Weapon!;
-        ActionDefinition action = definition.Actions.Action(weapon.Action)!;
-        if (users[hand].Readiness(action) != ActionRefusal.None) return null;
-        if (action.Cost.Rounds > Loaded(hands[hand].Item))
-            return Reload(hand) ?? Notice(definition.Text.Empty);
+        ActionDefinition action = definition.Actions.Action(weapon.Weapon!.Action)!;
+        if (user.Readiness(action) != ActionRefusal.None) return null;
+        if (action.Cost.Rounds > Loaded(weapon))
+            return Reload() ?? Notice(definition.Text.Empty);
         foreach ((string track, int amount) in action.Cost.Tracks)
             if (vitals.Stats.Track(track).ValueInt < amount)
                 return Notice(Template.Fill(definition.Text.Short, ("track", mechanics.Tracks.First(t => t.Id == track).Name)));
         foreach ((string track, int amount) in action.Cost.Tracks) vitals.Stats.Track(track).Spend(amount);
-        if (action.Cost.Rounds > 0) loaded[hands[hand].Item.Id] -= action.Cost.Rounds;
-        return Begin(action, hand);
+        if (action.Cost.Rounds > 0) loaded[weapon.Id] -= action.Cost.Rounds;
+        return Begin(action);
     }
 
-    /// <summary>Reloads a hand's gun from its ammunition. Returns the world seconds it costs, or null when there is nothing to do.</summary>
-    internal float? Reload(int hand)
+    /// <summary>Reloads the gun in hand from its ammunition. Returns the world seconds it costs, or null when there is nothing to do.</summary>
+    internal float? Reload()
     {
-        ItemDefinition item = hands[hand].Item;
-        if (hand == OffHand && TwoHanded) return null;
-        if (item.Weapon is not { Reload: { } reload, Magazine: { } magazine } || users[hand].Busy) return null;
-        if (Loaded(item) >= magazine.Size || vitals.Stats.Track(magazine.Track).ValueInt <= 0) return null;
-        return Begin(definition.Actions.Action(reload)!, hand);
+        if (weapon.Weapon is not { Reload: { } reload, Magazine: { } magazine } || user.Busy) return null;
+        if (Loaded(weapon) >= magazine.Size || vitals.Stats.Track(magazine.Track).ValueInt <= 0) return null;
+        return Begin(definition.Actions.Action(reload)!);
     }
 
     /// <summary>A training dummy standing at <paramref name="feet"/> (developer setups).</summary>
@@ -174,7 +137,7 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     /// <summary>
-    /// Advances by world seconds: each hand's action in progress (landing it when its windup ends), shots in flight, and
+    /// Advances by world seconds: the weapon's action in progress (landing it when its windup ends), shots in flight, and
     /// the dummies' effects. <paramref name="others"/> are the other bodies the player's actions may hit (enemies).
     /// </summary>
     internal void Step(float seconds, IReadOnlyList<IActionActor> others)
@@ -182,13 +145,12 @@ internal sealed class PlayerCombat : IDisposable
         held.Step(seconds);
         if (resolution is null) return;
         IActionActor[] targets = [.. dummies.Where(d => d.Alive), .. others];
-        for (int hand = 0; hand < users.Length; hand++)
+        if (user.Step(seconds) is { } landed)
         {
-            if (users[hand].Step(seconds) is not { } landed) continue;
-            if (landed.Reloads) Refill(hands[hand].Item);
-            else Feedback(resolution.Land(landed, actor, users[hand].Aim, targets, users[hand].Scale), hand);
+            if (landed.Reloads) Refill(weapon);
+            else Feedback(resolution.Land(landed, actor, user.Aim, targets, user.Scale), landedNow: true);
         }
-        Feedback(resolution.Step(seconds, [.. targets, actor]), null);
+        Feedback(resolution.Step(seconds, [.. targets, actor]), landedNow: false);
         foreach (TrainingDummy target in dummies) target.Stats.Effects.Advance(seconds);
         dummies.RemoveAll(d => !d.Alive);
     }
@@ -205,7 +167,7 @@ internal sealed class PlayerCombat : IDisposable
     internal IEnumerable<AppearanceFact> Facts()
     {
         CombatPresentation p = definition.Presentation;
-        foreach (AppearanceFact fact in held.Facts(hands[MainHand].Item.Weapon!.Look, hands[OffHand].Item.Weapon!.Look, TwoHanded, walker.Flying is false, users))
+        foreach (AppearanceFact fact in held.Facts(weapon.Weapon!.Look, TwoHanded, walker.Flying is false, user))
             yield return fact;
         ulong id = FirstObjectId + 4;
         foreach (Projectile shot in resolution?.Projectiles ?? [])
@@ -215,17 +177,16 @@ internal sealed class PlayerCombat : IDisposable
             yield return new AppearanceFact(id++, false, 0, target.Transform, dummy, true, RenderLayer.Scene);
     }
 
-    /// <summary>The hands' weapons and loads, the carried ammunition and charge, the action in progress and the latest hit.</summary>
-    internal (string Hands, string Supplies, string Action, string Notice) Hud()
+    /// <summary>The weapon in hand and its load, the carried ammunition and charge, the action in progress and the latest hit.</summary>
+    internal (string Hand, string Supplies, string Action, string Notice) Hud()
     {
         CombatMessages text = definition.Text;
-        string Describe(Hand hand) => hand.Item.Weapon!.Magazine is { } magazine
-            ? $"{hand.Item.Name} {Template.Fill(text.Loaded, ("loaded", Loaded(hand.Item)), ("size", magazine.Size))}"
-            : hand.Item.Name;
+        string hand = weapon.Weapon!.Magazine is { } magazine
+            ? $"{weapon.Name} {Template.Fill(text.Loaded, ("loaded", Loaded(weapon)), ("size", magazine.Size))}"
+            : weapon.Name;
         string supplies = string.Join("  ", mechanics.Tracks.Where(t => t.Id != ActorStats.HealthTrack).Select(t =>
             Template.Fill(text.Carried, ("name", t.Name), ("value", vitals.Stats.Track(t.Id).ValueInt))));
-        string action = string.Join("  ·  ", new[] { MainHand, OffHand }.Select(Acting).OfType<(string Label, float Progress)>().Select(a => a.Label));
-        return ($"{Describe(hands[MainHand])}  ·  {Describe(hands[OffHand])}", supplies, action, noticeLeft > 0 ? notice : "");
+        return (hand, supplies, Acting?.Label ?? "", noticeLeft > 0 ? notice : "");
     }
 
     /// <summary>Each held look's actions, from the weapons that show it (the developer motion viewer's choices).</summary>
@@ -253,7 +214,7 @@ internal sealed class PlayerCombat : IDisposable
     }
 
     /// <summary>Once the held looks are in the published snapshot, their motion follows the action in progress.</summary>
-    internal void Animate() => held.Animate(users);
+    internal void Animate() => held.Animate(user);
 
     /// <summary>Converted weapon models that could not be opened (they fall back to their boxes).</summary>
     internal IReadOnlyList<string> Problems => held.Problems;
@@ -268,11 +229,10 @@ internal sealed class PlayerCombat : IDisposable
     private int Loaded(ItemDefinition item) =>
         loaded.TryGetValue(item.Id, out int rounds) ? rounds : loaded[item.Id] = item.Weapon!.Magazine?.Size ?? 0;
 
-    private float Begin(ActionDefinition action, int hand)
+    private float Begin(ActionDefinition action)
     {
-        latestHand = hand;
         float scale = (float)vitals.Stats.Stat(ActorStats.ActionTimeStat).Value;
-        return users[hand].Begin(action, walker.Forward, scale);
+        return user.Begin(action, walker.Forward, scale);
     }
 
     private void Refill(ItemDefinition item)
@@ -294,18 +254,17 @@ internal sealed class PlayerCombat : IDisposable
         return null;
     }
 
-    // A burst where each landed action ended, and a notice of what the player's own actions did.
-    // landedBy is the hand whose action landed now (null for shots in flight and melee sweeps, which turn across the
-    // commit: a sweep's blow is the hand's whose action it is, still committing).
-    private void Feedback(ActionImpact[] impacts, int? landedBy)
+    // A burst where each landed action ended, and a notice of what the player's own actions did. landedNow is whether
+    // the weapon's action landed now (not for shots in flight; a melee sweep's blow, turning across the commit, is still
+    // the weapon's action landing).
+    private void Feedback(ActionImpact[] impacts, bool landedNow)
     {
         foreach (ActionImpact impact in impacts)
         {
-            int? by = landedBy ?? SweptBy(impact);
-            bool landedNow = by is not null;
+            bool now = landedNow || Swept(impact);
             if (impact.Action.Delivery.Kind != DeliveryKind.Self) Burst(impact.End);
-            if (impact.User == actor && by is { } hand && Felt(impact) is { } kind) held.Feel(hand, kind);
-            if (impact.User != actor || (!landedNow && impact.Target is null && !impact.Surface)) continue;
+            if (impact.User == actor && now && Felt(impact) is { } kind) held.Feel(HeldView.MainHand, kind);
+            if (impact.User != actor || (!now && impact.Target is null && !impact.Surface)) continue;
             string name = impact.Target is INamed named ? named.Name : "";
             CombatMessages text = definition.Text;
             Notice(impact.Target is null ? text.Missed
@@ -315,13 +274,9 @@ internal sealed class PlayerCombat : IDisposable
         }
     }
 
-    // The hand whose melee action a sweep's blow belongs to: the one still committing it.
-    private int? SweptBy(ActionImpact impact)
-    {
-        if (impact.User != actor || impact.Action.Delivery.Kind != DeliveryKind.Melee) return null;
-        int hand = Array.FindIndex(users, u => u.Current == impact.Action);
-        return hand >= 0 ? hand : null;
-    }
+    // Whether an impact is a blow of the weapon's melee sweep, still committing.
+    private bool Swept(ActionImpact impact) =>
+        impact.User == actor && impact.Action.Delivery.Kind == DeliveryKind.Melee && user.Current == impact.Action;
 
     // What the acting hand feels as its action lands: a shot or cast fires; a blow strikes a body or is stopped by a surface.
     private static FeedbackKind? Felt(ActionImpact impact) => impact.Action.Delivery.Kind switch
@@ -368,8 +323,6 @@ internal sealed class PlayerCombat : IDisposable
         appearances.Add(made);
         return made;
     }
-
-    private sealed record Hand(ItemDefinition Item);
 }
 
 /// <summary>An actor with a name the HUD can show (enemies).</summary>

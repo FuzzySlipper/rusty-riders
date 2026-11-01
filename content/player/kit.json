@@ -3,8 +3,7 @@
     "laser-flintlock",
     "rift-blade"
   ],
-  "mainHand": "laser-flintlock",
-  "offHand": "rift-blade",
+  "hand": "laser-flintlock",
   "items": [
     {
       "item": "medkit",

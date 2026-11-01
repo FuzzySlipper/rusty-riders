@@ -95,16 +95,15 @@ internal sealed class Play : IDisposable
             Combat.Announce(Template.Fill(Pickups.Text.Used, ("item", used.Name)));
             return used.Consumable!.Seconds;
         }
-        float? cost = physical.Pressed(PointerButton.Primary) ? Combat.Use(PlayerCombat.MainHand)
-            : physical.Pressed(PointerButton.Secondary) ? Combat.Use(PlayerCombat.OffHand)
-            : physical.Pressed(KeyboardControl.KeyR) ? Combat.Reload(PlayerCombat.MainHand)
+        float? cost = physical.Pressed(PointerButton.Primary) ? Combat.Use()
+            : physical.Pressed(KeyboardControl.KeyR) ? Combat.Reload()
             : null;
         return cost ?? 0;
     }
 
     /// <summary>
     /// The inventory screen's claims (intent <c>riders.inventory</c>, contract <c>riders.inventory.v1</c>): hold a carried
-    /// weapon in a hand, wear spare armour, take off a worn piece, or use a consumable stack. They apply while running and
+    /// weapon in hand, wear spare armour, take off a worn piece, or use a consumable stack. They apply while running and
     /// while paused alike; a claim that no longer fits the inventory does nothing. Returns whether anything changed.
     /// </summary>
     internal bool HandleIntents(ReadOnlySpan<ProductInputEvent> intents)
@@ -120,10 +119,9 @@ internal sealed class Play : IDisposable
                 JsonElement root = payload.RootElement;
                 if (!root.TryGetProperty("action", out JsonElement action) || !root.TryGetProperty("index", out JsonElement at)
                     || !at.TryGetInt32(out int index)) continue;
-                int hand = root.TryGetProperty("hand", out JsonElement h) && h.TryGetInt32(out int chosen) ? chosen : PlayerCombat.MainHand;
                 switch (action.GetString())
                 {
-                    case "hold": Combat.Hold(index, hand); changed = true; break;
+                    case "hold": Combat.Select(index); changed = true; break;
                     case "wear": changed |= Inventory.Wear(index); break;
                     case "takeOff": changed |= Inventory.TakeOff(index); break;
                     case "use" when Inventory.UseAt(mechanics, index) is { } used:

@@ -43,6 +43,8 @@ internal sealed class HeldView : IDisposable
     private bool twoHanded;
     private (ActionDefinition Action, int Key)? viewingKey;
     private readonly ArmsLead lead = new();
+    // The off hand holds no weapon of its own, so it never acts (it holds a two-handed weapon's off grip, or nothing).
+    private readonly ActionUser idle = new();
     // Where the main hand holds its look this update while the arms are clip-led (it rides the hand), or null.
     private (Vector3 Grip, Quaternion Look)? ridden;
     // The main hand's action and its world seconds when the hand was last ridden (what the blade bake reads it against).
@@ -97,13 +99,13 @@ internal sealed class HeldView : IDisposable
     /// The hands' looks as published (camera space, viewmodel layer): each at rest, or in the pose the motion viewer
     /// holds; an action's motion plays over them as the Engine tween.
     /// </summary>
-    /// <param name="twoHanded">The main hand's look is held in both hands: the off hand's own look is hidden and the off hand holds the main look's off grip.</param>
-    /// <param name="users">Each hand's actions; the main hand's leads clip-led arms.</param>
-    internal IEnumerable<AppearanceFact> Facts(string mainLook, string offLook, bool twoHanded, bool visible, IReadOnlyList<ActionUser> users)
+    /// <param name="twoHanded">The main hand's look is held in both hands: the off hand holds the main look's off grip.</param>
+    /// <param name="user">The weapon's actions, which lead clip-led arms. The off hand holds no look of its own.</param>
+    internal IEnumerable<AppearanceFact> Facts(string mainLook, bool twoHanded, bool visible, ActionUser user)
     {
         // The motion viewer shows a look with an off grip in both hands when it shows it in the main hand.
         // Each hand shows what it holds once a swap has drawn it (see Swaps); the viewer shows its look at once.
-        foreach (var (hand, wanted) in new[] { (hands[MainHand], mainLook), (hands[OffHand], offLook) })
+        foreach (var (hand, wanted) in new[] { (hands[MainHand], mainLook), (hands[OffHand], "") })
         {
             hand.Wanted = wanted;
             if (hand.Look == "") hand.Look = wanted;
@@ -112,9 +114,10 @@ internal sealed class HeldView : IDisposable
         // A look held in both hands takes the off hand once it is drawn.
         this.twoHanded = viewing is { } shownLook ? shownLook.Hand == MainHand && held.Look(shownLook.Look)!.Grips.Off is not null
             : twoHanded && hands[MainHand].Look == mainLook;
-        Lead(users[MainHand]);
+        Lead(user);
         for (int h = 0; h < hands.Length; h++)
         {
+            if (Empty(h)) continue;
             HeldLookDefinition look = held.Look(hands[h].Look)!;
             HeldPose pose = viewing is { } view && view.Hand == h && Viewed() is { } shown ? shown : Placed(h);
             (Vector3 at, Quaternion turn) = h == MainHand && ridden is { } hold ? Held(look, hold) : Drawn(look, pose, h == OffHand);
@@ -156,8 +159,9 @@ internal sealed class HeldView : IDisposable
     /// already), settles a hand back to rest when its action is cut short or its look changes, starts the punches felt,
     /// and reaches the arms.
     /// </summary>
-    internal void Animate(IReadOnlyList<ActionUser> users)
+    internal void Animate(ActionUser main)
     {
+        ActionUser[] users = [main, idle];
         for (int h = 0; h < hands.Length; h++)
         {
             HeldHand hand = hands[h];
@@ -213,6 +217,13 @@ internal sealed class HeldView : IDisposable
     // swaps at once; a change of mind while drawing puts the new look away again.
     private void Swaps(HeldHand hand, bool offHand)
     {
+        // A hand that holds nothing (the off hand, once the viewer lets it go) lets its look go at once.
+        if (hand.Wanted == "")
+        {
+            if (hand.Look != "") (hand.Look, hand.Swap) = ("", Swap.None);
+            hand.Cancel();
+            return;
+        }
         HeldMotion motion = held.Motion.Motions[held.Look(hand.Look)!.Motion];
         HeldLookDefinition look = held.Look(hand.Look)!;
         switch (hand.Swap)
@@ -445,6 +456,9 @@ internal sealed class HeldView : IDisposable
     private HandAim Aim(int index)
     {
         (float closure, _, Vector3 elbow) = Keyed(index);
+        // An empty off hand rests out of the view, clip-led or not (it leaves its clip for the rest).
+        if (index == OffHand && !twoHanded && Empty(OffHand))
+            return new(held.Arms.Rest.Grip, HeldFrames.Turn(held.Arms.Rest.Turn), null, 0, elbow);
         if (index == OffHand && twoHanded)
         {
             HeldLookDefinition main = held.Look(hands[MainHand].Look)!;
@@ -455,6 +469,9 @@ internal sealed class HeldView : IDisposable
         HeldLookDefinition own = held.Look(hands[index].Look)!;
         return new(grip, look, own.Grips.Hand, closure, elbow, Shape: own.Shape?.Main, Solved: index == MainHand || !twoHanded ? own.Solved.GetValueOrDefault(Rig) : null);
     }
+
+    // Whether a hand holds no look (the off hand, but for the motion viewer).
+    private bool Empty(int hand) => hands[hand].Look == "";
 
     private MotionKey[]? Keys(string look, ActionDefinition action) => held.Motion.Motions[held.Look(look)!.Motion].Track(action.Id);
 

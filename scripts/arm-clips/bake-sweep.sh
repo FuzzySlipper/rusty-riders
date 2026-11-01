@@ -31,7 +31,7 @@ debug=$(ls -d ~/.cache/rusty-engine/pairs/"$(sed -n 's:.*<RustyEnginePackageVers
 run() { "$debug" --origin "$origin" --command "$*" 2>/dev/null; }
 sleep 4; run riders.dev.select "$slot" >/dev/null; sleep 2
 run engine.time.mode manual >/dev/null; run engine.time.advance 300 >/dev/null
-run riders.dev.use main >/dev/null
+run riders.dev.use >/dev/null
 samples=$(mktemp); trap 'rm -f "$samples"; rusty dev stop --instance $instance >/dev/null 2>&1' EXIT
 # One update at a time until the blade is past the commit.
 for _ in $(seq 1 240); do

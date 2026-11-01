@@ -162,16 +162,12 @@ rusty-hotel's `Actions/`):
 | Focus / spell | Spells from the old ability schools (Elemental, Theurgy, Invocation …) | Charges, projectiles and areas, element effects |
 
 Ammo kinds from the old data: BulletClip, TechAmmo, TechCharge, MagicCharge, PowerCharge (Arrows if bows
-come back). The player holds a main hand and an off hand. A gun in one hand and a blade in the other is
-encouraged. Each hand acts on its own: a hand is busy only with its own action, so the off hand can strike or cast
-while the main hand's action is still recovering (and the reverse). Each hand's action keeps its own aim, phases and
-cooldown. An action begun while the other hand's is still being paid for in world time buys whichever ends later, so
-overlapping actions cost the longer, not the sum. Taking, using an item and swapping weapons wait until both hands are
-free. When both hands' motions lean the body, it leans by both together.
+come back). The player holds one weapon at a time, in the right hand (2026-11-01: simpler than a weapon in each
+hand, which may come back). The number keys or the inventory screen take another carried weapon in hand; the left
+mouse button uses it and R reloads it. Taking, using an item and swapping weapons wait until its action is done.
 
-A weapon may take both hands (`twoHanded` on the weapon item, such as the maul). It is always the main hand's: the
-off hand holds it too, on its look's off grip, and the off hand's own weapon is stowed (kept, hidden and unused) until
-the main hand takes a one-handed weapon again. While it is held, the off hand's button does nothing.
+A weapon may take both hands (`twoHanded` on the weapon item, such as the maul): the left hand holds it too, on its
+look's off grip. Otherwise the left hand holds nothing and rests out of the view (`content/held/arms.json` `rest`).
 
 ### Spells
 

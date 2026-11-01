@@ -18,16 +18,15 @@ internal sealed class CombatDebugCommands(PlayerCombat combat, Walker walker) : 
         return DebugCommandResult.Success(FormattableString.Invariant($"Dummy {dummy.Entity} at {dummy.Feet.X:0.0}, {dummy.Feet.Z:0.0}."));
     }
 
-    [DebugCommand("riders.dev.use", Description = "Developer override: the main or off hand uses its weapon, as a click does (the world still runs on its own time; advance it in held time).")]
-    public DebugCommandResult Use(string hand)
+    [DebugCommand("riders.dev.use", Description = "Developer override: use the weapon in hand, as a click does (the world still runs on its own time; advance it in held time).")]
+    public DebugCommandResult Use()
     {
-        if (hand is not ("main" or "off")) return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "Hand is main or off.");
-        return combat.Use(hand == "main" ? PlayerCombat.MainHand : PlayerCombat.OffHand) is { } seconds
+        return combat.Use() is { } seconds
             ? DebugCommandResult.Success(FormattableString.Invariant($"Used; it takes {seconds:0.###} s."))
-            : DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "The hand cannot act now.");
+            : DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "The weapon cannot act now.");
     }
 
-    [DebugCommand("riders.dev.select", Description = "Developer override: take carried weapon <index> (0 first) into the main hand, as its number key does.")]
+    [DebugCommand("riders.dev.select", Description = "Developer override: take carried weapon <index> (0 first) in hand, as its number key does.")]
     public DebugCommandResult Select(int index)
     {
         combat.Select(index);

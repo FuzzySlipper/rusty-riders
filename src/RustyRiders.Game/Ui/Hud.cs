@@ -42,9 +42,9 @@ internal static class Hud
             Tracks(w, vitals.Stats),
             w.Array("effects", vitals.Stats.Effects.Active.Select(e => w.Object("", w.Text("mark", e.Definition.Mark),
                 w.Text("text", Effect(e, play.MechanicsText)))).ToArray()),
-            Hands(w, play.Combat),
+            Hand(w, play.Combat),
             w.Text("action", action),
-            w.Number("actionProgress", play.Combat.Latest?.Progress ?? 0),
+            w.Number("actionProgress", play.Combat.Acting?.Progress ?? 0),
             w.Text("notice", notice),
             w.Text("prompt", play.Pickups.Prompt(walker.Feet)),
             w.Text("chase", chase),
@@ -68,14 +68,13 @@ internal static class Hud
         .Select(t => w.Object("", w.Text("name", t.Name), w.Number("value", stats.Track(t.Id).ValueInt), w.Number("max", stats.Track(t.Id).MaximumValue)))
         .ToArray());
 
-    // Each hand's weapon, its load and whether its action is under way.
-    private static uint Hands(UiValueWriter w, PlayerCombat combat) => w.Array("hands", new[] { PlayerCombat.MainHand, PlayerCombat.OffHand }
-        .Select(hand =>
-        {
-            (Items.ItemDefinition item, int loaded, int size) = combat.Held(hand);
-            return w.Object("", w.Text("name", item.Name), w.Text("icon", item.Icon), w.Number("loaded", loaded), w.Number("size", size),
-                w.Flag("acting", combat.Acting(hand) is not null));
-        }).ToArray());
+    // The weapon in hand, its load and whether its action is under way.
+    private static uint Hand(UiValueWriter w, PlayerCombat combat)
+    {
+        (Items.ItemDefinition item, int loaded, int size) = combat.Held;
+        return w.Object("hand", w.Text("name", item.Name), w.Text("icon", item.Icon), w.Number("loaded", loaded), w.Number("size", size),
+            w.Flag("acting", combat.Acting is not null));
+    }
 
     /// <summary>An effect's name with its stacks, time left and any ward left, from the authored templates.</summary>
     private static string Effect(LiveEffect effect, MechanicsMessages text)

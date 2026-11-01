@@ -22,8 +22,7 @@ export function mountHud(document) {
       <div class="effects"></div>
     </div>
     <div class="hotbar framed">
-      <div class="hand" data-hand="0"><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>LMB</kbd></div>
-      <div class="hand" data-hand="1"><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>RMB</kbd></div>
+      <div class="hand" data-hand><div class="socket"><i class="orn ring"></i></div><div class="name"></div><div class="load"></div><kbd>LMB</kbd></div>
       <div class="hand ready"><div class="socket"><i class="orn ring"></i></div><div class="name" data-fact="ready"></div><kbd>Q</kbd></div>
       <div class="run"><div data-fact="haul"></div><div data-fact="bank"></div></div>
     </div>
@@ -36,10 +35,10 @@ export function mountHud(document) {
   const clock = element.querySelector('.clock');
   const action = element.querySelector('.action');
   const progress = element.querySelector('.action i');
-  const hands = [...element.querySelectorAll('.hand[data-hand]')];
+  const hand = element.querySelector('.hand[data-hand]');
   const ready = element.querySelector('.hand.ready');
   let readyIcon = null;
-  const handIcons = [null, null];
+  let handIcon = null;
 
   // A socket keeps its ring ornament; only the icon after it changes.
   const setIcon = (socket, image) => socket.replaceChildren(socket.firstElementChild, image);
@@ -67,17 +66,15 @@ export function mountHud(document) {
     clock.toggleAttribute('data-held', facts.held === true);
     action.toggleAttribute('data-active', !!facts.action);
     progress.style.width = `${Math.max(0, Math.min(1, facts.actionProgress ?? 0)) * 100}%`;
-    (facts.hands ?? []).forEach((hand, index) => {
-      const slot = hands[index];
-      if (!slot) return;
-      if (handIcons[index] !== hand.icon) {
-        handIcons[index] = hand.icon;
-        setIcon(slot.querySelector('.socket'), icon(document, hand.icon));
+    if (facts.hand) {
+      if (handIcon !== facts.hand.icon) {
+        handIcon = facts.hand.icon;
+        setIcon(hand.querySelector('.socket'), icon(document, handIcon));
       }
-      slot.querySelector('.name').textContent = hand.name;
-      slot.querySelector('.load').textContent = hand.size > 0 ? `${hand.loaded}/${hand.size}` : '';
-      slot.toggleAttribute('data-acting', hand.acting === true);
-    });
+      hand.querySelector('.name').textContent = facts.hand.name;
+      hand.querySelector('.load').textContent = facts.hand.size > 0 ? `${facts.hand.loaded}/${facts.hand.size}` : '';
+      hand.toggleAttribute('data-acting', facts.hand.acting === true);
+    }
     if (readyIcon !== facts.readyIcon) {
       readyIcon = facts.readyIcon;
       setIcon(ready.querySelector('.socket'), icon(document, readyIcon));

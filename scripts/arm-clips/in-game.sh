@@ -24,7 +24,7 @@ capture() {
 }
 sleep 4; run riders.dev.select "$slot"; sleep 2
 run engine.time.mode manual; run engine.time.advance 300; capture f00
-run riders.dev.use main
+run riders.dev.use
 # The world advances whole updates, so record the milliseconds each step really admitted.
 : > "$out/ms.txt"
 for i in $(seq 1 "$frames"); do
