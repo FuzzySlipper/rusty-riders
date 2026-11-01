@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # In-game contact sheet of the main hand's action: builds, starts a private headless host (its own instance, stopped
 # afterwards), selects an inventory slot, holds world time and captures the view at rest and every STEP milliseconds of
-# world time (whole 60 Hz updates, at least one) through one use of the main hand. Needs rusty dev's live debug and a Chromium for headless hosts (RIDERS_CHROMIUM).
+# world time (rounded up to whole 60 Hz updates; tiles show the time admitted) through one use of the main hand. Needs rusty dev's live debug and a Chromium for headless hosts (RIDERS_CHROMIUM).
 #
 #   scripts/arm-clips/in-game.sh OUT_DIR [SLOT=1] [FRAMES=20] [STEP=33]
+#   (STEP 16 captures every update)
 set -euo pipefail
 out=$1; slot=${2:-1}; frames=${3:-20}; step=${4:-33}
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -24,16 +25,23 @@ capture() {
 sleep 4; run riders.dev.select "$slot"; sleep 2
 run engine.time.mode manual; run engine.time.advance 300; capture f00
 run riders.dev.use main
-for i in $(seq 1 "$frames"); do run engine.time.advance "$step"; capture "$(printf 'f%02d' "$i")"; done
-python3 - "$out" "$frames" "$step" <<'PY'
+# The world advances whole updates, so record the milliseconds each step really admitted.
+: > "$out/ms.txt"
+for i in $(seq 1 "$frames"); do
+  "$debug" --origin "$origin" --command "engine.time.advance $step" 2>/dev/null | grep -o '"advancedMs":[0-9.]*' | cut -d: -f2 >> "$out/ms.txt"
+  capture "$(printf 'f%02d' "$i")"
+done
+python3 - "$out" "$frames" <<'PY'
 import sys
 from PIL import Image, ImageDraw
-out, frames, step = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+out, frames = sys.argv[1], int(sys.argv[2])
+at = [0.0]
+for line in open(f"{out}/ms.txt"): at.append(at[-1] + float(line))
 cols = 4; rows = -(-(frames + 1) // cols)
 sheet = Image.new("RGB", (480 * cols, 270 * rows))
 for i in range(frames + 1):
     tile = Image.open(f"{out}/f{i:02d}.png").resize((480, 270))
-    ImageDraw.Draw(tile).text((8, 8), "rest" if i == 0 else f"+{i * step} ms", fill="white")
+    ImageDraw.Draw(tile).text((8, 8), "rest" if i == 0 else f"+{at[i]:.0f} ms", fill="white")
     sheet.paste(tile, ((i % cols) * 480, (i // cols) * 270))
 sheet.save(f"{out}/sheet.png")
 PY
