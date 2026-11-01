@@ -50,7 +50,9 @@ the same joint track, so staging and checks never depend on where a motion came 
    uses the main hand once in its own headless host and reads the drawn blade on every update through the commit
    (`riders.dev.held.blade`). The tip's bearing from the eye, resampled to evenly spaced points of the commit, becomes
    the action's `delivery.hit.path`. The path follows the clip and the look's grip and length; reach and width stay
-   the action's. Rebake after restaging a clip or changing its marks.
+   the action's. A drawn blade sits low and to the side, so a path traced from it hits low (Dark Messiah ties its
+   sweep to the view, not to its drawn sword); `--pitch=SCALE` scales the path's angles above and below the view's
+   level, and the slash uses 0.5. Rebake after restaging a clip or changing its marks.
 
 Each pack records its source, licence, commands and marks: `content/art/arms/sources.json` for authored clips,
 `art/arms/h3-slash/provenance.json` for the video slash.

@@ -4,12 +4,19 @@
 # the drawn blade (riders.dev.held.blade) on every update through the commit. The tip's bearing from the eye, resampled
 # to POINTS evenly spaced steps of the commit, becomes delivery.hit.path of ACTION in content/actions (with --write;
 # otherwise it is only printed). The bearings follow the look's grip and length as well as the clip, so bake with the
-# look the action is drawn with. Needs rusty dev's live debug and a Chromium for headless hosts (RIDERS_CHROMIUM).
+# look the action is drawn with.
 #
-#   scripts/arm-clips/bake-sweep.sh ACTION [SLOT=1] [POINTS=5] [--write]
+# --pitch=SCALE scales the bearings' angle above or below the view's level (1 keeps the drawn tip's). A first-person
+# blade is drawn low and out to the side to be seen, so a hit traced from it lands low on a body (Dark Messiah's sweep
+# is tied to the view, not to its drawn sword); scaling the pitch keeps the cut's shape and direction but centres it.
+# Needs rusty dev's live debug and a Chromium for headless hosts (RIDERS_CHROMIUM).
+#
+#   scripts/arm-clips/bake-sweep.sh ACTION [SLOT=1] [POINTS=5] [--pitch=SCALE] [--write]
 set -euo pipefail
-write=0; args=()
-for a in "$@"; do [[ $a == --write ]] && write=1 || args+=("$a"); done
+write=0; pitch=1; args=()
+for a in "$@"; do
+  case $a in --write) write=1 ;; --pitch=*) pitch=${a#--pitch=} ;; *) args+=("$a") ;; esac
+done
 action=${args[0]}; slot=${args[1]:-1}; points=${args[2]:-5}
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 chromium=${RIDERS_CHROMIUM:-$(ls -d ~/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null | tail -1)}
@@ -34,9 +41,9 @@ for _ in $(seq 1 240); do
   echo "$line" >> "$samples"
   python3 -c "import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d['action'] is None or d['commit'] > 1 else 1)" "$line" && break
 done
-python3 - "$samples" "$action" "$points" "$write" <<'PY'
+python3 - "$samples" "$action" "$points" "$write" "$pitch" <<'PY'
 import json, re, sys, glob
-samples, action, points, write = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4] == "1"
+samples, action, points, write, pitch = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4] == "1", float(sys.argv[5])
 rows = [json.loads(l) for l in open(samples)]
 rows = [r for r in rows if r["action"] == action]
 if not rows: sys.exit(f"bake-sweep: the main hand did not use {action}")
@@ -48,7 +55,7 @@ def at(t):
         if c0 <= t <= c1:
             k = 0 if c1 == c0 else (t - c0) / (c1 - c0)
             return r0 + (r1 - r0) * k, u0 + (u1 - u0) * k
-path = [at(i / (points - 1)) for i in range(points)]
+path = [(r, u * pitch) for r, u in (at(i / (points - 1)) for i in range(points))]
 text = "[" + ", ".join(f'{{ "right": {r:.1f}, "up": {u:.1f} }}' for r, u in path) + "]"
 print(f'"path": {text}')
 if not write: sys.exit(0)
