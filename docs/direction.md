@@ -205,8 +205,8 @@ The old arms turned up in `old-game/Assets/MoreArt` (2026-10-19), with a lot of 
 `scripts/import-fp-arms.sh` builds both into the ignored `content/art/fp-arms/`. Each is a rig profile in
 `content/held/rigs/`: the model, the clip played under the IK, its turn and scale, each arm's joints, and per-rig palm
 and base grip. Hand frames and digit axes are measured from the drawn model, so the arms' hold and the motion keys'
-closure (`content/held/arms.json`) serve every rig unchanged. The packs are third-party store assets the old game
-used; confirm their licences before any public release.
+closure (`content/held/arms.json`) serve every rig unchanged. The packs are Unity Asset Store assets the old game
+bought; they ship inside the game but stay out of git (`content/art/LICENSE.md`).
 
 ### Baking old clips into held motion
 
@@ -404,8 +404,8 @@ the first-person arms (`fp-arms/`), hotel's held models (`hotel/`), generated te
 from. Each producer replaces only its own entries.
 
 `content/art/` stays out of git, Git LFS included; only each folder's `sources.json` (how its art was made) is
-tracked. The art does not need versions, and most of it is third-party store packs that may ship inside the game but
-should not be published as raw files, which a public repository's LFS would do. `scripts/art-sync.sh push`
+tracked. The art does not need versions, and most of it is Unity Asset Store packs that may ship inside the game but
+may not be published as raw files, which a public repository's LFS would do (`content/art/LICENSE.md`). `scripts/art-sync.sh push`
 copies it to the den NAS (`/mnt/den-nas-backup/data/rusty-riders/art`) after a change, as the backup; `pull`
 fills a new Linux checkout, and `scripts/art-sync.ps1` fills a Windows one from den-agents' checkout over `P:`.
 The converted part can still be regenerated from `old-game/`, `old-game-fbx2013/` (the FBX 6 files re-saved as FBX

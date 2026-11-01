@@ -72,8 +72,8 @@ policy in `Held/`.
 
 The DOM UI uses Rift Riders' own UI art (`old-game/Assets/Art/Sprites/UI/RiftRiders`, `GameData/Icons`,
 `Art/Sprites/UI/Fonts`), copied by `scripts/import-ui-art.py`, which lists every source. The `OH_`-prefixed frames
-(hotbar, banner, button, fill) share a prefix with a third-party asset pack the old game used, so confirm their
-licence before any public release. The unprefixed `UI SLICE BOX`, `UI INVENTORY` and `int_sphere` pieces, the icons
+(hotbar, banner, button, fill) come from an Asset Store pack the old game bought; like all the old game's art they ship in the game but stay out
+of git (`content/art/LICENSE.md`). The unprefixed `UI SLICE BOX`, `UI INVENTORY` and `int_sphere` pieces, the icons
 and Alagard are the old game's own or carry their own licence terms.
 
 

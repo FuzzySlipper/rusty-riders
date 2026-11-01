@@ -18,6 +18,7 @@ old-game-fbx2013/
 content/art/**
 !content/art/**/
 !content/art/**/sources.json
+!content/art/LICENSE.md
 __pycache__/
 # Derived training sets and other regenerable outputs (scripts/texture-gen).
 artifacts/
