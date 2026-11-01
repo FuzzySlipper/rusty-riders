@@ -24,6 +24,37 @@
               "fade": 0.1
             }
           }
+        },
+        "revolver": {
+          "idle": {
+            "clip": "ual_pistol_idle",
+            "seconds": 1.7083
+          },
+          "actions": {
+            "flintlock-shot": {
+              "clip": "ual_pistol_shoot",
+              "marks": {
+                "start": 0,
+                "strike": 0.02,
+                "recover": 0.067,
+                "end": 0.8
+              },
+              "fade": 0.05
+            },
+            "flintlock-reload": {
+              "clip": "ual_pistol_reload",
+              "marks": {
+                "start": 0,
+                "strike": 0.55,
+                "recover": 0.6,
+                "end": 0.95
+              },
+              "fade": 0.1
+            }
+          },
+          "leftHand": [
+            "flintlock-reload"
+          ]
         }
       }
     }

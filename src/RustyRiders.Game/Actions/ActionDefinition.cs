@@ -25,11 +25,16 @@ internal enum DeliveryKind
 /// One gameplay action used by the player's hands and by enemies alike: how it is delivered, what it costs, its
 /// timing, the damage packets it deals (scaled by the user's stats) and the effects it puts on what it hits and on its
 /// user. The labels name its windup and commit phases on the HUD. A reloading action (<see cref="Reloads"/>) refills
-/// the hand's magazine when it lands. Its whole duration is what a player's use of it costs in world time.
+/// the hand's magazine when it lands. Its events are cues at other moments (a case ejected, a magazine out and in). Its
+/// whole duration is what a player's use of it costs in world time.
 /// </summary>
 internal sealed record ActionDefinition(string Id, string Name, ActionDelivery Delivery, ActionCost Cost, ActionTiming Timing,
-    DamageDefinition[] Damage, string[] Effects, string[] SelfEffects, string WindupLabel, string CommitLabel, bool Reloads = false)
+    DamageDefinition[] Damage, string[] Effects, string[] SelfEffects, string WindupLabel, string CommitLabel, bool Reloads = false,
+    ActionEvent[]? Events = null)
 {
+    /// <summary>The action's events, in the order authored.</summary>
+    internal ActionEvent[] Cues => Events ?? [];
+
     /// <summary>World seconds from start to ready, before the user's action-time scale.</summary>
     internal float Duration => Timing.Windup + Timing.Commit + Timing.Recovery;
 }
@@ -139,6 +144,7 @@ internal static class ActionValidation
             if (a.Damage[i].Power is { } power)
                 Authored.Require(mechanics.HasStat(power), path, $"{at}.damage[{i}].power", $"'{power}' is not a stat.");
         }
+        for (int i = 0; i < a.Cues.Length; i++) a.Cues[i].Validate(path, $"{at}.events[{i}]");
         mechanics.RequireEffects(path, $"{at}.effects", a.Effects);
         mechanics.RequireEffects(path, $"{at}.selfEffects", a.SelfEffects);
     }

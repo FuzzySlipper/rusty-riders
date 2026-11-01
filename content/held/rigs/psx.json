@@ -137,6 +137,26 @@
       "path": "held/models/psx-arms.ual-sword.glb",
       "producer": "Quaternius Universal Animation Library (Sword_Attack), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
       "license": "CC0-1.0"
+    },
+    {
+      "path": "held/models/psx-arms.ual-pistol-idle.glb",
+      "producer": "Quaternius Universal Animation Library (Pistol_Idle_Loop), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0-1.0"
+    },
+    {
+      "path": "held/models/psx-arms.ual-pistol-shoot.glb",
+      "producer": "Quaternius Universal Animation Library (Pistol_Shoot), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0-1.0"
+    },
+    {
+      "path": "held/models/psx-arms.ual-pistol-reload.glb",
+      "producer": "Quaternius Universal Animation Library (Pistol_Reload), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0-1.0"
+    },
+    {
+      "path": "art/arms/psx-arms.pinoc-pistol-fire.glb",
+      "producer": "PINOC curated motion library (Pistol Fire, Mixamo rig), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "PINOC library terms; the clip stays out of git"
     }
   ]
 }

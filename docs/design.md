@@ -143,7 +143,11 @@ Progression within a run comes from equipment, not levels. Permanent growth belo
 Every swing, shot, cast and use is one **action**. Player and enemies share one pipeline (adapted from
 rusty-hotel's `Actions/`):
 - **Phases:** windup → commit → recovery, plus a cooldown. The total time is what an action costs in
-  gameplay time.
+  gameplay time. The action lands (the hit, the shot, a reload's refill) as its windup ends.
+- **Events:** other moments within an action (`events`: a phase, a fraction of it and a cue: `Eject`,
+  `MagazineOut`, `MagazineIn`, `Cock`), placed on the frames where its arms clip shows them, so retiming the
+  phases moves clip and events together. Nothing plays the cues yet beyond the developer readout
+  (`riders.combat.moments`); sound and effects will.
 - **Delivery:** melee, hitscan ray, projectile (per-step segment cast), area, or self. A melee blow
   names how it finds what it strikes (`delivery.hit`): a thrust (a capsule along the aim, the default), a
   ray, a sphere overlap, or a sweep (a blade turned through a path of bearings across the commit,

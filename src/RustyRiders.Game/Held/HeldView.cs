@@ -49,6 +49,8 @@ internal sealed class HeldView : IDisposable
     private (Vector3 Grip, Quaternion Look)? ridden;
     // The main hand's action and its world seconds when the hand was last ridden (what the blade bake reads it against).
     private (ActionDefinition? Action, float Elapsed, float Scale) riddenAt;
+    // Whether the clip leading the arms now moves the left hand too (an empty left hand then plays it).
+    private bool leftLed;
 
     /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' two are the next three.</param>
     internal HeldView(IEngineContext engine, HeldCatalog held, ulong firstObject)
@@ -143,6 +145,7 @@ internal sealed class HeldView : IDisposable
     private void Lead(ActionUser user)
     {
         ArmClipFrame? frame = lead.Frame(MainClips(), user);
+        leftLed = MainClips() is { } clips && user.Current is { } action && clips.MovesLeft(action.Id);
         arms.Drawn.Lead(frame, lead.Take());
         arms.Drawn.Carry = held.Clips.Carry(Rig) + (frame is null ? Vector3.Zero : hands[MainHand].Sway.Position);
         ridden = null;
@@ -291,9 +294,10 @@ internal sealed class HeldView : IDisposable
 
     /// <summary>
     /// Where the main hand's look rides a clip-led hand as last drawn (camera space): its grip and its tip, the end of its
-    /// length farthest from the grip; with the hand's action and its world seconds then. Null while weapon-led.
+    /// length farthest from the grip, and the look's turn; with the hand's action and its world seconds then. Null while
+    /// weapon-led.
     /// </summary>
-    internal (Vector3 Grip, Vector3 Tip, ActionDefinition? Action, float Elapsed, float Scale)? Blade()
+    internal (Vector3 Grip, Vector3 Tip, Quaternion Look, ActionDefinition? Action, float Elapsed, float Scale)? Blade()
     {
         if (ridden is not { } hold) return null;
         HeldLookDefinition look = held.Look(hands[MainHand].Look)!;
@@ -302,7 +306,7 @@ internal sealed class HeldView : IDisposable
         float half = (look.Model?.Length ?? size[axis]) / 2;
         Vector3 tip = Vector3.Zero;
         tip[axis] = main[axis] > 0 ? -half : half;
-        return (hold.Grip, hold.Grip + Vector3.Transform(tip - main, hold.Look), riddenAt.Action, riddenAt.Elapsed, riddenAt.Scale);
+        return (hold.Grip, hold.Grip + Vector3.Transform(tip - main, hold.Look), hold.Look, riddenAt.Action, riddenAt.Elapsed, riddenAt.Scale);
     }
 
     /// <summary>
@@ -456,9 +460,10 @@ internal sealed class HeldView : IDisposable
     private HandAim Aim(int index)
     {
         (float closure, _, Vector3 elbow) = Keyed(index);
-        // An empty off hand rests out of the view, clip-led or not (it leaves its clip for the rest).
+        // An empty off hand rests out of the view, unless the clip leading the arms moves it too (reach 0: it plays it).
         if (index == OffHand && !twoHanded && Empty(OffHand))
-            return new(held.Arms.Rest.Grip, HeldFrames.Turn(held.Arms.Rest.Turn), null, 0, elbow);
+            return new(held.Arms.Rest.Grip, HeldFrames.Turn(held.Arms.Rest.Turn), null, 0, elbow,
+                Reach: leftLed && arms.Drawn.Clip.Led > 0 ? 0 : 1);
         if (index == OffHand && twoHanded)
         {
             HeldLookDefinition main = held.Look(hands[MainHand].Look)!;

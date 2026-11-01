@@ -1,7 +1,9 @@
 using System.Numerics;
+using System.Text.Json.Serialization;
 
 namespace RustyRiders.Game.Actions;
 
+[JsonConverter(typeof(JsonStringEnumConverter<ActionPhase>))]
 internal enum ActionPhase { Ready, Windup, Commit, Recovery }
 
 /// <summary>Why an action was not started.</summary>
@@ -35,6 +37,9 @@ internal sealed class ActionUser
 
     /// <summary>How many actions have begun; a held view starts an action's motion when this changes.</summary>
     internal ulong Started { get; private set; }
+
+    /// <summary>The current action's events whose moment the last step passed (cleared each step).</summary>
+    internal List<ActionEvent> Cued { get; } = [];
 
     /// <summary>World seconds since the current action began (one update can admit several steps after it began).</summary>
     internal float Elapsed => Current is null ? 0 : elapsed;
@@ -73,9 +78,16 @@ internal sealed class ActionUser
     {
         foreach (string id in cooldowns.Keys.ToArray())
             if ((cooldowns[id] -= seconds) <= 0) cooldowns.Remove(id);
+        Cued.Clear();
         if (Current is not { } action) return null;
         remaining -= seconds;
+        float from = elapsed;
         elapsed += seconds;
+        // An event at the very end of the action is passed by the step that ends it.
+        float end = action.Duration * scale;
+        foreach (ActionEvent cue in action.Cues)
+            if (cue.Time(action.Timing, scale) is var at && at >= from && (at < elapsed || elapsed >= end - Due && at <= end))
+                Cued.Add(cue);
         ActionDefinition? landed = null;
         while (remaining <= Due && Current is not null)
             switch (Phase)

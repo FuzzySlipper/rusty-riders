@@ -31,6 +31,9 @@ internal sealed class PlayerCombat : IDisposable
     // The weapon's action timing: its action in progress, its aim and its cooldowns.
     private readonly ActionUser user = new();
     private ItemDefinition weapon = null!;
+    // The weapon's action moments since the developer readout last took them: its landing and its events' cues, each
+    // with its action and the seconds into it.
+    private readonly List<(string Action, string Moment, float At)> moments = [];
     private readonly Inventory inventory;
     private readonly Dictionary<string, int> loaded = [];
     private readonly List<TrainingDummy> dummies = [];
@@ -145,14 +148,33 @@ internal sealed class PlayerCombat : IDisposable
         held.Step(seconds);
         if (resolution is null) return;
         IActionActor[] targets = [.. dummies.Where(d => d.Alive), .. others];
-        if (user.Step(seconds) is { } landed)
+        ActionDefinition? acting = user.Current;
+        ActionDefinition? landed = user.Step(seconds);
+        foreach (ActionEvent cue in user.Cued) Moment(acting!, cue.Cue.ToString(), cue.Time(acting!.Timing, user.Scale));
+        if (landed is not null)
         {
+            Moment(landed, "Landing", landed.Timing.Windup * user.Scale);
             if (landed.Reloads) Refill(weapon);
             else Feedback(resolution.Land(landed, actor, user.Aim, targets, user.Scale), landedNow: true);
         }
         Feedback(resolution.Step(seconds, [.. targets, actor]), landedNow: false);
         foreach (TrainingDummy target in dummies) target.Stats.Effects.Advance(seconds);
         dummies.RemoveAll(d => !d.Alive);
+    }
+
+    /// <summary>The weapon's action moments (its landing and its events' cues) since this was last read, taken.</summary>
+    internal IReadOnlyList<(string Action, string Moment, float At)> TakeMoments()
+    {
+        var taken = moments.ToArray();
+        moments.Clear();
+        return taken;
+    }
+
+    // A moment the weapon's action passed, kept for the developer readout (the last few only).
+    private void Moment(ActionDefinition action, string moment, float at)
+    {
+        if (moments.Count >= 32) moments.RemoveAt(0);
+        moments.Add((action.Id, moment, at));
     }
 
     /// <summary>Counts down the hit notice in host seconds (it is presentation, not world state).</summary>

@@ -29,6 +29,8 @@ internal sealed record ArmClipCatalog(Dictionary<string, RigClips> Rigs)
                 Authored.Require(motion.Motions.ContainsKey(id), Path, at, $"unknown motion; see content/{HeldMotionCatalog.Path}.");
                 Authored.Positive(Path, $"{at}.idle.seconds", clips.Idle.Seconds);
                 foreach (var (action, clip) in clips.Actions) Authored.Require(Path, $"{at}.actions.{action}", clip.Problems());
+                foreach (string action in clips.LeftHand ?? [])
+                    Authored.Require(clips.Actions.ContainsKey(action), Path, $"{at}.leftHand", $"'{action}' has no clip here.");
             }
         }
         return catalog;
@@ -58,8 +60,17 @@ internal sealed record RigClips(Dictionary<string, MotionClips> Motions)
     public Vector3 Carry { get; init; }
 }
 
-/// <summary>A motion family's clips on one rig: its idle loop and each action's clip, by action id.</summary>
-internal sealed record MotionClips(IdleClip Idle, Dictionary<string, ArmClip> Actions);
+/// <summary>
+/// A motion family's clips on one rig: its idle loop and each action's clip, by action id; and the actions whose clips
+/// move the left hand too (a reload's magazine), which an empty left hand plays instead of resting.
+/// </summary>
+internal sealed record MotionClips(IdleClip Idle, Dictionary<string, ArmClip> Actions)
+{
+    public string[]? LeftHand { get; init; }
+
+    /// <summary>Whether an action's clip moves the left hand too.</summary>
+    internal bool MovesLeft(string action) => LeftHand?.Contains(action) ?? false;
+}
 
 /// <summary>A clip the arms loop at rest, once every <see cref="Seconds"/> of world time.</summary>
 internal sealed record IdleClip(string Clip, float Seconds);

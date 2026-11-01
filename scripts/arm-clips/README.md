@@ -44,8 +44,11 @@ the same joint track, so staging and checks never depend on where a motion came 
    arms with a known camera: the hand's bearing and distance per frame, the closest the elbow comes, and the share of
    frames with the hand on screen. Compare a pack against the reference below.
 6. **Use and check in game.** List the pack in `content/held/rigs/psx.json` `packs`, then set the action's clip and
-   marks in `clips.json`. `in-game.sh OUT_DIR` builds the game, runs its own headless host, uses the main hand once
-   in held time and writes a contact sheet.
+   marks in `clips.json`. `in-game.sh OUT_DIR [SLOT] [FRAMES] [STEP] [use|reload]` builds the game, runs its own
+   headless host, uses or reloads the weapon once in held time and writes a contact sheet. Each tile names the
+   action's landing and event cues its step passed (`riders.combat.moments`), so an action's `events` can be placed
+   on the frames that show them. A clip that moves the left hand too (a reload's magazine) is listed in its family's
+   `leftHand`; otherwise the empty left hand rests out of the view.
 7. **Bake a sweep** (`bake-sweep.sh ACTION [SLOT] [POINTS] --write`) for a melee action whose hit is a `Sweep`. It
    uses the main hand once in its own headless host and reads the drawn blade on every update through the commit
    (`riders.dev.held.blade`). The tip's bearing from the eye, resampled to evenly spaced points of the commit, becomes

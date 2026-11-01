@@ -95,7 +95,11 @@
       "effects": [],
       "selfEffects": [],
       "windupLabel": "Aiming",
-      "commitLabel": "Fired"
+      "commitLabel": "Fired",
+      "events": [
+        { "phase": "Recovery", "at": 0.1, "cue": "Eject" },
+        { "phase": "Recovery", "at": 0.8, "cue": "Cock" }
+      ]
     },
     {
       "id": "flintlock-reload",
@@ -117,7 +121,11 @@
       "selfEffects": [],
       "windupLabel": "Reloading",
       "commitLabel": "Loaded",
-      "reloads": true
+      "reloads": true,
+      "events": [
+        { "phase": "Windup", "at": 0.09, "cue": "MagazineOut" },
+        { "phase": "Commit", "at": 0, "cue": "MagazineIn" }
+      ]
     },
     {
       "id": "ember-bolt",
