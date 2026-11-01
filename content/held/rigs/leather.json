@@ -37,6 +37,12 @@
       "thumb_01_r",
       "thumb_02_r",
       "thumb_03_r"
+    ],
+    "twist": [
+      {
+        "joint": "lowerarm_twist_01_r",
+        "share": 0.5
+      }
     ]
   },
   "off": {
@@ -69,6 +75,12 @@
       "thumb_01_l",
       "thumb_02_l",
       "thumb_03_l"
+    ],
+    "twist": [
+      {
+        "joint": "lowerarm_twist_01_l",
+        "share": 0.5
+      }
     ]
   },
   "digits": "Measured",
@@ -107,12 +119,12 @@
           -19
         ],
         [
-          8,
-          -63
+          16,
+          -55
         ],
         [
-          -29,
-          -79
+          -24,
+          -89
         ]
       ]
     }
