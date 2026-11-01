@@ -46,6 +46,11 @@ the same joint track, so staging and checks never depend on where a motion came 
 6. **Use and check in game.** List the pack in `content/held/rigs/psx.json` `packs`, then set the action's clip and
    marks in `clips.json`. `in-game.sh OUT_DIR` builds the game, runs its own headless host, uses the main hand once
    in held time and writes a contact sheet.
+7. **Bake a sweep** (`bake-sweep.sh ACTION [SLOT] [POINTS] --write`) for a melee action whose hit is a `Sweep`. It
+   uses the main hand once in its own headless host and reads the drawn blade on every update through the commit
+   (`riders.dev.held.blade`). The tip's bearing from the eye, resampled to evenly spaced points of the commit, becomes
+   the action's `delivery.hit.path`. The path follows the clip and the look's grip and length; reach and width stay
+   the action's. Rebake after restaging a clip or changing its marks.
 
 Each pack records its source, licence, commands and marks: `content/art/arms/sources.json` for authored clips,
 `art/arms/h3-slash/provenance.json` for the video slash.

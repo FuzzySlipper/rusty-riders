@@ -52,55 +52,70 @@ internal sealed partial class ActionResolution
         }).ToArray();
     }
 
-    // Turns each sweep's blade on by admitted seconds: the bodies it passes are struck as it reaches them, a surface
-    // met first stops it, and one that ends having met nothing misses where it ended.
+    // Turns each sweep's blade on by admitted seconds, one query per stretch of its path the step covers (a corner of the
+    // path is not cut): the bodies it passes are struck as it reaches them, a surface met first stops it, and one that
+    // ends having met nothing misses where it ended.
     private List<ActionImpact> Turn(float seconds, IReadOnlyList<IActionActor> bodies)
     {
         List<ActionImpact> impacts = [];
         foreach (MeleeSweep sweep in sweeps.ToArray())
         {
-            ActionDefinition action = sweep.Action;
-            ActionDelivery d = action.Delivery;
-            MeleeHit hit = d.Melee;
+            MeleeHit hit = sweep.Action.Delivery.Melee;
             float from = sweep.Progress;
             sweep.Elapsed += seconds;
             float to = sweep.Progress;
-            Vector3 eye = sweep.User.Eye;
             IActionActor[] living = bodies.Where(t => t.Alive && t.Entity != sweep.User.Entity && sweep.Eligible.Contains(t.Entity)
                 && !sweep.Struck.Contains(t.Entity)).ToArray();
-            SpatialContact[] contacts = engine.Spatial.SweepContacts(SpatialContactQueryRequest.Sweep(session,
-                SpatialShape.Capsule(Vector3.Zero, -Vector3.UnitZ * d.Range, d.Width / 2),
-                new SpatialPose(eye, Bearing.Toward(sweep.Aim, hit.From!, hit.To!, from)),
-                new SpatialPose(eye, Bearing.Toward(sweep.Aim, hit.From!, hit.To!, to)),
-                living.Select(t => t.Hitbox).ToArray(), ignoredEntities: new[] { sweep.User.Entity }, filter: Everything)).Contacts.ToArray();
             bool over = false;
-            foreach (SpatialContact contact in contacts)
+            for (int k = 1; k < hit.Path!.Length && !over; k++)
             {
-                if (contact.Kind == SpatialHitKind.Entity)
-                {
-                    if (living.FirstOrDefault(t => t.Entity == contact.Entity) is not { } target || !sweep.Struck.Add(target.Entity)) continue;
-                    int? taken = Hit(action, sweep.User, target);
-                    impacts.Add(new(action, sweep.User, target, contact.Point, taken ?? 0, !target.Alive, TurnedAside: taken is null));
-                    if (over = sweep.Struck.Count >= hit.Limit) break;
-                }
-                // A blade that starts a step inside a surface (its user hugging a wall) passes through it.
-                else if (!contact.StartSolid)
-                {
-                    if (sweep.Struck.Count == 0) impacts.Add(new(action, sweep.User, null, contact.Point, 0, false, Surface: true));
-                    over = true;
-                    break;
-                }
+                float start = Math.Max(from, hit.Knot(k - 1)), end = Math.Min(to, hit.Knot(k));
+                if (end > start) over = Cut(sweep, start, end, living, impacts);
             }
             if (!over && to >= 1)
             {
                 over = true;
                 if (sweep.Struck.Count == 0)
-                    impacts.Add(new(action, sweep.User, null, eye + Vector3.Transform(-Vector3.UnitZ * d.Range, Bearing.Toward(sweep.Aim, hit.From!, hit.To!, 1)), 0, false));
+                    impacts.Add(new(sweep.Action, sweep.User, null, Tip(sweep, 1), 0, false));
             }
             if (over) sweeps.Remove(sweep);
         }
         return impacts;
     }
+
+    // Turns a sweep's blade from one point of its path to another; whether the blow is over (its limit struck, or a surface met).
+    private bool Cut(MeleeSweep sweep, float from, float to, IActionActor[] living, List<ActionImpact> impacts)
+    {
+        ActionDefinition action = sweep.Action;
+        ActionDelivery d = action.Delivery;
+        Vector3 eye = sweep.User.Eye;
+        SpatialContact[] contacts = engine.Spatial.SweepContacts(SpatialContactQueryRequest.Sweep(session,
+            SpatialShape.Capsule(Vector3.Zero, -Vector3.UnitZ * d.Range, d.Width / 2),
+            new SpatialPose(eye, Bearing.Along(sweep.Aim, d.Melee.Path!, from)),
+            new SpatialPose(eye, Bearing.Along(sweep.Aim, d.Melee.Path!, to)),
+            living.Select(t => t.Hitbox).ToArray(), ignoredEntities: new[] { sweep.User.Entity }, filter: Everything)).Contacts.ToArray();
+        foreach (SpatialContact contact in contacts)
+        {
+            if (contact.Kind == SpatialHitKind.Entity)
+            {
+                if (living.FirstOrDefault(t => t.Entity == contact.Entity) is not { } target || !sweep.Struck.Add(target.Entity)) continue;
+                int? taken = Hit(action, sweep.User, target);
+                impacts.Add(new(action, sweep.User, target, contact.Point, taken ?? 0, !target.Alive, TurnedAside: taken is null));
+                if (sweep.Struck.Count >= d.Melee.Limit) return true;
+            }
+            // A blade that starts a step inside a surface (its user hugging a wall) passes through it.
+            else if (!contact.StartSolid)
+            {
+                if (sweep.Struck.Count == 0) impacts.Add(new(action, sweep.User, null, contact.Point, 0, false, Surface: true));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Where a sweep's blade tip is at a point of its path.
+    private static Vector3 Tip(MeleeSweep sweep, float t) =>
+        sweep.User.Eye + Vector3.Transform(-Vector3.UnitZ * sweep.Action.Delivery.Range, Bearing.Along(sweep.Aim, sweep.Action.Delivery.Melee.Path!, t));
 
     /// <summary>A melee sweep turning across its commit: who swings, its aim, how long it turns, and whom it has struck.</summary>
     private sealed class MeleeSweep(ActionDefinition action, IActionActor user, Vector3 aim, float seconds, IReadOnlySet<ulong> eligible)

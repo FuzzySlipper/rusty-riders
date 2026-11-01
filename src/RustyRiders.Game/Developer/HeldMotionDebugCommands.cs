@@ -291,6 +291,17 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success("Motion viewer off.");
     }
 
+    [DebugCommand("riders.dev.held.blade", Description = "Developer sweep bake: where the main hand's look rides a clip-led hand as last drawn (camera space metres), its tip's bearing from the eye (degrees right and up), and how far through its commit the hand's action then was (below 0 in the windup, above 1 in the recovery), as JSON.")]
+    public DebugCommandResult Blade()
+    {
+        if (View.Blade() is not var (grip, tip, current, elapsed, scale)) return Failure("The main hand is not clip-led.");
+        float? commit = current is { Timing: var t } ? (elapsed - t.Windup * scale) / (t.Commit * scale) : null;
+        float right = MathF.Atan2(tip.X, -tip.Z) * 180 / MathF.PI, up = MathF.Atan2(tip.Y, MathF.Sqrt(tip.X * tip.X + tip.Z * tip.Z)) * 180 / MathF.PI;
+        string at = commit is { } c ? FormattableString.Invariant($"{c:0.####}") : "null";
+        return DebugCommandResult.Success(FormattableString.Invariant(
+            $"{{\"action\": \"{current?.Id}\", \"commit\": {at}, \"right\": {right:0.##}, \"up\": {up:0.##}, \"grip\": [{grip.X:0.###}, {grip.Y:0.###}, {grip.Z:0.###}], \"tip\": [{tip.X:0.###}, {tip.Y:0.###}, {tip.Z:0.###}]}}"));
+    }
+
     private string Describe()
     {
         ActionTiming t = action!.Timing;

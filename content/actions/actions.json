@@ -9,8 +9,7 @@
         "width": 0.5,
         "hit": {
           "kind": "Sweep",
-          "from": { "right": 45, "up": 0 },
-          "to": { "right": -45, "up": -25 },
+          "path": [{ "right": 24.3, "up": 36.3 }, { "right": 1.6, "up": 10.6 }, { "right": -23.2, "up": -17.0 }, { "right": -34.0, "up": -25.8 }, { "right": -33.1, "up": -29.8 }],
           "limit": 3
         }
       },

@@ -146,9 +146,10 @@ rusty-hotel's `Actions/`):
   gameplay time.
 - **Delivery:** melee, hitscan ray, projectile (per-step segment cast), area, or self. A melee blow
   names how it finds what it strikes (`delivery.hit`): a thrust (a capsule along the aim, the default), a
-  ray, a sphere overlap, or a sweep (a blade turned between two bearings across the commit, striking
-  each body as it reaches it). The hit is gameplay, not read from the arms clip; a clip is staged to
-  match it.
+  ray, a sphere overlap, or a sweep (a blade turned through a path of bearings across the commit,
+  striking each body as it reaches it). The hit runs on gameplay time, not on the arms clip; a clip-led
+  sweep's path is baked from where its clip draws the blade tip (`scripts/arm-clips/bake-sweep.sh`), and
+  its reach and width stay the action's.
 - **Cost:** ammo, charge, health or nothing.
 - **Payload:** damage packets by kind, scaled by stats, plus effects (burn, slow, stun, knockback).
 

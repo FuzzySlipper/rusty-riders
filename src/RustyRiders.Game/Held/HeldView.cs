@@ -45,6 +45,8 @@ internal sealed class HeldView : IDisposable
     private readonly ArmsLead lead = new();
     // Where the main hand holds its look this update while the arms are clip-led (it rides the hand), or null.
     private (Vector3 Grip, Quaternion Look)? ridden;
+    // The main hand's action and its world seconds when the hand was last ridden (what the blade bake reads it against).
+    private (ActionDefinition? Action, float Elapsed, float Scale) riddenAt;
 
     /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' two are the next three.</param>
     internal HeldView(IEngineContext engine, HeldCatalog held, ulong firstObject)
@@ -141,6 +143,7 @@ internal sealed class HeldView : IDisposable
         arms.Drawn.Lead(frame, lead.Take());
         arms.Drawn.Carry = held.Clips.Carry(Rig) + (frame is null ? Vector3.Zero : hands[MainHand].Sway.Position);
         ridden = null;
+        riddenAt = (user.Current, user.Elapsed, user.Scale);
         if (arms.Drawn.Clip.Led > 0) ridden = arms.Drawn.Ride(Aim(MainHand));
     }
 
@@ -274,6 +277,22 @@ internal sealed class HeldView : IDisposable
     /// last measured them on the drawn hands.
     /// </summary>
     internal (string Look, LandmarkReadResult Measured) Grips => (hands[MainHand].Look, grips.Read());
+
+    /// <summary>
+    /// Where the main hand's look rides a clip-led hand as last drawn (camera space): its grip and its tip, the end of its
+    /// length farthest from the grip; with the hand's action and its world seconds then. Null while weapon-led.
+    /// </summary>
+    internal (Vector3 Grip, Vector3 Tip, ActionDefinition? Action, float Elapsed, float Scale)? Blade()
+    {
+        if (ridden is not { } hold) return null;
+        HeldLookDefinition look = held.Look(hands[MainHand].Look)!;
+        Vector3 size = look.Box.Size, main = look.Grips.Main;
+        int axis = size.X >= size.Y && size.X >= size.Z ? 0 : size.Y >= size.Z ? 1 : 2;
+        float half = (look.Model?.Length ?? size[axis]) / 2;
+        Vector3 tip = Vector3.Zero;
+        tip[axis] = main[axis] > 0 ? -half : half;
+        return (hold.Grip, hold.Grip + Vector3.Transform(tip - main, hold.Look), riddenAt.Action, riddenAt.Elapsed, riddenAt.Scale);
+    }
 
     /// <summary>
     /// A hand feels its action land: a punch layered over its motion. Started once its motion for this update has
