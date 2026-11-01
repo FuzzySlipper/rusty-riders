@@ -22,6 +22,10 @@ the same joint track, so staging and checks never depend on where a motion came 
      the whole arm turns rigidly about its shoulder until the shoulder-to-wrist line lies in a soft cone around the
      aim. Its bend, elbow plane and wrist turn ride along.
    - `--reach`: opens a folded elbow so the hand is held out where it can be seen.
+   - `--clear`: keeps the elbow and forearm at least that far from the view, about 0.3 m. A frame whose arm comes
+     closer turns about the shoulder, mostly forward along the view, until it clears, so an overhead wind-up does
+     not sweep the elbow across the lens. The camera is the PSX pack's own, or set it with `--camera`. The run
+     prints the closest the arm comes. Much more than 0.3 m pushes the hand out of the frame.
    - `--sides R`: drives only the right arm, for example to leave a shield arm out.
    - `--pitch` and `--forward`: the older global tilt that the H3 slash uses.
    - `--report`: gives the right wrist's speed and height per frame, for placing `ClipMarks`.
@@ -42,7 +46,6 @@ MediaPipe model
 
 Limits:
 - The PSX arms have no twist joints.
-- The cone keeps the wrist in view, but not the elbow: an overhead wind-up can still bring the upper arm close to the
-  camera.
+- The cone and clearance work frame by frame and do not look ahead. A low dip can still leave the frame for a moment.
 - Video tracks rest on one camera view, so depth is MediaPipe's estimate.
 - A clip keeps its source timing; `ClipMarks` fit it to the action's phases.

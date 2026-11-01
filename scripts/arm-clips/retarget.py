@@ -9,7 +9,7 @@ bent in the video's elbow plane; the hand turns to the video's wrist->knuckles l
 else (clavicles, fingers, root) holds the base clip's first frame (knife_idle: the fist closed on a grip).
 
     retarget.py TRACK.json ARMS.glb PACK_IN.glb PACK_OUT.glb CLIP_NAME [--start F] [--end F] [--sigma S]
-        [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--cone DEGREES] [--aim YAW,PITCH] [--reach FRACTION] [--sides R,L]
+        [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--cone DEGREES] [--aim YAW,PITCH] [--reach FRACTION] [--clear METRES] [--camera X,Y,Z] [--sides R,L]
         [--report REPORT.json]
 
 --facing picks the frames whose body facing is the view (where the cut is aimed). --pitch and --forward are FPS
@@ -19,7 +19,10 @@ kept). --cone is the general staging: each frame the whole arm turns rigidly abo
 shoulder-wrist line lies within a soft cone of that half-angle around --aim (degrees right and up of the view's
 forward); the elbow's bend and plane and the wrist's turn ride along, so a third-person wind-up behind the head is
 pulled into view with its shape kept. --reach opens the elbow so the wrist is at least that fraction of the arm's
-length from the shoulder (FPS arms hold the hands out where they can be seen). --sides names the arms the track drives (the others hold the base pose). The report gives the right wrist's speed and height per frame, for placing an action's ClipMarks.
+length from the shoulder (FPS arms hold the hands out where they can be seen). --clear keeps the elbow and
+forearm at least that far from the view (--camera, in the arms model's space; the PSX pack's own camera by default):
+a frame whose arm passes closer turns, again rigidly about the shoulder, away from the view until it clears, so an
+overhead wind-up does not sweep the elbow across the lens. --sides names the arms the track drives (the others hold the base pose). The report gives the right wrist's speed and height per frame, for placing an action's ClipMarks.
 """
 import argparse, json, struct
 import numpy as np
@@ -27,7 +30,7 @@ import numpy as np
 ap = argparse.ArgumentParser()
 ap.add_argument("track"); ap.add_argument("arms"); ap.add_argument("pack_in"); ap.add_argument("pack_out"); ap.add_argument("clip")
 ap.add_argument("--base", default="knife_idle"); ap.add_argument("--start", type=int, default=0); ap.add_argument("--end", type=int, default=-1)
-ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0)
+ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera", default="0,1.743,0")
 a = ap.parse_args()
 
 
@@ -97,6 +100,31 @@ yaw, pitch = (np.radians(float(v)) for v in a.aim.split(","))
 AIM = np.array([np.sin(yaw) * np.cos(pitch) * -1, np.sin(pitch), np.cos(yaw) * np.cos(pitch)])  # model space: right is -X
 
 
+CAMERA = np.array([float(v) for v in a.camera.split(",")])
+
+
+def nearest(p0, p1, c):
+    """The point of segment p0-p1 nearest c."""
+    d = p1 - p0; t = np.clip(np.dot(c - p0, d) / max(np.dot(d, d), 1e-12), 0, 1); return p0 + t * d
+
+
+def clear_of_view(shoulder, u, f):
+    """The rotation about the shoulder taking the elbow and forearm (upper arm u, forearm f) at least --clear from the
+    camera. The upper arm's root is never far from the view (the shoulder itself is about 25 cm away), so the measure
+    starts at the elbow."""
+    turn = np.eye(3)
+    if a.clear <= 0: return turn
+    for _ in range(45):  # 2 degree steps, at most 90
+        elbow = shoulder + turn @ u; wrist = elbow + turn @ f
+        q = nearest(elbow, wrist, CAMERA)
+        if np.linalg.norm(q - CAMERA) >= a.clear: break
+        # Push mostly along the view's forward (+Z): the shortest way out of the lens is often out of the frame too.
+        axis = np.cross(q - shoulder, unit(q - CAMERA) + 2 * np.array([0, 0, 1.0]))
+        if np.linalg.norm(axis) < 1e-9: axis = np.array([1.0, 0, 0])
+        turn = rotation(axis, np.radians(2)) @ turn
+    return turn
+
+
 def into_cone(d):
     """The rotation turning direction d into the soft cone around AIM (identity without --cone)."""
     if a.cone <= 0: return np.eye(3)
@@ -139,7 +167,7 @@ for s in SIDES:
     Ru, pu = world(up, R); Rf, pf = world(fo, R); Rh, ph = world(ha, R)
     _, pix = world(idx[f"f_index.01.{s}"], R); _, ppi = world(idx[f"f_pinky.01.{s}"], R)
     u0, f0 = pf - pu, ph - pf; n0 = unit(np.cross(u0, f0))
-    rest[s] = dict(up=up, fo=fo, ha=ha,
+    rest[s] = dict(up=up, fo=fo, ha=ha, shoulder=pu,
                    u_axis=Ru.T @ u0, u_hinge=Ru.T @ n0, f_axis=Rf.T @ f0, f_hinge=Rf.T @ n0,
                    h_axis=Rh.T @ ((pix + ppi) / 2 - ph), h_side=Rh.T @ (pix - ppi))
 
@@ -173,7 +201,7 @@ to_model = np.stack([-right, upv, fwd])  # model space: right arm toward -X, up 
 # The camera looks down by --pitch degrees: the arms' motion is raised by that much about the shoulder line (FPS staging).
 th = np.radians(a.pitch); to_model = np.array([[1, 0, 0], [0, np.cos(th), np.sin(th)], [0, -np.sin(th), np.cos(th)]]) @ to_model
 
-rot_frames = []
+rot_frames = []; clearance = []
 for p in P:
     rot = dict(R)
     for s in SIDES:
@@ -187,7 +215,10 @@ for p in P:
         if np.linalg.norm(u + f) < want and np.linalg.norm(hinge) > 1e-9:
             inner = lambda d: np.arccos(np.clip((lu * lu + lf * lf - d * d) / (2 * lu * lf), -1, 1))
             f = rotation(hinge, -(inner(want) - inner(np.linalg.norm(u + f)))) @ f  # opening the elbow in its own plane
-        C = into_cone(u + f); u = C @ u; f = C @ f
+        C = into_cone(u + f); C = clear_of_view(r["shoulder"], C @ u, C @ f) @ C; u = C @ u; f = C @ f
+        elbow = r["shoulder"] + u
+        gap = np.linalg.norm(nearest(elbow, elbow + f, CAMERA) - CAMERA)
+        clearance.append(gap)
         n = np.cross(u, f)
         if np.linalg.norm(n) < 1e-3 * np.linalg.norm(u) * np.linalg.norm(f) and rot_frames: n = rot_frames[-1][("n", s)]
         n = unit(n)
@@ -252,7 +283,8 @@ write_glb(a.pack_out, pack, new_blob)
 # Report: the right wrist's speed per frame (model space, m/s at the source body's scale), to place the strike.
 wr = np.array([to_model @ (p[J["wrist.R"]] - p[J["shoulder.R"]]) for p in P])
 speed = np.r_[0, np.linalg.norm(np.diff(wr, axis=0), axis=1) * fps]
-rep = {"frames": len(P), "seconds": len(P) / fps, "peak": int(speed.argmax()), "speed": [round(float(v), 2) for v in speed],
+rep = {"clearance": round(float(min(clearance)), 3) if clearance else None, "frames": len(P), "seconds": len(P) / fps, "peak": int(speed.argmax()), "speed": [round(float(v), 2) for v in speed],
        "wristHeight": [round(float(v[1]), 3) for v in wr]}
 if a.report: json.dump(rep, open(a.report, "w"))
-print(f"{a.clip}: {len(P)} frames ({len(P) / fps:.2f} s), peak wrist speed {speed.max():.1f} m/s at frame {speed.argmax()}")
+print(f"{a.clip}: {len(P)} frames ({len(P) / fps:.2f} s), peak wrist speed {speed.max():.1f} m/s at frame {speed.argmax()}, "
+      f"elbow and forearm at least {min(clearance):.2f} m from the view")
