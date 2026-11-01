@@ -9,7 +9,8 @@ bent in the video's elbow plane; the hand turns to the video's wrist->knuckles l
 else (clavicles, fingers, root) holds the base clip's first frame (knife_idle: the fist closed on a grip).
 
     retarget.py TRACK.json ARMS.glb PACK_IN.glb PACK_OUT.glb CLIP_NAME [--start F] [--end F] [--sigma S]
-        [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--cone DEGREES] [--aim YAW,PITCH] [--reach FRACTION] [--clear METRES] [--camera X,Y,Z] [--sides R,L]
+        [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--cone DEGREES] [--aim YAW,PITCH] [--reach FRACTION] [--clear METRES] [--camera X,Y,Z]
+        [--band YAW,PITCH,HALF_YAW,HALF_PITCH] [--gain G] [--sides R,L]
         [--report REPORT.json]
 
 --facing picks the frames whose body facing is the view (where the cut is aimed). --pitch and --forward are FPS
@@ -22,7 +23,11 @@ pulled into view with its shape kept. --reach opens the elbow so the wrist is at
 length from the shoulder (FPS arms hold the hands out where they can be seen). --clear keeps the elbow and
 forearm at least that far from the view (--camera, in the arms model's space; the PSX pack's own camera by default):
 a frame whose arm passes closer turns, again rigidly about the shoulder, away from the view until it clears, so an
-overhead wind-up does not sweep the elbow across the lens. --sides names the arms the track drives (the others hold the base pose). The report gives the right wrist's speed and height per frame, for placing an action's ClipMarks.
+overhead wind-up does not sweep the elbow across the lens. --band is staging from the camera instead of the shoulder: where our camera would see the wrist if the arm did
+the source's motion, its bearing is pulled into a soft elliptical band (centre bearing and half-widths, degrees
+right and up) and scaled by --gain from the band's centre, then the arm turns rigidly about the shoulder to put the
+wrist on that bearing. A wide, low band lets a cut sweep across the view and a rest or finish sit below the frame,
+as measured first-person melee does (README, "Reference"). --sides names the arms the track drives (the others hold the base pose). The report gives the right wrist's speed and height per frame, for placing an action's ClipMarks.
 """
 import argparse, json, struct
 import numpy as np
@@ -30,7 +35,7 @@ import numpy as np
 ap = argparse.ArgumentParser()
 ap.add_argument("track"); ap.add_argument("arms"); ap.add_argument("pack_in"); ap.add_argument("pack_out"); ap.add_argument("clip")
 ap.add_argument("--base", default="knife_idle"); ap.add_argument("--start", type=int, default=0); ap.add_argument("--end", type=int, default=-1)
-ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera", default="0,1.743,0")
+ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera", default="0,1.743,0"); ap.add_argument("--band"); ap.add_argument("--gain", type=float, default=1); ap.add_argument("--push", default="0,0,2")
 a = ap.parse_args()
 
 
@@ -101,6 +106,7 @@ AIM = np.array([np.sin(yaw) * np.cos(pitch) * -1, np.sin(pitch), np.cos(yaw) * n
 
 
 CAMERA = np.array([float(v) for v in a.camera.split(",")])
+PUSH = np.array([float(v) for v in a.push.split(",")])
 
 
 def nearest(p0, p1, c):
@@ -118,11 +124,43 @@ def clear_of_view(shoulder, u, f):
         elbow = shoulder + turn @ u; wrist = elbow + turn @ f
         q = nearest(elbow, wrist, CAMERA)
         if np.linalg.norm(q - CAMERA) >= a.clear: break
-        # Push mostly along the view's forward (+Z): the shortest way out of the lens is often out of the frame too.
-        axis = np.cross(q - shoulder, unit(q - CAMERA) + 2 * np.array([0, 0, 1.0]))
+        # Push mostly along the view's forward and down (PUSH): the shortest way out of the lens is often out of the
+        # frame too, and down keeps a cut's side-to-side bearing, passing under the face as measured melee arms do.
+        axis = np.cross(q - shoulder, unit(q - CAMERA) + PUSH)
         if np.linalg.norm(axis) < 1e-9: axis = np.array([1.0, 0, 0])
         turn = rotation(axis, np.radians(2)) @ turn
     return turn
+
+
+def bearing_basis(c):
+    """The view's right and up about a forward direction c (model space: right is -X, up +Y)."""
+    right = unit(np.cross(c, [0, 1.0, 0])); return right, np.cross(right, c)
+
+
+if a.band:
+    by, bp, hy, hp = (np.radians(float(v)) for v in a.band.split(","))
+    BAND = np.array([-np.sin(by) * np.cos(bp), np.sin(bp), np.cos(by) * np.cos(bp)])
+
+
+def into_band(shoulder, w):
+    """The rotation about the shoulder putting the wrist (shoulder + w) on its bearing pulled into --band."""
+    if not a.band: return np.eye(3)
+    d = unit(shoulder + w - CAMERA); theta = np.arccos(np.clip(np.dot(d, BAND), -1, 1))
+    tangent = d - BAND * np.cos(theta)
+    if np.linalg.norm(tangent) < 1e-9: return np.eye(3)
+    tangent = unit(tangent); right, up = bearing_basis(BAND)
+    phi = np.arctan2(np.dot(tangent, up), np.dot(tangent, right))
+    limit = 1 / np.sqrt((np.cos(phi) / hy) ** 2 + (np.sin(phi) / hp) ** 2)  # the ellipse's half-width that way
+    theta2 = limit * np.tanh(a.gain * theta / limit)
+    b = BAND * np.cos(theta2) + tangent * np.sin(theta2)
+    # The wrist stays its distance from the shoulder: the far point on that bearing at that distance (the camera is
+    # inside the arm's reach), or the bearing's nearest point to the shoulder when the arm is folded short of it.
+    oc = CAMERA - shoulder; r = np.linalg.norm(w); half = np.dot(oc, b); disc = half * half - (np.dot(oc, oc) - r * r)
+    t = -half + np.sqrt(disc) if disc >= 0 else max(-half, 0)
+    w2 = CAMERA + t * b - shoulder
+    axis = np.cross(w, w2)
+    if np.linalg.norm(axis) < 1e-9: return np.eye(3)
+    return rotation(axis, np.arccos(np.clip(np.dot(unit(w), unit(w2)), -1, 1)))
 
 
 def into_cone(d):
@@ -215,7 +253,8 @@ for p in P:
         if np.linalg.norm(u + f) < want and np.linalg.norm(hinge) > 1e-9:
             inner = lambda d: np.arccos(np.clip((lu * lu + lf * lf - d * d) / (2 * lu * lf), -1, 1))
             f = rotation(hinge, -(inner(want) - inner(np.linalg.norm(u + f)))) @ f  # opening the elbow in its own plane
-        C = into_cone(u + f); C = clear_of_view(r["shoulder"], C @ u, C @ f) @ C; u = C @ u; f = C @ f
+        C = into_cone(u + f); C = into_band(r["shoulder"], C @ (u + f)) @ C
+        C = clear_of_view(r["shoulder"], C @ u, C @ f) @ C; u = C @ u; f = C @ f
         elbow = r["shoulder"] + u
         gap = np.linalg.norm(nearest(elbow, elbow + f, CAMERA) - CAMERA)
         clearance.append(gap)

@@ -26,6 +26,13 @@ the same joint track, so staging and checks never depend on where a motion came 
      closer turns about the shoulder, mostly forward along the view, until it clears, so an overhead wind-up does
      not sweep the elbow across the lens. The camera is the PSX pack's own, or set it with `--camera`. The run
      prints the closest the arm comes. Much more than 0.3 m pushes the hand out of the frame.
+   - `--band YAW,PITCH,HALF_YAW,HALF_PITCH`, `--gain`: staging measured from the camera, the one the sword packs use.
+     It takes where our camera would see the wrist if the arm did the source's motion. It pulls that bearing into a
+     soft ellipse around the centre, spreading it by the gain, then turns the arm about the shoulder to put the wrist
+     there. A wide, low band lets a cut sweep across the view and pass below it, as the reference does. Use it with
+     `--push=0,-2,1`, which makes `--clear` push down as well as forward, so the forearm passes under the face and
+     keeps the cut's sweep. The sword packs use `--band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28`.
+   - `--cone` and `--aim` are the shoulder-centred version. They keep a cut in one part of the view.
    - `--sides R`: drives only the right arm, for example to leave a shield arm out.
    - `--pitch` and `--forward`: the older global tilt that the H3 slash uses.
    - `--report`: gives the right wrist's speed and height per frame, for placing `ClipMarks`.
@@ -64,8 +71,9 @@ of the view's forward.
 
 What it says: hands rest and finish below the frame and sweep through it. A fast cut crosses about 100 degrees
 side to side, mostly below the view's middle, in a third of a second. Elbows stay about 0.27-0.39 m from the
-camera. Ours (2026-10-31, PSX at 75 degrees): UAL slash hand bearing 3 to 51 right, -36 to 10 up, elbow 0.33 m,
-on screen 89%; Mixamo 56 to -2 right, elbow 0.33 m, on screen 49%. Our cuts stay in the right half of the view.
+camera. Ours with the shoulder-centred cone: UAL hand 3 to 51 right, on screen 89%; Mixamo 56 to -2 right, 49%.
+Both stayed in the right half of the view. With `--band` (2026-10-31): UAL 41 right to 41 left, -51 to 5 up,
+elbow 0.31 m, on screen 68%; Mixamo 44 right to 46 left, -55 to 10 up, elbow 0.31 m, 71%.
 
 Limits:
 - The PSX arms have no twist joints.

@@ -12,18 +12,18 @@
     "clip": "mixamo_sword_slash",
     "commands": [
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/mixamo/sword-and-shield-slash.fbx mixamo.track.json",
-      "python scripts/arm-clips/retarget.py mixamo.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/art/arms/psx-arms.mixamo-sword-slash.glb mixamo_sword_slash --facing 0:4 --cone 28 --aim=0,12 --reach 0.85 --clear 0.3 --sides R --sigma 0"
+      "python scripts/arm-clips/retarget.py mixamo.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/art/arms/psx-arms.mixamo-sword-slash.glb mixamo_sword_slash --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
     ],
     "marks": "start 0.3 (frame 15, the dip under the rising cut begins), strike 0.44 (frame 22), recover 0.58 (frame 29, the cut done up and right), end 1",
-    "notes": "A wind-up high, a dip, then a fast rising backhand cut. --clear 0.3 keeps the overhead wind-up's elbow off the lens (it filled the view before); the dip before the cut drops briefly below the bottom right of the view."
+    "notes": "A wind-up high, a dip, then a fast rising backhand cut. Staged by --band toward Dark Messiah's measured fast cuts (README, Reference): hand 44 right to 46 left, -55 to 10 up, elbow at least 0.31 m, on screen 71%. In game the dip goes below the frame and the rising cut passes close through the bottom right before finishing upper right."
   },
   "../../held/models/psx-arms.ual-sword.glb": {
     "clip": "ual_sword_attack",
     "commands": [
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual.track.json --clip Sword_Attack",
-      "python scripts/arm-clips/retarget.py ual.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/held/models/psx-arms.ual-sword.glb ual_sword_attack --facing 0:4 --cone 28 --aim=0,12 --reach 0.85 --clear 0.3 --sides R --sigma 0"
+      "python scripts/arm-clips/retarget.py ual.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/held/models/psx-arms.ual-sword.glb ual_sword_attack --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
     ],
     "marks": "start 0, strike 0.216 (frame 8, top of the raise), recover 0.35 (frame 13, the cut done low and left), end 0.81 (frame 30, settled after the flourish)",
-    "notes": "Raise, fast downward cut across the body, a small flourish. With --clear 0.3 the cut finishes low and centre, beside the off hand's flintlock rather than over it."
+    "notes": "Raise, fast downward cut across the body, a small flourish. Staged by --band: hand 41 right to 41 left, -51 to 5 up, elbow at least 0.31 m, on screen 68%. In game the cut finishes at the lower left with the blade across the view; the low hold after it keeps the hand below the frame for about a second before the flourish."
   }
 }
