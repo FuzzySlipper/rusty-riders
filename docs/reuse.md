@@ -76,3 +76,11 @@ The DOM UI uses Rift Riders' own UI art (`old-game/Assets/Art/Sprites/UI/RiftRid
 licence before any public release. The unprefixed `UI SLICE BOX`, `UI INVENTORY` and `int_sphere` pieces, the icons
 and Alagard are the old game's own or carry their own licence terms.
 
+
+## Animation sources for arm clips
+
+`content/art/arms/sources/ual/UAL1_Standard.glb` and its CC0 licence file are a copy of Quaternius's Universal
+Animation Library from `rusty-craftsurvive/content/animations` at
+`169618aebca1b52372bf41e89c1d6184c11fc0ea`. They are ignored source material for
+`scripts/arm-clips`, not a content dependency. `content/art/arms/sources.json` records them, the Mixamo download,
+and the commands that made each pack.

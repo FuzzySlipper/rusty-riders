@@ -14,12 +14,12 @@
           },
           "actions": {
             "blade-slash": {
-              "clip": "h3_slash",
+              "clip": "ual_sword_attack",
               "marks": {
-                "start": 0.1,
-                "strike": 0.435,
-                "recover": 0.61,
-                "end": 1
+                "start": 0,
+                "strike": 0.216,
+                "recover": 0.35,
+                "end": 0.81
               },
               "fade": 0.1
             }

@@ -1,0 +1,20 @@
+{
+  "mixamo": {
+    "prefix": "mixamorig\\d*:",
+    "points": {
+      "shoulder.R": "RightArm", "elbow.R": "RightForeArm", "wrist.R": "RightHand", "index.R": "RightHandIndex1", "pinky.R": "RightHandPinky1",
+      "shoulder.L": "LeftArm", "elbow.L": "LeftForeArm", "wrist.L": "LeftHand", "index.L": "LeftHandIndex1", "pinky.L": "LeftHandPinky1",
+      "hip.R": "RightUpLeg", "hip.L": "LeftUpLeg", "ankle.R": "RightFoot", "ankle.L": "LeftFoot", "toe.R": "RightToeBase", "toe.L": "LeftToeBase"
+    },
+    "chest": "Spine2"
+  },
+  "ual": {
+    "prefix": "",
+    "points": {
+      "shoulder.R": "upperarm_r", "elbow.R": "lowerarm_r", "wrist.R": "hand_r", "index.R": "index_01_r", "pinky.R": "pinky_01_r",
+      "shoulder.L": "upperarm_l", "elbow.L": "lowerarm_l", "wrist.L": "hand_l", "index.L": "index_01_l", "pinky.L": "pinky_01_l",
+      "hip.R": "thigh_r", "hip.L": "thigh_l", "ankle.R": "foot_r", "ankle.L": "foot_l", "toe.R": "ball_r", "toe.L": "ball_l"
+    },
+    "chest": "spine_03"
+  }
+}

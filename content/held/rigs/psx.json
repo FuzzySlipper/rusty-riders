@@ -127,6 +127,16 @@
       "path": "held/models/psx-arms.h3-slash.glb",
       "producer": "rusty-riders: MiniMax H3 video, MediaPipe pose (art/arms/h3-slash/provenance.json)",
       "license": "own work"
+    },
+    {
+      "path": "art/arms/psx-arms.mixamo-sword-slash.glb",
+      "producer": "Adobe Mixamo (Sword And Shield Slash), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "Mixamo terms: use in the game; the clip is not redistributed on its own, so it stays out of git"
+    },
+    {
+      "path": "held/models/psx-arms.ual-sword.glb",
+      "producer": "Quaternius Universal Animation Library (Sword_Attack), retargeted by scripts/arm-clips (content/art/arms/sources.json)",
+      "license": "CC0-1.0"
     }
   ]
 }

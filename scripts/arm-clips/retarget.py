@@ -1,25 +1,33 @@
-"""MediaPipe world landmarks -> a PSX-arms clip pack (skeleton-only GLB with one animation).
+"""A joint track -> a PSX-arms clip pack (skeleton-only GLB with one animation).
+
+The track is either sample.py's (any authored clip: Mixamo, UAL, BVH mocap...) or extract.py's MediaPipe landmarks
+from a video; both give each arm's shoulder, elbow, wrist and index/pinky knuckles, the hips and a point in front.
 
 The camera is one fixed frame for the whole clip, from the body's facing over the first frames (a first-person view
 looks at the target, it does not turn with the swing). Each arm's upper arm and forearm point where the video's do,
 bent in the video's elbow plane; the hand turns to the video's wrist->knuckles line and index->pinky side. Everything
 else (clavicles, fingers, root) holds the base clip's first frame (knife_idle: the fist closed on a grip).
 
-    retarget.py LANDMARKS.json ARMS.glb PACK_IN.glb PACK_OUT.glb CLIP_NAME [--start F] [--end F] [--sigma S]
-        [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--report REPORT.json]
+    retarget.py TRACK.json ARMS.glb PACK_IN.glb PACK_OUT.glb CLIP_NAME [--start F] [--end F] [--sigma S]
+        [--facing F0:F1] [--pitch DEGREES] [--forward BIAS] [--cone DEGREES] [--aim YAW,PITCH] [--reach FRACTION] [--sides R,L]
+        [--report REPORT.json]
 
 --facing picks the frames whose body facing is the view (where the cut is aimed). --pitch and --forward are FPS
 staging: a real cut finishes near the body, below and beside a first-person view, so the view looks down by --pitch
 and each arm segment leans toward the view's forward by --forward (direction plus BIAS times forward, its length
-kept). The report gives the right wrist's speed and height per frame, for placing an action's ClipMarks.
+kept). --cone is the general staging: each frame the whole arm turns rigidly about its shoulder so the
+shoulder-wrist line lies within a soft cone of that half-angle around --aim (degrees right and up of the view's
+forward); the elbow's bend and plane and the wrist's turn ride along, so a third-person wind-up behind the head is
+pulled into view with its shape kept. --reach opens the elbow so the wrist is at least that fraction of the arm's
+length from the shoulder (FPS arms hold the hands out where they can be seen). --sides names the arms the track drives (the others hold the base pose). The report gives the right wrist's speed and height per frame, for placing an action's ClipMarks.
 """
 import argparse, json, struct
 import numpy as np
 
 ap = argparse.ArgumentParser()
-ap.add_argument("landmarks"); ap.add_argument("arms"); ap.add_argument("pack_in"); ap.add_argument("pack_out"); ap.add_argument("clip")
+ap.add_argument("track"); ap.add_argument("arms"); ap.add_argument("pack_in"); ap.add_argument("pack_out"); ap.add_argument("clip")
 ap.add_argument("--base", default="knife_idle"); ap.add_argument("--start", type=int, default=0); ap.add_argument("--end", type=int, default=-1)
-ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report")
+ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0)
 a = ap.parse_args()
 
 
@@ -80,6 +88,23 @@ def basis(axis, side):
     y = unit(axis); s = unit(side - y * np.dot(side, y)); return np.column_stack([y, s, np.cross(y, s)])
 
 
+def rotation(axis, angle):
+    k = unit(axis); K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
+    return np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
+
+
+yaw, pitch = (np.radians(float(v)) for v in a.aim.split(","))
+AIM = np.array([np.sin(yaw) * np.cos(pitch) * -1, np.sin(pitch), np.cos(yaw) * np.cos(pitch)])  # model space: right is -X
+
+
+def into_cone(d):
+    """The rotation turning direction d into the soft cone around AIM (identity without --cone)."""
+    if a.cone <= 0: return np.eye(3)
+    dn = unit(d); theta = np.arccos(np.clip(np.dot(dn, AIM), -1, 1)); axis = np.cross(AIM, dn)
+    if np.linalg.norm(axis) < 1e-6: return np.eye(3)
+    limit = np.radians(a.cone); return rotation(axis, limit * np.tanh(theta / limit) - theta)
+
+
 # --- base pose: the arms GLB's nodes with the base clip's first frame ---
 arms, ablob = read_glb(a.arms)
 nodes = arms["nodes"]; names = [n.get("name", "") for n in nodes]; idx = {n: i for i, n in enumerate(names)}
@@ -107,7 +132,7 @@ def world(i, rot):
 
 
 # Rest relations measured on the base pose, per side.
-SIDES = {"R": dict(sh=12, el=14, wr=16, pi=18, ix=20), "L": dict(sh=11, el=13, wr=15, pi=17, ix=19)}
+SIDES = [side for side in a.sides.split(",") if side]
 rest = {}
 for s in SIDES:
     up, fo, ha = idx[f"upper_arm.{s}"], idx[f"forearm.{s}"], idx[f"hand.{s}"]
@@ -118,10 +143,19 @@ for s in SIDES:
                    u_axis=Ru.T @ u0, u_hinge=Ru.T @ n0, f_axis=Rf.T @ f0, f_hinge=Rf.T @ n0,
                    h_axis=Rh.T @ ((pix + ppi) / 2 - ph), h_side=Rh.T @ (pix - ppi))
 
-# --- landmarks into the rig's model space ---
-L = json.load(open(a.landmarks)); frames = L["frames"]
-end = len(frames) if a.end < 0 else a.end
-P = np.array([[p[:3] for p in f["world"]] if f["world"] else [[np.nan] * 3] * 33 for f in frames[a.start:end]], float)
+# --- the track into the rig's model space ---
+# MediaPipe Pose landmark indices for the track's points (extract.py output); "front" is the nose.
+MEDIAPIPE = {"shoulder.R": 12, "elbow.R": 14, "wrist.R": 16, "pinky.R": 18, "index.R": 20,
+             "shoulder.L": 11, "elbow.L": 13, "wrist.L": 15, "pinky.L": 17, "index.L": 19, "hip.R": 24, "hip.L": 23, "front": 0}
+L = json.load(open(a.track))
+if "points" in L:
+    col = {k: L["points"].index(k) for k in MEDIAPIPE}
+    rows = [[f[col[k]] for k in MEDIAPIPE] for f in L["frames"]]
+else:
+    rows = [[f["world"][i][:3] for i in MEDIAPIPE.values()] if f["world"] else [[np.nan] * 3] * len(MEDIAPIPE) for f in L["frames"]]
+J = {k: i for i, k in enumerate(MEDIAPIPE)}
+end = len(rows) if a.end < 0 else a.end
+P = np.array(rows[a.start:end], float)
 # Fill missing frames by holding the nearest seen one, then smooth over time.
 for i in range(len(P)):
     if np.isnan(P[i]).any(): P[i] = P[i - 1] if i else P[next(j for j in range(len(P)) if not np.isnan(P[j]).any())]
@@ -131,10 +165,10 @@ if a.sigma > 0:
     P = np.stack([np.tensordot(w, pad[i:i + len(k)], axes=1) for i in range(len(P))])
 # One camera for the clip: the body's facing over --facing frames (shoulders' right, hips-to-shoulders up).
 f0, f1 = (int(v) for v in a.facing.split(":")); head = P[f0 - a.start:f1 - a.start]
-right = unit((head[:, 12] - head[:, 11]).mean(0))
-upv = ((head[:, 11] + head[:, 12]) / 2 - (head[:, 23] + head[:, 24]) / 2).mean(0); upv = unit(upv - right * np.dot(upv, right))
+right = unit((head[:, J["shoulder.R"]] - head[:, J["shoulder.L"]]).mean(0))
+upv = ((head[:, J["shoulder.L"]] + head[:, J["shoulder.R"]]) / 2 - (head[:, J["hip.L"]] + head[:, J["hip.R"]]) / 2).mean(0); upv = unit(upv - right * np.dot(upv, right))
 fwd = np.cross(upv, right)
-if np.dot(fwd, (head[:, 0] - (head[:, 11] + head[:, 12]) / 2).mean(0)) < 0: fwd = -fwd  # the nose is in front
+if np.dot(fwd, (head[:, J["front"]] - (head[:, J["shoulder.L"]] + head[:, J["shoulder.R"]]) / 2).mean(0)) < 0: fwd = -fwd  # the front point is ahead
 to_model = np.stack([-right, upv, fwd])  # model space: right arm toward -X, up +Y, facing +Z
 # The camera looks down by --pitch degrees: the arms' motion is raised by that much about the shoulder line (FPS staging).
 th = np.radians(a.pitch); to_model = np.array([[1, 0, 0], [0, np.cos(th), np.sin(th)], [0, -np.sin(th), np.cos(th)]]) @ to_model
@@ -142,12 +176,18 @@ th = np.radians(a.pitch); to_model = np.array([[1, 0, 0], [0, np.cos(th), np.sin
 rot_frames = []
 for p in P:
     rot = dict(R)
-    for s, m in SIDES.items():
-        r = rest[s]
-        u = to_model @ (p[m["el"]] - p[m["sh"]]); f = to_model @ (p[m["wr"]] - p[m["el"]])
+    for s in SIDES:
+        r = rest[s]; m = {k: J[f"{k}.{s}"] for k in ("shoulder", "elbow", "wrist", "index", "pinky")}
+        u = to_model @ (p[m["elbow"]] - p[m["shoulder"]]); f = to_model @ (p[m["wrist"]] - p[m["elbow"]])
         # FPS staging: each segment leans toward the view's forward by --forward (its length kept), so a cut stays in front.
         Z = np.array([0, 0, 1.0])
         u = (unit(u) + a.forward * Z) * np.linalg.norm(u); f = (unit(f) + a.forward * Z) * np.linalg.norm(f)
+        lu, lf = np.linalg.norm(u), np.linalg.norm(f); hinge = np.cross(u, f)
+        want = a.reach * (lu + lf)
+        if np.linalg.norm(u + f) < want and np.linalg.norm(hinge) > 1e-9:
+            inner = lambda d: np.arccos(np.clip((lu * lu + lf * lf - d * d) / (2 * lu * lf), -1, 1))
+            f = rotation(hinge, -(inner(want) - inner(np.linalg.norm(u + f)))) @ f  # opening the elbow in its own plane
+        C = into_cone(u + f); u = C @ u; f = C @ f
         n = np.cross(u, f)
         if np.linalg.norm(n) < 1e-3 * np.linalg.norm(u) * np.linalg.norm(f) and rot_frames: n = rot_frames[-1][("n", s)]
         n = unit(n)
@@ -157,7 +197,7 @@ for p in P:
         rot[r["up"]] = m2q(Wp.T @ Wu)
         Wf = basis(f, n) @ basis(r["f_axis"], r["f_hinge"]).T
         rot[r["fo"]] = m2q(Wu.T @ Wf)
-        hand_axis = to_model @ ((p[m["ix"]] + p[m["pi"]]) / 2 - p[m["wr"]]); hand_side = to_model @ (p[m["ix"]] - p[m["pi"]])
+        hand_axis = C @ to_model @ ((p[m["index"]] + p[m["pinky"]]) / 2 - p[m["wrist"]]); hand_side = C @ to_model @ (p[m["index"]] - p[m["pinky"]])
         Wh = basis(hand_axis, hand_side) @ basis(r["h_axis"], r["h_side"]).T
         rot[r["ha"]] = m2q(Wf.T @ Wh)
         rot[("n", s)] = n
@@ -209,8 +249,8 @@ for i in joints:
 pack["animations"] = [{"name": a.clip, "channels": channels, "samplers": samplers}]
 write_glb(a.pack_out, pack, new_blob)
 
-# Report: the right wrist's speed per frame (model space, m/s scaled to the video body), to place the strike.
-wr = np.array([to_model @ (p[16] - p[12]) for p in P])
+# Report: the right wrist's speed per frame (model space, m/s at the source body's scale), to place the strike.
+wr = np.array([to_model @ (p[J["wrist.R"]] - p[J["shoulder.R"]]) for p in P])
 speed = np.r_[0, np.linalg.norm(np.diff(wr, axis=0), axis=1) * fps]
 rep = {"frames": len(P), "seconds": len(P) / fps, "peak": int(speed.argmax()), "speed": [round(float(v), 2) for v in speed],
        "wristHeight": [round(float(v[1]), 3) for v in wr]}

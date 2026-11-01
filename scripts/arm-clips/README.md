@@ -1,27 +1,48 @@
-# Arm clips from generated video
+# Arm clips from any humanoid motion
 
-Clip-led arms (`content/held/clips.json`) play baked clips on the PSX arms. This folder makes one from a
-third-person MiniMax H3 video: the video model supplies the motion, a pose model reads the body, and the arms are
-aimed where the video's arms point. The video's look does not matter, only its motion.
+Clip-led arms (`content/held/clips.json`) play baked clips on the PSX arms. This folder turns a full-body motion
+into one: authored clips (Mixamo, the CC0 UAL library, BVH mocap) or a pose read from a video. Every source becomes
+the same joint track, so staging and checks never depend on where a motion came from.
 
-1. **Generate** a full-body, fixed-camera video of the action (`h3.py`, on a ComfyUI host with the H3 models, such as
-   Patch's 5090). Ask for the action to be staged for a first-person view: the man facing the camera, the cut
-   crossing in front of his body. Cuts that finish beside or behind the body leave the view. Try a few seeds and
-   pick by eye.
-2. **Read the pose** (`extract.py`, MediaPipe Pose Landmarker heavy, CPU): 33 world landmarks per frame. Check the
-   arm on an overlay of the frames before going on.
-3. **Retarget** (`retarget.py`): a clip pack on the PSX skeleton with one clip. Each upper arm and forearm points
-   where the video's does, bent in the video's elbow plane; each hand turns to the video's wrist-knuckles line and
-   index-pinky side; fingers and clavicles hold `knife_idle`'s first frame (the fist closed on a grip). The view is
-   the body's facing over `--facing` frames. `--pitch` and `--forward` stage the motion for the view. `--report`
-   gives the right wrist's speed and height per frame, to place the action's `ClipMarks`.
-4. **Use**: list the pack in `content/held/rigs/psx.json` `packs`, name the clip and its marks in `clips.json`, and
-   check it in game (`riders.dev.select`, `riders.dev.use main` and frame captures in held time).
+1. **Get a motion.**
+   - Mixamo: pick X Bot as the character (its standard skeleton), then download the animation as FBX Binary at
+     30 fps. Raw Mixamo clips stay out of git, in `content/art/arms/sources/` (synced to the NAS by
+     `scripts/art-sync.sh`).
+   - UAL and other libraries: a GLB or FBX holding many clips works as is, with `--clip`.
+   - Video: `h3.py` generates one on a ComfyUI host with the H3 models. `extract.py` reads it with MediaPipe Pose and
+     writes landmarks that `retarget.py` reads directly.
+2. **Sample it** (`sample.py`, in Blender), from any FBX, glTF/GLB or BVH. It writes a track: each arm's shoulder,
+   elbow, wrist and index/pinky knuckles, the hips, and a point in front of the chest. The facing comes from the
+   skeleton's rest pose (toes ahead of ankles), not from how the clip stands. Bone names come from
+   `skeletons.json` (Mixamo and UAL so far). A new skeleton family is one entry there.
+3. **Retarget and stage** (`retarget.py`). Each upper arm and forearm points where the track's does, bent in its
+   elbow plane, and each hand turns to the track's knuckles. Fingers and clavicles hold `knife_idle`'s first frame.
+   Staging flags:
+   - `--cone` and `--aim`: third-person clips swing behind and over the head, out of a first-person view. Each frame,
+     the whole arm turns rigidly about its shoulder until the shoulder-to-wrist line lies in a soft cone around the
+     aim. Its bend, elbow plane and wrist turn ride along.
+   - `--reach`: opens a folded elbow so the hand is held out where it can be seen.
+   - `--sides R`: drives only the right arm, for example to leave a shield arm out.
+   - `--pitch` and `--forward`: the older global tilt that the H3 slash uses.
+   - `--report`: gives the right wrist's speed and height per frame, for placing `ClipMarks`.
+4. **Preview** (`preview.py`, in Blender). A contact sheet of the clip on the PSX arms from the game's view: the
+   pack's camera, which the shoulder plus psx's carry reproduces, at 75 degrees vertical. A bar stands in for a
+   blade. `--from side|front|above` shows where the arms go when they leave the view. The framing is close to the
+   game's, not exact, so check in game before calling it done.
+5. **Use and check in game.** List the pack in `content/held/rigs/psx.json` `packs`, then set the action's clip and
+   marks in `clips.json`. `in-game.sh OUT_DIR` builds the game, runs its own headless host, uses the main hand once
+   in held time and writes a contact sheet.
 
-Each clip keeps its source video, landmarks and settings beside it (for example `art/arms/h3-slash/provenance.json`).
+Each pack records its source, licence, commands and marks: `content/art/arms/sources.json` for authored clips,
+`art/arms/h3-slash/provenance.json` for the video slash.
 
-Setup: `python3.12 -m venv venv && venv/bin/pip install mediapipe opencv-python-headless numpy`, and the model
+Setup: a venv with `mediapipe opencv-python-headless numpy` (the video route), Blender 5.x on PATH, and for video the
+MediaPipe model
 `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task`.
 
-Limits: one camera view, so depth is MediaPipe's estimate; the forearm's roll rests on two hand points. No twist
-joints on the PSX arms. The clip carries the body's own timing; `ClipMarks` fit it to the action's phases.
+Limits:
+- The PSX arms have no twist joints.
+- The cone keeps the wrist in view, but not the elbow: an overhead wind-up can still bring the upper arm close to the
+  camera.
+- Video tracks rest on one camera view, so depth is MediaPipe's estimate.
+- A clip keeps its source timing; `ClipMarks` fit it to the action's phases.

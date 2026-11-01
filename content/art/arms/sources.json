@@ -1,0 +1,29 @@
+{
+  "about": "Arm clip packs made from authored humanoid clips by scripts/arm-clips (sample.py, then retarget.py). Source clips stay out of git: Mixamo's terms allow their use in the game but not passing the raw clips on, and the UAL source is kept beside it for the rebuild. A pack under content/held/models is in git; one here is not.",
+  "sources/mixamo/sword-and-shield-slash.fbx": {
+    "from": "Adobe Mixamo, 'Sword And Shield Slash' on X Bot, downloaded 2026-10-31 from Patch's Mixamo account (Firefox on den-agents): FBX Binary, With Skin, 30 fps, no keyframe reduction, default trim and sliders",
+    "license": "Mixamo terms: free to use in games; the animation files themselves are not redistributed"
+  },
+  "sources/ual/UAL1_Standard.glb": {
+    "from": "Quaternius Universal Animation Library (Standard), copied from rusty-craftsurvive/content/animations with its licence file",
+    "license": "CC0-1.0 (sources/ual/UAL1_Standard-License.txt)"
+  },
+  "psx-arms.mixamo-sword-slash.glb": {
+    "clip": "mixamo_sword_slash",
+    "commands": [
+      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/mixamo/sword-and-shield-slash.fbx mixamo.track.json",
+      "python scripts/arm-clips/retarget.py mixamo.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/art/arms/psx-arms.mixamo-sword-slash.glb mixamo_sword_slash --facing 0:4 --cone 28 --aim=0,12 --reach 0.85 --sides R --sigma 0"
+    ],
+    "marks": "start 0.3 (frame 15, the dip under the rising cut begins), strike 0.44 (frame 22), recover 0.58 (frame 29, the cut done up and right), end 1",
+    "notes": "A wind-up high, a dip, then a fast rising backhand cut. During the overhead wind-up the upper arm passes close to the view for a couple of frames."
+  },
+  "../../held/models/psx-arms.ual-sword.glb": {
+    "clip": "ual_sword_attack",
+    "commands": [
+      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual.track.json --clip Sword_Attack",
+      "python scripts/arm-clips/retarget.py ual.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/held/models/psx-arms.ual-sword.glb ual_sword_attack --facing 0:4 --cone 28 --aim=0,12 --reach 0.85 --sides R --sigma 0"
+    ],
+    "marks": "start 0, strike 0.216 (frame 8, top of the raise), recover 0.35 (frame 13, the cut done low and left), end 0.81 (frame 30, settled after the flourish)",
+    "notes": "Raise, fast downward cut across the body, a small flourish. The finish lands over the off hand's flintlock."
+  }
+}
