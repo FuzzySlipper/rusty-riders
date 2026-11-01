@@ -24,6 +24,8 @@ internal sealed class ActionUser
     private float remaining;
     private float scale = 1;
     private float elapsed;
+    // The time up to which the current action's events have been cued; below zero until its first step.
+    private float cuedTo;
 
     internal ActionDefinition? Current { get; private set; }
     internal ActionPhase Phase { get; private set; }
@@ -64,6 +66,7 @@ internal sealed class ActionUser
         Phase = ActionPhase.Windup;
         scale = timeScale;
         elapsed = 0;
+        cuedTo = -1;
         Started++;
         remaining = action.Timing.Windup * scale;
         if (action.Timing.Cooldown > 0) cooldowns[action.Id] = action.Timing.Cooldown;
@@ -81,13 +84,14 @@ internal sealed class ActionUser
         Cued.Clear();
         if (Current is not { } action) return null;
         remaining -= seconds;
-        float from = elapsed;
         elapsed += seconds;
-        // An event at the very end of the action is passed by the step that ends it.
-        float end = action.Duration * scale;
+        // An event is passed with the same tolerance as a phase's end, so one on a phase boundary (a reload's magazine
+        // in at the start of its commit) is cued on the step that lands or changes phase, and one at the very end by
+        // the step that ends the action. Each is cued once: the next step starts above this one's reach.
         foreach (ActionEvent cue in action.Cues)
-            if (cue.Time(action.Timing, scale) is var at && at >= from && (at < elapsed || elapsed >= end - Due && at <= end))
+            if (cue.Time(action.Timing, scale) - Due is var at && at > cuedTo && at <= elapsed)
                 Cued.Add(cue);
+        cuedTo = elapsed;
         ActionDefinition? landed = null;
         while (remaining <= Due && Current is not null)
             switch (Phase)
