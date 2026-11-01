@@ -23,7 +23,7 @@
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual.track.json --clip Sword_Attack",
       "python scripts/arm-clips/retarget.py ual.track.json content/held/models/psx-arms.glb content/held/models/psx-arms.knife.glb content/held/models/psx-arms.ual-sword.glb ual_sword_attack --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
     ],
-    "marks": "start 0, strike 0.216 (frame 8, top of the raise), recover 0.35 (frame 13, the cut done low and left), end 0.81 (frame 30, settled after the flourish)",
-    "notes": "Raise, fast downward cut across the body, a small flourish. Staged by --band: hand 41 right to 41 left, -51 to 5 up, elbow at least 0.31 m, on screen 68%. In game the cut finishes at the lower left with the blade across the view; the low hold after it keeps the hand below the frame for about a second before the flourish."
+    "marks": "start 0, strike 0.243 (frame 9, the last raised frame), recover 0.297 (frame 11, the cut done low and left), end 0.81 (frame 30, settled after the flourish). The cut is one source frame (9 to 10); strike and recover bracket it so it spans the commit and crosses the view as the hit lands",
+    "notes": "Raise, fast downward cut across the body, a small flourish. Staged by --band: hand 41 right to 41 left, -51 to 5 up, elbow at least 0.31 m, on screen 68%. In game (in-game.sh, 33 ms steps) the cut crosses the view as the hit lands, the hand is below the frame for about 0.15 s early in the recovery, as Dark Messiah's cuts finish, and the flourish brings the blade back through the lower left by 0.33 s."
   }
 }

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # In-game contact sheet of the main hand's action: builds, starts a private headless host (its own instance, stopped
-# afterwards), selects an inventory slot, holds world time and captures the view at rest and every STEP updates of
-# one use of the main hand. Needs rusty dev's live debug and a Chromium for headless hosts (RIDERS_CHROMIUM).
+# afterwards), selects an inventory slot, holds world time and captures the view at rest and every STEP milliseconds of
+# world time (whole 60 Hz updates, at least one) through one use of the main hand. Needs rusty dev's live debug and a Chromium for headless hosts (RIDERS_CHROMIUM).
 #
-#   scripts/arm-clips/in-game.sh OUT_DIR [SLOT=1] [FRAMES=15] [STEP=30]
+#   scripts/arm-clips/in-game.sh OUT_DIR [SLOT=1] [FRAMES=20] [STEP=33]
 set -euo pipefail
-out=$1; slot=${2:-1}; frames=${3:-15}; step=${4:-30}
+out=$1; slot=${2:-1}; frames=${3:-20}; step=${4:-33}
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 chromium=${RIDERS_CHROMIUM:-$(ls -d ~/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null | tail -1)}
 instance=arm-clips-$$
@@ -33,7 +33,7 @@ cols = 4; rows = -(-(frames + 1) // cols)
 sheet = Image.new("RGB", (480 * cols, 270 * rows))
 for i in range(frames + 1):
     tile = Image.open(f"{out}/f{i:02d}.png").resize((480, 270))
-    ImageDraw.Draw(tile).text((8, 8), "rest" if i == 0 else f"+{i * step}", fill="white")
+    ImageDraw.Draw(tile).text((8, 8), "rest" if i == 0 else f"+{i * step} ms", fill="white")
     sheet.paste(tile, ((i % cols) * 480, (i // cols) * 270))
 sheet.save(f"{out}/sheet.png")
 PY

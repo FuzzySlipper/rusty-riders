@@ -17,8 +17,8 @@
               "clip": "ual_sword_attack",
               "marks": {
                 "start": 0,
-                "strike": 0.216,
-                "recover": 0.35,
+                "strike": 0.243,
+                "recover": 0.297,
                 "end": 0.81
               },
               "fade": 0.1
