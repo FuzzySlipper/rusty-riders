@@ -1,9 +1,9 @@
 """A clip pack's clip on a rig's arms, seen from the game's view, as one contact sheet. Runs in Blender:
 
-    blender -b --factory-startup --python scripts/arm-clips/preview.py -- PACK.glb CLIP SHEET.png [--rig psx] [--frames N]
+    blender -b --factory-startup --python scripts/arm-clips/preview.py -- PACK.glb CLIP SHEET.png [--rig painted] [--frames N]
         [--blade X,Y,Z] [--from game|side|front|above]
 
-The rig (content/held/rigs/<rig>.json, psx by default) gives the arms model, the main hand and the palm. The camera is
+The rig (content/held/rigs/<rig>.json, painted by default) gives the arms model, the main hand and the palm. The camera is
 where the game puts the view for the rig's clip-led arms (shared shoulder plus the rig's carry in
 content/held/clips.json, rig.py), looking along the arms' +Z, with the walker's 75 degree vertical field of view. A
 thin bar from the right hand's palm stands in for a blade so its path reads; --blade is its direction in the hand
@@ -19,7 +19,7 @@ opt = dict(zip(args[3::2], args[4::2]))
 count = int(opt.get("--frames", 12))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from rig import Rig
-rig = Rig(opt.get("--rig", "psx"))
+rig = Rig(opt.get("--rig", "painted"))
 hand = rig.profile["main"]["hand"]
 eye = rig.camera()
 

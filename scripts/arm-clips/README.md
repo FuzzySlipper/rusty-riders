@@ -1,7 +1,6 @@
 # Arm clips from any humanoid motion
 
-Clip-led arms (`content/held/clips.json`) play baked clips on an arms rig: the painted arms (the drawing rig) and the
-PSX arms. This folder turns a full-body motion into a clip pack for any rig profile (`content/held/rigs/<rig>.json`): authored clips (Mixamo, the CC0 UAL library, BVH mocap) or a pose read from a video. Every source becomes
+Clip-led arms (`content/held/clips.json`) play baked clips on the painted arms, the rig Riders draws. This folder turns a full-body motion into a clip pack for any rig profile (`content/held/rigs/<rig>.json`): authored clips (Mixamo, the CC0 UAL library, BVH mocap) or a pose read from a video. Every source becomes
 the same joint track, so staging and checks never depend on where a motion came from.
 
 1. **Get a motion.**
@@ -19,7 +18,7 @@ the same joint track, so staging and checks never depend on where a motion came 
    rig profile (`rig.py`). Each upper arm and forearm points where the track's does, bent in its elbow plane, and each
    hand turns to the track's knuckles. A forearm twist joint the profile lists (painted's `CATRig?Arm22`) turns by its
    share of the hand's roll, as the Engine shares a weapon-led hand's. Fingers and collarbones hold the first frame of
-   the rig's own clip (`--base` picks another: the PSX packs keep `knife_idle`'s fist), so with `"digits": "Look"` on
+   the rig's own clip (`--base` picks another), so with `"digits": "Look"` on
    the rig in `clips.json` a clip-led hand takes its look's hand shape over them, as a weapon-led hand does (Engine
    `HandAim.ShapeClip`). The pack is the rig model's skeleton (nodes and skin, no mesh) with the one clip.
    Staging flags:
@@ -30,7 +29,7 @@ the same joint track, so staging and checks never depend on where a motion came 
    - `--clear`: keeps the elbow and forearm at least that far from the view, about 0.3 m. A frame whose arm comes
      closer turns about the shoulder, mostly forward along the view, until it clears, so an overhead wind-up does
      not sweep the elbow across the lens. The camera is where the game puts the view for the rig (`arms.json` shoulder
-     plus the rig's carry, under its turn and scale; for PSX the pack's own, 1.743 m up), or set it with `--camera`. The run
+     plus the rig's carry, under its turn and scale), or set it with `--camera`. The run
      prints the closest the arm comes. Much more than 0.3 m pushes the hand out of the frame.
    - `--band YAW,PITCH,HALF_YAW,HALF_PITCH`, `--gain`: staging measured from the camera, the one the sword packs use.
      It takes where our camera would see the wrist if the arm did the source's motion. It pulls that bearing into a
@@ -93,8 +92,8 @@ Both stayed in the right half of the view. With `--band` (2026-10-31): UAL 41 ri
 elbow 0.31 m, on screen 68%; Mixamo 44 right to 46 left, -55 to 10 up, elbow 0.31 m, 71%.
 
 Limits:
-- The PSX arms have no twist joints; painted's second forearm bone takes its share of the roll.
-- A rig without a body (the PSX arms alone) cannot be sampled as a source, so the PSX knife clips do not carry over;
+- Painted's second forearm bone takes its share of the roll; a rig profile without `twist` joints (PSX) has none.
+- A rig without a body (the PSX arms alone) cannot be sampled as a source, so their knife clips do not carry over;
   painted's sword idle is UAL's `Sword_Idle` instead.
 - Packs made on Asset Store or Mixamo/PINOC art or clips stay in ignored `content/art/arms/` (`content/art/LICENSE.md`).
 - The cone and clearance work frame by frame and do not look ahead. A low dip can still leave the frame for a moment.

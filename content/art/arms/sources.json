@@ -1,5 +1,5 @@
 {
-  "about": "Arm clip packs made from authored humanoid clips by scripts/arm-clips (sample.py, then retarget.py onto a rig profile). Source clips stay out of git: Mixamo's terms allow their use in the game but not passing the raw clips on, and the UAL source is kept beside it for the rebuild. A pack under content/held/models is in git; one here is not. Packs on the painted arms (Asset Store art) stay here, out of git, whatever their clip's licence.",
+  "about": "Arm clip packs made from authored humanoid clips by scripts/arm-clips (sample.py, then retarget.py onto a rig profile). Source clips stay out of git: Mixamo's terms allow their use in the game but not passing the raw clips on, and the UAL source is kept beside it for the rebuild. A pack under content/held/models is in git; one here is not. Packs on the painted arms (Asset Store art) stay here, out of git, whatever their clip's licence. The PSX arms' clip packs were removed on 2026-11-02 when Riders settled on the painted arms; their marks and notes are carried on the painted packs.",
   "sources/mixamo/sword-and-shield-slash.fbx": {
     "from": "Adobe Mixamo, 'Sword And Shield Slash' on X Bot, downloaded 2026-10-31 from Patch's Mixamo account (Firefox on den-agents): FBX Binary, With Skin, 30 fps, no keyframe reduction, default trim and sliders",
     "license": "Mixamo terms: free to use in games; the animation files themselves are not redistributed"
@@ -8,63 +8,9 @@
     "from": "Quaternius Universal Animation Library (Standard), copied from rusty-craftsurvive/content/animations with its licence file",
     "license": "CC0-1.0 (sources/ual/UAL1_Standard-License.txt)"
   },
-  "psx-arms.mixamo-sword-slash.glb": {
-    "clip": "mixamo_sword_slash",
-    "commands": [
-      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/mixamo/sword-and-shield-slash.fbx mixamo.track.json",
-      "python scripts/arm-clips/retarget.py mixamo.track.json psx content/art/arms/psx-arms.mixamo-sword-slash.glb mixamo_sword_slash --base knife_idle --camera 0,1.743,0 --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
-    ],
-    "marks": "start 0.3 (frame 15, the dip under the rising cut begins), strike 0.44 (frame 22), recover 0.58 (frame 29, the cut done up and right), end 1",
-    "notes": "A wind-up high, a dip, then a fast rising backhand cut. Staged by --band toward Dark Messiah's measured fast cuts (README, Reference): hand 44 right to 46 left, -55 to 10 up, elbow at least 0.31 m, on screen 71%. In game the dip goes below the frame and the rising cut passes close through the bottom right before finishing upper right."
-  },
-  "../../held/models/psx-arms.ual-sword.glb": {
-    "clip": "ual_sword_attack",
-    "commands": [
-      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual.track.json --clip Sword_Attack",
-      "python scripts/arm-clips/retarget.py ual.track.json psx content/held/models/psx-arms.ual-sword.glb ual_sword_attack --base knife_idle --camera 0,1.743,0 --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
-    ],
-    "marks": "start 0, strike 0.243 (frame 9, the last raised frame), recover 0.297 (frame 11, the cut done low and left), end 0.81 (frame 30, settled after the flourish). The cut is one source frame (9 to 10); strike and recover bracket it so it spans the commit and crosses the view as the hit lands",
-    "notes": "Raise, fast downward cut across the body, a small flourish. Staged by --band: hand 41 right to 41 left, -51 to 5 up, elbow at least 0.31 m, on screen 68%. In game (in-game.sh, 33 ms steps) the cut crosses the view as the hit lands, the hand is below the frame for about 0.15 s early in the recovery, as Dark Messiah's cuts finish, and the flourish brings the blade back through the lower left by 0.33 s.",
-    "sweep": "blade-slash's hit path was baked from this clip on rift-blade while psx drew the arms: scripts/arm-clips/bake-sweep.sh blade-slash 1 5 --pitch=0.5 --write (2026-11-01). The drawn tip goes from 24 right, 36 up to 33 left, 30 down across the commit; at half its pitch the cut ends about 1.2 m up a body 1.6 m away (the drawn tip's would end at 0.7 m, the thigh); it is now baked on painted (painted.ual-sword.glb)"
-  },
   "sources/pinoc/pistol-fire.fbx": {
     "from": "PINOC curated motion library, 'Pistol Fire' (asset 57dce1dd-7a52-4b31-b751-bcf78e90e085), Mixamo-rig FBX downloaded 2026-11-01 through the PINOC MCP",
     "license": "PINOC library terms (free library clip); the file is not redistributed, so it and its pack stay out of git"
-  },
-  "../../held/models/psx-arms.ual-pistol-idle.glb": {
-    "clip": "ual_pistol_idle",
-    "commands": [
-      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-idle.track.json --clip Pistol_Idle_Loop",
-      "python scripts/arm-clips/retarget.py ual-idle.track.json psx content/held/models/psx-arms.ual-pistol-idle.glb ual_pistol_idle --base knife_idle --camera 0,1.743,0 --facing 0:4 --band=30,-24,10,8 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R"
-    ],
-    "notes": "The revolver family's idle (laser-flintlock on the PSX arms). Right arm only: UAL holds the pistol in both hands, and the left hand's open palm sat in front of the view; the empty left hand rests out of view instead."
-  },
-  "../../held/models/psx-arms.ual-pistol-shoot.glb": {
-    "clip": "ual_pistol_shoot",
-    "commands": [
-      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-shoot.track.json --clip Pistol_Shoot",
-      "python scripts/arm-clips/retarget.py ual-shoot.track.json psx content/held/models/psx-arms.ual-pistol-shoot.glb ual_pistol_shoot --base knife_idle --camera 0,1.743,0 --facing 0:4 --band=30,-24,10,8 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R"
-    ],
-    "marks": "start 0, strike 0.02, recover 0.067 (frame 1: the kick is the one-frame jump from frame 0), end 0.8. The landing (the shot) is the frame before the kick; Eject at recovery 0.1 and Cock at 0.8 are action events (content/actions)",
-    "notes": "A small kick (0.06 m at the wrist) and a slow settle. In game (in-game.sh 16 ms) the landing and the kick are on update 4, Eject on update 8."
-  },
-  "../../held/models/psx-arms.ual-pistol-reload.glb": {
-    "clip": "ual_pistol_reload",
-    "commands": [
-      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-reload.track.json --clip Pistol_Reload",
-      "python scripts/arm-clips/retarget.py ual-reload.track.json psx content/held/models/psx-arms.ual-pistol-reload.glb ual_pistol_reload --base knife_idle --camera 0,1.743,0 --facing 0:4 --band=30,-24,20,14 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R,L"
-    ],
-    "marks": "start 0, strike 0.55 (frame 22: the left hand slaps the magazine in), recover 0.6, end 0.95. Read from the left wrist: it leaves the gun at frame 2 (MagazineOut, windup 0.09), drops to the belt (frames 6 to 11), returns (12 to 16) and pushes up at 21 to 22. The refill lands at magazine-in because the strike mark is there",
-    "notes": "Both arms (clips.json leftHand lists flintlock-reload), so the empty left hand plays this clip instead of resting. Its fingers hold the base pose: no magazine in it."
-  },
-  "psx-arms.pinoc-pistol-fire.glb": {
-    "clip": "pinoc_pistol_fire",
-    "commands": [
-      "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/pinoc/pistol-fire.fbx pinoc-fire.track.json",
-      "python scripts/arm-clips/retarget.py pinoc-fire.track.json psx content/art/arms/psx-arms.pinoc-pistol-fire.glb pinoc_pistol_fire --base knife_idle --camera 0,1.743,0 --facing 0:4 --band=30,-24,10,8 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R"
-    ],
-    "marks": "start 0, strike 0.053 (frame 2), recover 0.105 (frame 4: the kick), end 0.5",
-    "notes": "Compared on flintlock-shot 2026-11-01: a much bigger kick than UAL's (3.3 m/s at the wrist), with the arm held straight out and the gun small and far. UAL's stays the shot clip; switch flintlock-shot's clip in clips.json to try this one."
   },
   "painted.ual-sword-idle.glb": {
     "clip": "ual_sword_idle",
@@ -72,7 +18,7 @@
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-sword-idle.track.json --clip Sword_Idle",
       "python scripts/arm-clips/retarget.py ual-sword-idle.track.json painted content/art/arms/painted.ual-sword-idle.glb ual_sword_idle --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
     ],
-    "notes": "The sword family's (sns) idle on painted: the PSX arms' knife_idle has no body to sample, so UAL's sword idle, staged as the sword attack so the cut starts where the idle rests. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
+    "notes": "The sword family's (sns) idle on painted: UAL's sword idle, staged as the sword attack so the cut starts where the idle rests. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
   },
   "painted.ual-sword.glb": {
     "clip": "ual_sword_attack",
@@ -80,8 +26,9 @@
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual.track.json --clip Sword_Attack",
       "python scripts/arm-clips/retarget.py ual.track.json painted content/art/arms/painted.ual-sword.glb ual_sword_attack --facing 0:4 --band=-15,0,55,28 --gain 2.2 --reach 0.9 --clear 0.28 --push=0,-2,1 --sides R --sigma 0"
     ],
-    "notes": "Painted's blade-slash, from the same track and staging as psx-arms.ual-sword.glb, with the same marks. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry).",
-    "sweep": "blade-slash's hit path is baked from this clip on rift-blade with painted drawing: scripts/arm-clips/bake-sweep.sh blade-slash 1 5 --pitch=0.5 --write (2026-11-01). The drawn tip goes from 11 right, 41 up to 40 left, 8 up across the commit: the painted fist holds the blade upright, so the cut stays above the view's level, and at half its pitch the path ends about 4 degrees up (head height on a body 1.6 m away), where psx's ended at the chest"
+    "marks": "start 0, strike 0.243 (frame 9, the last raised frame), recover 0.297 (frame 11, the cut done low and left), end 0.81 (frame 30, settled after the flourish). The cut is one source frame (9 to 10); strike and recover bracket it so it spans the commit and crosses the view as the hit lands",
+    "notes": "Painted's blade-slash. Raise, fast downward cut across the body, a small flourish. Staged by --band: hand 41 right to 41 left, -51 to 5 up, elbow at least 0.31 m, on screen 68%. On the PSX arms, in game (in-game.sh, 33 ms steps), the cut crosses the view as the hit lands, the hand is below the frame for about 0.15 s early in the recovery, as Dark Messiah's cuts finish, and the flourish brings the blade back through the lower left by 0.33 s. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry).",
+    "sweep": "blade-slash's hit path is baked from this clip on rift-blade with painted drawing: scripts/arm-clips/bake-sweep.sh blade-slash 1 5 --pitch=0.5 --write. Rebaked 2026-11-02 after #10480 refitted rift-blade's hold: at half its pitch the path runs from 25 right, 28 up to 22 left, 10 up across the commit (it was 10 right, 19 up to 40 left, 4 up), still above the view's level because the painted fist holds the blade upright."
   },
   "painted.ual-pistol-idle.glb": {
     "clip": "ual_pistol_idle",
@@ -89,7 +36,7 @@
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-idle.track.json --clip Pistol_Idle_Loop",
       "python scripts/arm-clips/retarget.py ual-idle.track.json painted content/art/arms/painted.ual-pistol-idle.glb ual_pistol_idle --facing 0:4 --band=30,-24,10,8 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R"
     ],
-    "notes": "Painted's revolver idle (laser-flintlock), as psx-arms.ual-pistol-idle.glb. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
+    "notes": "Painted's revolver idle (laser-flintlock). The revolver family's idle (laser-flintlock on the PSX arms). Right arm only: UAL holds the pistol in both hands, and the left hand's open palm sat in front of the view; the empty left hand rests out of view instead. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
   },
   "painted.ual-pistol-shoot.glb": {
     "clip": "ual_pistol_shoot",
@@ -97,7 +44,8 @@
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-shoot.track.json --clip Pistol_Shoot",
       "python scripts/arm-clips/retarget.py ual-shoot.track.json painted content/art/arms/painted.ual-pistol-shoot.glb ual_pistol_shoot --facing 0:4 --band=30,-24,10,8 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R"
     ],
-    "notes": "Painted's flintlock-shot, as psx-arms.ual-pistol-shoot.glb, with the same marks. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
+    "marks": "start 0, strike 0.02, recover 0.067 (frame 1: the kick is the one-frame jump from frame 0), end 0.8. The landing (the shot) is the frame before the kick; Eject at recovery 0.1 and Cock at 0.8 are action events (content/actions)",
+    "notes": "Painted's flintlock-shot. A small kick (0.06 m at the wrist) and a slow settle. On the PSX arms, in game (in-game.sh 16 ms), the landing and the kick are on update 4, Eject on update 8. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
   },
   "painted.ual-pistol-reload.glb": {
     "clip": "ual_pistol_reload",
@@ -105,6 +53,7 @@
       "blender -b --factory-startup --python scripts/arm-clips/sample.py -- content/art/arms/sources/ual/UAL1_Standard.glb ual-reload.track.json --clip Pistol_Reload",
       "python scripts/arm-clips/retarget.py ual-reload.track.json painted content/art/arms/painted.ual-pistol-reload.glb ual_pistol_reload --facing 0:4 --band=30,-24,20,14 --gain 1 --reach 0.85 --clear 0.28 --push=0,-2,1 --sigma 0 --sides R,L"
     ],
-    "notes": "Painted's flintlock-reload, both arms, as psx-arms.ual-pistol-reload.glb, with the same marks. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
+    "marks": "start 0, strike 0.55 (frame 22: the left hand slaps the magazine in), recover 0.6, end 0.95. Read from the left wrist: it leaves the gun at frame 2 (MagazineOut, windup 0.09), drops to the belt (frames 6 to 11), returns (12 to 16) and pushes up at 21 to 22. The refill lands at magazine-in because the strike mark is there",
+    "notes": "Painted's flintlock-reload. Both arms (clips.json leftHand lists flintlock-reload), so the empty left hand plays this clip instead of resting. Its fingers hold the base pose: no magazine in it. The fingers hold painted's own clip (Hands_Gun_03_Mesh) and the look shapes them in game (clips.json digits Look); CATRigRArm22 takes 0.6 of the hand's roll. The camera is the game's view for painted (rig.py: arms.json shoulder, no carry)."
   }
 }

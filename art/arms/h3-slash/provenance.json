@@ -1,8 +1,8 @@
 {
- "asset": "h3_slash: a one-handed cross-body sword slash for the PSX arms (clip pack content/held/models/psx-arms.h3-slash.glb)",
+ "asset": "h3_slash: a one-handed cross-body sword slash, made for the PSX arms. Its PSX clip pack (content/held/models/psx-arms.h3-slash.glb) was removed on 2026-11-02 when Riders settled on the painted arms; the video and landmarks stay, and retarget.py can put them on painted",
  "source": {
   "video": "art/arms/h3-slash/cross-41011.mp4",
-  "generator": "MiniMax H3 text-to-video (minimax_h3_fl2va_pruned_int8_convrot) on the owner's 5090 ComfyUI, asset-pipeline legacy/tools/asset-cli/operators/video/minimax_h3_t2v_api.json at b3905a25005b",
+  "generator": "MiniMax H3 text-to-video (minimax_h3_fl2va_pruned_int8_convrot) on Patch's 5090 ComfyUI, asset-pipeline legacy/tools/asset-cli/operators/video/minimax_h3_t2v_api.json at b3905a25005b",
   "seed": 41011,
   "frames": "124 at 24 fps, 768x448, 20 steps",
   "prompt": "Fixed camera, full body motion reference on a plain light grey studio backdrop with a flat grey floor. A man in a fitted plain dark grey long-sleeve shirt and dark trousers stands squarely facing the camera, his whole body from head to feet in frame the entire time. He holds a one-handed sword in his right hand only; his left hand stays empty. He raises the sword high above his right shoulder, then cuts in one fast diagonal slash down across the front of his body, the blade passing in front of his chest and ending low by his left hip with his right arm across his body. He holds that finish for a moment, then brings the sword back up in front of him to a ready guard. One clean cross-body slash, realistic weight, no camera movement, no cuts, the man stays in place facing the camera."
