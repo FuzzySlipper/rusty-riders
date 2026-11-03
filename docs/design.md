@@ -150,10 +150,11 @@ rusty-hotel's `Actions/`):
   (`riders.combat.moments`); sound and effects will.
 - **Delivery:** melee, hitscan ray, projectile (per-step segment cast), area, or self. A melee blow
   names how it finds what it strikes (`delivery.hit`): a thrust (a capsule along the aim, the default), a
-  ray, a sphere overlap, or a sweep (a blade turned through a path of bearings across the commit,
-  striking each body as it reaches it). The hit runs on gameplay time, not on the arms clip; a clip-led
-  sweep's path is baked from where its clip draws the blade tip (`scripts/arm-clips/bake-sweep.sh`), and
-  its reach and width stay the action's.
+  ray, a sphere overlap, or a sweep (a blade turned through an arc across the commit, striking each
+  body as it reaches it). The hit runs on gameplay time, not on the arms clip. A sweep's arc is authored in
+  the view (`arc`: from and to, degrees right of the aim, and a tilt that raises its right end), as Dark
+  Messiah's are: in first person the click and the view are the attack, and the arm's motion only sells it,
+  fast. The clip is staged to read as the arc; the arc never follows the clip or the grip.
 - **Cost:** ammo, charge, health or nothing.
 - **Payload:** damage packets by kind, scaled by stats, plus effects (burn, slow, stun, knockback).
 

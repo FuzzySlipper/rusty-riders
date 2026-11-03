@@ -8,6 +8,8 @@ internal sealed partial class ActionResolution
 {
     // A thrust meeting a surface this close to its start began in contact with it.
     private const double StartContact = .05;
+    // A sweep query turns its shape by the shortest rotation between its poses, so an arc is cut in stretches no wider.
+    private const float StretchDegrees = 45;
     private readonly List<MeleeSweep> sweeps = [];
 
     private ActionImpact[] Melee(ActionDefinition action, IActionActor user, Vector3 aim, IActionActor[] living, float commit)
@@ -52,26 +54,24 @@ internal sealed partial class ActionResolution
         }).ToArray();
     }
 
-    // Turns each sweep's blade on by admitted seconds, one query per stretch of its path the step covers (a corner of the
-    // path is not cut): the bodies it passes are struck as it reaches them, a surface met first stops it, and one that
-    // ends having met nothing misses where it ended.
+    // Turns each sweep's blade on by admitted seconds, through as many stretches of its arc as the step covers: the
+    // bodies it passes are struck as it reaches them, a surface met first stops it, and one that ends having met nothing
+    // misses where it ended.
     private List<ActionImpact> Turn(float seconds, IReadOnlyList<IActionActor> bodies)
     {
         List<ActionImpact> impacts = [];
         foreach (MeleeSweep sweep in sweeps.ToArray())
         {
-            MeleeHit hit = sweep.Action.Delivery.Melee;
+            SweepArc arc = sweep.Action.Delivery.Melee.Arc!;
             float from = sweep.Progress;
             sweep.Elapsed += seconds;
             float to = sweep.Progress;
             IActionActor[] living = bodies.Where(t => t.Alive && t.Entity != sweep.User.Entity && sweep.Eligible.Contains(t.Entity)
                 && !sweep.Struck.Contains(t.Entity)).ToArray();
+            int stretches = Math.Max(1, (int)MathF.Ceiling(arc.Span * (to - from) / StretchDegrees));
             bool over = false;
-            for (int k = 1; k < hit.Path!.Length && !over; k++)
-            {
-                float start = Math.Max(from, hit.Knot(k - 1)), end = Math.Min(to, hit.Knot(k));
-                if (end > start) over = Cut(sweep, start, end, living, impacts);
-            }
+            for (int k = 0; k < stretches && !over && to > from; k++)
+                over = Cut(sweep, float.Lerp(from, to, (float)k / stretches), float.Lerp(from, to, (float)(k + 1) / stretches), living, impacts);
             if (!over && to >= 1)
             {
                 over = true;
@@ -83,7 +83,7 @@ internal sealed partial class ActionResolution
         return impacts;
     }
 
-    // Turns a sweep's blade from one point of its path to another; whether the blow is over (its limit struck, or a surface met).
+    // Turns a sweep's blade from one point of its arc to another; whether the blow is over (its limit struck, or a surface met).
     private bool Cut(MeleeSweep sweep, float from, float to, IActionActor[] living, List<ActionImpact> impacts)
     {
         ActionDefinition action = sweep.Action;
@@ -91,8 +91,8 @@ internal sealed partial class ActionResolution
         Vector3 eye = sweep.User.Eye;
         SpatialContact[] contacts = engine.Spatial.SweepContacts(SpatialContactQueryRequest.Sweep(session,
             SpatialShape.Capsule(Vector3.Zero, -Vector3.UnitZ * d.Range, d.Width / 2),
-            new SpatialPose(eye, Bearing.Along(sweep.Aim, d.Melee.Path!, from)),
-            new SpatialPose(eye, Bearing.Along(sweep.Aim, d.Melee.Path!, to)),
+            new SpatialPose(eye, d.Melee.Arc!.Along(sweep.Aim, from)),
+            new SpatialPose(eye, d.Melee.Arc!.Along(sweep.Aim, to)),
             living.Select(t => t.Hitbox).ToArray(), ignoredEntities: new[] { sweep.User.Entity }, filter: Everything)).Contacts.ToArray();
         foreach (SpatialContact contact in contacts)
         {
@@ -113,9 +113,9 @@ internal sealed partial class ActionResolution
         return false;
     }
 
-    // Where a sweep's blade tip is at a point of its path.
+    // Where a sweep's blade tip is at a point of its arc.
     private static Vector3 Tip(MeleeSweep sweep, float t) =>
-        sweep.User.Eye + Vector3.Transform(-Vector3.UnitZ * sweep.Action.Delivery.Range, Bearing.Along(sweep.Aim, sweep.Action.Delivery.Melee.Path!, t));
+        sweep.User.Eye + Vector3.Transform(-Vector3.UnitZ * sweep.Action.Delivery.Range, sweep.Action.Delivery.Melee.Arc!.Along(sweep.Aim, t));
 
     /// <summary>A melee sweep turning across its commit: who swings, its aim, how long it turns, and whom it has struck.</summary>
     private sealed class MeleeSweep(ActionDefinition action, IActionActor user, Vector3 aim, float seconds, IReadOnlySet<ulong> eligible)

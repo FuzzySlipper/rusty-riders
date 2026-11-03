@@ -9,7 +9,7 @@
         "width": 0.5,
         "hit": {
           "kind": "Sweep",
-          "path": [{ "right": 24.8, "up": 27.5 }, { "right": 19.9, "up": 18.9 }, { "right": -6.4, "up": 12.2 }, { "right": -16.8, "up": 10.7 }, { "right": -21.7, "up": 10.0 }],
+          "arc": { "from": 40, "to": -60, "tilt": 20 },
           "limit": 3
         }
       },

@@ -55,13 +55,10 @@ the same joint track, so staging and checks never depend on where a motion came 
    action's landing and event cues its step passed (`riders.combat.moments`), so an action's `events` can be placed
    on the frames that show them. A clip that moves the left hand too (a reload's magazine) is listed in its family's
    `leftHand`; otherwise the empty left hand rests out of the view.
-7. **Bake a sweep** (`bake-sweep.sh ACTION [SLOT] [POINTS] --write`) for a melee action whose hit is a `Sweep`. It
-   uses the main hand once in its own headless host and reads the drawn blade on every update through the commit
-   (`riders.dev.held.blade`). The tip's bearing from the eye, resampled to evenly spaced points of the commit, becomes
-   the action's `delivery.hit.path`. The path follows the clip and the look's grip and length; reach and width stay
-   the action's. A drawn blade sits low and to the side, so a path traced from it hits low (Dark Messiah ties its
-   sweep to the view, not to its drawn sword); `--pitch=SCALE` scales the path's angles above and below the view's
-   level, and the slash uses 0.5. Rebake after restaging a clip or changing its marks.
+7. **The hit is not the clip's.** A melee sweep's arc is authored in view terms on its action (`delivery.hit.arc`:
+   from and to bearings and a tilt), as Dark Messiah ties its sweeps to the view rather than to its drawn sword. The
+   clip only has to sell it, quickly. `riders.dev.held.blade` prints the drawn tip's bearing beside the arc's through the
+   commit, to check a clip reads as its arc. The drawn tip runs about 25 degrees above it, as an upright blade does.
 
 Each pack records its source, licence, commands and marks: `content/art/arms/sources.json` for authored clips,
 `art/arms/h3-slash/provenance.json` for the video slash.

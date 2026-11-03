@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text.Json;
 using Rusty.Engine.Debugging;
 using Rusty.Engine.FirstPerson;
@@ -291,16 +292,26 @@ internal sealed class HeldMotionDebugCommands(PlayerCombat combat, Action publis
         return DebugCommandResult.Success("Motion viewer off.");
     }
 
-    [DebugCommand("riders.dev.held.blade", Description = "Developer sweep bake: where the main hand's look rides a clip-led hand as last drawn (camera space metres), its tip's bearing from the eye (degrees right and up), the look's turn (quaternion x y z w), and how far through its commit the hand's action then was (below 0 in the windup, above 1 in the recovery), as JSON.")]
+    [DebugCommand("riders.dev.held.blade", Description = "Developer sweep check: where the main hand's look rides a clip-led hand as last drawn (camera space metres), its tip's bearing from the eye (degrees right and up), the look's turn (quaternion x y z w), how far through its commit the hand's action then was (below 0 in the windup, above 1 in the recovery), and where the action's authored sweep arc is then (null outside the commit or without one), as JSON. The clip only has to sell the arc.")]
     public DebugCommandResult Blade()
     {
         if (View.Blade() is not var (grip, tip, turn, current, elapsed, scale)) return Failure("The main hand is not clip-led.");
         float? commit = current is { Timing: var t } ? (elapsed - t.Windup * scale) / (t.Commit * scale) : null;
-        float right = MathF.Atan2(tip.X, -tip.Z) * 180 / MathF.PI, up = MathF.Atan2(tip.Y, MathF.Sqrt(tip.X * tip.X + tip.Z * tip.Z)) * 180 / MathF.PI;
+        (float right, float up) = Bearing(tip);
         string at = commit is { } c ? FormattableString.Invariant($"{c:0.####}") : "null";
+        string arc = "null";
+        if (current?.Delivery.Hit?.Arc is { } a && commit is >= 0 and <= 1)
+        {
+            (float r, float u) = Bearing(Vector3.Transform(-Vector3.UnitZ, a.Along(-Vector3.UnitZ, commit.Value)));
+            arc = FormattableString.Invariant($"{{\"right\": {r:0.##}, \"up\": {u:0.##}}}");
+        }
         return DebugCommandResult.Success(FormattableString.Invariant(
-            $"{{\"action\": \"{current?.Id}\", \"commit\": {at}, \"right\": {right:0.##}, \"up\": {up:0.##}, \"grip\": [{grip.X:0.###}, {grip.Y:0.###}, {grip.Z:0.###}], \"tip\": [{tip.X:0.###}, {tip.Y:0.###}, {tip.Z:0.###}], \"look\": [{turn.X:0.####}, {turn.Y:0.####}, {turn.Z:0.####}, {turn.W:0.####}]}}"));
+            $"{{\"action\": \"{current?.Id}\", \"commit\": {at}, \"right\": {right:0.##}, \"up\": {up:0.##}, \"arc\": {arc}, \"grip\": [{grip.X:0.###}, {grip.Y:0.###}, {grip.Z:0.###}], \"tip\": [{tip.X:0.###}, {tip.Y:0.###}, {tip.Z:0.###}], \"look\": [{turn.X:0.####}, {turn.Y:0.####}, {turn.Z:0.####}, {turn.W:0.####}]}}"));
     }
+
+    // A camera-space direction's bearing from the view: degrees right and up.
+    private static (float Right, float Up) Bearing(Vector3 d) =>
+        (MathF.Atan2(d.X, -d.Z) * 180 / MathF.PI, MathF.Atan2(d.Y, MathF.Sqrt(d.X * d.X + d.Z * d.Z)) * 180 / MathF.PI);
 
     private string Describe()
     {
