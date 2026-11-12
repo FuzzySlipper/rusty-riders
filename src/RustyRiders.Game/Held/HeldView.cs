@@ -43,6 +43,8 @@ internal sealed class HeldView : IDisposable
     private bool twoHanded;
     private (ActionDefinition Action, int Key)? viewingKey;
     private readonly ArmsLead lead = new();
+    // Whether the arms are in the published snapshot, so their clip pose can be sampled (a scene change clears it).
+    private bool armsPublished = true;
     // The off hand holds no weapon of its own, so it never acts (it holds a two-handed weapon's off grip, or nothing).
     private readonly ActionUser idle = new();
     // Where the main hand holds its look this update while the arms are clip-led (it rides the hand), or null.
@@ -116,7 +118,8 @@ internal sealed class HeldView : IDisposable
         // A look held in both hands takes the off hand once it is drawn.
         this.twoHanded = viewing is { } shownLook ? shownLook.Hand == MainHand && held.Look(shownLook.Look)!.Grips.Off is not null
             : twoHanded && hands[MainHand].Look == mainLook;
-        Lead(user);
+        if (armsPublished) Lead(user);
+        else ridden = null; // sampled again once this snapshot is published
         for (int h = 0; h < hands.Length; h++)
         {
             if (Empty(h)) continue;
@@ -164,6 +167,7 @@ internal sealed class HeldView : IDisposable
     /// </summary>
     internal void Animate(ActionUser main)
     {
+        armsPublished = true;
         ActionUser[] users = [main, idle];
         for (int h = 0; h < hands.Length; h++)
         {
@@ -316,6 +320,12 @@ internal sealed class HeldView : IDisposable
     internal void Feel(int hand, FeedbackKind kind) => felt.Add((hand, kind));
 
     /// <summary>Ends every motion (a level or the kit changes).</summary>
+    /// <summary>
+    /// A scene change has published a snapshot without the arms: their clip pose is not sampled until the next
+    /// snapshot, which draws them again, has been published.
+    /// </summary>
+    internal void Unpublished() => armsPublished = false;
+
     internal void Reset()
     {
         sway.Moved();

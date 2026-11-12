@@ -75,6 +75,7 @@ internal sealed class PlayerCombat : IDisposable
         dummies.Clear();
         user.Interrupt();
         held.Reset();
+        held.Unpublished(); // the old scene's disposal published a snapshot without the arms
     }
 
     /// <summary>The kit as it starts: its weapon in hand and every magazine full.</summary>
