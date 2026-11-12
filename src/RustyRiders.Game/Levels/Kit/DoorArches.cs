@@ -52,7 +52,7 @@ internal static class DoorArches
             }
 
             // The wall faces above the arch: the room's at the band's room side, the corridor's at the cell edge.
-            foreach ((float t, float top, float sign) in new[] { (depth, rules.RoomHeight, 1f), (0f, rules.CorridorHeight, -1f) })
+            foreach ((float t, float top, float sign) in new[] { (depth, doorway.RoomHeight, 1f), (0f, rules.CorridorHeight, -1f) })
             {
                 Vector3 facing = OpenGround.Gltf(into * sign, 0);
                 for (int k = 0; k < arch.Segments; k++)

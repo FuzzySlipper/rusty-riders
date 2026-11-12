@@ -34,13 +34,14 @@ internal static class KitDressing
         return placed;
     }
 
-    /// <summary>A column at each level-cell corner whose four cells are all one room.</summary>
+    /// <summary>A column at each level-cell corner whose four cells are all one room, where the room's family has columns (any room without families).</summary>
     private static void HallColumns(RoomPlan plan, DressingDefinition part, Random random, List<DressingPlacement> placed)
     {
         foreach (((int x, int z), int node) in plan.RoomOf)
         {
             bool Same(int dx, int dz) => plan.RoomOf.TryGetValue((x + dx, z + dz), out int other) && other == node;
             if (!(Same(1, 0) && Same(0, 1) && Same(1, 1)) || random.NextDouble() >= part.Chance) continue;
+            if (plan.Family(node) is { Columns: false }) continue;
             Vector2 corner = new((x + .5f) * plan.CellSize, (z + .5f) * plan.CellSize);
             Add(part, random, placed, corner, Vector2.UnitY);
         }
@@ -49,7 +50,7 @@ internal static class KitDressing
     /// <summary>A pier in each corner of a room's outline that turns into the room, set against both walls.</summary>
     private static void RoomCorners(RoomPlan plan, DressingDefinition part, Random random, List<DressingPlacement> placed)
     {
-        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Outlines(plan.Heights([PlanArea.Room])))
+        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(plan.Heights([PlanArea.Room])))
         {
             for (int i = 0; i < loop.Count; i++)
             {
@@ -57,7 +58,8 @@ internal static class KitDressing
                     after = plan.Metres(loop[(i + 1) % loop.Count].Point);
                 Vector2 inA = Inward(before, corner), inB = Inward(corner, after);
                 // Walked with the room on the left, a corner of the room turns left: the second run's inward is the first's direction.
-                if (Vector2.Dot(inB, Vector2.Normalize(corner - before)) > -.5f || random.NextDouble() >= part.Chance) continue;
+                // Square corners only: a diagonal cut's shallow turns take no pier.
+                if (Vector2.Dot(inB, Vector2.Normalize(corner - before)) > -.95f || random.NextDouble() >= part.Chance) continue;
                 Vector2 at = corner + (inA + inB) * (part.Footprint / 2 + WallGap);
                 if (Opening(plan, at, part.Footprint)) continue;
                 Add(part, random, placed, at, inA); // square to the walls, so it sits in the corner
@@ -121,7 +123,7 @@ internal static class KitDressing
     {
         // A run's area is told by its height: only runs of the named areas, on the outline of all the open ground.
         Dictionary<(int X, int Z), float> ground = plan.Heights([PlanArea.Room, PlanArea.Corridor, PlanArea.Doorway]);
-        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Outlines(ground))
+        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(ground))
             for (int i = 0; i < loop.Count; i++)
             {
                 if (!areas.Contains(plan.Rules.Area(loop[i].Height))) continue;

@@ -39,6 +39,12 @@
     "clearance": 2.5
   },
   "props": [],
+  "rooms": [
+    { "id": "hall", "weight": 3, "height": 9, "columns": true },
+    { "id": "great hall", "weight": 2, "height": 12, "columns": true, "minCells": 12 },
+    { "id": "chamber", "weight": 2, "height": 7, "chamfer": 3, "maxCells": 10 },
+    { "id": "octagon court", "weight": 1, "height": 10, "chamfer": 3.5, "maxCells": 12 }
+  ],
   "doorArch": {
     "rise": 2.2,
     "segments": 12,

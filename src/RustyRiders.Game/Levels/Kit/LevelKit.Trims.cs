@@ -13,7 +13,7 @@ internal sealed partial class LevelKit
     private void Trim(MeshBuilder mesh, MeshBuilder collision, TrimDefinition trim, Dictionary<(int X, int Z), float> ground)
     {
         bool ceiling = trim.Anchor == TrimAnchor.Ceiling;
-        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Outlines(ceiling ? plan.Heights(trim.Areas) : ground))
+        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(ceiling ? plan.Heights(trim.Areas) : ground))
         {
             bool[] keep = loop.Select(p => ceiling || trim.Areas.Contains(plan.Rules.Area(p.Height))).ToArray();
             if (keep.All(k => k))

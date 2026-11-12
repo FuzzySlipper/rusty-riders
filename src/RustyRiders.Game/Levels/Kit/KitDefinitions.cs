@@ -49,8 +49,11 @@ internal sealed record PlanRules(float GridMetres, float WallMetres, float Corri
         _ => DoorHeight,
     };
 
-    /// <summary>The area whose ceiling this is (each area's height differs).</summary>
-    internal PlanArea Area(float height) => height == RoomHeight ? PlanArea.Room : height == CorridorHeight ? PlanArea.Corridor : PlanArea.Doorway;
+    /// <summary>
+    /// The area whose ceiling this is: corridors and doorways have their own heights, and every room is taller than a
+    /// corridor (rooms of a kit's families vary).
+    /// </summary>
+    internal PlanArea Area(float height) => height == CorridorHeight ? PlanArea.Corridor : height == DoorHeight ? PlanArea.Doorway : PlanArea.Room;
 }
 
 /// <summary>The plan overlay: the plan's open ground drawn flat and unlit, coloured by area, <see cref="Lift"/> above the floor.</summary>
@@ -83,13 +86,14 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
     float WallMetres, float FloorMetres, float CeilingMetres, float TrimMetres, float NormalScale, float Roughness,
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
-    DressingDefinition[]? Dressing = null)
+    DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null)
 {
-    internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan)
+    internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
         string path = $"levels/kits/{tileset}.json";
         if (Authored.ReadOptional(engine, path, LevelKitJson.Default.KitRecipe) is not { } recipe) return null;
         recipe.DoorArch?.Validate(path, plan);
+        for (int i = 0; i < (recipe.Rooms?.Length ?? 0); i++) recipe.Rooms![i].Validate(path, $"rooms[{i}]", plan, cellSize);
         for (int i = 0; i < (recipe.Dressing?.Length ?? 0); i++) recipe.Dressing![i].Validate(path, $"dressing[{i}]");
         Authored.Positive(path, "wallMetres", recipe.WallMetres);
         Authored.Positive(path, "floorMetres", recipe.FloorMetres);
@@ -175,6 +179,27 @@ internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surfa
 
 /// <summary>A band of voussoirs <see cref="Width"/> wide round an arch, standing <see cref="Depth"/> out from the room's wall.</summary>
 internal sealed record ArchRingDefinition(float Width, float Depth, KitSurface Surface);
+
+/// <summary>
+/// A kind of room a world's kit builds. Each room of a level takes one of the families whose size range fits its cells,
+/// picked by the level's seed in proportion to <see cref="Weight"/>. A family sets the room's ceiling
+/// <see cref="Height"/>, cuts each corner the room turns at diagonally by <see cref="Chamfer"/> metres along both walls
+/// (beyond the wall band), and says whether the room's hall <see cref="Columns"/> stand.
+/// </summary>
+internal sealed record RoomFamily(string Id, float Weight, float Height, float Chamfer = 0, bool Columns = false, int MinCells = 1,
+    int MaxCells = int.MaxValue)
+{
+    internal void Validate(string path, string field, PlanRules plan, float cellSize)
+    {
+        Authored.Positive(path, $"{field}.weight", Weight);
+        Authored.Require(Height > plan.CorridorHeight, path, $"{field}.height", $"rooms must be taller than corridors ({plan.CorridorHeight} m).");
+        Authored.AtLeast(path, $"{field}.chamfer", Chamfer, 0);
+        // A chamfer stops short of a doorway, which is centred on the cell's side.
+        float reach = (cellSize - plan.DoorWidth) / 2 - plan.WallMetres;
+        Authored.Require(Chamfer < reach, path, $"{field}.chamfer", $"must stay clear of doorways: under {reach} m.");
+        Authored.Require(MinCells >= 1 && MaxCells >= MinCells, path, $"{field}.minCells", "must be at least 1 and no more than maxCells.");
+    }
+}
 
 /// <summary>Where a dressing rule puts its props on the room plan.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<DressingRule>))]

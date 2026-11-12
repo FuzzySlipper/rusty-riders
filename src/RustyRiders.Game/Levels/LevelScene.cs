@@ -53,7 +53,7 @@ internal sealed partial class LevelScene : IWalkScene
         KitRecipe? kit = null;
         if (settings.Build == LevelSettings.KitBuild)
         {
-            if ((kit = KitRecipe.Load(engine, data.Tileset.Id, rules.Plan)) is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
+            if ((kit = KitRecipe.Load(engine, data.Tileset.Id, rules.Plan, cellSize)) is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
         }
         else if (settings.Build != LevelSettings.TilesBuild && (shell = ShellDefinition.Load(engine, data.Tileset.Id)) is null)
         {
@@ -99,7 +99,7 @@ internal sealed partial class LevelScene : IWalkScene
         string built = "tiles";
         float spawnLift = SpawnLift;
         (Vector3 floorMin, Vector3 floorMax) = Extent(plan);
-        Plan = new RoomPlan(plan, rules.Plan, cellSize);
+        Plan = new RoomPlan(plan, rules.Plan, cellSize, kit?.Rooms, seed);
         if (kit is not null && BuildKit(kit, data.Tileset, collision, seed, ref nextPlacement) is { } kitSummary)
         {
             built = kitSummary;

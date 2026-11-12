@@ -37,7 +37,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
         this.recipe = recipe;
         MeshBuilder mesh = new(SlotCount), collision = new(1);
         Dictionary<(int X, int Z), float> ground = plan.Heights(AllAreas);
-        List<List<(Vector2 Point, float Height)>> loops = OpenGround.Outlines(ground);
+        List<List<(Vector2 Point, float Height)>> loops = OpenGround.Walls(ground);
         foreach (List<(Vector2 Point, float Height)> loop in loops) Walls(mesh, collision, loop);
         // An arched doorway takes no flat lintel or ceiling: DoorArches builds its head.
         bool arched = recipe.DoorArch is not null;
@@ -45,10 +45,12 @@ internal sealed partial class LevelKit : IGeneratedLevel
         foreach (WalkRectangle r in WalkCells.Merge(ground).Where(r => !arched || r.Height != plan.Rules.DoorHeight))
             Flat(mesh, collision, CeilingSlot, r, r.Height, recipe.CeilingMetres, -Vector3.UnitY);
         int arches = recipe.DoorArch is { } arch ? DoorArches.Build(mesh, collision, plan, recipe, arch) : 0;
+        int diagonals = loops.Sum(loop => loop.Where((p, i) => p.Point.X != loop[(i + 1) % loop.Count].Point.X
+            && p.Point.Y != loop[(i + 1) % loop.Count].Point.Y).Count());
         foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, FloorSlot, r, 0, recipe.FloorMetres, Vector3.UnitY);
         foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground);
         if (recipe.Pilasters is { } pilaster)
-            foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Outlines(plan.Heights(pilaster.Areas))) Pilasters(mesh, collision, loop, pilaster, ground);
+            foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(plan.Heights(pilaster.Areas))) Pilasters(mesh, collision, loop, pilaster, ground);
 
         foreach (DressingPlacement prop in dressing)
             if (prop.Box is { } box) Box(collision, prop.Pose.Translation, box);
@@ -66,7 +68,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
         }
         double seconds = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds;
         Summary = FormattableString.Invariant(
-            $"kit: {loops.Count} outlines, {arches} arches, {pilasters} pilasters, {mesh.VertexCount} vertices, {mesh.TriangleCount} triangles ({collision.TriangleCount} colliding), {sections.Count} sections, {seconds:0.000} s");
+            $"kit: {loops.Count} outlines, {diagonals} diagonal walls, {arches} arches, {pilasters} pilasters, {mesh.VertexCount} vertices, {mesh.TriangleCount} triangles ({collision.TriangleCount} colliding), {sections.Count} sections, {seconds:0.000} s");
     }
 
     public Transform Placement { get; } = new(Vector3.Zero, Quaternion.Identity, Vector3.One);

@@ -3,11 +3,17 @@ using RustyRiders.Game.Content;
 
 namespace RustyRiders.Game.Levels.Kit;
 
-/// <summary>A room of the plan: its layout node and tags, its level cells, and its footprint's bounds in Unity metres.</summary>
-internal sealed record PlanRoom(int Node, string[] Tags, int Cells, Vector2 Min, Vector2 Max);
+/// <summary>
+/// A room of the plan: its layout node and tags, its level cells, its footprint's bounds in Unity metres, its kit
+/// family (null without one) and its ceiling height.
+/// </summary>
+internal sealed record PlanRoom(int Node, string[] Tags, int Cells, Vector2 Min, Vector2 Max, RoomFamily? Family, float Height);
 
-/// <summary>A doorway of the plan: the middle of its opening on the room's wall line, and the way into the room, in Unity metres.</summary>
-internal sealed record PlanDoorway(Vector2 Centre, Vector2 IntoRoom);
+/// <summary>
+/// A doorway of the plan: the middle of its opening on the room's wall line, the way into the room, in Unity metres,
+/// and the height of the room it opens into.
+/// </summary>
+internal sealed record PlanDoorway(Vector2 Centre, Vector2 IntoRoom, float RoomHeight);
 
 /// <summary>
 /// The level as rooms, corridors and doorways measured out in metres, from the generated plan's cells rather than the
@@ -16,15 +22,18 @@ internal sealed record PlanDoorway(Vector2 Centre, Vector2 IntoRoom);
 /// i = X × Fine + k). A room fills its cells but for a wall band along every edge, and corner, it does not share with
 /// itself. A corridor runs down the middle of its cells, joining the next corridor cell and any doorway. A doorway cuts
 /// through the room's wall band where the generator put one. Generated builds take <see cref="Open"/> as their ground.
+/// With a kit's room families, each room takes one (by the level's seed and its size), which sets its ceiling and may cut
+/// each corner it turns at diagonally: a staircase of squares the builders straighten into a diagonal wall.
 /// </summary>
 internal sealed class RoomPlan
 {
     private readonly Dictionary<(int X, int Z), PlanArea> open = [];
     private readonly List<PlanDoorway> doorways = [];
     private readonly Dictionary<(int X, int Z), int> roomOf = [];
+    private readonly Dictionary<int, (RoomFamily? Family, float Height)> family = [];
     private readonly float cellSize;
 
-    internal RoomPlan(LevelPlan plan, PlanRules rules, float cellSize)
+    internal RoomPlan(LevelPlan plan, PlanRules rules, float cellSize, IReadOnlyList<RoomFamily>? families = null, int seed = 0)
     {
         this.cellSize = cellSize;
         Rules = rules;
@@ -36,8 +45,13 @@ internal sealed class RoomPlan
             "corridors and doorways must centre on the grid: the cell's squares less theirs must be even.");
 
         foreach (PlannedRoom room in plan.Rooms)
+        {
             foreach ((int X, int Z) cell in room.Cells) roomOf[cell] = room.Node;
-        foreach (((int x, int z), int node) in roomOf) AddRoomCell(x, z, node, roomOf, band);
+            RoomFamily? chosen = Choose(families, room, seed);
+            family[room.Node] = (chosen, chosen?.Height ?? rules.RoomHeight);
+        }
+        foreach (((int x, int z), int node) in roomOf)
+            AddRoomCell(x, z, node, roomOf, band, (int)MathF.Round((family[node].Family?.Chamfer ?? 0) / rules.GridMetres));
 
         HashSet<(int X, int Z)> corridors = [.. plan.Corridors];
         Dictionary<(int X, int Z), List<int>> doorSides = [];
@@ -57,12 +71,14 @@ internal sealed class RoomPlan
             AddDoorway(Offset(doorway.Corridor, doorway.Direction), GridDirection.Opposite(doorway.Direction), door, band);
             (int dx, int dz) = GridDirection.Step(doorway.Direction);
             Vector2 into = new(dx, dz);
-            doorways.Add(new PlanDoorway(new Vector2(doorway.Corridor.X, doorway.Corridor.Z) * cellSize + into * cellSize / 2, into));
+            float roomHeight = family[roomOf[Offset(doorway.Corridor, doorway.Direction)]].Height;
+            doorways.Add(new PlanDoorway(new Vector2(doorway.Corridor.X, doorway.Corridor.Z) * cellSize + into * cellSize / 2, into, roomHeight));
         }
 
         Rooms = plan.Rooms.Select(room => new PlanRoom(room.Node, room.Tags, room.Cells.Count,
             new Vector2(room.Cells.Min(c => c.X) * cellSize - cellSize / 2, room.Cells.Min(c => c.Z) * cellSize - cellSize / 2),
-            new Vector2(room.Cells.Max(c => c.X) * cellSize + cellSize / 2, room.Cells.Max(c => c.Z) * cellSize + cellSize / 2))).ToArray();
+            new Vector2(room.Cells.Max(c => c.X) * cellSize + cellSize / 2, room.Cells.Max(c => c.Z) * cellSize + cellSize / 2),
+            family[room.Node].Family, family[room.Node].Height)).ToArray();
         CorridorCells = corridors.Count;
     }
 
@@ -77,9 +93,26 @@ internal sealed class RoomPlan
     internal int CorridorCells { get; }
     internal IReadOnlyDictionary<(int X, int Z), PlanArea> Open => open;
 
-    /// <summary>The open squares of the given areas, each with its area's ceiling height.</summary>
+    /// <summary>The open squares of the given areas, each with its ceiling height (a room's own).</summary>
     internal Dictionary<(int X, int Z), float> Heights(IReadOnlyCollection<PlanArea> areas) => open.Where(pair => areas.Contains(pair.Value))
-        .ToDictionary(pair => pair.Key, pair => Rules.Height(pair.Value));
+        .ToDictionary(pair => pair.Key, pair => pair.Value == PlanArea.Room ? family[roomOf[Cell(pair.Key)]].Height : Rules.Height(pair.Value));
+
+    /// <summary>The kit family of a layout node's room, or null.</summary>
+    internal RoomFamily? Family(int node) => family.TryGetValue(node, out var chosen) ? chosen.Family : null;
+
+    /// <summary>The level cell a grid square lies in.</summary>
+    private (int X, int Z) Cell((int X, int Z) square) => ((int)MathF.Floor(square.X / (float)Fine), (int)MathF.Floor(square.Z / (float)Fine));
+
+    /// <summary>A room's family: one of those whose size range fits it, by weight, from the seed and the room's node.</summary>
+    private static RoomFamily? Choose(IReadOnlyList<RoomFamily>? families, PlannedRoom room, int seed)
+    {
+        RoomFamily[] fits = families?.Where(f => room.Cells.Count >= f.MinCells && room.Cells.Count <= f.MaxCells).ToArray() ?? [];
+        if (fits.Length == 0) return null;
+        double pick = new Random(unchecked(seed * 7919 + room.Node * 104729)).NextDouble() * fits.Sum(f => f.Weight);
+        foreach (RoomFamily f in fits)
+            if ((pick -= f.Weight) < 0) return f;
+        return fits[^1];
+    }
 
     /// <summary>A grid corner (outline units, corner (i, j) at (i − ½, j − ½)) in Unity metres on the ground plane.</summary>
     internal Vector2 Metres(Vector2 corner) => (corner + new Vector2(.5f)) * Rules.GridMetres - new Vector2(cellSize / 2);
@@ -94,18 +127,25 @@ internal sealed class RoomPlan
         return squares;
     }
 
-    /// <summary>A room cell, less its wall band toward each side and corner that is not the same room.</summary>
-    private void AddRoomCell(int x, int z, int node, Dictionary<(int X, int Z), int> roomOf, int band)
+    /// <summary>
+    /// A room cell, less its wall band toward each side and corner that is not the same room, and less a staircase
+    /// <paramref name="chamfer"/> squares deep in each corner where the room turns (both sides walled).
+    /// </summary>
+    private void AddRoomCell(int x, int z, int node, Dictionary<(int X, int Z), int> roomOf, int band, int chamfer)
     {
         bool Same(int dx, int dz) => roomOf.TryGetValue((x + dx, z + dz), out int other) && other == node;
         for (int k = 0; k < Fine; k++)
         {
             int dx = k < band ? -1 : k >= Fine - band ? 1 : 0;
+            int fromX = k < Fine / 2 ? k - band : Fine - 1 - k - band; // squares in from the nearer side's wall band
             for (int l = 0; l < Fine; l++)
             {
                 int dz = l < band ? -1 : l >= Fine - band ? 1 : 0;
                 bool walled = (dx != 0 && !Same(dx, 0)) || (dz != 0 && !Same(0, dz)) || (dx != 0 && dz != 0 && !Same(dx, dz));
-                if (!walled) open[(x * Fine + k, z * Fine + l)] = PlanArea.Room;
+                int fromZ = l < Fine / 2 ? l - band : Fine - 1 - l - band;
+                int sx = k < Fine / 2 ? -1 : 1, sz = l < Fine / 2 ? -1 : 1;
+                bool cut = chamfer > 0 && !Same(sx, 0) && !Same(0, sz) && fromX + fromZ < chamfer;
+                if (!walled && !cut) open[(x * Fine + k, z * Fine + l)] = PlanArea.Room;
             }
         }
     }

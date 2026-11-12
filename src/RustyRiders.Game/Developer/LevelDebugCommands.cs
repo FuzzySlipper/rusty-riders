@@ -88,14 +88,14 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
         return DebugCommandResult.Success("Standing at the arrival point.");
     }
 
-    [DebugCommand("riders.level.plan", Description = "Read the current level's room plan in glTF metres: its rooms (node, tags, cells, footprint bounds), corridor cells, doorways (centre on the wall line, way into the room) and open area.")]
+    [DebugCommand("riders.level.plan", Description = "Read the current level's room plan in glTF metres: its rooms (node, tags, cells, footprint bounds, kit family, ceiling), corridor cells, doorways (centre on the wall line, way into the room) and open area.")]
     public DebugCommandResult Plan()
     {
         if (scene() is not LevelScene level) return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "Not in a level.");
         RoomPlan plan = level.Plan;
         return DebugCommandResult.Success(JsonSerializer.Serialize(new PlanInspection(plan.Summary,
             plan.Rooms.Select(room => new RoomInspection(room.Node, room.Tags, room.Cells,
-                [-room.Max.X, room.Min.Y], [-room.Min.X, room.Max.Y])).ToArray(), plan.CorridorCells,
+                [-room.Max.X, room.Min.Y], [-room.Min.X, room.Max.Y], room.Family?.Id ?? "", room.Height)).ToArray(), plan.CorridorCells,
                 plan.Doorways.Select(d => new DoorwayInspection([-d.Centre.X, d.Centre.Y], [-d.IntoRoom.X, d.IntoRoom.Y])).ToArray(), level.ShowPlan),
             DebugJson.Default.PlanInspection));
     }
@@ -117,7 +117,7 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
     private static float[] Xyz(Vector3 v) => [v.X, v.Y, v.Z];
 }
 
-internal sealed record RoomInspection(int Node, string[] Tags, int Cells, float[] Min, float[] Max);
+internal sealed record RoomInspection(int Node, string[] Tags, int Cells, float[] Min, float[] Max, string Family, float Height);
 
 internal sealed record DoorwayInspection(float[] Centre, float[] IntoRoom);
 
