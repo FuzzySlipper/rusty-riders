@@ -48,7 +48,8 @@ internal sealed class MeshBuilder
             indices.ToArray(), groups.ToArray(), bindings));
     }
 
-    private void Triangle(int slot, uint a, uint b, uint c, Vector3 facing)
+    /// <summary>One triangle wound to face <paramref name="facing"/>; its normal accumulates on its corners.</summary>
+    internal void Triangle(int slot, uint a, uint b, uint c, Vector3 facing)
     {
         Vector3 normal = Vector3.Cross(positions[(int)b] - positions[(int)a], positions[(int)c] - positions[(int)a]);
         if (normal.LengthSquared() < 1e-12f) return;

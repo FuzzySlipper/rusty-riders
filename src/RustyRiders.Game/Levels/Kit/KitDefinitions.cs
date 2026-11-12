@@ -8,6 +8,10 @@ namespace RustyRiders.Game.Levels.Kit;
 [JsonConverter(typeof(JsonStringEnumConverter<PlanArea>))]
 internal enum PlanArea { Room, Corridor, Doorway }
 
+/// <summary>Which of a kit's materials a piece takes.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<KitSurface>))]
+internal enum KitSurface { Wall, Floor, Ceiling, Trim }
+
 /// <summary>Where a trim's profile hangs: from the floor up, or from the ceiling down.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TrimAnchor>))]
 internal enum TrimAnchor { Floor, Ceiling }
@@ -44,6 +48,9 @@ internal sealed record PlanRules(float GridMetres, float WallMetres, float Corri
         PlanArea.Corridor => CorridorHeight,
         _ => DoorHeight,
     };
+
+    /// <summary>The area whose ceiling this is (each area's height differs).</summary>
+    internal PlanArea Area(float height) => height == RoomHeight ? PlanArea.Room : height == CorridorHeight ? PlanArea.Corridor : PlanArea.Doorway;
 }
 
 /// <summary>The plan overlay: the plan's open ground drawn flat and unlit, coloured by area, <see cref="Lift"/> above the floor.</summary>
@@ -94,11 +101,15 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
 }
 
 /// <summary>
-/// A moulding swept along the outline of the plan's <see cref="Areas"/>: a skirting from the floor, or a cornice from
-/// the ceiling. <see cref="Profile"/> is [out from the wall, up from the anchor] points in metres, running from the wall
-/// face to the anchor (a cornice's heights are negative).
+/// A moulding or ledge swept along walls: from the floor, along the walls of the plan's <see cref="Areas"/> and ending
+/// square, with its end capped, where a wall of another area begins (so a ledge stops at a doorway's jamb); or from the
+/// ceiling, around the outline of its one area (so a cornice runs on over a doorway). <see cref="Profile"/> is
+/// [out from the wall, up from the anchor] points in metres, running from the wall face to the anchor (a cornice's
+/// heights are negative). It takes the kit's <see cref="Surface"/> material, and <see cref="Collides"/> when it should
+/// stop the walker (a ledge, not a thin moulding).
 /// </summary>
-internal sealed record TrimDefinition(string Id, TrimAnchor Anchor, PlanArea[] Areas, float[][] Profile)
+internal sealed record TrimDefinition(string Id, TrimAnchor Anchor, PlanArea[] Areas, float[][] Profile, KitSurface Surface = KitSurface.Trim,
+    bool Collides = false)
 {
     internal void Validate(string path, string field)
     {
