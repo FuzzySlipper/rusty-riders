@@ -91,8 +91,8 @@
     "lightColor": [1, 0.55, 0.2], "intensity": 25, "range": 12
   },
   "columns": {
-    "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9 },
-    "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1 }
+    "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9, "stones": true },
+    "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1, "stones": true }
   },
   "wallStones": {
     "minCourse": 0.7, "maxCourse": 1.1, "joint": 0.06, "minRelief": 0.04, "maxRelief": 0.12, "pushedChance": 0.12, "pushed": 0.1,

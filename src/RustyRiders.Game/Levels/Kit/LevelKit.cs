@@ -48,7 +48,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
         Dictionary<(int X, int Z), float> ground = plan.Heights(AllAreas);
         List<List<(Vector2 Point, float Height)>> loops = OpenGround.Walls(ground);
         foreach (List<(Vector2 Point, float Height)> loop in loops) Walls(mesh, collision, loop);
-        int stones = recipe.WallStones is { } wallStones ? WallStones.Runs(mesh, plan, recipe, wallStones, loops, seed) : 0;
+        int stones = recipe.WallStones is { } wallStones ? WallStones.Outlines(mesh, plan, recipe, wallStones, loops, seed) : 0;
         // An arched doorway takes no flat lintel or ceiling: DoorArches builds its head.
         bool arched = recipe.DoorArch is not null;
         Steps(mesh, collision, ground, arched);
@@ -68,7 +68,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
             details.Add($"{BlindArches.Build(mesh, recipe, blind, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground))} blind arches");
         if (recipe.Columns is { } columns)
         {
-            (int hall, int corners) = KitColumns.Build(mesh, collision, plan, recipe, columns);
+            (int hall, int corners) = KitColumns.Build(mesh, collision, plan, recipe, columns, seed);
             details.Add($"{hall} columns, {corners} corner piers");
         }
         List<LightDescriptor> sconces = recipe.Sconces is { } sconce ? Sconces.Build(mesh, plan, recipe, sconce) : [];

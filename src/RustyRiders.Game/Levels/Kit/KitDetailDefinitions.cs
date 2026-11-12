@@ -101,10 +101,11 @@ internal sealed record ColumnsDefinition(ColumnDefinition? Hall = null, ColumnDe
 /// <summary>
 /// A square column: a shaft <see cref="Width"/> across on a plinth <see cref="PlinthWidth"/> across and
 /// <see cref="PlinthHeight"/> tall, under a capital <see cref="CapitalWidth"/> across and <see cref="CapitalHeight"/> tall
-/// that meets the ceiling, all of the kit's <see cref="Surface"/> material.
+/// that meets the ceiling, all of the kit's <see cref="Surface"/> material. With <see cref="Stones"/> and the kit's wall
+/// stones, the shaft is stacked of stones in its material round a core of the stones' backing, its corners interlocking.
 /// </summary>
 internal sealed record ColumnDefinition(float Width, float PlinthWidth, float PlinthHeight, float CapitalWidth, float CapitalHeight,
-    KitSurface Surface = KitSurface.Trim)
+    KitSurface Surface = KitSurface.Trim, bool Stones = false)
 {
     internal void Validate(string path, string field)
     {

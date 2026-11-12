@@ -3,33 +3,16 @@ using System.Numerics;
 namespace RustyRiders.Game.Levels.Kit;
 
 /// <summary>
-/// Walls of real stones (<see cref="WallStonesDefinition"/>). A stretch of wall is laid in courses of random height;
-/// each course is a row of stones of the recipe's kinds, nudged so no joint sits right over one in the course below.
-/// Each stone is its kind's irregular outline (chipped corners, nicked edges) run out from the wall to its relief,
-/// bevelled in to a pillowed or hewn face, with the joints between stones showing the wall behind. Layouts come from a <see cref="Random"/> seeded by the level and the stretch, so a level
-/// always lays the same stones.
+/// Walls of real stones (<see cref="WallStonesDefinition"/>). A stretch of wall is laid in courses; each course is a
+/// row of stones of the recipe's kinds, nudged so no joint sits right over one in the course below. Each stone is its
+/// kind's irregular outline (chipped corners, nicked edges) run out from the wall to its relief, bevelled in to a
+/// pillowed or hewn face, with the joints between stones showing the wall behind. Outlines and column shafts are laid
+/// as loops whose corners interlock (WallStones.Corners.cs); a doorway's head is laid on its own (<see cref="Lay"/>).
+/// Layouts come from <see cref="Random"/>s seeded by the level, so a level always lays the same stones.
 /// </summary>
-internal static class WallStones
+internal static partial class WallStones
 {
     private const float JointClearance = .25f; // metres a joint keeps from the joints of the course below
-
-    /// <summary>The stones on every outline run, between its area's floor trims and ceiling trims.</summary>
-    internal static int Runs(MeshBuilder mesh, RoomPlan plan, KitRecipe recipe, WallStonesDefinition stones,
-        List<List<(Vector2 Point, float Height)>> loops, int seed)
-    {
-        int laid = 0, run = 0;
-        foreach (List<(Vector2 Point, float Height)> loop in loops)
-            for (int i = 0; i < loop.Count; i++, run++)
-            {
-                Vector2 a = plan.Metres(loop[i].Point), b = plan.Metres(loop[(i + 1) % loop.Count].Point);
-                PlanArea area = plan.Rules.Area(loop[i].Height);
-                Vector2 along = Vector2.Normalize(b - a);
-                Random random = new(unchecked(seed * 7919 + run * 104729));
-                laid += Lay(mesh, recipe, stones, random, a, along, new Vector2(-along.Y, along.X), 0, Vector2.Distance(a, b),
-                    Bottom(recipe, area), loop[i].Height - TopGap(recipe, area));
-            }
-        return laid;
-    }
 
     /// <summary>How high the floor trims along an area's walls stand: where its stones start.</summary>
     internal static float Bottom(KitRecipe recipe, PlanArea area) => recipe.Trims
@@ -42,8 +25,8 @@ internal static class WallStones
     /// <summary>
     /// Lays the wall from <paramref name="x0"/> to <paramref name="x1"/> metres along <paramref name="along"/> from
     /// <paramref name="origin"/> (on the wall line, Unity metres) and from <paramref name="y0"/> to <paramref name="y1"/>
-    /// up, standing out toward <paramref name="inward"/>. A stone whose rectangle <paramref name="skip"/> refuses (an
-    /// arch in the way) is left out, its place kept. Returns how many stones were laid.
+    /// up, standing out toward <paramref name="inward"/>, in courses of its own. A stone whose rectangle
+    /// <paramref name="skip"/> refuses (an arch in the way) is left out, its place kept. Returns how many stones were laid.
     /// </summary>
     internal static int Lay(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, Random random, Vector2 origin, Vector2 along,
         Vector2 inward, float x0, float x1, float y0, float y1, Func<float, float, float, float, bool>? skip = null)
@@ -51,33 +34,49 @@ internal static class WallStones
         if (x1 - x0 < stones.Joint * 2 || y1 - y0 < stones.Joint * 2) return 0;
         int laid = 0;
         List<float> below = [];
-        float y = y0, total = stones.Stones.Sum(s => s.Weight);
+        float y = y0;
         while (y < y1 - 1e-3f)
         {
             float h = Between(random, stones.MinCourse, stones.MaxCourse);
             if (y1 - (y + h) < stones.MinCourse * .6f) h = y1 - y; // no sliver of a course at the top
-            List<float> joints = [];
-            float x = x0;
-            while (x < x1 - 1e-3f)
-            {
-                StoneKind kind = Pick(random, stones.Stones, total);
-                float length = Between(random, kind.MinLength, kind.MaxLength), end = x + length;
-                if (below.Any(j => MathF.Abs(j - end) < JointClearance)) end += JointClearance * 2; // break the joint
-                if (x1 - end < stones.Shortest * .6f) end = x1; // no sliver of a stone at the end
-                if (end < x1) joints.Add(end);
-                float relief = Between(random, stones.MinRelief, stones.MaxRelief) + (random.NextDouble() < stones.PushedChance ? stones.Pushed : 0);
-                Vector2 patch = new((float)random.NextDouble(), (float)random.NextDouble());
-                float g = stones.Joint / 2;
-                if (skip?.Invoke(x, end, y, y + h) != true)
-                {
-                    Stone(mesh, recipe, stones, kind, random, origin, along, inward, x + g, end - g, y + g, y + h - g, relief, patch);
-                    laid++;
-                }
-                x = end;
-            }
-            below = joints;
+            laid += Row(mesh, recipe, stones, stones.Surface, random, origin, along, inward, x0, x1, y, y + h, ref below, null, null, skip);
             y += h;
         }
+        return laid;
+    }
+
+    /// <summary>
+    /// One course from <paramref name="x0"/> to <paramref name="x1"/>, its joints kept clear of <paramref name="below"/>
+    /// (which it replaces with its own). The first and last stones may have their relief set (corner stones).
+    /// </summary>
+    private static int Row(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, KitSurface surface, Random random, Vector2 origin,
+        Vector2 along, Vector2 inward, float x0, float x1, float y0, float y1, ref List<float> below, float? firstRelief, float? lastRelief,
+        Func<float, float, float, float, bool>? skip = null)
+    {
+        int laid = 0;
+        List<float> joints = [];
+        float x = x0, total = stones.Stones.Sum(s => s.Weight), g = stones.Joint / 2;
+        bool first = true;
+        while (x < x1 - 1e-3f)
+        {
+            StoneKind kind = Pick(random, stones.Stones, total);
+            float length = Between(random, kind.MinLength, kind.MaxLength), end = x + length;
+            if (below.Any(j => MathF.Abs(j - end) < JointClearance)) end += JointClearance * 2; // break the joint
+            if (x1 - end < stones.Shortest * .6f) end = x1; // no sliver of a stone at the end
+            if (end < x1) joints.Add(end);
+            float relief = Between(random, stones.MinRelief, stones.MaxRelief) + (random.NextDouble() < stones.PushedChance ? stones.Pushed : 0);
+            if (first && firstRelief is { } f) relief = f;
+            if (end >= x1 && lastRelief is { } l) relief = l;
+            Vector2 patch = new((float)random.NextDouble(), (float)random.NextDouble());
+            if (skip?.Invoke(x, end, y0, y1) != true && end - x > 2 * g)
+            {
+                Stone(mesh, recipe, stones, surface, kind, random, origin, along, inward, x + g, end - g, y0 + g, y1 - g, relief, patch);
+                laid++;
+            }
+            x = end;
+            first = false;
+        }
+        below = joints;
         return laid;
     }
 
@@ -86,11 +85,11 @@ internal static class WallStones
     /// out from the wall, then bevels in to its face, which bulges to a point over the middle and stands a little
     /// unevenly round its edge; a hewn face is flat facets, any other smooth.
     /// </summary>
-    private static void Stone(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, StoneKind kind, Random random, Vector2 origin,
-        Vector2 along, Vector2 inward, float x0, float x1, float y0, float y1, float relief, Vector2 patch)
+    private static void Stone(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, KitSurface surface, StoneKind kind, Random random,
+        Vector2 origin, Vector2 along, Vector2 inward, float x0, float x1, float y0, float y1, float relief, Vector2 patch)
     {
-        int slot = LevelKit.Slot(stones.Surface);
-        float metres = recipe.Metres(stones.Surface);
+        int slot = LevelKit.Slot(surface);
+        float metres = recipe.Metres(surface);
         float b = MathF.Min(stones.Bevel, MathF.Min(relief / 2, MathF.Min((x1 - x0) / 4, (y1 - y0) / 4)));
         float edge = relief - b; // where the sides meet the bevel
         Vector3 At(Vector2 p, float d) => OpenGround.Gltf(origin + along * p.X + inward * d, p.Y);

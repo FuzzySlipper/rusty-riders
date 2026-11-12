@@ -5,31 +5,45 @@ namespace RustyRiders.Game.Levels.Kit;
 /// <summary>
 /// The kit's own columns: hall columns where <see cref="KitDressing.HallColumnPlaces"/> stands them and corner piers
 /// where <see cref="KitDressing.RoomCornerPlaces"/> does, each a plinth, a square shaft and a capital up to the room's
-/// ceiling, square to the room's walls. Each collides as an upright box as wide as its widest part.
+/// ceiling, square to the room's walls. A stone shaft is stacked of stones round a core (<see cref="WallStones.Loop"/>).
+/// Each collides as an upright box as wide as its widest part.
 /// </summary>
 internal static class KitColumns
 {
-    internal static (int Hall, int Corners) Build(MeshBuilder mesh, MeshBuilder collision, RoomPlan plan, KitRecipe recipe, ColumnsDefinition columns)
+    internal static (int Hall, int Corners) Build(MeshBuilder mesh, MeshBuilder collision, RoomPlan plan, KitRecipe recipe, ColumnsDefinition columns,
+        int seed)
     {
         Dictionary<(int X, int Z), float> rooms = plan.Heights([PlanArea.Room]);
         int hall = 0, corners = 0;
         if (columns.Hall is { } h)
             foreach (Vector2 at in KitDressing.HallColumnPlaces(plan))
-                if (rooms.TryGetValue(plan.Square(at), out float top)) { Column(mesh, collision, recipe, h, at, Vector2.UnitY, top); hall++; }
+                if (rooms.TryGetValue(plan.Square(at), out float top)) Column(mesh, collision, recipe, h, at, Vector2.UnitY, top, seed + 1_000_033 * ++hall);
         if (columns.Corners is { } c)
             foreach ((Vector2 at, Vector2 front) in KitDressing.RoomCornerPlaces(plan, c.Footprint))
-                if (rooms.TryGetValue(plan.Square(at), out float top)) { Column(mesh, collision, recipe, c, at, front, top); corners++; }
+                if (rooms.TryGetValue(plan.Square(at), out float top)) Column(mesh, collision, recipe, c, at, front, top, seed + 2_000_029 * ++corners);
         return (hall, corners);
     }
 
-    private static void Column(MeshBuilder mesh, MeshBuilder collision, KitRecipe recipe, ColumnDefinition column, Vector2 at, Vector2 front, float top)
+    private static void Column(MeshBuilder mesh, MeshBuilder collision, KitRecipe recipe, ColumnDefinition column, Vector2 at, Vector2 front, float top,
+        int seed)
     {
         int slot = LevelKit.Slot(column.Surface);
         float metres = recipe.Metres(column.Surface);
         Vector2 side = new(-front.Y, front.X);
         float shaftBottom = column.PlinthHeight, shaftTop = top - column.CapitalHeight;
         Block(0, column.PlinthHeight, column.PlinthWidth / 2, top: true, bottom: false);
-        Block(shaftBottom, shaftTop, column.Width / 2, top: false, bottom: false);
+        if (column.Stones && recipe.WallStones is { } stones)
+        {
+            // The core sits back by a middling relief, so the stones bring the shaft out to about its width.
+            float core = column.Width / 2 - (stones.MinRelief + stones.MaxRelief) / 2;
+            slot = LevelKit.Slot(stones.Backing);
+            Block(shaftBottom, shaftTop, core, top: false, bottom: false);
+            slot = LevelKit.Slot(column.Surface);
+            Vector2[] square = [at + (front - side) * core, at + (-front - side) * core, at + (-front + side) * core, at + (front + side) * core];
+            StoneRun[] runs = square.Select((p, i) => new StoneRun(p, square[(i + 1) % 4], shaftBottom, shaftTop)).ToArray(); // outside on the left
+            WallStones.Loop(mesh, recipe, stones, column.Surface, runs, seed);
+        }
+        else Block(shaftBottom, shaftTop, column.Width / 2, top: false, bottom: false);
         Block(shaftTop, top, column.CapitalWidth / 2, top: false, bottom: true);
         LevelKit.Box(collision, OpenGround.Gltf(at, 0), new Vector3(column.Footprint, top, column.Footprint));
 
