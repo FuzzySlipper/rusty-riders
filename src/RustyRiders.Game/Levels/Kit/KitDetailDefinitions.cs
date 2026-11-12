@@ -118,3 +118,46 @@ internal sealed record ColumnDefinition(float Width, float PlinthWidth, float Pl
     /// <summary>The widest part, which sets how far a corner pier stands from its walls.</summary>
     internal float Footprint => MathF.Max(PlinthWidth, CapitalWidth);
 }
+
+/// <summary>
+/// Walls built of real stones (<see cref="WallStones"/>) instead of a flat face with stones painted on it. Each wall
+/// run, and each doorway's head above its arch, is laid in courses <see cref="MinCourse"/> to <see cref="MaxCourse"/>
+/// metres tall, each course a row of <see cref="Stones"/> of the kinds' lengths, picked by weight, its joints kept clear
+/// of the course below. A stone stands <see cref="MinRelief"/> to <see cref="MaxRelief"/> out from the wall, and one in
+/// <see cref="PushedChance"/> stands <see cref="Pushed"/> further; <see cref="Joint"/> metres separate stones, showing
+/// the wall behind in the <see cref="Backing"/> material, and the front edges are cut back by <see cref="Bevel"/>.
+/// Stones take <see cref="Surface"/>, each showing its own patch of the texture. They run between the floor trims' top
+/// and the ceiling trims' foot, chosen by the level's seed; they do not collide.
+/// </summary>
+internal sealed record WallStonesDefinition(float MinCourse, float MaxCourse, StoneKind[] Stones, float Joint, float MinRelief, float MaxRelief,
+    float PushedChance, float Pushed, float Bevel, KitSurface Surface = KitSurface.Wall, KitSurface Backing = KitSurface.Ceiling)
+{
+    internal void Validate(string path)
+    {
+        Authored.Positive(path, "wallStones.minCourse", MinCourse);
+        Authored.AtLeast(path, "wallStones.maxCourse", MaxCourse, MinCourse);
+        Authored.Require(Stones.Length > 0, path, "wallStones.stones", "must name at least one kind of stone.");
+        for (int i = 0; i < Stones.Length; i++)
+        {
+            Authored.Positive(path, $"wallStones.stones[{i}].weight", Stones[i].Weight);
+            Authored.Positive(path, $"wallStones.stones[{i}].minLength", Stones[i].MinLength);
+            Authored.AtLeast(path, $"wallStones.stones[{i}].maxLength", Stones[i].MaxLength, Stones[i].MinLength);
+        }
+        Authored.Positive(path, "wallStones.joint", Joint);
+        Authored.Require(Joint < MinCourse / 2, path, "wallStones.joint", "must be well under a course's height.");
+        Authored.Positive(path, "wallStones.minRelief", MinRelief);
+        Authored.AtLeast(path, "wallStones.maxRelief", MaxRelief, MinRelief);
+        Authored.Within(path, "wallStones.pushedChance", PushedChance, 0, 1);
+        Authored.AtLeast(path, "wallStones.pushed", Pushed, 0);
+        Authored.AtLeast(path, "wallStones.bevel", Bevel, 0);
+    }
+
+    /// <summary>The furthest any stone stands out from its wall, which parts set on the wall stand clear of.</summary>
+    internal float Deepest => MaxRelief + Pushed;
+
+    /// <summary>The shortest stone of any kind.</summary>
+    internal float Shortest => Stones.Min(s => s.MinLength);
+}
+
+/// <summary>A kind of stone a wall is laid from: <see cref="MinLength"/> to <see cref="MaxLength"/> metres long, picked in proportion to <see cref="Weight"/>.</summary>
+internal sealed record StoneKind(string Id, float Weight, float MinLength, float MaxLength);

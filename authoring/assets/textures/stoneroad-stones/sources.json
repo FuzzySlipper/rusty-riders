@@ -1,0 +1,111 @@
+{
+  "about": "Plain stone-surface textures for StoneRoad's wall stones (rusty-riders, 2026-11-12): Patch asked for walls whose irregularity is built into their geometry, so each stone needs a texture of one continuous stone surface, not a picture of many stones. Z-Image base with the house LoRA v5-3000 at 1.0, seamless, on den-m5 and den-nimo. The first round (raw-m5, raw-nimo: 'the face of one huge dressed stone block') drew separate rounded stones on white, one with a face, and was rejected. The second (surface-m5, surface-nimo: 'a smooth dressed stone surface, one continuous plane') gave continuous surfaces; checks.py passed only seeds 34 and 36. Both were tried on the kit in first person; 36 won (34's parallel diagonal streaks repeat across neighbouring stones like marble). The winner's normal map is make_tileable.normal_map at strength 3, saved RGBA.",
+  "stone-face-21": {
+    "host": "m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 21,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of the face of one huge dressed stone block, a calm smooth cut-stone surface in uniform muted cool grey-violet slate colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, no joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, masonry, mortar joints, grid, tiles, blocks, courses, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "not checked: first-round prompt rejected by eye",
+    "review": "rejected"
+  },
+  "stone-face-22": {
+    "host": "m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 22,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of the face of one huge dressed stone block, a calm smooth cut-stone surface in uniform muted cool grey-violet slate colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, no joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, masonry, mortar joints, grid, tiles, blocks, courses, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "not checked: first-round prompt rejected by eye",
+    "review": "rejected"
+  },
+  "stone-face-23": {
+    "host": "m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 23,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of the face of one huge dressed stone block, a calm smooth cut-stone surface in uniform muted cool grey-violet slate colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, no joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, masonry, mortar joints, grid, tiles, blocks, courses, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "not checked: first-round prompt rejected by eye",
+    "review": "rejected"
+  },
+  "stone-face-24": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 24,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of the face of one huge dressed stone block, a calm smooth cut-stone surface in uniform muted cool grey-violet slate colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, no joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, masonry, mortar joints, grid, tiles, blocks, courses, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "not checked: first-round prompt rejected by eye",
+    "review": "rejected"
+  },
+  "stone-face-25": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 25,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of the face of one huge dressed stone block, a calm smooth cut-stone surface in uniform muted cool grey-violet slate colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, no joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, masonry, mortar joints, grid, tiles, blocks, courses, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "not checked: first-round prompt rejected by eye",
+    "review": "rejected"
+  },
+  "stone-face-26": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 26,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of the face of one huge dressed stone block, a calm smooth cut-stone surface in uniform muted cool grey-violet slate colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, no joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, masonry, mortar joints, grid, tiles, blocks, courses, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "not checked: first-round prompt rejected by eye",
+    "review": "rejected"
+  },
+  "stone-surface-31": {
+    "host": "m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 31,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "perspective",
+    "review": "rejected"
+  },
+  "stone-surface-32": {
+    "host": "m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 32,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "perspective",
+    "review": "rejected"
+  },
+  "stone-surface-33": {
+    "host": "m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 33,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "seam",
+    "review": "rejected"
+  },
+  "stone-surface-34": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 34,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "ok",
+    "review": "tried in game; lost to 36"
+  },
+  "stone-surface-35": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 35,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "flat, perspective, frame",
+    "review": "rejected"
+  },
+  "stone-surface-36": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 36,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
+    "checks": "ok",
+    "review": "in use (wall stones)"
+  }
+}

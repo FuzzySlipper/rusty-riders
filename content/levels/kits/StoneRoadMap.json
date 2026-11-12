@@ -40,7 +40,7 @@
   },
   "props": [],
   "textures": {
-    "wall": { "id": "wall-ashlar-slate", "albedo": "art/textures/stoneroad/wall-ashlar-slate.png", "normal": "art/textures/stoneroad/wall-ashlar-slate-normal.png", "metres": 4, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
+    "wall": { "id": "stone-surface-36", "albedo": "art/textures/stoneroad/stone-surface-36.png", "normal": "art/textures/stoneroad/stone-surface-36-normal.png", "metres": 3, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, a plain stone surface for wall stones; see art/textures/stoneroad/sources.json", "colour": true },
     "floor": { "id": "floor-slate-basalt", "albedo": "art/textures/stoneroad/floor-slate-basalt.png", "normal": "art/textures/stoneroad/floor-slate-basalt-normal.png", "metres": 4, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
     "ceiling": { "id": "ceiling-obsidian-vault", "albedo": "art/textures/stoneroad/ceiling-obsidian-vault.png", "normal": "art/textures/stoneroad/ceiling-obsidian-vault-normal.png", "metres": 3, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
     "trim": { "id": "trim-oxblood-dressed", "albedo": "art/textures/stoneroad/trim-oxblood-dressed.png", "normal": "art/textures/stoneroad/trim-oxblood-dressed-normal.png", "metres": 2.5, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
@@ -93,5 +93,14 @@
   "columns": {
     "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9 },
     "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1 }
+  },
+  "wallStones": {
+    "minCourse": 0.7, "maxCourse": 1.1, "joint": 0.06, "minRelief": 0.04, "maxRelief": 0.12, "pushedChance": 0.12, "pushed": 0.1,
+    "bevel": 0.05,
+    "stones": [
+      { "id": "long", "weight": 3, "minLength": 1.6, "maxLength": 2.4 },
+      { "id": "block", "weight": 3, "minLength": 1.0, "maxLength": 1.5 },
+      { "id": "short", "weight": 1, "minLength": 0.6, "maxLength": 0.9 }
+    ]
   }
 }

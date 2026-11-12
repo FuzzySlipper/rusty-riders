@@ -37,7 +37,9 @@ internal sealed partial class LevelKit : IGeneratedLevel
 
     /// <param name="materials">The wall, floor, ceiling, trim, runner and flame materials, in slot order.</param>
     /// <param name="dressing">The props placed over the plan; those with a box collide.</param>
-    internal LevelKit(IEngineContext engine, RoomPlan plan, KitRecipe recipe, Material[] materials, float cellSize, IReadOnlyList<DressingPlacement> dressing)
+    /// <param name="seed">The level's seed, which lays the wall stones.</param>
+    internal LevelKit(IEngineContext engine, RoomPlan plan, KitRecipe recipe, Material[] materials, float cellSize, IReadOnlyList<DressingPlacement> dressing,
+        int seed)
     {
         long started = System.Diagnostics.Stopwatch.GetTimestamp(); // load-cost evidence only, never simulation time
         this.plan = plan;
@@ -46,19 +48,20 @@ internal sealed partial class LevelKit : IGeneratedLevel
         Dictionary<(int X, int Z), float> ground = plan.Heights(AllAreas);
         List<List<(Vector2 Point, float Height)>> loops = OpenGround.Walls(ground);
         foreach (List<(Vector2 Point, float Height)> loop in loops) Walls(mesh, collision, loop);
+        int stones = recipe.WallStones is { } wallStones ? WallStones.Runs(mesh, plan, recipe, wallStones, loops, seed) : 0;
         // An arched doorway takes no flat lintel or ceiling: DoorArches builds its head.
         bool arched = recipe.DoorArch is not null;
         Steps(mesh, collision, ground, arched);
         foreach (WalkRectangle r in WalkCells.Merge(ground).Where(r => !arched || r.Height != plan.Rules.DoorHeight))
             Flat(mesh, collision, CeilingSlot, r, r.Height, recipe.Metres(KitSurface.Ceiling), -Vector3.UnitY);
-        int arches = recipe.DoorArch is { } arch ? DoorArches.Build(mesh, collision, plan, recipe, arch) : 0;
+        int arches = recipe.DoorArch is { } arch ? DoorArches.Build(mesh, collision, plan, recipe, arch, seed, ref stones) : 0;
         int diagonals = loops.Sum(loop => loop.Where((p, i) => p.Point.X != loop[(i + 1) % loop.Count].Point.X
             && p.Point.Y != loop[(i + 1) % loop.Count].Point.Y).Count());
         foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, FloorSlot, r, 0, recipe.Metres(KitSurface.Floor), Vector3.UnitY);
         foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground);
         List<PilasterPlace> places = recipe.Pilasters is { } pilaster ? Places(pilaster, ground) : [];
         foreach (PilasterPlace place in places) Pilaster(mesh, collision, place, recipe.Pilasters!);
-        List<string> details = [];
+        List<string> details = recipe.WallStones is null ? [] : [$"{stones} wall stones"];
         if (recipe.Runners is { } runners) details.Add($"{KitRunners.Build(mesh, plan, recipe, runners)} runners");
         if (recipe.Ribs is { } ribs) details.Add($"{CeilingRibs.Build(mesh, plan, recipe, ribs, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room))} ribs");
         if (recipe.BlindArches is { } blind)
@@ -110,18 +113,23 @@ internal sealed partial class LevelKit : IGeneratedLevel
         solid.Dispose();
     }
 
-    /// <summary>A wall face along each run of an outline, floor to the run's ceiling, U in metres along the outline.</summary>
+    /// <summary>
+    /// A wall face along each run of an outline, floor to the run's ceiling, U in metres along the outline. Behind wall
+    /// stones it is the stones' backing, seen in their joints.
+    /// </summary>
     private void Walls(MeshBuilder mesh, MeshBuilder collision, List<(Vector2 Point, float Height)> loop)
     {
-        float along = 0;
+        KitSurface surface = recipe.WallStones?.Backing ?? KitSurface.Wall;
+        int slot = Slot(surface);
+        float metres = recipe.Metres(surface), along = 0;
         for (int i = 0; i < loop.Count; i++)
         {
             (Vector2 a, float height) = (plan.Metres(loop[i].Point), loop[i].Height);
             Vector2 b = plan.Metres(loop[(i + 1) % loop.Count].Point);
             float length = Vector2.Distance(a, b);
             Vector3 inward = OpenGround.Gltf(Inward(a, b), 0);
-            float u0 = along / recipe.Metres(KitSurface.Wall), u1 = (along + length) / recipe.Metres(KitSurface.Wall), v = height / recipe.Metres(KitSurface.Wall);
-            mesh.Face(WallSlot, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
+            float u0 = along / metres, u1 = (along + length) / metres, v = height / metres;
+            mesh.Face(slot, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
                 new Vector2(u0, 0), new Vector2(u1, 0), new Vector2(u1, -v), new Vector2(u0, -v), inward);
             collision.Face(0, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
                 default, default, default, default, inward);

@@ -56,7 +56,7 @@ internal sealed partial class LevelScene
             kit.Runners is null ? Slot(kit.FloorMaterial, KitSurface.Floor) : Slot(kit.FloorMaterial, KitSurface.Runner), flame];
         try
         {
-            generated = new LevelKit(engine, Plan, kit, slots, cellSize, dressing);
+            generated = new LevelKit(engine, Plan, kit, slots, cellSize, dressing, seed);
         }
         catch (EngineCallException error)
         {

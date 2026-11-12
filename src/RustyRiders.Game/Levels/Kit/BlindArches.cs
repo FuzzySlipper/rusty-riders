@@ -39,7 +39,9 @@ internal static class BlindArches
     private static void Bay(MeshBuilder mesh, KitRecipe recipe, BlindArchDefinition arch, Vector2 middle, Vector2 along, Vector2 inward,
         float r, float spring)
     {
-        float sill = arch.Sill, w = arch.Ring.Width, front = arch.Ring.Depth;
+        // Clear of any wall stones: the panel just proud of the deepest, the ring standing out from there.
+        float proud = PanelProud + (recipe.WallStones?.Deepest ?? 0);
+        float sill = arch.Sill, w = arch.Ring.Width, front = proud + arch.Ring.Depth;
         Vector3 At(float s, float y, float out_) => OpenGround.Gltf(middle + along * s + inward * out_, y);
         Vector3 toRoom = OpenGround.Gltf(inward, 0);
 
@@ -47,13 +49,13 @@ internal static class BlindArches
         int panel = LevelKit.Slot(arch.Panel);
         float pm = recipe.Metres(arch.Panel);
         Vector2 Uv(float s, float y) => new(s / pm, -y / pm);
-        mesh.Face(panel, At(-r, sill, PanelProud), At(r, sill, PanelProud), At(r, spring, PanelProud), At(-r, spring, PanelProud),
+        mesh.Face(panel, At(-r, sill, proud), At(r, sill, proud), At(r, spring, proud), At(-r, spring, proud),
             Uv(-r, sill), Uv(r, sill), Uv(r, spring), Uv(-r, spring), toRoom);
         (float S, float Y)[] head = Arc(r, spring, arch.Segments);
-        uint hub = mesh.Vertex(At(0, spring, PanelProud), Uv(0, spring));
+        uint hub = mesh.Vertex(At(0, spring, proud), Uv(0, spring));
         for (int k = 0; k < arch.Segments; k++)
-            mesh.Triangle(panel, hub, mesh.Vertex(At(head[k].S, head[k].Y, PanelProud), Uv(head[k].S, head[k].Y)),
-                mesh.Vertex(At(head[k + 1].S, head[k + 1].Y, PanelProud), Uv(head[k + 1].S, head[k + 1].Y)), toRoom);
+            mesh.Triangle(panel, hub, mesh.Vertex(At(head[k].S, head[k].Y, proud), Uv(head[k].S, head[k].Y)),
+                mesh.Vertex(At(head[k + 1].S, head[k + 1].Y, proud), Uv(head[k + 1].S, head[k + 1].Y)), toRoom);
 
         // The ring: up one side, round the head and down the other, a band w wide standing front metres out.
         int ring = LevelKit.Slot(arch.Ring.Surface);
