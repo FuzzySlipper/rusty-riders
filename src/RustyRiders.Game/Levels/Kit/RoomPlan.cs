@@ -114,6 +114,16 @@ internal sealed class RoomPlan
         return fits[^1];
     }
 
+    /// <summary>The grid square holding a point in Unity metres (the inverse of <see cref="Metres"/> at square centres).</summary>
+    internal (int X, int Z) Square(Vector2 metres)
+    {
+        Vector2 corner = (metres + new Vector2(Fine * Rules.GridMetres / 2)) / Rules.GridMetres;
+        return ((int)MathF.Floor(corner.X), (int)MathF.Floor(corner.Y));
+    }
+
+    /// <summary>The level cell a point in Unity metres lies in.</summary>
+    internal (int X, int Z) CellAt(Vector2 metres) => ((int)MathF.Round(metres.X / cellSize), (int)MathF.Round(metres.Y / cellSize));
+
     /// <summary>A grid corner (outline units, corner (i, j) at (i − ½, j − ½)) in Unity metres on the ground plane.</summary>
     internal Vector2 Metres(Vector2 corner) => (corner + new Vector2(.5f)) * Rules.GridMetres - new Vector2(cellSize / 2);
 

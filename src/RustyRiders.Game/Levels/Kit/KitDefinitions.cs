@@ -10,7 +10,7 @@ internal enum PlanArea { Room, Corridor, Doorway }
 
 /// <summary>Which of a kit's materials a piece takes.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<KitSurface>))]
-internal enum KitSurface { Wall, Floor, Ceiling, Trim }
+internal enum KitSurface { Wall, Floor, Ceiling, Trim, Runner }
 
 /// <summary>Where a trim's profile hangs: from the floor up, or from the ceiling down.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<TrimAnchor>))]
@@ -80,13 +80,16 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 /// ceilings and trims take (Assets-relative .mat paths, as the converted GLBs name them), metres
 /// per texture repeat on each, how they are drawn, and its typed parts: trims swept along the outlines and pilasters
 /// set against room walls, an arch over every doorway, and <see cref="Dressing"/>: the old game's props placed over the
-/// plan by typed rules. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
+/// plan by typed rules. Its details (KitDetailDefinitions.cs) build toward the world's concept scene:
+/// <see cref="Runners"/> on the floor, <see cref="Ribs"/> across ceilings, <see cref="BlindArches"/> on walls and
+/// <see cref="Sconces"/> lighting the doorways. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
 /// stay where the tile prefab put them.
 /// </summary>
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
     float WallMetres, float FloorMetres, float CeilingMetres, float TrimMetres, float NormalScale, float Roughness,
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
-    DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null)
+    DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null, RunnerDefinition? Runners = null,
+    RibDefinition? Ribs = null, BlindArchDefinition? BlindArches = null, SconceDefinition? Sconces = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
@@ -103,6 +106,11 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         Authored.Positive(path, "trimMetres", recipe.TrimMetres);
         for (int i = 0; i < recipe.Trims.Length; i++) recipe.Trims[i].Validate(path, $"trims[{i}]");
         recipe.Pilasters?.Validate(path);
+        recipe.Runners?.Validate(path, plan);
+        Authored.Require(recipe.Runners is null || recipe.Textures?.Runner is not null, path, "textures.runner", "runners need a runner texture.");
+        recipe.Ribs?.Validate(path, recipe.Pilasters);
+        recipe.BlindArches?.Validate(path, recipe.Pilasters);
+        recipe.Sconces?.Validate(path, plan);
         return recipe;
     }
 
@@ -112,6 +120,7 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         KitSurface.Wall => WallMetres,
         KitSurface.Floor => FloorMetres,
         KitSurface.Ceiling => CeilingMetres,
+        KitSurface.Runner => FloorMetres,
         _ => TrimMetres,
     };
 
@@ -161,13 +170,15 @@ internal sealed record PilasterDefinition(PlanArea[] Areas, float Spacing, float
 /// Generated textures in place of a surface's old material texture (content-root paths, repeating every
 /// <see cref="SurfaceTexture.Metres"/>). A colour texture is drawn as painted, without the old material's colour.
 /// </summary>
-internal sealed record KitTextures(SurfaceTexture? Wall = null, SurfaceTexture? Floor = null, SurfaceTexture? Ceiling = null, SurfaceTexture? Trim = null)
+internal sealed record KitTextures(SurfaceTexture? Wall = null, SurfaceTexture? Floor = null, SurfaceTexture? Ceiling = null, SurfaceTexture? Trim = null,
+    SurfaceTexture? Runner = null)
 {
     internal SurfaceTexture? For(KitSurface surface) => surface switch
     {
         KitSurface.Wall => Wall,
         KitSurface.Floor => Floor,
         KitSurface.Ceiling => Ceiling,
+        KitSurface.Runner => Runner,
         _ => Trim,
     };
 }

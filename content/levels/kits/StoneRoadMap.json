@@ -43,7 +43,8 @@
     "wall": { "id": "wall-ashlar-slate", "albedo": "art/textures/stoneroad/wall-ashlar-slate.png", "normal": "art/textures/stoneroad/wall-ashlar-slate-normal.png", "metres": 4, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
     "floor": { "id": "floor-slate-basalt", "albedo": "art/textures/stoneroad/floor-slate-basalt.png", "normal": "art/textures/stoneroad/floor-slate-basalt-normal.png", "metres": 4, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
     "ceiling": { "id": "ceiling-obsidian-vault", "albedo": "art/textures/stoneroad/ceiling-obsidian-vault.png", "normal": "art/textures/stoneroad/ceiling-obsidian-vault-normal.png", "metres": 3, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
-    "trim": { "id": "trim-oxblood-dressed", "albedo": "art/textures/stoneroad/trim-oxblood-dressed.png", "normal": "art/textures/stoneroad/trim-oxblood-dressed-normal.png", "metres": 2.5, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true }
+    "trim": { "id": "trim-oxblood-dressed", "albedo": "art/textures/stoneroad/trim-oxblood-dressed.png", "normal": "art/textures/stoneroad/trim-oxblood-dressed-normal.png", "metres": 2.5, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
+    "runner": { "id": "runner-crimson-inlay", "albedo": "art/textures/stoneroad/runner-crimson-inlay.png", "normal": "art/textures/stoneroad/runner-crimson-inlay-normal.png", "metres": 3, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true }
   },
   "rooms": [
     { "id": "hall", "weight": 3, "height": 9, "columns": true },
@@ -85,19 +86,6 @@
       "collides": true
     },
     {
-      "id": "wall niches",
-      "rule": "WallNiches",
-      "models": [
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/hole01/mdl_LOD0-1f568d8b.glb"
-      ],
-      "footprint": 1.3,
-      "height": 1.4,
-      "depth": 0.28,
-      "lift": 1,
-      "spacing": 7.5,
-      "chance": 0.5
-    },
-    {
       "id": "rubble",
       "rule": "Rubble",
       "models": [
@@ -113,5 +101,15 @@
       "chance": 0.35,
       "count": 5
     }
-  ]
+  ],
+  "runners": { "width": 2.5, "lift": 0.02 },
+  "ribs": { "width": 0.6, "depth": 0.45, "haunch": 2.5, "segments": 16 },
+  "blindArches": {
+    "sill": 1.6, "spring": 4.5, "margin": 0.4, "topClearance": 1.2, "segments": 12, "panel": "Ceiling",
+    "ring": { "width": 0.45, "depth": 0.18, "surface": "Trim" }
+  },
+  "sconces": {
+    "height": 3.2, "gap": 0.6, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.32, 0.05], "flameEmission": 2,
+    "lightColor": [1, 0.55, 0.2], "intensity": 25, "range": 12
+  }
 }

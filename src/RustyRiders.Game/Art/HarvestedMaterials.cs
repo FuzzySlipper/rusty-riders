@@ -59,6 +59,18 @@ internal sealed class HarvestedMaterials : IDisposable
         return made;
     }
 
+    /// <summary>
+    /// A plain glowing material (a flame) of <paramref name="color"/> emitting it at <paramref name="strength"/>, owned and
+    /// released with the harvested ones. Linear colour.
+    /// </summary>
+    internal Material Glow(Color color, float strength)
+    {
+        string key = FormattableString.Invariant($"glow|{color.R}|{color.G}|{color.B}|{strength}");
+        if (materials.TryGetValue(key, out Material? cached)) return cached;
+        return materials[key] = engine.Graphics.CreateMaterial(new MaterialRequest(color, default, 1, new Color(1, 1, 1, 1),
+            new Vector3(color.R, color.G, color.B), strength, false));
+    }
+
     /// <summary>Releases the materials, then their textures; meshes drawn with them must already be released.</summary>
     public void Dispose()
     {

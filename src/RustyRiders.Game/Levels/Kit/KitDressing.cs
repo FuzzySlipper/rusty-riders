@@ -141,7 +141,7 @@ internal static class KitDressing
     {
         float step = plan.Rules.GridMetres;
         for (float s = -width / 2; s <= width / 2; s += step)
-            if (plan.Open.ContainsKey(Square(plan, wall + along * s - inward * step / 2))) return true;
+            if (plan.Open.ContainsKey(plan.Square(wall + along * s - inward * step / 2))) return true;
         return false;
     }
 
@@ -150,12 +150,6 @@ internal static class KitDressing
     {
         float reach = footprint / 2 + plan.Rules.WallMetres + (plan.Rules.DoorWidth / 2);
         return plan.Doorways.Any(d => Vector2.Distance(d.Centre, at) < reach);
-    }
-
-    private static (int X, int Z) Square(RoomPlan plan, Vector2 metres)
-    {
-        Vector2 corner = (metres + new Vector2(plan.Fine * plan.Rules.GridMetres / 2)) / plan.Rules.GridMetres;
-        return ((int)MathF.Floor(corner.X), (int)MathF.Floor(corner.Y));
     }
 
     private static Vector2 Inward(Vector2 from, Vector2 to)

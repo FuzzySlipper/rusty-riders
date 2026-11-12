@@ -48,8 +48,12 @@ internal sealed partial class LevelScene
         HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
         Material Slot(string material, KitSurface surface) => materials.Get(material, prefabs, look, kit.Textures?.For(surface)?.Replacement);
+        // The runner is the floor's material under its own texture; the flame glows in the sconces' colour.
+        Material flame = kit.Sconces is { } sconce ? materials.Glow(Content.Authored.Color(sconce.FlameColor), sconce.FlameEmission)
+            : Slot(kit.TrimMaterial, KitSurface.Trim);
         Material[] slots = [Slot(kit.WallMaterial, KitSurface.Wall), Slot(kit.FloorMaterial, KitSurface.Floor),
-            Slot(kit.CeilingMaterial, KitSurface.Ceiling), Slot(kit.TrimMaterial, KitSurface.Trim)];
+            Slot(kit.CeilingMaterial, KitSurface.Ceiling), Slot(kit.TrimMaterial, KitSurface.Trim),
+            kit.Runners is null ? Slot(kit.FloorMaterial, KitSurface.Floor) : Slot(kit.FloorMaterial, KitSurface.Runner), flame];
         try
         {
             generated = new LevelKit(engine, Plan, kit, slots, cellSize, dressing);
