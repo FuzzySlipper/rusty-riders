@@ -29,7 +29,8 @@ internal sealed partial class LevelKit : IGeneratedLevel
     private int pilasters;
 
     /// <param name="materials">The wall, floor, ceiling and trim materials, in slot order.</param>
-    internal LevelKit(IEngineContext engine, RoomPlan plan, KitRecipe recipe, Material[] materials, float cellSize)
+    /// <param name="dressing">The props placed over the plan; those with a box collide.</param>
+    internal LevelKit(IEngineContext engine, RoomPlan plan, KitRecipe recipe, Material[] materials, float cellSize, IReadOnlyList<DressingPlacement> dressing)
     {
         long started = System.Diagnostics.Stopwatch.GetTimestamp(); // load-cost evidence only, never simulation time
         this.plan = plan;
@@ -48,6 +49,9 @@ internal sealed partial class LevelKit : IGeneratedLevel
         foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground);
         if (recipe.Pilasters is { } pilaster)
             foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Outlines(plan.Heights(pilaster.Areas))) Pilasters(mesh, collision, loop, pilaster, ground);
+
+        foreach (DressingPlacement prop in dressing)
+            if (prop.Box is { } box) Box(collision, prop.Pose.Translation, box);
 
         drawn = mesh.Create(engine, materials);
         solid = collision.Create(engine, [materials[WallSlot]]);
@@ -207,6 +211,19 @@ internal sealed partial class LevelKit : IGeneratedLevel
     {
         Vector2 along = Vector2.Normalize(to - from);
         return new Vector2(-along.Y, along.X);
+    }
+
+    /// <summary>An upright box's four sides (glTF space, standing on its base), for a prop the walker meets.</summary>
+    private static void Box(MeshBuilder collision, Vector3 foot, Vector3 size)
+    {
+        Vector3 h = new(size.X / 2, 0, size.Z / 2);
+        Vector3[] corners = [foot + new Vector3(-h.X, 0, -h.Z), foot + new Vector3(h.X, 0, -h.Z), foot + new Vector3(h.X, 0, h.Z), foot + new Vector3(-h.X, 0, h.Z)];
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 a = corners[i], b = corners[(i + 1) % 4], up = Vector3.UnitY * size.Y;
+            Vector3 outward = (a + b) / 2 - foot;
+            collision.Face(0, a, b, b + up, a + up, default, default, default, default, outward);
+        }
     }
 
     /// <summary>The mesh slot a surface's material is bound to.</summary>

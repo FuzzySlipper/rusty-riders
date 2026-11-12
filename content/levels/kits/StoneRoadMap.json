@@ -48,5 +48,58 @@
       "depth": 0.15,
       "surface": "Trim"
     }
-  }
+  },
+  "dressing": [
+    {
+      "id": "hall columns",
+      "rule": "HallColumns",
+      "models": [
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar04/mdl_LOD0-35388cbc.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar07/mdl_LOD0-31fb8073.glb"
+      ],
+      "footprint": 1.16,
+      "height": 5,
+      "collides": true
+    },
+    {
+      "id": "corner piers",
+      "rule": "RoomCorners",
+      "models": [
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar02/mdl_LOD0-1e46ebfd.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar03/mdl_LOD0-04108a18.glb"
+      ],
+      "footprint": 2.1,
+      "height": 5,
+      "collides": true
+    },
+    {
+      "id": "wall niches",
+      "rule": "WallNiches",
+      "models": [
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/hole01/mdl_LOD0-1f568d8b.glb"
+      ],
+      "footprint": 1.3,
+      "height": 1.4,
+      "depth": 0.28,
+      "lift": 1,
+      "spacing": 7.5,
+      "chance": 0.5
+    },
+    {
+      "id": "rubble",
+      "rule": "Rubble",
+      "models": [
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall01/mdl_LOD0-d33e97f3.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall02/mdl_LOD0-b1da87c6.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall03/mdl_LOD0-b4f4cd3a.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall04/mdl_LOD0-81e44edc.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blockbig01/mdl_LOD0-4c52c512.glb",
+        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blockbig02/mdl_LOD0-92465646.glb"
+      ],
+      "footprint": 0.5,
+      "height": 0.5,
+      "chance": 0.35,
+      "count": 5
+    }
+  ]
 }

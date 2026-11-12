@@ -21,6 +21,7 @@ internal sealed class RoomPlan
 {
     private readonly Dictionary<(int X, int Z), PlanArea> open = [];
     private readonly List<PlanDoorway> doorways = [];
+    private readonly Dictionary<(int X, int Z), int> roomOf = [];
     private readonly float cellSize;
 
     internal RoomPlan(LevelPlan plan, PlanRules rules, float cellSize)
@@ -34,7 +35,6 @@ internal sealed class RoomPlan
         Authored.Require((Fine - corridor) % 2 == 0 && (Fine - door) % 2 == 0, PlanRules.Path, "corridorWidth",
             "corridors and doorways must centre on the grid: the cell's squares less theirs must be even.");
 
-        Dictionary<(int X, int Z), int> roomOf = [];
         foreach (PlannedRoom room in plan.Rooms)
             foreach ((int X, int Z) cell in room.Cells) roomOf[cell] = room.Node;
         foreach (((int x, int z), int node) in roomOf) AddRoomCell(x, z, node, roomOf, band);
@@ -67,6 +67,9 @@ internal sealed class RoomPlan
     }
 
     internal PlanRules Rules { get; }
+    /// <summary>The layout node whose room each room cell belongs to (level cells).</summary>
+    internal IReadOnlyDictionary<(int X, int Z), int> RoomOf => roomOf;
+    internal float CellSize => cellSize;
     /// <summary>Grid squares to a level cell's side.</summary>
     internal int Fine { get; }
     internal IReadOnlyList<PlanRoom> Rooms { get; }

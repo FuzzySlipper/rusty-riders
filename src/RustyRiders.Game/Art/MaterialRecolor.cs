@@ -31,6 +31,12 @@ internal sealed class MaterialRecolor
     /// <summary>Recolours a Unity material (Assets-relative .mat path). Colours are Unity's stored, gamma-encoded values.</summary>
     internal void Set(string unityMaterial, Vector4 baseColor, Vector3? emissive) => colors[unityMaterial] = (baseColor, emissive);
 
+    /// <summary>Sets every colour of this recolour on <paramref name="other"/>, over what it already has.</summary>
+    internal void CopyTo(MaterialRecolor other)
+    {
+        foreach ((string material, (Vector4 baseColor, Vector3? emissive)) in colors) other.Set(material, baseColor, emissive);
+    }
+
     /// <summary>
     /// The Engine factor overrides for one GLB, from its JSON chunk. The Engine numbers a GLB's material slots by
     /// the glTF material indices its primitives use, in ascending order; that is how slots are matched here.

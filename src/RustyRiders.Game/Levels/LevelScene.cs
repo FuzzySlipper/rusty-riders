@@ -15,7 +15,7 @@ namespace RustyRiders.Game.Levels;
 /// Engine navigation is derived from that collision, and the level's gameplay points (<see cref="LevelPoints"/>) stand
 /// on it: the entry portal the walker arrives in front of, the rifts out, caches and resident spots.
 /// </summary>
-internal sealed class LevelScene : IWalkScene
+internal sealed partial class LevelScene : IWalkScene
 {
     private const int CollisionChunkSize = 16;
     private const double CollisionVoxelSize = 0.5;
@@ -45,7 +45,7 @@ internal sealed class LevelScene : IWalkScene
     {
         this.engine = engine;
         PaletteDefinition? palette = ChoosePalette(settings, data.Tileset, seed);
-        MaterialRecolor? recolor = palette?.Recolor();
+        MaterialRecolor? recolor = rules.MaterialColors.With(palette?.Recolor());
         art = new ConvertedArt(engine, settings.ArtRoot, recolor);
         materials = new HarvestedMaterials(engine, art, recolor);
         cellSize = data.Generator.CellSize;
@@ -100,7 +100,7 @@ internal sealed class LevelScene : IWalkScene
         float spawnLift = SpawnLift;
         (Vector3 floorMin, Vector3 floorMax) = Extent(plan);
         Plan = new RoomPlan(plan, rules.Plan, cellSize);
-        if (kit is not null && BuildKit(kit, data.Tileset, collision) is { } kitSummary)
+        if (kit is not null && BuildKit(kit, data.Tileset, collision, seed, ref nextPlacement) is { } kitSummary)
         {
             built = kitSummary;
         }
@@ -188,70 +188,6 @@ internal sealed class LevelScene : IWalkScene
         materials.Dispose();
         art.Dispose();
         Session.Dispose();
-    }
-
-    /// <summary>
-    /// The generated shells in place of the tiles' shell meshes: drawn by sections, colliding as one mesh. Returns
-    /// what was built for the status, or null (a recorded problem) when generation fails, leaving only the props.
-    /// </summary>
-    private string? BuildShells(string build, string? floorTextureId, ShellDefinition shell, TilesetDefinition tileset, List<(PlannedTile Tile, string[] Walkable)> walkGrids,
-        int seed, CollisionBuilder collision)
-    {
-        bool swept = build == LevelSettings.SweepsBuild;
-        HarvestedLook look = new(swept ? 0 : shell.TriplanarSharpness, shell.NormalScale, shell.Roughness);
-        string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        SurfaceTexture? floorTexture = null;
-        if (floorTextureId is not null && (floorTexture = shell.FloorTextures.FirstOrDefault(t => t.Id == floorTextureId)) is null)
-            problems.Add($"{tileset.Id} shells have no floor texture '{floorTextureId}'");
-        Material walls = materials.Get(shell.WallMaterial, prefabs, look, shell.WallTexture?.Replacement),
-            floor = materials.Get(shell.FloorMaterial, prefabs, look, floorTexture?.Replacement);
-        try
-        {
-            generated = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor,
-                    shell.WallTexture?.Metres ?? shell.Sweep.WallMetres, floorTexture?.Metres ?? shell.Sweep.FloorMetres, seed)
-                : new LevelShells(engine, shell, cellSize, walkGrids, walls, floor, seed);
-        }
-        catch (EngineCallException error)
-        {
-            problems.Add($"shells: {error.Message}");
-            return null;
-        }
-        Place(generated, collision);
-        return floorTexture is null ? generated.Summary : $"{generated.Summary} · floor {floorTexture.Id}";
-    }
-
-    /// <summary>
-    /// The world's parametric kit over the room plan, in place of the tiles: its wall, floor, ceiling and trim materials
-    /// harvested from the converted art (so the palette tints them). Returns the build's summary, or null (a recorded
-    /// problem) when generation fails.
-    /// </summary>
-    private string? BuildKit(KitRecipe kit, TilesetDefinition tileset, CollisionBuilder collision)
-    {
-        HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
-        string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        Material[] slots = [materials.Get(kit.WallMaterial, prefabs, look), materials.Get(kit.FloorMaterial, prefabs, look),
-            materials.Get(kit.CeilingMaterial, prefabs, look), materials.Get(kit.TrimMaterial, prefabs, look)];
-        try
-        {
-            generated = new LevelKit(engine, Plan, kit, slots, cellSize);
-        }
-        catch (EngineCallException error)
-        {
-            problems.Add($"kit: {error.Message}");
-            return null;
-        }
-        Place(generated, collision);
-        return generated.Summary;
-    }
-
-    /// <summary>A generated build's sections drawn where it is placed, and its collision meshes as their own assets.</summary>
-    private void Place(IGeneratedLevel built, CollisionBuilder collision)
-    {
-        ulong id = FirstShellSectionObjectId;
-        foreach (Appearance section in built.Sections)
-            facts.Add(new AppearanceFact(id++, false, 0, built.Placement, section, true, RenderLayer.Scene));
-        ulong collisionId = FirstShellCollisionId;
-        foreach (MeshResource mesh in built.Collision) collision.AddMesh(collisionId++, mesh, built.Placement);
     }
 
     /// <summary>The named palette, or (as the old LevelFx did) one of the tileset's picked by the level's seed.</summary>

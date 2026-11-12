@@ -76,18 +76,21 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 /// A world's parametric kit (content/levels/kits/&lt;tileset&gt;.json): the old Unity materials its walls, floors,
 /// ceilings and trims take (Assets-relative .mat paths, as palettes name them, so a level's palette tints them), metres
 /// per texture repeat on each, how they are drawn, and its typed parts: trims swept along the outlines and pilasters
-/// set against room walls, and an arch over every doorway. Converted models of each tile prefab whose file names start
-/// with one of <see cref="Props"/> stay as placed dressing.
+/// set against room walls, an arch over every doorway, and <see cref="Dressing"/>: the old game's props placed over the
+/// plan by typed rules. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
+/// stay where the tile prefab put them.
 /// </summary>
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
     float WallMetres, float FloorMetres, float CeilingMetres, float TrimMetres, float NormalScale, float Roughness,
-    TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null)
+    TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
+    DressingDefinition[]? Dressing = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan)
     {
         string path = $"levels/kits/{tileset}.json";
         if (Authored.ReadOptional(engine, path, LevelKitJson.Default.KitRecipe) is not { } recipe) return null;
         recipe.DoorArch?.Validate(path, plan);
+        for (int i = 0; i < (recipe.Dressing?.Length ?? 0); i++) recipe.Dressing![i].Validate(path, $"dressing[{i}]");
         Authored.Positive(path, "wallMetres", recipe.WallMetres);
         Authored.Positive(path, "floorMetres", recipe.FloorMetres);
         Authored.Positive(path, "ceilingMetres", recipe.CeilingMetres);
@@ -172,6 +175,43 @@ internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surfa
 
 /// <summary>A band of voussoirs <see cref="Width"/> wide round an arch, standing <see cref="Depth"/> out from the room's wall.</summary>
 internal sealed record ArchRingDefinition(float Width, float Depth, KitSurface Surface);
+
+/// <summary>Where a dressing rule puts its props on the room plan.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<DressingRule>))]
+internal enum DressingRule
+{
+    /// <summary>A free-standing column at every level-cell corner with the same room on all four sides.</summary>
+    HallColumns,
+    /// <summary>A pier in every corner of a room, against both walls.</summary>
+    RoomCorners,
+    /// <summary>Props against room walls, midway between pilaster places, kept clear of openings.</summary>
+    WallNiches,
+    /// <summary>Clusters of small props scattered at the foot of room and corridor walls.</summary>
+    Rubble,
+}
+
+/// <summary>
+/// Props from the old game placed over the plan by a typed <see cref="Rule"/>, each picking one of <see cref="Models"/>
+/// (converted GLBs under the art root) by the level's seed. <see cref="Footprint"/> and <see cref="Height"/> are the props'
+/// size in metres, used to set them against walls and, when they <see cref="Collides"/>, as a box the walker meets.
+/// <see cref="Turn"/> (degrees) turns a model so its front faces into the room; <see cref="Lift"/> raises it (a niche sits
+/// on the ledge). <see cref="Chance"/> is how likely each place is to be dressed; <see cref="Spacing"/> spaces wall props;
+/// <see cref="Count"/> is the most props in a rubble cluster. A wall prop stands <see cref="Depth"/> deep against the wall.
+/// </summary>
+internal sealed record DressingDefinition(string Id, DressingRule Rule, string[] Models, float Footprint, float Height, bool Collides = false,
+    float Turn = 0, float Lift = 0, float Chance = 1, float Spacing = 0, int Count = 1, float Depth = 0)
+{
+    internal void Validate(string path, string field)
+    {
+        Authored.Require(Models.Length > 0, path, $"{field}.models", "must name at least one model.");
+        Authored.Positive(path, $"{field}.footprint", Footprint);
+        Authored.Positive(path, $"{field}.height", Height);
+        Authored.Within(path, $"{field}.chance", Chance, 0, 1);
+        Authored.AtLeast(path, $"{field}.lift", Lift, 0);
+        Authored.Require(Rule != DressingRule.WallNiches || (Spacing > 0 && Depth > 0), path, $"{field}.spacing", "wall props need a spacing and a depth.");
+        Authored.Require(Rule != DressingRule.Rubble || Count >= 1, path, $"{field}.count", "a rubble cluster has at least one prop.");
+    }
+}
 
 // Authored: missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

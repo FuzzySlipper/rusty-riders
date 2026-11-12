@@ -1,0 +1,9 @@
+{
+  "materials": [
+    {
+      "material": "Art/Models/GridMaps/StoneRoadMap/Model/Textures/darkgradation_mat.mat",
+      "baseColor": [0, 0, 0],
+      "note": "The inside of StoneRoad's wall holes and niches. Its shader reads _BaseColor (black); the import took _Color (white), so the holes drew white."
+    }
+  ]
+}
