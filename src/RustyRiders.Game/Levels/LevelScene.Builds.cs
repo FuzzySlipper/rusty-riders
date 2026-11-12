@@ -47,8 +47,9 @@ internal sealed partial class LevelScene
         List<DressingPlacement> dressing = KitDressing.Place(Plan, kit, seed);
         HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        Material[] slots = [materials.Get(kit.WallMaterial, prefabs, look), materials.Get(kit.FloorMaterial, prefabs, look),
-            materials.Get(kit.CeilingMaterial, prefabs, look), materials.Get(kit.TrimMaterial, prefabs, look)];
+        Material Slot(string material, KitSurface surface) => materials.Get(material, prefabs, look, kit.Textures?.For(surface)?.Replacement);
+        Material[] slots = [Slot(kit.WallMaterial, KitSurface.Wall), Slot(kit.FloorMaterial, KitSurface.Floor),
+            Slot(kit.CeilingMaterial, KitSurface.Ceiling), Slot(kit.TrimMaterial, KitSurface.Trim)];
         try
         {
             generated = new LevelKit(engine, Plan, kit, slots, cellSize, dressing);

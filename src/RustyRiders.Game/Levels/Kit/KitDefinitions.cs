@@ -86,13 +86,15 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
     float WallMetres, float FloorMetres, float CeilingMetres, float TrimMetres, float NormalScale, float Roughness,
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
-    DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null)
+    DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
         string path = $"levels/kits/{tileset}.json";
         if (Authored.ReadOptional(engine, path, LevelKitJson.Default.KitRecipe) is not { } recipe) return null;
         recipe.DoorArch?.Validate(path, plan);
+        foreach (KitSurface surface in Enum.GetValues<KitSurface>())
+            if (recipe.Textures?.For(surface) is { } texture) Authored.Positive(path, $"textures.{surface}.metres", texture.Metres);
         for (int i = 0; i < (recipe.Rooms?.Length ?? 0); i++) recipe.Rooms![i].Validate(path, $"rooms[{i}]", plan, cellSize);
         for (int i = 0; i < (recipe.Dressing?.Length ?? 0); i++) recipe.Dressing![i].Validate(path, $"dressing[{i}]");
         Authored.Positive(path, "wallMetres", recipe.WallMetres);
@@ -104,8 +106,8 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         return recipe;
     }
 
-    /// <summary>The metres per texture repeat of a surface's material.</summary>
-    internal float Metres(KitSurface surface) => surface switch
+    /// <summary>The metres per texture repeat of a surface: its generated texture's, or its old material's.</summary>
+    internal float Metres(KitSurface surface) => Textures?.For(surface)?.Metres ?? surface switch
     {
         KitSurface.Wall => WallMetres,
         KitSurface.Floor => FloorMetres,
@@ -153,6 +155,21 @@ internal sealed record PilasterDefinition(PlanArea[] Areas, float Spacing, float
         Authored.Positive(path, "pilasters.depth", Depth);
         Authored.AtLeast(path, "pilasters.clearance", Clearance, Width / 2);
     }
+}
+
+/// <summary>
+/// Generated textures in place of a surface's old material texture (content-root paths, repeating every
+/// <see cref="SurfaceTexture.Metres"/>). A colour texture is drawn as painted, without the old material's colour.
+/// </summary>
+internal sealed record KitTextures(SurfaceTexture? Wall = null, SurfaceTexture? Floor = null, SurfaceTexture? Ceiling = null, SurfaceTexture? Trim = null)
+{
+    internal SurfaceTexture? For(KitSurface surface) => surface switch
+    {
+        KitSurface.Wall => Wall,
+        KitSurface.Floor => Floor,
+        KitSurface.Ceiling => Ceiling,
+        _ => Trim,
+    };
 }
 
 /// <summary>

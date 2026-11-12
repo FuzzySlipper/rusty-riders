@@ -43,11 +43,11 @@ internal sealed partial class LevelKit : IGeneratedLevel
         bool arched = recipe.DoorArch is not null;
         Steps(mesh, collision, ground, arched);
         foreach (WalkRectangle r in WalkCells.Merge(ground).Where(r => !arched || r.Height != plan.Rules.DoorHeight))
-            Flat(mesh, collision, CeilingSlot, r, r.Height, recipe.CeilingMetres, -Vector3.UnitY);
+            Flat(mesh, collision, CeilingSlot, r, r.Height, recipe.Metres(KitSurface.Ceiling), -Vector3.UnitY);
         int arches = recipe.DoorArch is { } arch ? DoorArches.Build(mesh, collision, plan, recipe, arch) : 0;
         int diagonals = loops.Sum(loop => loop.Where((p, i) => p.Point.X != loop[(i + 1) % loop.Count].Point.X
             && p.Point.Y != loop[(i + 1) % loop.Count].Point.Y).Count());
-        foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, FloorSlot, r, 0, recipe.FloorMetres, Vector3.UnitY);
+        foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, FloorSlot, r, 0, recipe.Metres(KitSurface.Floor), Vector3.UnitY);
         foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground);
         if (recipe.Pilasters is { } pilaster)
             foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(plan.Heights(pilaster.Areas))) Pilasters(mesh, collision, loop, pilaster, ground);
@@ -98,7 +98,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
             Vector2 b = plan.Metres(loop[(i + 1) % loop.Count].Point);
             float length = Vector2.Distance(a, b);
             Vector3 inward = OpenGround.Gltf(Inward(a, b), 0);
-            float u0 = along / recipe.WallMetres, u1 = (along + length) / recipe.WallMetres, v = height / recipe.WallMetres;
+            float u0 = along / recipe.Metres(KitSurface.Wall), u1 = (along + length) / recipe.Metres(KitSurface.Wall), v = height / recipe.Metres(KitSurface.Wall);
             mesh.Face(WallSlot, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
                 new Vector2(u0, 0), new Vector2(u1, 0), new Vector2(u1, -v), new Vector2(u0, -v), inward);
             collision.Face(0, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
@@ -119,11 +119,11 @@ internal sealed partial class LevelKit : IGeneratedLevel
                 if (arched && low == plan.Rules.DoorHeight) continue; // the arch's own faces stand here
                 Vector2 centre = new(x + dx * .5f, z + dz * .5f), across = new(-dz * .5f, dx * .5f);
                 Vector2 a = plan.Metres(centre - across), b = plan.Metres(centre + across);
-                float ua = (dx != 0 ? a.Y : a.X) / recipe.WallMetres, ub = (dx != 0 ? b.Y : b.X) / recipe.WallMetres;
+                float ua = (dx != 0 ? a.Y : a.X) / recipe.Metres(KitSurface.Wall), ub = (dx != 0 ? b.Y : b.X) / recipe.Metres(KitSurface.Wall);
                 Vector3 facing = OpenGround.Gltf(new Vector2(-dx, -dz), 0);
                 mesh.Face(WallSlot, OpenGround.Gltf(a, low), OpenGround.Gltf(b, low), OpenGround.Gltf(b, high), OpenGround.Gltf(a, high),
-                    new Vector2(ua, -low / recipe.WallMetres), new Vector2(ub, -low / recipe.WallMetres),
-                    new Vector2(ub, -high / recipe.WallMetres), new Vector2(ua, -high / recipe.WallMetres), facing);
+                    new Vector2(ua, -low / recipe.Metres(KitSurface.Wall)), new Vector2(ub, -low / recipe.Metres(KitSurface.Wall)),
+                    new Vector2(ub, -high / recipe.Metres(KitSurface.Wall)), new Vector2(ua, -high / recipe.Metres(KitSurface.Wall)), facing);
                 collision.Face(0, OpenGround.Gltf(a, low), OpenGround.Gltf(b, low), OpenGround.Gltf(b, high), OpenGround.Gltf(a, high),
                     default, default, default, default, facing);
             }
@@ -163,7 +163,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
                 Vector2 left = centre - along * pilaster.Width / 2, right = centre + along * pilaster.Width / 2;
                 if (Behind(left, right, inward, ground)) continue;
                 Vector2 leftFront = left + inward * pilaster.Depth, rightFront = right + inward * pilaster.Depth;
-                float u0 = 0, u1 = pilaster.Width / recipe.TrimMetres, d = pilaster.Depth / recipe.TrimMetres, v = -height / recipe.TrimMetres;
+                float u0 = 0, u1 = pilaster.Width / recipe.Metres(KitSurface.Trim), d = pilaster.Depth / recipe.Metres(KitSurface.Trim), v = -height / recipe.Metres(KitSurface.Trim);
                 Vector3 front = OpenGround.Gltf(inward, 0), toLeft = OpenGround.Gltf(-along, 0), toRight = OpenGround.Gltf(along, 0);
                 Box(leftFront, rightFront, front, new Vector2(u0, 0), new Vector2(u1, v));
                 Box(left, leftFront, toLeft, new Vector2(0, 0), new Vector2(d, v));

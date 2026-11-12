@@ -39,6 +39,12 @@
     "clearance": 2.5
   },
   "props": [],
+  "textures": {
+    "wall": { "id": "wall-6", "albedo": "art/textures/stoneroad/wall-6.png", "normal": "art/textures/stoneroad/wall-6-normal.png", "metres": 4, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, on a Strix Halo; see art/textures/stoneroad/sources.json", "colour": true },
+    "floor": { "id": "floor-6", "albedo": "art/textures/stoneroad/floor-6.png", "normal": "art/textures/stoneroad/floor-6-normal.png", "metres": 4, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, on a Strix Halo; see art/textures/stoneroad/sources.json", "colour": true },
+    "ceiling": { "id": "trim-3", "albedo": "art/textures/stoneroad/trim-3.png", "normal": "art/textures/stoneroad/trim-3-normal.png", "metres": 2.5, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, on a Strix Halo; see art/textures/stoneroad/sources.json", "colour": true },
+    "trim": { "id": "trim-3", "albedo": "art/textures/stoneroad/trim-3.png", "normal": "art/textures/stoneroad/trim-3-normal.png", "metres": 2.5, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, on a Strix Halo; see art/textures/stoneroad/sources.json", "colour": true }
+  },
   "rooms": [
     { "id": "hall", "weight": 3, "height": 9, "columns": true },
     { "id": "great hall", "weight": 2, "height": 12, "columns": true, "minCells": 12 },
