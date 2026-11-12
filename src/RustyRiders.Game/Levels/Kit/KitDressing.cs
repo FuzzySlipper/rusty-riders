@@ -34,21 +34,40 @@ internal static class KitDressing
         return placed;
     }
 
-    /// <summary>A column at each level-cell corner whose four cells are all one room, where the room's family has columns (any room without families).</summary>
+    /// <summary>A column at each hall-column place (<see cref="HallColumnPlaces"/>), by the part's chance.</summary>
     private static void HallColumns(RoomPlan plan, DressingDefinition part, Random random, List<DressingPlacement> placed)
+    {
+        foreach (Vector2 corner in HallColumnPlaces(plan))
+            if (random.NextDouble() < part.Chance) Add(part, random, placed, corner, Vector2.UnitY);
+    }
+
+    /// <summary>A pier at each room-corner place (<see cref="RoomCornerPlaces"/>), by the part's chance.</summary>
+    private static void RoomCorners(RoomPlan plan, DressingDefinition part, Random random, List<DressingPlacement> placed)
+    {
+        foreach ((Vector2 at, Vector2 front) in RoomCornerPlaces(plan, part.Footprint))
+            if (random.NextDouble() < part.Chance) Add(part, random, placed, at, front); // square to the walls, so it sits in the corner
+    }
+
+    /// <summary>
+    /// The level-cell corners (Unity metres) whose four cells are all one room, where the room's family has columns (any
+    /// room without families): where a hall's free-standing columns stand.
+    /// </summary>
+    internal static IEnumerable<Vector2> HallColumnPlaces(RoomPlan plan)
     {
         foreach (((int x, int z), int node) in plan.RoomOf)
         {
             bool Same(int dx, int dz) => plan.RoomOf.TryGetValue((x + dx, z + dz), out int other) && other == node;
-            if (!(Same(1, 0) && Same(0, 1) && Same(1, 1)) || random.NextDouble() >= part.Chance) continue;
-            if (plan.Family(node) is { Columns: false }) continue;
-            Vector2 corner = new((x + .5f) * plan.CellSize, (z + .5f) * plan.CellSize);
-            Add(part, random, placed, corner, Vector2.UnitY);
+            if (!(Same(1, 0) && Same(0, 1) && Same(1, 1)) || plan.Family(node) is { Columns: false }) continue;
+            yield return new Vector2((x + .5f) * plan.CellSize, (z + .5f) * plan.CellSize);
         }
     }
 
-    /// <summary>A pier in each corner of a room's outline that turns into the room, set against both walls.</summary>
-    private static void RoomCorners(RoomPlan plan, DressingDefinition part, Random random, List<DressingPlacement> placed)
+    /// <summary>
+    /// Where a pier <paramref name="footprint"/> across stands in each square corner of a room's outline that turns
+    /// into the room, against both walls and clear of doorways, with the direction of one wall's inward normal (Unity
+    /// metres). A diagonal cut's shallow turns take none.
+    /// </summary>
+    internal static IEnumerable<(Vector2 At, Vector2 Front)> RoomCornerPlaces(RoomPlan plan, float footprint)
     {
         foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(plan.Heights([PlanArea.Room])))
         {
@@ -58,11 +77,9 @@ internal static class KitDressing
                     after = plan.Metres(loop[(i + 1) % loop.Count].Point);
                 Vector2 inA = Inward(before, corner), inB = Inward(corner, after);
                 // Walked with the room on the left, a corner of the room turns left: the second run's inward is the first's direction.
-                // Square corners only: a diagonal cut's shallow turns take no pier.
-                if (Vector2.Dot(inB, Vector2.Normalize(corner - before)) > -.95f || random.NextDouble() >= part.Chance) continue;
-                Vector2 at = corner + (inA + inB) * (part.Footprint / 2 + WallGap);
-                if (Opening(plan, at, part.Footprint)) continue;
-                Add(part, random, placed, at, inA); // square to the walls, so it sits in the corner
+                if (Vector2.Dot(inB, Vector2.Normalize(corner - before)) > -.95f) continue;
+                Vector2 at = corner + (inA + inB) * (footprint / 2 + WallGap);
+                if (!Opening(plan, at, footprint)) yield return (at, inA);
             }
         }
     }

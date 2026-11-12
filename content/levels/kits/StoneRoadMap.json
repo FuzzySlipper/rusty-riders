@@ -64,28 +64,6 @@
   },
   "dressing": [
     {
-      "id": "hall columns",
-      "rule": "HallColumns",
-      "models": [
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar04/mdl_LOD0-35388cbc.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar07/mdl_LOD0-31fb8073.glb"
-      ],
-      "footprint": 1.16,
-      "height": 5,
-      "collides": true
-    },
-    {
-      "id": "corner piers",
-      "rule": "RoomCorners",
-      "models": [
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar02/mdl_LOD0-1e46ebfd.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/pillar03/mdl_LOD0-04108a18.glb"
-      ],
-      "footprint": 2.1,
-      "height": 5,
-      "collides": true
-    },
-    {
       "id": "rubble",
       "rule": "Rubble",
       "models": [
@@ -111,5 +89,9 @@
   "sconces": {
     "height": 3.2, "gap": 0.6, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.32, 0.05], "flameEmission": 2,
     "lightColor": [1, 0.55, 0.2], "intensity": 25, "range": 12
+  },
+  "columns": {
+    "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9 },
+    "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1 }
   }
 }

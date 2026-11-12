@@ -83,3 +83,38 @@ internal sealed record SconceDefinition(float Height, float Gap, float BracketDe
         Authored.Positive(path, "sconces.range", Range);
     }
 }
+
+/// <summary>
+/// The kit's own columns (<see cref="KitColumns"/>), in place of old props: free-standing <see cref="Hall"/> columns where
+/// the HallColumns dressing rule would stand them (rooms whose family has columns), and <see cref="Corners"/> piers in
+/// each square room corner. Both run floor to ceiling and collide.
+/// </summary>
+internal sealed record ColumnsDefinition(ColumnDefinition? Hall = null, ColumnDefinition? Corners = null)
+{
+    internal void Validate(string path)
+    {
+        Hall?.Validate(path, "columns.hall");
+        Corners?.Validate(path, "columns.corners");
+    }
+}
+
+/// <summary>
+/// A square column: a shaft <see cref="Width"/> across on a plinth <see cref="PlinthWidth"/> across and
+/// <see cref="PlinthHeight"/> tall, under a capital <see cref="CapitalWidth"/> across and <see cref="CapitalHeight"/> tall
+/// that meets the ceiling, all of the kit's <see cref="Surface"/> material.
+/// </summary>
+internal sealed record ColumnDefinition(float Width, float PlinthWidth, float PlinthHeight, float CapitalWidth, float CapitalHeight,
+    KitSurface Surface = KitSurface.Trim)
+{
+    internal void Validate(string path, string field)
+    {
+        Authored.Positive(path, $"{field}.width", Width);
+        Authored.AtLeast(path, $"{field}.plinthWidth", PlinthWidth, Width);
+        Authored.AtLeast(path, $"{field}.capitalWidth", CapitalWidth, Width);
+        Authored.AtLeast(path, $"{field}.plinthHeight", PlinthHeight, 0);
+        Authored.AtLeast(path, $"{field}.capitalHeight", CapitalHeight, 0);
+    }
+
+    /// <summary>The widest part, which sets how far a corner pier stands from its walls.</summary>
+    internal float Footprint => MathF.Max(PlinthWidth, CapitalWidth);
+}

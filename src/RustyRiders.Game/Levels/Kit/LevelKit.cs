@@ -12,7 +12,8 @@ namespace RustyRiders.Game.Levels.Kit;
 /// - pilasters against the walls;
 /// - an arch over each doorway, when the recipe has one (<see cref="DoorArches"/>);
 /// - the recipe's details: runners (<see cref="KitRunners"/>), ceiling ribs (<see cref="CeilingRibs"/>), blind arches
-///   (<see cref="BlindArches"/>) and sconces (<see cref="Sconces"/>), whose point lights the kit owns.
+///   (<see cref="BlindArches"/>), sconces (<see cref="Sconces"/>), whose point lights the kit owns, and columns
+///   (<see cref="KitColumns"/>).
 ///
 /// Texture coordinates run in world metres (walls by metres along their outline and up), so adjoining pieces keep one
 /// texture phase. One mesh is drawn in level-cell sections. A second mesh, without the thin trims, is the collision.
@@ -62,6 +63,11 @@ internal sealed partial class LevelKit : IGeneratedLevel
         if (recipe.Ribs is { } ribs) details.Add($"{CeilingRibs.Build(mesh, plan, recipe, ribs, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room))} ribs");
         if (recipe.BlindArches is { } blind)
             details.Add($"{BlindArches.Build(mesh, recipe, blind, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground))} blind arches");
+        if (recipe.Columns is { } columns)
+        {
+            (int hall, int corners) = KitColumns.Build(mesh, collision, plan, recipe, columns);
+            details.Add($"{hall} columns, {corners} corner piers");
+        }
         List<LightDescriptor> sconces = recipe.Sconces is { } sconce ? Sconces.Build(mesh, plan, recipe, sconce) : [];
         if (recipe.Sconces is not null) details.Add($"{sconces.Count} sconces");
 
@@ -235,7 +241,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
     }
 
     /// <summary>An upright box's four sides (glTF space, standing on its base), for a prop the walker meets.</summary>
-    private static void Box(MeshBuilder collision, Vector3 foot, Vector3 size)
+    internal static void Box(MeshBuilder collision, Vector3 foot, Vector3 size)
     {
         Vector3 h = new(size.X / 2, 0, size.Z / 2);
         Vector3[] corners = [foot + new Vector3(-h.X, 0, -h.Z), foot + new Vector3(h.X, 0, -h.Z), foot + new Vector3(h.X, 0, h.Z), foot + new Vector3(-h.X, 0, h.Z)];

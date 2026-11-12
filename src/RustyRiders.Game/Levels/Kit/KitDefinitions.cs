@@ -82,14 +82,14 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 /// set against room walls, an arch over every doorway, and <see cref="Dressing"/>: the old game's props placed over the
 /// plan by typed rules. Its details (KitDetailDefinitions.cs) build toward the world's concept scene:
 /// <see cref="Runners"/> on the floor, <see cref="Ribs"/> across ceilings, <see cref="BlindArches"/> on walls and
-/// <see cref="Sconces"/> lighting the doorways. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
+/// <see cref="Sconces"/> lighting the doorways, and its own <see cref="Columns"/>. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
 /// stay where the tile prefab put them.
 /// </summary>
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
     float WallMetres, float FloorMetres, float CeilingMetres, float TrimMetres, float NormalScale, float Roughness,
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
     DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null, RunnerDefinition? Runners = null,
-    RibDefinition? Ribs = null, BlindArchDefinition? BlindArches = null, SconceDefinition? Sconces = null)
+    RibDefinition? Ribs = null, BlindArchDefinition? BlindArches = null, SconceDefinition? Sconces = null, ColumnsDefinition? Columns = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
@@ -111,6 +111,7 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         recipe.Ribs?.Validate(path, recipe.Pilasters);
         recipe.BlindArches?.Validate(path, recipe.Pilasters);
         recipe.Sconces?.Validate(path, plan);
+        recipe.Columns?.Validate(path);
         return recipe;
     }
 
