@@ -27,10 +27,10 @@ internal sealed class LevelSweeps : IGeneratedLevel
         float step = cellSize / WalkCells.PerTile;
         Dictionary<(int X, int Z), float> open = WalkCells.Open(tiles, shell);
         List<WalkRectangle> rectangles = WalkCells.Merge(open);
-        MeshBuilder mesh = new();
+        MeshBuilder mesh = new(3);
 
         Bulge bulge = new(sweep.Bulge, sweep.BulgeWavelength, seed);
-        List<List<(Vector2 Point, float Height)>> loops = Outlines(open);
+        List<List<(Vector2 Point, float Height)>> loops = OpenGround.Outlines(open);
         foreach (List<(Vector2 Point, float Height)> loop in loops)
             SweepWall(mesh, Round(loop, sweep.CornerRadius / step), step, sweep, bulge);
         foreach (WalkRectangle r in rectangles)
@@ -66,67 +66,6 @@ internal sealed class LevelSweeps : IGeneratedLevel
         sections.Clear();
         whole.Dispose();
     }
-
-    /// <summary>
-    /// The open ground's outlines as closed loops of cell corners (cell units, corner (i, j) at (i - ½, j - ½)), each
-    /// walked with open ground on its left. Each corner carries the ceiling height of the open cell along the edge
-    /// that leaves it; straight runs of one height are merged.
-    /// </summary>
-    private static List<List<(Vector2 Point, float Height)>> Outlines(Dictionary<(int X, int Z), float> open)
-    {
-        Dictionary<(int X, int Z), List<((int X, int Z) End, float Height)>> outgoing = [];
-        void Edge((int, int) from, (int, int) to, float height)
-        {
-            if (!outgoing.TryGetValue(from, out var list)) outgoing[from] = list = [];
-            list.Add((to, height));
-        }
-        foreach (((int x, int z), float h) in open)
-        {
-            if (!open.ContainsKey((x, z - 1))) Edge((x, z), (x + 1, z), h);
-            if (!open.ContainsKey((x + 1, z))) Edge((x + 1, z), (x + 1, z + 1), h);
-            if (!open.ContainsKey((x, z + 1))) Edge((x + 1, z + 1), (x, z + 1), h);
-            if (!open.ContainsKey((x - 1, z))) Edge((x, z + 1), (x, z), h);
-        }
-
-        List<List<(Vector2, float)>> loops = [];
-        while (outgoing.FirstOrDefault(pair => pair.Value.Count > 0) is { Value: not null } first)
-        {
-            List<((int X, int Z) Corner, float Height)> chain = [];
-            (int X, int Z) start = first.Key, at = start;
-            (int X, int Z) heading = (0, 0); // none yet: any edge may start the loop
-            do
-            {
-                List<((int X, int Z) End, float Height)> choices = outgoing[at];
-                // Where two cells touch only at this corner, keep turning left so each loop stays one outline.
-                int pick = 0;
-                for (int i = 1; i < choices.Count; i++)
-                    if (Turn(heading, Direction(at, choices[i].End)) > Turn(heading, Direction(at, choices[pick].End))) pick = i;
-                ((int X, int Z) end, float height) = choices[pick];
-                choices.RemoveAt(pick);
-                chain.Add((at, height));
-                heading = Direction(at, end);
-                at = end;
-            }
-            while (at != start);
-
-            List<(Vector2, float)> loop = [];
-            for (int i = 0; i < chain.Count; i++)
-            {
-                ((int X, int Z) corner, float height) = chain[i];
-                ((int X, int Z) previous, float previousHeight) = chain[(i + chain.Count - 1) % chain.Count];
-                (int X, int Z) next = chain[(i + 1) % chain.Count].Corner;
-                bool straight = Direction(previous, corner) == Direction(corner, next) && previousHeight == height;
-                if (!straight) loop.Add((new Vector2(corner.X - .5f, corner.Z - .5f), height));
-            }
-            loops.Add(loop);
-        }
-        return loops;
-    }
-
-    private static (int X, int Z) Direction((int X, int Z) from, (int X, int Z) to) => (Math.Sign(to.X - from.X), Math.Sign(to.Z - from.Z));
-
-    /// <summary>1 for a left turn (seen from above, x east and z north), 0 straight, -1 right.</summary>
-    private static int Turn((int X, int Z) a, (int X, int Z) b) => Math.Sign(a.X * b.Z - a.Z * b.X);
 
     /// <summary>
     /// Each corner of a loop replaced by a quadratic arc of up to <paramref name="radius"/> cells (half of either
@@ -201,12 +140,12 @@ internal sealed class LevelSweeps : IGeneratedLevel
                 float y = height * row / rows;
                 float push = bulge.At(u, y) * MathF.Sin(MathF.PI * y / height);
                 Vector2 at = point + outward * push;
-                grid[c, row] = mesh.Vertex(Gltf(at, y), new Vector2(u / sweep.WallMetres, -y / sweep.WallMetres));
+                grid[c, row] = mesh.Vertex(OpenGround.Gltf(at, y), new Vector2(u / sweep.WallMetres, -y / sweep.WallMetres));
             }
         }
         for (int c = 0; c + 1 < columns.Count; c++)
         {
-            Vector3 inward = -Gltf(columns[c].Outward + columns[c + 1].Outward, 0);
+            Vector3 inward = -OpenGround.Gltf(columns[c].Outward + columns[c + 1].Outward, 0);
             for (int row = 0; row < rows; row++)
                 mesh.Quad(WallSlot, grid[c, row], grid[c + 1, row], grid[c + 1, row + 1], grid[c, row + 1], inward);
         }
@@ -222,7 +161,7 @@ internal sealed class LevelSweeps : IGeneratedLevel
     private static void AddCeiling(MeshBuilder mesh, WalkRectangle r, float step, SweepDefinition sweep)
     {
         Vector2 min = new((r.X0 - .5f) * step, (r.Z0 - .5f) * step), max = new((r.X1 + .5f) * step, (r.Z1 + .5f) * step);
-        uint Corner(float x, float z) => mesh.Vertex(Gltf(new Vector2(x, z), r.Height), new Vector2(x, z) / sweep.WallMetres);
+        uint Corner(float x, float z) => mesh.Vertex(OpenGround.Gltf(new Vector2(x, z), r.Height), new Vector2(x, z) / sweep.WallMetres);
         mesh.Quad(CeilingSlot, Corner(min.X, min.Y), Corner(max.X, min.Y), Corner(max.X, max.Y), Corner(min.X, max.Y), -Vector3.UnitY);
     }
 
@@ -237,8 +176,8 @@ internal sealed class LevelSweeps : IGeneratedLevel
                 if (!open.TryGetValue((x + dx, z + dz), out float low) || low >= high) continue;
                 Vector2 centre = new(x + dx * .5f, z + dz * .5f), across = new(-dz * .5f, dx * .5f);
                 Vector2 a = (centre - across) * step, b = (centre + across) * step;
-                uint V(Vector2 p, float y) => mesh.Vertex(Gltf(p, y), new Vector2(0, 0));
-                mesh.Quad(CeilingSlot, V(a, low), V(b, low), V(b, high), V(a, high), Gltf(new Vector2(-dx, -dz), 0));
+                uint V(Vector2 p, float y) => mesh.Vertex(OpenGround.Gltf(p, y), new Vector2(0, 0));
+                mesh.Quad(CeilingSlot, V(a, low), V(b, low), V(b, high), V(a, high), OpenGround.Gltf(new Vector2(-dx, -dz), 0));
             }
         }
     }
@@ -252,13 +191,10 @@ internal sealed class LevelSweeps : IGeneratedLevel
         const int Margin = 2;
         Vector2 min = new((open.Keys.Min(c => c.X) - Margin) * step, (open.Keys.Min(c => c.Z) - Margin) * step);
         Vector2 max = new((open.Keys.Max(c => c.X) + Margin) * step, (open.Keys.Max(c => c.Z) + Margin) * step);
-        uint Corner(float x, float z) => mesh.Vertex(Gltf(new Vector2(x, z), 0), new Vector2(x, z) / metres);
+        uint Corner(float x, float z) => mesh.Vertex(OpenGround.Gltf(new Vector2(x, z), 0), new Vector2(x, z) / metres);
         mesh.Quad(FloorSlot, Corner(min.X, min.Y), Corner(max.X, min.Y), Corner(max.X, max.Y), Corner(min.X, max.Y), Vector3.UnitY);
-        return Vector3.Min(Gltf(min, 0), Gltf(max, 0));
+        return Vector3.Min(OpenGround.Gltf(min, 0), OpenGround.Gltf(max, 0));
     }
-
-    /// <summary>A Unity-space point (metres on the ground plane) and height in glTF space: Unity is the X mirror.</summary>
-    private static Vector3 Gltf(Vector2 point, float y) => new(-point.X, y, point.Y);
 
     /// <summary>Seeded smooth wall relief in metres, ±<c>amplitude</c>, over metres along the wall and up it.</summary>
     private sealed class Bulge(float amplitude, float wavelength, int seed)
@@ -285,62 +221,6 @@ internal sealed class LevelSweeps : IGeneratedLevel
                 float angle = (float)(random.NextDouble() * MathF.PI);
                 return (MathF.Cos(angle), MathF.Sin(angle) * .6f, (float)(random.NextDouble() * MathF.Tau));
             }).ToArray();
-        }
-    }
-
-    /// <summary>Positions, smooth normals, uvs and per-material triangle lists for one retained mesh.</summary>
-    private sealed class MeshBuilder
-    {
-        private readonly List<Vector3> positions = [];
-        private readonly List<Vector3> normals = [];
-        private readonly List<Vector2> uvs = [];
-        private readonly List<uint>[] slots = [[], [], []];
-
-        internal int VertexCount => positions.Count;
-        internal int TriangleCount => slots.Sum(slot => slot.Count) / 3;
-
-        internal uint Vertex(Vector3 position, Vector2 uv)
-        {
-            positions.Add(position);
-            normals.Add(Vector3.Zero);
-            uvs.Add(uv);
-            return (uint)positions.Count - 1;
-        }
-
-        /// <summary>Two triangles wound to face <paramref name="facing"/>; their normals accumulate on the corners.</summary>
-        internal void Quad(int slot, uint a, uint b, uint c, uint d, Vector3 facing)
-        {
-            Triangle(slot, a, b, c, facing);
-            Triangle(slot, a, c, d, facing);
-        }
-
-        internal MeshResource Create(IEngineContext engine, Material[] materials)
-        {
-            List<uint> indices = [];
-            List<MeshGroup> groups = [];
-            for (int slot = 0; slot < slots.Length; slot++)
-            {
-                if (slots[slot].Count == 0) continue;
-                groups.Add(new MeshGroup((uint)slot, (uint)indices.Count, (uint)slots[slot].Count));
-                indices.AddRange(slots[slot]);
-            }
-            Vector3[] unit = normals.Select(n => n == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(n)).ToArray();
-            MeshMaterialBinding[] bindings = materials.Select((material, slot) => new MeshMaterialBinding((uint)slot, material)).ToArray();
-            return engine.Graphics.CreateMeshResource(new MeshResourceCreateRequest(positions.ToArray(), unit, uvs.ToArray(),
-                indices.ToArray(), groups.ToArray(), bindings));
-        }
-
-        private void Triangle(int slot, uint a, uint b, uint c, Vector3 facing)
-        {
-            Vector3 normal = Vector3.Cross(positions[(int)b] - positions[(int)a], positions[(int)c] - positions[(int)a]);
-            if (normal.LengthSquared() < 1e-12f) return;
-            if (Vector3.Dot(normal, facing) < 0)
-            {
-                (b, c) = (c, b);
-                normal = -normal;
-            }
-            slots[slot].AddRange([a, b, c]);
-            foreach (uint corner in (uint[])[a, b, c]) normals[(int)corner] += normal;
         }
     }
 }

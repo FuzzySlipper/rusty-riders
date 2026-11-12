@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Rusty.Engine.Debugging;
 using RustyRiders.Game.Levels;
+using RustyRiders.Game.Levels.Kit;
 using RustyRiders.Game.Player;
 
 namespace RustyRiders.Game.Developer;
@@ -11,7 +12,8 @@ namespace RustyRiders.Game.Developer;
 /// Live-debug commands for the current level (Engine command catalog; `rusty dev --live-debug`): read its gameplay
 /// points, and developer overrides that stand the walker somewhere for inspection and playtests.
 /// </summary>
-internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, Func<string, string, int, string?> buildLevel) : IDebugCommandModule
+internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, Func<string, string, int, string?> buildLevel,
+    Func<string, string?> setBuild) : IDebugCommandModule
 {
     private const float ApproachMetres = 4;
 
@@ -86,8 +88,40 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
         return DebugCommandResult.Success("Standing at the arrival point.");
     }
 
+    [DebugCommand("riders.level.plan", Description = "Read the current level's room plan in glTF metres: its rooms (node, tags, cells, footprint bounds), corridor cells, doorways (centre on the wall line, way into the room) and open area.")]
+    public DebugCommandResult Plan()
+    {
+        if (scene() is not LevelScene level) return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "Not in a level.");
+        RoomPlan plan = level.Plan;
+        return DebugCommandResult.Success(JsonSerializer.Serialize(new PlanInspection(plan.Summary,
+            plan.Rooms.Select(room => new RoomInspection(room.Node, room.Tags, room.Cells,
+                [-room.Max.X, room.Min.Y], [-room.Min.X, room.Max.Y])).ToArray(), plan.CorridorCells,
+                plan.Doorways.Select(d => new DoorwayInspection([-d.Centre.X, d.Centre.Y], [-d.IntoRoom.X, d.IntoRoom.Y])).ToArray(), level.ShowPlan),
+            DebugJson.Default.PlanInspection));
+    }
+
+    [DebugCommand("riders.dev.plan", Description = "Developer view: show (true) or hide (false) the room plan over the current level: rooms, corridors and doorways as coloured slabs.")]
+    public DebugCommandResult ShowPlan(bool show)
+    {
+        if (scene() is not LevelScene level) return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "Not in a level.");
+        level.ShowPlan = show;
+        return DebugCommandResult.Success(show ? $"Showing the plan: {level.Plan.Summary}." : "Plan hidden.");
+    }
+
+    [DebugCommand("riders.dev.build", Description = "Developer override: rebuild the current level as tiles, shells, sweeps or kit (as B cycles them).")]
+    public DebugCommandResult Build(string build) =>
+        setBuild(build) is { } refusal
+            ? DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, refusal)
+            : Inspect();
+
     private static float[] Xyz(Vector3 v) => [v.X, v.Y, v.Z];
 }
+
+internal sealed record RoomInspection(int Node, string[] Tags, int Cells, float[] Min, float[] Max);
+
+internal sealed record DoorwayInspection(float[] Centre, float[] IntoRoom);
+
+internal sealed record PlanInspection(string Summary, RoomInspection[] Rooms, int CorridorCells, DoorwayInspection[] Doorways, bool Shown);
 
 internal sealed record RiftInspection(int Index, float[] Feet, string Tileset, string Name);
 
@@ -96,4 +130,5 @@ internal sealed record LevelInspection(string Status, float[] Entry, float[] Arr
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(LevelInspection))]
+[JsonSerializable(typeof(PlanInspection))]
 internal sealed partial class DebugJson : JsonSerializerContext;

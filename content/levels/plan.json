@@ -1,0 +1,16 @@
+{
+  "gridMetres": 0.5,
+  "wallMetres": 1.5,
+  "corridorWidth": 5,
+  "doorWidth": 4,
+  "roomHeight": 9,
+  "corridorHeight": 6,
+  "doorHeight": 4.5,
+  "overlay": {
+    "show": false,
+    "lift": 0.08,
+    "roomColor": [0.25, 0.55, 0.95],
+    "corridorColor": [0.35, 0.85, 0.4],
+    "doorwayColor": [1.0, 0.6, 0.15]
+  }
+}

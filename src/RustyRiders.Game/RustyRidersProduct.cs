@@ -140,7 +140,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
 
     public void RegisterDebugCommands(IDebugCommandModuleRegistrar registrar)
     {
-        registrar.Register(new LevelDebugCommands(() => scenes.Current, walker, EnterLevel));
+        registrar.Register(new LevelDebugCommands(() => scenes.Current, walker, EnterLevel, RebuildAs));
         registrar.Register(new PlayerDebugCommands(play.Vitals, walker, Publish));
         registrar.Register(new CombatDebugCommands(play.Combat, walker));
         registrar.Register(new EnemyDebugCommands(play.Enemies, walker));
@@ -192,6 +192,25 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         try
         {
             scenes.GoTo(tileset, layout, seed);
+        }
+        catch (Exception error) when (error is InvalidOperationException or EngineCallException)
+        {
+            return error.Message;
+        }
+        EnterScene();
+        Publish();
+        return null;
+    }
+
+    /// <summary>Rebuilds the current level as another build (developer override); returns why it could not, or null.</summary>
+    private string? RebuildAs(string build)
+    {
+        string[] builds = [LevelSettings.TilesBuild, LevelSettings.ShellsBuild, LevelSettings.SweepsBuild, LevelSettings.KitBuild];
+        if (!builds.Contains(build)) return $"Builds are {string.Join(", ", builds)}.";
+        if (!scenes.ShowingLevel) return "Not in a level.";
+        try
+        {
+            scenes.SetBuild(build);
         }
         catch (Exception error) when (error is InvalidOperationException or EngineCallException)
         {

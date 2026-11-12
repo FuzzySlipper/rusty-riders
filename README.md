@@ -54,7 +54,7 @@ Open the URL printed by the host and click to capture the mouse:
 | Space | Jump |
 | F | Toggle flight (Space and Ctrl rise and descend) |
 | N | New level with the next seed |
-| B | Cycle the level build: stamped tiles, generated shells, swept meshes (tilesets with a shell recipe) |
+| B | Cycle the level build: stamped tiles, generated shells, swept meshes (tilesets with a shell recipe), the parametric kit (tilesets with a kit recipe) |
 | V | Cycle the generated builds' floor texture through the recipe's generated candidates |
 | G | Switch between the level and the gallery |
 | R | Return to the start |
@@ -63,7 +63,7 @@ Open the URL printed by the host and click to capture the mouse:
 The level collides with its ground and walls. In the gallery only the ground
 collides, so fly to see raised floors.
 
-The level's tileset, layout, seed and optional palette are set in `content/level.json`; without a palette the seed picks one of the tileset's, as the old game did. Its `build` is `tiles` (the default), `shells` or `sweeps`, generated level geometry for tilesets with a recipe in `content/levels/shells/` (CaveMap, LavaMap and ForestMap; Den `technical/level-generation`). The
+The level's tileset, layout, seed and optional palette are set in `content/level.json`; without a palette the seed picks one of the tileset's, as the old game did. Its `build` is `tiles` (the default), `shells` or `sweeps`, generated level geometry for tilesets with a recipe in `content/levels/shells/` (CaveMap, LavaMap and ForestMap), or `kit`, a world's parametric kit over the room plan for tilesets with a recipe in `content/levels/kits/` (StoneRoadMap); see Den `technical/level-generation`. With `--live-debug`, `riders.level.plan` reads the room plan, `riders.dev.plan true` draws it over the level, and `riders.dev.build kit` rebuilds the level as another build. The
 walker tuning is in `content/walker.json`, and the gallery's exhibits in
 `content/gallery.json`.
 To run it in the background instead, `rusty dev start` (same options) returns once the

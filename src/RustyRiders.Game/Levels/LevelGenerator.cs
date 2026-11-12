@@ -39,8 +39,15 @@ internal sealed record PlannedRoom(int Node, string[] Tags, IReadOnlyList<(int X
     internal bool Has(string tag) => Tags.Contains(tag);
 }
 
-internal sealed record LevelPlan(IReadOnlyList<PlannedTile> Tiles, IReadOnlyList<PlannedRoom> Rooms, (int X, int Z) Spawn, int SpawnFacing,
-    IReadOnlyList<string> Notes);
+/// <summary>A doorway from a corridor cell into the room cell beside it, <see cref="Direction"/> pointing into the room.</summary>
+internal sealed record PlannedDoorway((int X, int Z) Corridor, int Direction);
+
+/// <summary>
+/// The generated level: its tiles, its rooms (one per built layout node), the corridor cells between them (door cells
+/// included) and the doorways where a corridor opens into a room.
+/// </summary>
+internal sealed record LevelPlan(IReadOnlyList<PlannedTile> Tiles, IReadOnlyList<PlannedRoom> Rooms, IReadOnlyList<(int X, int Z)> Corridors,
+    IReadOnlyList<PlannedDoorway> Doorways, (int X, int Z) Spawn, int SpawnFacing, IReadOnlyList<string> Notes);
 
 /// <summary>
 /// The old ProceduralLevelBuilder, reduced to its geometry: one chunk per layout node (rotated so its doors face the
@@ -163,7 +170,13 @@ internal sealed class LevelGenerator
         }
         if (tiles.Count == 0) throw new InvalidOperationException($"Layout {layout.Id} produced no cells.");
         if (spawn is null) notes.Add("no start node was built; spawning at the first cell");
-        return new LevelPlan(tiles, rooms, spawn ?? (tiles[0].X, tiles[0].Z), spawnFacing, notes);
+        List<(int X, int Z)> corridors = cells.Values.Where(cell => cell.Type == CorridorType).Select(cell => cell.Position).ToList();
+        List<PlannedDoorway> doorways = [];
+        foreach (Cell cell in cells.Values.Where(cell => cell.Type == CorridorType))
+            for (int direction = 0; direction < GridDirection.Count; direction++)
+                if (cell.Borders[direction] == Border.Doorway && cells.TryGetValue(Offset(cell.Position, direction), out Cell? room) && room.Type == RoomType)
+                    doorways.Add(new PlannedDoorway(cell.Position, direction));
+        return new LevelPlan(tiles, rooms, corridors, doorways, spawn ?? (tiles[0].X, tiles[0].Z), spawnFacing, notes);
     }
 
     private (ChunkDefinition Chunk, int Rotation)? Fit(LayoutNode node, int?[] neighbors)

@@ -25,9 +25,10 @@ internal sealed record LevelData(GeneratorSettings Generator, TileKindTemplate[]
 
 /// <summary>
 /// Which layout, tileset and seed to stamp, from content/level.json. Without a palette the seed picks one. The build
-/// is <c>tiles</c> (the old tile art), <c>shells</c> (an extracted implicit field) or <c>sweeps</c> (swept UV-mapped
-/// meshes); both generated builds keep the tile art's props and follow <see cref="ShellDefinition"/>, whose floor
-/// texture <see cref="FloorTexture"/> may replace by id.
+/// is <c>tiles</c> (the old tile art), <c>shells</c> (an extracted implicit field), <c>sweeps</c> (swept UV-mapped
+/// meshes) or <c>kit</c> (a world's parametric kit over the room plan, <see cref="Kit.KitRecipe"/>). Shells and sweeps
+/// keep the tile art's props and follow <see cref="ShellDefinition"/>, whose floor texture <see cref="FloorTexture"/>
+/// may replace by id.
 /// </summary>
 internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layout, int Seed, float WallHeight,
     float[] BackgroundColor, string? Palette = null, string Build = LevelSettings.TilesBuild, string? FloorTexture = null)
@@ -35,9 +36,10 @@ internal sealed record LevelSettings(string ArtRoot, string Tileset, string Layo
     internal const string TilesBuild = "tiles";
     internal const string ShellsBuild = "shells";
     internal const string SweepsBuild = "sweeps";
+    internal const string KitBuild = "kit";
 
     /// <summary>The build after this one, as B cycles them.</summary>
-    internal string NextBuild => Build switch { TilesBuild => ShellsBuild, ShellsBuild => SweepsBuild, _ => TilesBuild };
+    internal string NextBuild => Build switch { TilesBuild => ShellsBuild, ShellsBuild => SweepsBuild, SweepsBuild => KitBuild, _ => TilesBuild };
 
     internal const string Path = "level.json";
 

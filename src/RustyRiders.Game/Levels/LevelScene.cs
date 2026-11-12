@@ -1,14 +1,17 @@
 using System.Numerics;
 using Rusty.Engine;
 using RustyRiders.Game.Art;
+using RustyRiders.Game.Levels.Kit;
 using RustyRiders.Game.Player;
 
 namespace RustyRiders.Game.Levels;
 
 /// <summary>
-/// Stamps a generated level: each planned cell places one of its tile kind's tile prefabs (converted old-game art)
-/// at the cell, turned by the planned rotation. Collision is the ground plus a box over each blocked cell of the
-/// tile prefab's 9x9 walkability grid (the old combat grid), so walls stop the walker where the old game's did.
+/// Builds a generated level. The tiles build stamps each planned cell with one of its tile kind's tile prefabs
+/// (converted old-game art), turned by the planned rotation, colliding as the ground plus a box over each blocked cell
+/// of the prefab's 9x9 walkability grid (the old combat grid). The shells and sweeps builds replace the tiles' shell
+/// meshes with geometry generated from those walk grids; the kit build replaces the tiles with a world's parametric kit
+/// over the <see cref="RoomPlan"/>, which every build measures and can show as an overlay.
 /// Engine navigation is derived from that collision, and the level's gameplay points (<see cref="LevelPoints"/>) stand
 /// on it: the entry portal the walker arrives in front of, the rifts out, caches and resident spots.
 /// </summary>
@@ -28,7 +31,8 @@ internal sealed class LevelScene : IWalkScene
     private readonly IEngineContext engine;
     private readonly ConvertedArt art;
     private readonly HarvestedMaterials materials;
-    private IGeneratedLevel? shells;
+    private IGeneratedLevel? generated;
+    private PlanOverlay? overlay;
     private readonly Portals portals;
     private readonly PortalLook portalLook;
     private double worldSeconds;
@@ -46,8 +50,15 @@ internal sealed class LevelScene : IWalkScene
         materials = new HarvestedMaterials(engine, art, recolor);
         cellSize = data.Generator.CellSize;
         ShellDefinition? shell = null;
-        if (settings.Build != LevelSettings.TilesBuild && (shell = ShellDefinition.Load(engine, data.Tileset.Id)) is null)
+        KitRecipe? kit = null;
+        if (settings.Build == LevelSettings.KitBuild)
+        {
+            if ((kit = KitRecipe.Load(engine, data.Tileset.Id)) is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
+        }
+        else if (settings.Build != LevelSettings.TilesBuild && (shell = ShellDefinition.Load(engine, data.Tileset.Id)) is null)
+        {
             problems.Add($"no content/levels/shells/{data.Tileset.Id}.json: stamped the tiles instead");
+        }
         Session = engine.Spatial.CreateSession(new SpatialSessionConfig(CollisionVoxelSize, CollisionChunkSize, VoxelSurfaceMode.GreedyCubes));
         LevelPlan plan = LevelGenerator.Generate(data, layout, seed);
         problems.AddRange(plan.Notes);
@@ -57,7 +68,8 @@ internal sealed class LevelScene : IWalkScene
         Dictionary<string, ulong> collisionAssets = [];
         List<(PlannedTile Tile, string[] Walkable)> walkGrids = [];
         ulong nextPlacement = FirstPlacementObjectId, nextTile = FirstTileObjectId;
-        Func<PlacementRow, bool>? keep = shell is null ? null : row => shell.KeepsProp(row.Model);
+        Func<PlacementRow, bool>? keep = kit is not null ? row => kit.KeepsProp(row.Model)
+            : shell is not null ? row => shell.KeepsProp(row.Model) : null;
         foreach (PlannedTile tile in plan.Tiles)
         {
             string[] prefabs = data.Tileset.Tiles.GetValueOrDefault(tile.Kind.ToString(), []);
@@ -73,6 +85,7 @@ internal sealed class LevelScene : IWalkScene
             {
                 facts.Add(new AppearanceFact(nextPlacement++, false, 0, Compose(cell, pose), mesh.Appearance, true, RenderLayer.Scene));
             }
+            if (kit is not null) continue;
             string[] walkable = data.Tileset.Walkability.GetValueOrDefault(prefab) ?? Upsample(data.TileKinds[(int)tile.Kind].Walkable);
             if (shell is not null)
             {
@@ -86,7 +99,12 @@ internal sealed class LevelScene : IWalkScene
         string built = "tiles";
         float spawnLift = SpawnLift;
         (Vector3 floorMin, Vector3 floorMax) = Extent(plan);
-        if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, settings.FloorTexture, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
+        Plan = new RoomPlan(plan, rules.Plan, cellSize);
+        if (kit is not null && BuildKit(kit, data.Tileset, collision) is { } kitSummary)
+        {
+            built = kitSummary;
+        }
+        else if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, settings.FloorTexture, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
         {
             built = summary;
             spawnLift += shell.FloorNoise.Amplitude;
@@ -101,6 +119,7 @@ internal sealed class LevelScene : IWalkScene
         problems.AddRange(Points.Problems);
         portalLook = rules.Points.Portal;
         portals = new Portals(engine, rules.Points, Points);
+        ShowPlan = rules.Plan.Overlay.Show;
         Playable = Points.Rifts.Count >= rules.Points.MinimumRifts;
         TravelLayouts = data.Layouts.Where(l => !l.Special).Select(l => l.Id).ToArray();
         engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(new Color(settings.BackgroundColor[0],
@@ -121,6 +140,20 @@ internal sealed class LevelScene : IWalkScene
     /// <summary>Whether the arrival can walk to at least the minimum number of rifts; a level that cannot is rejected.</summary>
     internal bool Playable { get; }
     internal LevelPoints Points { get; }
+    /// <summary>The level as rooms, corridors and doorways in metres, which the kit build stands on.</summary>
+    internal RoomPlan Plan { get; }
+
+    /// <summary>Whether the room plan's overlay is drawn (developer view; starts as content/levels/plan.json says).</summary>
+    internal bool ShowPlan
+    {
+        get => overlay is not null && showPlan;
+        set
+        {
+            showPlan = value;
+            if (value) overlay ??= new PlanOverlay(engine, Plan);
+        }
+    }
+    private bool showPlan;
     /// <summary>The layouts a rift can lead to (the non-special ones).</summary>
     internal string[] TravelLayouts { get; }
 
@@ -142,12 +175,15 @@ internal sealed class LevelScene : IWalkScene
             : "";
     }
 
-    public IEnumerable<AppearanceFact> Facts => [.. facts, .. portals.Facts(worldSeconds)];
+    public IEnumerable<AppearanceFact> Facts => ShowPlan
+        ? [.. facts, .. portals.Facts(worldSeconds), .. overlay!.Facts]
+        : [.. facts, .. portals.Facts(worldSeconds)];
 
     public void Dispose()
     {
         engine.Graphics.PublishSnapshot([]);
-        shells?.Dispose();
+        generated?.Dispose();
+        overlay?.Dispose();
         portals.Dispose();
         materials.Dispose();
         art.Dispose();
@@ -171,7 +207,7 @@ internal sealed class LevelScene : IWalkScene
             floor = materials.Get(shell.FloorMaterial, prefabs, look, floorTexture?.Replacement);
         try
         {
-            shells = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor,
+            generated = swept ? new LevelSweeps(engine, shell, cellSize, walkGrids, walls, floor,
                     shell.WallTexture?.Metres ?? shell.Sweep.WallMetres, floorTexture?.Metres ?? shell.Sweep.FloorMetres, seed)
                 : new LevelShells(engine, shell, cellSize, walkGrids, walls, floor, seed);
         }
@@ -180,12 +216,42 @@ internal sealed class LevelScene : IWalkScene
             problems.Add($"shells: {error.Message}");
             return null;
         }
+        Place(generated, collision);
+        return floorTexture is null ? generated.Summary : $"{generated.Summary} · floor {floorTexture.Id}";
+    }
+
+    /// <summary>
+    /// The world's parametric kit over the room plan, in place of the tiles: its wall, floor, ceiling and trim materials
+    /// harvested from the converted art (so the palette tints them). Returns the build's summary, or null (a recorded
+    /// problem) when generation fails.
+    /// </summary>
+    private string? BuildKit(KitRecipe kit, TilesetDefinition tileset, CollisionBuilder collision)
+    {
+        HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
+        string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
+        Material[] slots = [materials.Get(kit.WallMaterial, prefabs, look), materials.Get(kit.FloorMaterial, prefabs, look),
+            materials.Get(kit.CeilingMaterial, prefabs, look), materials.Get(kit.TrimMaterial, prefabs, look)];
+        try
+        {
+            generated = new LevelKit(engine, Plan, kit, slots, cellSize);
+        }
+        catch (EngineCallException error)
+        {
+            problems.Add($"kit: {error.Message}");
+            return null;
+        }
+        Place(generated, collision);
+        return generated.Summary;
+    }
+
+    /// <summary>A generated build's sections drawn where it is placed, and its collision meshes as their own assets.</summary>
+    private void Place(IGeneratedLevel built, CollisionBuilder collision)
+    {
         ulong id = FirstShellSectionObjectId;
-        foreach (Appearance section in shells.Sections)
-            facts.Add(new AppearanceFact(id++, false, 0, shells.Placement, section, true, RenderLayer.Scene));
+        foreach (Appearance section in built.Sections)
+            facts.Add(new AppearanceFact(id++, false, 0, built.Placement, section, true, RenderLayer.Scene));
         ulong collisionId = FirstShellCollisionId;
-        foreach (MeshResource mesh in shells.Collision) collision.AddMesh(collisionId++, mesh, shells.Placement);
-        return floorTexture is null ? shells.Summary : $"{shells.Summary} · floor {floorTexture.Id}";
+        foreach (MeshResource mesh in built.Collision) collision.AddMesh(collisionId++, mesh, built.Placement);
     }
 
     /// <summary>The named palette, or (as the old LevelFx did) one of the tileset's picked by the level's seed.</summary>
@@ -229,81 +295,5 @@ internal sealed class LevelScene : IWalkScene
             max = Vector3.Max(max, center + new Vector3(half, 0, half));
         }
         return (min, max);
-    }
-
-    /// <summary>Raw static-mesh collision: one asset per tile prefab's blocked cells, one instance per placed tile.</summary>
-    private sealed class CollisionBuilder
-    {
-        private const ulong GroundAsset = 1;
-        internal const ulong NoCollision = 0;
-        private readonly List<Vector3> vertices = [];
-        private readonly List<Triangle> triangles = [];
-        private readonly List<StaticMeshAsset> assets = [];
-        private readonly List<StaticMeshInstance> instances = [];
-
-        /// <summary>Boxes over the blocked cells (merged along each row), in a tile's glTF-local space.</summary>
-        internal ulong AddBlockedCells(string[] walkable, float cellSize, float height)
-        {
-            int firstVertex = vertices.Count, firstTriangle = triangles.Count;
-            float step = cellSize / WalkGrid;
-            for (int row = 0; row < WalkGrid; row++)
-            {
-                for (int column = 0; column < WalkGrid; column++)
-                {
-                    if (walkable[row][column] != '#') continue;
-                    int end = column;
-                    while (end + 1 < WalkGrid && walkable[row][end + 1] == '#') end++;
-                    // Unity tile-local: column 0 is west (-x), row 0 is north (+z); glTF mirrors x.
-                    float westX = -cellSize / 2 + column * step, eastX = -cellSize / 2 + (end + 1) * step;
-                    float northZ = cellSize / 2 - row * step, southZ = northZ - step;
-                    AddBox(new Vector3(-eastX, 0, southZ), new Vector3(-westX, height, northZ), firstVertex);
-                    column = end;
-                }
-            }
-            if (triangles.Count == firstTriangle) return NoCollision;
-            ulong id = (ulong)assets.Count + GroundAsset + 1;
-            assets.Add(new StaticMeshAsset(id, (uint)firstVertex, (uint)(vertices.Count - firstVertex),
-                (uint)firstTriangle, (uint)(triangles.Count - firstTriangle)));
-            return id;
-        }
-
-        internal void Place(ulong instance, ulong asset, Transform transform)
-        {
-            if (asset != NoCollision) instances.Add(new StaticMeshInstance(instance, asset, transform));
-        }
-
-        /// <summary>A retained mesh as its own collision asset (the Engine copies its geometry), placed once.</summary>
-        internal void AddMesh(ulong id, MeshResource mesh, Transform transform)
-        {
-            assets.Add(new StaticMeshAsset(id, new MeshResourceReference(mesh), 0, 0, 0, 0));
-            instances.Add(new StaticMeshInstance(id, id, transform));
-        }
-
-        internal void AddGround(ulong instance, Vector3 min, Vector3 max)
-        {
-            int first = vertices.Count;
-            vertices.AddRange([new(min.X, 0, min.Z), new(max.X, 0, min.Z), new(max.X, 0, max.Z), new(min.X, 0, max.Z)]);
-            triangles.AddRange([new(0, 2, 1), new(0, 3, 2)]); // asset-local indices, wound to face up
-            assets.Add(new StaticMeshAsset(GroundAsset, (uint)first, 4, (uint)triangles.Count - 2, 2));
-            instances.Add(new StaticMeshInstance(instance, GroundAsset, new Transform(Vector3.Zero, Quaternion.Identity, Vector3.One)));
-        }
-
-        internal CollisionReplaceRequest Request(SpatialSession session) =>
-            new(session, assets.ToArray(), vertices.ToArray(), triangles.ToArray(), instances.ToArray());
-
-        /// <summary>An axis-aligned box, faces wound outward. Triangle indices are relative to the asset's first vertex.</summary>
-        private void AddBox(Vector3 min, Vector3 max, int assetFirstVertex)
-        {
-            int assetFirst = vertices.Count - assetFirstVertex;
-            for (int corner = 0; corner < 8; corner++)
-                vertices.Add(new Vector3((corner & 1) == 0 ? min.X : max.X, (corner & 2) == 0 ? min.Y : max.Y, (corner & 4) == 0 ? min.Z : max.Z));
-            int[][] faces = [[0, 2, 3, 1], [4, 5, 7, 6], [0, 1, 5, 4], [2, 6, 7, 3], [0, 4, 6, 2], [1, 3, 7, 5]];
-            foreach (int[] face in faces)
-            {
-                uint a = (uint)(assetFirst + face[0]), b = (uint)(assetFirst + face[1]), c = (uint)(assetFirst + face[2]), d = (uint)(assetFirst + face[3]);
-                triangles.Add(new Triangle(a, b, c));
-                triangles.Add(new Triangle(a, c, d));
-            }
-        }
     }
 }

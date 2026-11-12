@@ -59,11 +59,23 @@ internal sealed class Scenes : IDisposable
         Switch(true);
     }
 
-    /// <summary>The next level build: tiles, shells, sweeps (developer key).</summary>
-    internal void NextBuild()
+    /// <summary>The next level build: tiles, shells, sweeps, kit (developer key).</summary>
+    internal void NextBuild() => SetBuild(Settings.NextBuild);
+
+    /// <summary>Rebuilds the level as the named build (developer override), keeping the settings if that fails.</summary>
+    internal void SetBuild(string build)
     {
-        Settings = Settings with { Build = Settings.NextBuild };
-        Switch(true);
+        LevelSettings previous = Settings;
+        Settings = Settings with { Build = build };
+        try
+        {
+            Switch(true);
+        }
+        catch
+        {
+            Settings = previous;
+            throw;
+        }
     }
 
     /// <summary>The tileset's next shell floor texture after the current one, then its own again (developer key).</summary>

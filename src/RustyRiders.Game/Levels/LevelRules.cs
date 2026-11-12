@@ -1,14 +1,16 @@
 using System.Text.Json.Serialization;
 using Rusty.Engine;
 using RustyRiders.Game.Content;
+using RustyRiders.Game.Levels.Kit;
 
 namespace RustyRiders.Game.Levels;
 
 /// <summary>
 /// The authored rules that turn a stamped level into a play space: where its points go (points.json), how its
-/// navigation is derived (navigation.json) and which worlds a rift can lead to (worlds.json). Loaded once.
+/// navigation is derived (navigation.json), which worlds a rift can lead to (worlds.json) and how the room plan is
+/// measured out (plan.json). Loaded once.
 /// </summary>
-internal sealed record LevelRules(PointRules Points, NavigationTuning Navigation, World[] Worlds)
+internal sealed record LevelRules(PointRules Points, NavigationTuning Navigation, World[] Worlds, PlanRules Plan)
 {
     internal static LevelRules Load(IEngineContext engine)
     {
@@ -20,7 +22,7 @@ internal sealed record LevelRules(PointRules Points, NavigationTuning Navigation
         for (int i = 0; i < worlds.Length; i++) Authored.Colour(WorldCatalog.Path, $"worlds[{i}].riftColor", worlds[i].RiftColor);
         Authored.Require(worlds.Length > 0, WorldCatalog.Path, "worlds", "must name at least one world.");
         Authored.Require(worlds.Select(w => w.Tileset).Distinct().Count() == worlds.Length, WorldCatalog.Path, "worlds", "each tileset is one world.");
-        return new LevelRules(points, navigation, worlds);
+        return new LevelRules(points, navigation, worlds, PlanRules.Load(engine));
     }
 
     internal World? World(string tileset) => Worlds.FirstOrDefault(world => world.Tileset == tileset);
