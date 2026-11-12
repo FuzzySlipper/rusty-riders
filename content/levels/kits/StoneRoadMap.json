@@ -98,9 +98,10 @@
     "minCourse": 0.7, "maxCourse": 1.1, "joint": 0.06, "minRelief": 0.04, "maxRelief": 0.12, "pushedChance": 0.12, "pushed": 0.1,
     "bevel": 0.05,
     "stones": [
-      { "id": "long", "weight": 3, "minLength": 1.6, "maxLength": 2.4 },
-      { "id": "block", "weight": 3, "minLength": 1.0, "maxLength": 1.5 },
-      { "id": "short", "weight": 1, "minLength": 0.6, "maxLength": 0.9 }
+      { "id": "dressed", "weight": 3, "minLength": 1.4, "maxLength": 2.4, "chipChance": 0.4, "chip": 0.14, "nicks": 0.2, "pillow": 0.02, "facet": 0.01 },
+      { "id": "rough", "weight": 3, "minLength": 0.9, "maxLength": 1.5, "chipChance": 0.85, "chip": 0.26, "nicks": 0.6, "pillow": 0.05, "facet": 0.045, "hewn": true },
+      { "id": "pillow", "weight": 2, "minLength": 0.8, "maxLength": 1.3, "chipChance": 0.5, "chip": 0.16, "nicks": 0.3, "pillow": 0.1, "facet": 0.015 },
+      { "id": "short", "weight": 1, "minLength": 0.5, "maxLength": 0.8, "chipChance": 0.6, "chip": 0.12, "nicks": 0.3, "pillow": 0.03, "facet": 0.03, "hewn": true }
     ]
   }
 }

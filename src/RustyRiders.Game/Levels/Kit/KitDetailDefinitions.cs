@@ -142,6 +142,11 @@ internal sealed record WallStonesDefinition(float MinCourse, float MaxCourse, St
             Authored.Positive(path, $"wallStones.stones[{i}].weight", Stones[i].Weight);
             Authored.Positive(path, $"wallStones.stones[{i}].minLength", Stones[i].MinLength);
             Authored.AtLeast(path, $"wallStones.stones[{i}].maxLength", Stones[i].MaxLength, Stones[i].MinLength);
+            Authored.Within(path, $"wallStones.stones[{i}].chipChance", Stones[i].ChipChance, 0, 1);
+            Authored.AtLeast(path, $"wallStones.stones[{i}].chip", Stones[i].Chip, 0);
+            Authored.Within(path, $"wallStones.stones[{i}].nicks", Stones[i].Nicks, 0, 1);
+            Authored.AtLeast(path, $"wallStones.stones[{i}].pillow", Stones[i].Pillow, 0);
+            Authored.AtLeast(path, $"wallStones.stones[{i}].facet", Stones[i].Facet, 0);
         }
         Authored.Positive(path, "wallStones.joint", Joint);
         Authored.Require(Joint < MinCourse / 2, path, "wallStones.joint", "must be well under a course's height.");
@@ -153,11 +158,18 @@ internal sealed record WallStonesDefinition(float MinCourse, float MaxCourse, St
     }
 
     /// <summary>The furthest any stone stands out from its wall, which parts set on the wall stand clear of.</summary>
-    internal float Deepest => MaxRelief + Pushed;
+    internal float Deepest => MaxRelief + Pushed + Stones.Max(s => s.Pillow + s.Facet);
 
     /// <summary>The shortest stone of any kind.</summary>
     internal float Shortest => Stones.Min(s => s.MinLength);
 }
 
-/// <summary>A kind of stone a wall is laid from: <see cref="MinLength"/> to <see cref="MaxLength"/> metres long, picked in proportion to <see cref="Weight"/>.</summary>
-internal sealed record StoneKind(string Id, float Weight, float MinLength, float MaxLength);
+/// <summary>
+/// A kind of stone a wall is laid from: <see cref="MinLength"/> to <see cref="MaxLength"/> metres long, picked in
+/// proportion to <see cref="Weight"/>, and its shape. Each corner is chipped off, with chance <see cref="ChipChance"/>,
+/// by up to <see cref="Chip"/> metres along both edges; each edge takes a nick with chance <see cref="Nicks"/>. Its face
+/// bulges <see cref="Pillow"/> metres at the middle, and each point round the face stands up to <see cref="Facet"/>
+/// metres proud of or below the rest. A <see cref="Hewn"/> face is cut in flat facets; otherwise it is smooth.
+/// </summary>
+internal sealed record StoneKind(string Id, float Weight, float MinLength, float MaxLength, float ChipChance = 0, float Chip = 0, float Nicks = 0,
+    float Pillow = 0, float Facet = 0, bool Hewn = false);
