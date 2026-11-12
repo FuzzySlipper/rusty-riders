@@ -1,0 +1,210 @@
+{
+  "about": "StoneRoadMap 'Direction B' (M\u00e9tal Hurlant Necro-Cathedral / BuildingBgHall) element-stable colour-blocked texture pack (2026-11-12). Generated on den-m5 & den-nimo with Z-Image base bf16 + rrink_zimage_v5_seg6_3000 at 1.0, SeamlessTileModelDiT + MakeCircularVAEDiT (25 steps res_multistep, cfg 4, shift 3, 1024x1024). Normal maps generated via authoring/tools/textures/make_tileable.py (strength 3.0). Each architectural surface owns one unified pigment family so the scene is colourful as a whole without per-stone pastel confetti.",
+  "floor-slate-basalt-11": {
+    "role": "Floor (Primary Arena Ground)",
+    "target_hex": "#2d2b3a",
+    "metres": 4.0,
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 11,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a worn dungeon floor of large interlocking cut basalt-slate stone slabs, uniform dark desaturated slate-indigo colour across every stone with no pink or multicoloured slabs, mostly calm flat cel-shaded stone faces with dark inked joints and fine hair cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 11,
+      "seam": 0.87,
+      "repeat": 0.073,
+      "gradient": 0.018,
+      "perspective": 0.067,
+      "mean": 0.284,
+      "spread": 0.333,
+      "saturation": 0.275,
+      "flags": []
+    },
+    "review": "selected as primary for surface"
+  },
+  "floor-slate-basalt-12": {
+    "role": "Floor (Primary Arena Ground)",
+    "target_hex": "#2d2b3a",
+    "metres": 4.0,
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 12,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a worn dungeon floor of large interlocking cut basalt-slate stone slabs, uniform dark desaturated slate-indigo colour across every stone with no pink or multicoloured slabs, mostly calm flat cel-shaded stone faces with dark inked joints and fine hair cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 12,
+      "seam": 1.12,
+      "repeat": 0.061,
+      "gradient": 0.003,
+      "perspective": 0.057,
+      "mean": 0.22,
+      "spread": 0.259,
+      "saturation": 0.343,
+      "flags": []
+    }
+  },
+  "wall-ashlar-slate-11": {
+    "role": "Wall (Main Ashlar Masonry)",
+    "target_hex": "#5e5b6e",
+    "metres": 4.0,
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 11,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a castle wall of horizontal hand-cut ashlar stone blocks laid in regular courses, uniform muted cool grey-violet slate colour across every block with no pink or rainbow patches, calm flat cel-shaded stone faces with dark inked mortar joints and sparse short parallel hatch ticks near chipped edges, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 11,
+      "seam": 3.59,
+      "repeat": 0.337,
+      "gradient": 0.042,
+      "perspective": 0.06,
+      "mean": 0.505,
+      "spread": 0.498,
+      "saturation": 0.071,
+      "flags": [
+        "seam"
+      ]
+    }
+  },
+  "wall-ashlar-slate-12": {
+    "role": "Wall (Main Ashlar Masonry)",
+    "target_hex": "#5e5b6e",
+    "metres": 4.0,
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 12,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a castle wall of horizontal hand-cut ashlar stone blocks laid in regular courses, uniform muted cool grey-violet slate colour across every block with no pink or rainbow patches, calm flat cel-shaded stone faces with dark inked mortar joints and sparse short parallel hatch ticks near chipped edges, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 12,
+      "seam": 0.59,
+      "repeat": 0.332,
+      "gradient": 0.008,
+      "perspective": 0.029,
+      "mean": 0.474,
+      "spread": 0.569,
+      "saturation": 0.123,
+      "flags": []
+    },
+    "review": "selected as primary for surface"
+  },
+  "trim-oxblood-dressed-11": {
+    "role": "Trim (Pilasters, Arches, Ribs)",
+    "target_hex": "#6e293e",
+    "metres": 2.5,
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 11,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of large square dressed stone blocks with chiselled bevelled edges and vertical fluted tool marks, uniform deep dusky oxblood-burgundy red-plum stone colour across every block, dark inked mortar joints and fine cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 11,
+      "seam": 1.94,
+      "repeat": 0.235,
+      "gradient": 0.023,
+      "perspective": 0.08,
+      "mean": 0.21,
+      "spread": 0.294,
+      "saturation": 0.666,
+      "flags": []
+    }
+  },
+  "trim-oxblood-dressed-12": {
+    "role": "Trim (Pilasters, Arches, Ribs)",
+    "target_hex": "#6e293e",
+    "metres": 2.5,
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 12,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of large square dressed stone blocks with chiselled bevelled edges and vertical fluted tool marks, uniform deep dusky oxblood-burgundy red-plum stone colour across every block, dark inked mortar joints and fine cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 12,
+      "seam": 1.53,
+      "repeat": 0.225,
+      "gradient": 0.018,
+      "perspective": 0.121,
+      "mean": 0.169,
+      "spread": 0.196,
+      "saturation": 0.76,
+      "flags": []
+    },
+    "review": "selected as primary for surface"
+  },
+  "ceiling-obsidian-vault-11": {
+    "role": "Ceiling Ceiling & Deep Alcove Recesses (Comic-Black Shadow Stone) Recesses (Obsidian)",
+    "target_hex": "#1a1824",
+    "metres": 3.0,
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 11,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with heavy black ink shadows and painted cel tones, flat top-down view of a dark dungeon ceiling of heavy cut obsidian-basalt stone blocks with deep inked joints, uniform very dark charcoal-indigo colour across the whole surface with bold black ink linework and restrained dark slate cel highlights, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 11,
+      "seam": 1.07,
+      "repeat": 0.12,
+      "gradient": 0.013,
+      "perspective": 0.071,
+      "mean": 0.09,
+      "spread": 0.133,
+      "saturation": 0.518,
+      "flags": []
+    }
+  },
+  "ceiling-obsidian-vault-12": {
+    "role": "Ceiling Ceiling & Deep Alcove Recesses (Comic-Black Shadow Stone) Recesses (Obsidian)",
+    "target_hex": "#1a1824",
+    "metres": 3.0,
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 12,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with heavy black ink shadows and painted cel tones, flat top-down view of a dark dungeon ceiling of heavy cut obsidian-basalt stone blocks with deep inked joints, uniform very dark charcoal-indigo colour across the whole surface with bold black ink linework and restrained dark slate cel highlights, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 12,
+      "seam": 1.04,
+      "repeat": 0.107,
+      "gradient": 0.003,
+      "perspective": 0.068,
+      "mean": 0.078,
+      "spread": 0.125,
+      "saturation": 0.564,
+      "flags": []
+    },
+    "review": "selected as primary for surface"
+  },
+  "runner-crimson-inlay-11": {
+    "role": "Floor Runner (Crimson-Gold Inlay)",
+    "target_hex": "#782638",
+    "metres": 3.0,
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 11,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of an ornate carved stone floor pavement of fitted porphyry slabs inlaid with geometric ritual linework, uniform deep crimson-burgundy stone with subtle muted ochre-gold geometric inlay lines and dark inked joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 11,
+      "seam": 1.26,
+      "repeat": 0.091,
+      "gradient": 0.017,
+      "perspective": 0.038,
+      "mean": 0.18,
+      "spread": 0.365,
+      "saturation": 0.819,
+      "flags": []
+    }
+  },
+  "runner-crimson-inlay-12": {
+    "role": "Floor Runner (Crimson-Gold Inlay)",
+    "target_hex": "#782638",
+    "metres": 3.0,
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 12,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of an ornate carved stone floor pavement of fitted porphyry slabs inlaid with geometric ritual linework, uniform deep crimson-burgundy stone with subtle muted ochre-gold geometric inlay lines and dark inked joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, patchwork, crazy paving, Voronoi cells, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": {
+      "seed": 12,
+      "seam": 0.81,
+      "repeat": 0.055,
+      "gradient": 0.008,
+      "perspective": 0.118,
+      "mean": 0.141,
+      "spread": 0.38,
+      "saturation": 0.858,
+      "flags": []
+    },
+    "review": "selected as primary for surface"
+  }
+}
