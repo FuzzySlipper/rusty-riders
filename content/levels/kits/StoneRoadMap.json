@@ -38,5 +38,15 @@
     "depth": 0.8,
     "clearance": 2.5
   },
-  "props": []
+  "props": [],
+  "doorArch": {
+    "rise": 2.2,
+    "segments": 12,
+    "surface": "Trim",
+    "ring": {
+      "width": 0.6,
+      "depth": 0.15,
+      "surface": "Trim"
+    }
+  }
 }

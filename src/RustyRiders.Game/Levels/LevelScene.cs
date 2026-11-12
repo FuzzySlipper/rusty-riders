@@ -53,7 +53,7 @@ internal sealed class LevelScene : IWalkScene
         KitRecipe? kit = null;
         if (settings.Build == LevelSettings.KitBuild)
         {
-            if ((kit = KitRecipe.Load(engine, data.Tileset.Id)) is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
+            if ((kit = KitRecipe.Load(engine, data.Tileset.Id, rules.Plan)) is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
         }
         else if (settings.Build != LevelSettings.TilesBuild && (shell = ShellDefinition.Load(engine, data.Tileset.Id)) is null)
         {

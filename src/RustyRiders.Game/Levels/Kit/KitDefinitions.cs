@@ -76,17 +76,18 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 /// A world's parametric kit (content/levels/kits/&lt;tileset&gt;.json): the old Unity materials its walls, floors,
 /// ceilings and trims take (Assets-relative .mat paths, as palettes name them, so a level's palette tints them), metres
 /// per texture repeat on each, how they are drawn, and its typed parts: trims swept along the outlines and pilasters
-/// set against room walls. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
-/// stay as placed dressing.
+/// set against room walls, and an arch over every doorway. Converted models of each tile prefab whose file names start
+/// with one of <see cref="Props"/> stay as placed dressing.
 /// </summary>
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
     float WallMetres, float FloorMetres, float CeilingMetres, float TrimMetres, float NormalScale, float Roughness,
-    TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props)
+    TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null)
 {
-    internal static KitRecipe? Load(IEngineContext engine, string tileset)
+    internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan)
     {
         string path = $"levels/kits/{tileset}.json";
         if (Authored.ReadOptional(engine, path, LevelKitJson.Default.KitRecipe) is not { } recipe) return null;
+        recipe.DoorArch?.Validate(path, plan);
         Authored.Positive(path, "wallMetres", recipe.WallMetres);
         Authored.Positive(path, "floorMetres", recipe.FloorMetres);
         Authored.Positive(path, "ceilingMetres", recipe.CeilingMetres);
@@ -95,6 +96,15 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         recipe.Pilasters?.Validate(path);
         return recipe;
     }
+
+    /// <summary>The metres per texture repeat of a surface's material.</summary>
+    internal float Metres(KitSurface surface) => surface switch
+    {
+        KitSurface.Wall => WallMetres,
+        KitSurface.Floor => FloorMetres,
+        KitSurface.Ceiling => CeilingMetres,
+        _ => TrimMetres,
+    };
 
     internal bool KeepsProp(string? model) => model is not null
         && Props.Any(prefix => System.IO.Path.GetFileName(model).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
@@ -137,6 +147,31 @@ internal sealed record PilasterDefinition(PlanArea[] Areas, float Spacing, float
         Authored.AtLeast(path, "pilasters.clearance", Clearance, Width / 2);
     }
 }
+
+/// <summary>
+/// An arch over every doorway. The doorway's straight sides stand to the plan's door height, the springing line, and
+/// its head rises <see cref="Rise"/> above that in a half-ellipse across the door's width (a round arch when the rise is
+/// half the width), drawn with <see cref="Segments"/> straight pieces. The arched soffit through the wall takes
+/// <see cref="Surface"/>. An optional <see cref="Ring"/> of voussoirs stands out round the arch on the room side.
+/// </summary>
+internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surface, ArchRingDefinition? Ring = null)
+{
+    internal void Validate(string path, PlanRules plan)
+    {
+        Authored.Positive(path, "doorArch.rise", Rise);
+        Authored.Require(Segments >= 2, path, "doorArch.segments", "must be at least 2.");
+        Authored.Require(plan.DoorHeight + Rise + (Ring?.Width ?? 0) < plan.CorridorHeight, path, "doorArch.rise",
+            $"the arch (from the plan's door height, {plan.DoorHeight} m, with its ring) must stay under the corridor ceiling, {plan.CorridorHeight} m.");
+        if (Ring is { } ring)
+        {
+            Authored.Positive(path, "doorArch.ring.width", ring.Width);
+            Authored.Positive(path, "doorArch.ring.depth", ring.Depth);
+        }
+    }
+}
+
+/// <summary>A band of voussoirs <see cref="Width"/> wide round an arch, standing <see cref="Depth"/> out from the room's wall.</summary>
+internal sealed record ArchRingDefinition(float Width, float Depth, KitSurface Surface);
 
 // Authored: missing constructor values, nulls in non-nullable fields and unknown members are errors, not defaults.
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,

@@ -48,6 +48,10 @@ internal sealed class MeshBuilder
             indices.ToArray(), groups.ToArray(), bindings));
     }
 
+    /// <summary>A quad from four new corners with their UVs, wound to face <paramref name="facing"/>.</summary>
+    internal void Face(int slot, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector2 uvA, Vector2 uvB, Vector2 uvC, Vector2 uvD, Vector3 facing) =>
+        Quad(slot, Vertex(a, uvA), Vertex(b, uvB), Vertex(c, uvC), Vertex(d, uvD), facing);
+
     /// <summary>One triangle wound to face <paramref name="facing"/>; its normal accumulates on its corners.</summary>
     internal void Triangle(int slot, uint a, uint b, uint c, Vector3 facing)
     {

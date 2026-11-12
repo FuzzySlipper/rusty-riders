@@ -5,7 +5,7 @@
   "doorWidth": 4,
   "roomHeight": 9,
   "corridorHeight": 6,
-  "doorHeight": 4.5,
+  "doorHeight": 2.5,
   "overlay": {
     "show": false,
     "lift": 0.08,
