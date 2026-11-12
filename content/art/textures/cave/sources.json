@@ -1,5 +1,5 @@
 {
-  "about": "Generated floor texture trials for CaveMap (rusty-riders #9373). Each albedo was made tileable and given a normal map by scripts/texture-gen/make_tileable.py (Qwen-Image 2.1 seam repaint with the rolled image as reference, denoise 0.75, band 0.08, greyscale, seed 9373). The reference image is wall01.png from old-game Art/Models/GridMaps/CaveMap (the Cave's wall and floor texture), at 1024 px.",
+  "about": "Generated floor texture trials for CaveMap (rusty-riders #9373). Each albedo was made tileable and given a normal map by authoring/tools/textures/make_tileable.py (Qwen-Image 2.1 seam repaint with the rolled image as reference, denoise 0.75, band 0.08, greyscale, seed 9373). The reference image is wall01.png from old-game Art/Models/GridMaps/CaveMap (the Cave's wall and floor texture), at 1024 px.",
   "gpt-cells": {
     "route": "codex-image-gen skill (codex exec, gpt-6-luna relay to GPT image generation)",
     "reference": "wall01.png",

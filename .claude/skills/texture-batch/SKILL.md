@@ -5,8 +5,8 @@ description: Generate a batch of tiling textures in the Rusty Riders house style
 
 # Texture batch: generate, filter, judge, pick
 
-The house style and the judging rubric are in `scripts/texture-gen/style-and-judging.md`. Read both sections before writing
-prompts or judging. The tools are in `scripts/texture-gen/`. The 5090's ComfyUI is reached only through its
+The house style and the judging rubric are in `authoring/tools/textures/style-and-judging.md`. Read both sections before writing
+prompts or judging. The tools are in `authoring/tools/textures/`. The 5090's ComfyUI is reached only through its
 HTTP API (`comfy.py`, `COMFY_URL`, default `http://192.168.1.20:8188`); check `/queue` first and never
 disturb Patch's own jobs.
 
@@ -22,12 +22,12 @@ its colour (textures carry their own; there are no level palettes). Attach a sty
 | Z-Image base + house LoRA | Volume in the ink-toon style, about 18 s each on the 5090 (110 s on a Strix Halo; v5 is on both) | `generate.py --model zimage-base --lora rrink_zimage_v5_seg6_3000_steps_00001_.safetensors --seamless`, prompt starting "rrink style, top-down view of …" |
 | Z-Image Turbo (5090) | Fast text-only drafts, 3 s each | 8 steps, `res_multistep`, shift 3 |
 
-For Z-Image base with the house LoRA, use the house prompt and negative in `scripts/texture-gen/style-and-judging.md` ("House
+For Z-Image base with the house LoRA, use the house prompt and negative in `authoring/tools/textures/style-and-judging.md` ("House
 prompt": Moebius-inked wording). In review it beat plain prompts 12/12 to 5/12. Add `--seamless` (den-m5) for any
 surface: it keeps the model from drawing a scene and makes the image tile as generated, so step 2 is only needed
 for images made without it.
 
-`scripts/texture-gen/generate.py` runs Z-Image (turbo or base, with or without a LoRA) and Qwen edit batches over
+`authoring/tools/textures/generate.py` runs Z-Image (turbo or base, with or without a LoRA) and Qwen edit batches over
 seeds and records provenance; point `COMFY_URL` at the 5090 (fastest when free), den-nimo (192.168.1.23) or
 den-m5 (192.168.1.24). Never write "seamless" or "tileable" in a prompt; "tiling surface" also makes Z-Image
 draw panel grids, while leaving it out drifts toward perspective photos, so prefer "top-down view of". 
@@ -35,7 +35,7 @@ draw panel grids, while leaving it out drifts toward perspective photos, so pref
 ## 2. Make them tile
 
 ```bash
-scripts/texture-gen/make_tileable.py <raw.png> <albedo.png> <normal.png> --prompt "<what the texture shows>"
+authoring/tools/textures/make_tileable.py <raw.png> <albedo.png> <normal.png> --prompt "<what the texture shows>"
 ```
 
 The script rolls the image by half a tile, has Qwen-Image 2.1 repaint the seam cross with the rolled image as its
@@ -46,7 +46,7 @@ GPT outputs are often nearly seamless already, but run them through it anyway.
 ## 3. Filter with checks
 
 ```bash
-scripts/texture-gen/checks.py <albedo.png>... --json checks.json
+authoring/tools/textures/checks.py <albedo.png>... --json checks.json
 ```
 
 Drop anything flagged `seam`, `repeats`, `gradient` or `flat`. Vision judges are not trusted with
@@ -55,8 +55,8 @@ tiling: in calibration, Haiku reported seams on seamless textures and ranked a v
 ## 4. Judge
 
 ```bash
-scripts/texture-gen/contact_sheet.py <out>/order1 <survivors>... --tile 1 --cell 560 --per-sheet 9 --seed 1
-scripts/texture-gen/contact_sheet.py <out>/order2 <survivors>... --tile 1 --cell 560 --per-sheet 9 --seed 2
+authoring/tools/textures/contact_sheet.py <out>/order1 <survivors>... --tile 1 --cell 560 --per-sheet 9 --seed 1
+authoring/tools/textures/contact_sheet.py <out>/order2 <survivors>... --tile 1 --cell 560 --per-sheet 9 --seed 2
 ```
 
 For every sheet, start one **Sonnet** judge per shuffled order, in parallel and in the background (Agent tool,
@@ -64,7 +64,7 @@ For every sheet, start one **Sonnet** judge per shuffled order, in parallel and 
 this prompt:
 
 > You are a texture judge for a stylized first-person game. Do only this: 1. Read
-> /home/agent/dev/rusty-riders/scripts/texture-gen/style-and-judging.md, sections "House style" and "Judging" (the part "Judges
+> /home/agent/dev/rusty-riders/authoring/tools/textures/style-and-judging.md, sections "House style" and "Judging" (the part "Judges
 > rank style and appeal"). 2. Look at the style reference: <reference path>. 3. Look at the candidates for
 > <surface and place>: <sheet path> (lettered; tiling has already been checked, do not judge seams). Rank all
 > of them best to worst as the doc says. Reply with ONLY the JSON object {"ranking": [...], "why": {...}}. No
@@ -73,7 +73,7 @@ this prompt:
 Save each reply as JSON, then merge them:
 
 ```bash
-scripts/texture-gen/merge_rankings.py <out>/order1=<judge1.json> <out>/order2=<judge2.json>
+authoring/tools/textures/merge_rankings.py <out>/order1=<judge1.json> <out>/order2=<judge2.json>
 ```
 
 With more than one sheet, take each sheet's top three into a final sheet and judge that the same way.
@@ -83,7 +83,7 @@ With more than one sheet, take each sheet's top three into a final sheet and jud
 Put the candidates (or just the judges' top third) in one folder and start the review app on den-agents:
 
 ```bash
-scripts/review/review_server.py <dir> --title "<what this is>" --info checks.json --order ranking.txt
+authoring/tools/review/review_server.py <dir> --title "<what this is>" --info checks.json --order ranking.txt
 ```
 
 Patch opens `http://192.168.1.10:8790/` and clicks through pages of thumbnails:
@@ -91,7 +91,7 @@ Patch opens `http://192.168.1.10:8790/` and clicks through pages of thumbnails:
 - space for full size, `t` to see it tiled 2x2;
 - drag to mark crops (several per image for sprite sheets).
 
-Marks save to `<dir>/review.json` as they are made. `scripts/review/apply_review.py <dir> [--keep-only] --out <set>
+Marks save to `<dir>/review.json` as they are made. `authoring/tools/review/apply_review.py <dir> [--keep-only] --out <set>
 --copy` lists the survivors and cuts out the crops. Use the same app to pick and crop source art before training
 a LoRA. Stop the server when the pass is done.
 
@@ -100,6 +100,8 @@ a LoRA. Stop the server when the pass is done.
 Look at the top three yourself, in a contact sheet and, for a level surface, in game (the generated builds'
 `floorTextures` and V key). Show Patch the finalists. Add the winner under `content/art/textures/<set>/` (ignored by git: commit its `sources.json` and run `scripts/art-sync.sh push`),
 record its brief, route, seed and reference in that folder's `sources.json`, and wire it into the recipe.
+`content/art/` holds only art the game draws: keep the other candidates under `authoring/assets/textures/<set>/`, with
+their own `sources.json`, and run `authoring/tools/assets-sync.sh push` (see `authoring/README.md`).
 
 ## Calibration
 

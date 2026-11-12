@@ -1,7 +1,7 @@
 # Rusty Riders agent guidance
 
 Rusty Riders builds *Rift Riders*, a Rusty Engine game inspired by an unfinished
-Unity game of that name kept in the ignored `old-game/`. It is not a port: old art
+Unity game of that name kept in the ignored `authoring/assets/old-game/`. It is not a port: old art
 and data are donor material. Its current slice is a rift run through levels
 stamped the old game's way from its chunks, layouts and tilesets, plus a gallery
 of the converted combat art.
@@ -44,8 +44,8 @@ Patch's split (2026-11-12):
   repository document and a task disagree, the task wins.
 - **The repository:** only narrow technical notes beside the code or tool they
   describe: `README.md`, this file, `src/ui/README.md`,
-  `src/RustyRiders.Game/Held/README.md`, `scripts/arm-clips/README.md`,
-  `scripts/texture-gen/style-and-judging.md`, `content/art/LICENSE.md` and
+  `src/RustyRiders.Game/Held/README.md`, `authoring/README.md`, `authoring/tools/held/arm-clips/README.md`,
+  `authoring/tools/textures/style-and-judging.md`, `content/art/LICENSE.md` and
   `docs/agent-review/`. Working notes for work in progress are fine; when the
   work is done, tidy them into the homes above rather than leaving them.
 
@@ -67,7 +67,14 @@ describes: a new owner in `product-map`, a level-generation change in
   scheduling stay with their C#/Engine owners.
 - `content/` holds product-authored data. Interpret it in typed C# through
   Engine content services. Keep authored definitions, live state, and transient
-  presentation distinct.
+  presentation distinct. `content/art/` holds only art the game draws.
+- `authoring/` holds what makes content and is not loaded by the game (Patch,
+  2026-11-12): `authoring/tools/` the converters and generators, by area;
+  `authoring/assets/` their sources and working files (the old game, generated
+  candidates, training sets, references), ignored but for their text and backed
+  up with `authoring/tools/assets-sync.sh push`. A finished file the game loads
+  goes to `content/`, its provenance in that folder's `sources.json`. Generic
+  image, mesh and texture tooling stays in `../asset-pipeline`.
 - The SDK generates the bind entry point and interop under ignored `obj/` output.
   Product code stays safe C#: no handwritten ABI/PInvoke, exports, raw native
   access, downstream Rust, or checked-in composition projects.

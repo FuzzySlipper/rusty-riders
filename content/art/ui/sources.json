@@ -1,5 +1,5 @@
 {
-  "about": "UI ornaments generated in the old Rift Riders UI style where the old art has none (rusty-riders #9808), 2026-10-09. Experimental: generated, not old art and not a house-style recipe. scripts/import-ui-art.py exports them into src/ui/art/ with the old pieces.",
+  "about": "UI ornaments generated in the old Rift Riders UI style where the old art has none (rusty-riders #9808), 2026-10-09. Experimental: generated, not old art and not a house-style recipe. authoring/tools/old-game/import-ui-art.py exports them into src/ui/art/ with the old pieces.",
   "ammo": {
     "route": "GPT image through a Codex oneshot (codex-image-gen skill, gpt-6-sol/gpt-6-luna relay) on a flat #00FF00 background, keyed and cropped by hand into this folder (green dominance to alpha, despilled); references were crops of the old Rift Riders UI art",
     "references": [

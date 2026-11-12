@@ -1,6 +1,6 @@
 /* Rift Riders UI in two layers (src/ui/README.md).
    Function: plain DOM and CSS drawn from the tokens below; it reads whole with every ornament gone.
-   Ornaments: the old game's art (./art, cut by scripts/import-ui-art.py) pinned to an element at a fixed scale,
+   Ornaments: the old game's art (./art, cut by authoring/tools/old-game/import-ui-art.py) pinned to an element at a fixed scale,
    never stretched and never carrying layout. Rails and fills repeat; corners and caps keep their size.
    Everything is sized in --u, one stepped scale from the viewport. */
 /* Alagard (the title face) is granted by the product and registered by main.js from the facts. */

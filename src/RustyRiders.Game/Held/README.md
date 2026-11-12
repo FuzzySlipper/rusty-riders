@@ -63,14 +63,14 @@ GLB's bone heads, times the rig's `scale`): `painted` +23 mm and `leather` +26 m
 against `shared`'s 59), so holds were fitted on `shared,painted` together until Riders settled on the painted arms alone (2026-11-01).
 
 The arms are drawn by a rig profile (`content/held/rigs/`, chosen in `content/held/arms.json`). Riders draws `painted`,
-the old game's hand-painted gloves, built from `old-game/Assets/MoreArt` into the ignored `content/art/fp-arms/` by
-`scripts/import-fp-arms.sh` (Blender 5 and `../asset-pipeline`); calibrate and fit on it alone. `leather`, `generated`
-(kept in git, from asset-pipeline's `tools/fps-arms`, `art/arms/provenance.json`), `shared` (asset-pipeline
-`tools/fps-arms/sets/riders.json`, `art/arms/shared-provenance.json`) and `psx` stay switchable with
+the old game's hand-painted gloves, built from `authoring/assets/old-game/Assets/MoreArt` into the ignored `content/art/fp-arms/` by
+`authoring/tools/held/import-fp-arms.sh` (Blender 5 and `../asset-pipeline`); calibrate and fit on it alone. `leather`, `generated`
+(kept in git, from asset-pipeline's `tools/fps-arms`, `authoring/assets/held/arms/provenance.json`), `shared` (asset-pipeline
+`tools/fps-arms/sets/riders.json`, `authoring/assets/held/arms/shared-provenance.json`) and `psx` stay switchable with
 `riders.dev.arms.rig` for comparison, but are not maintained. Without the import the game falls back to the generated
-arms. `scripts/import-hotel-held.sh` copies rusty-hotel's coach gun into the ignored `content/art/hotel/`; without it
+arms. `authoring/tools/held/import-hotel-held.sh` copies rusty-hotel's coach gun into the ignored `content/art/hotel/`; without it
 the coach gun is drawn as its box.
 
-Clip packs that make a look clip-led on the painted arms are made by `scripts/arm-clips` (its README). How the held
+Clip packs that make a look clip-led on the painted arms are made by `authoring/tools/held/arm-clips` (its README). How the held
 motion is baked from the old clips, and the design behind it, are the Den document `technical/held-weapons` (project
 `rusty-riders`) and the den-wiki page `wiki/rift-riders/first-person-presentation`.

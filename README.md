@@ -1,7 +1,7 @@
 # Rusty Riders
 
 A Rusty Engine game inspired by an unfinished Unity game (kept, ignored, in
-`old-game/`). It is not a port. The current slice walks a level generated the old game's
+`authoring/assets/old-game/`). It is not a port. The current slice walks a level generated the old game's
 way: its chunks, layouts and tilesets, translated into `content/levels/`, stamp
 a dungeon of converted tile art. A gallery of the old combat tilesets and levels
 is one key away.
@@ -33,17 +33,19 @@ rusty dev --port 8787
 
 The game's art is in the ignored `content/art/` (about 1.1 GB); `scripts/art-sync.sh pull` copies it from the den
 NAS, and on Windows `scripts\art-sync.ps1` copies it from den-agents' checkout over `P:`. After changing art, run
-`scripts/art-sync.sh push` (licences: [content/art/LICENSE.md](content/art/LICENSE.md)).
+`scripts/art-sync.sh push` (licences: [content/art/LICENSE.md](content/art/LICENSE.md)). The authoring sources
+(the old Unity project, generated candidates, training sets) come with `authoring/tools/assets-sync.sh pull`; only the
+tools that convert or generate art need them.
 
-To rebuild the converted part instead, `scripts/import-old-art.sh` converts the level tileset tiles and the combat
+To rebuild the converted part instead, `authoring/tools/old-game/import-old-art.sh` converts the level tileset tiles and the combat
 tilesets and levels into the ignored `content/art/`. That is about 1 GB at
 the default 1024 px texture cap, copied again into each staged build;
 `MAX_TEXTURE=512` roughly halves it. The import takes about ten minutes. It
 needs a sibling `../asset-pipeline` checkout (or `ASSET_PIPELINE=`),
-`old-game/`, and the upgraded FBX copies in `old-game-fbx2013/` (see
+`authoring/assets/old-game/`, and the upgraded FBX copies in `authoring/assets/old-game-fbx2013/` (see
 asset-pipeline `docs/unity-import.md`). Without it the game still starts and
-lists what is missing. `scripts/extract-level-data.py` regenerates the
-checked-in `content/levels/` from `old-game/`.
+lists what is missing. `authoring/tools/old-game/extract-level-data.py` regenerates the
+checked-in `content/levels/` from `authoring/assets/old-game/`.
 
 Open the URL printed by the host and click to capture the mouse:
 
@@ -110,17 +112,18 @@ rusty build --aot
 | `src/ui/` | DOM companion: HUD and screens |
 | `content/levels/` | The old generator's chunks, layouts, styles, tilesets and tile templates as JSON |
 | `content/level.json`, `content/walker.json`, `content/gallery.json` | Which level to stamp, walker tuning, gallery exhibits |
-| `content/art/` | Ignored, synced to the NAS by `scripts/art-sync.sh`: converted GLBs and placement files, arms, hotel's held models, textures, UI art (each `sources.json` stays in git) |
-| `scripts/import-old-art.sh` | Regenerates `content/art/` with asset-pipeline unity-import |
-| `scripts/texture-gen/` | Generated textures: tiling and normal maps, checks, contact sheets and judge merging, LoRA dataset, captions and training through ComfyUI |
-| `scripts/review/` | A LAN web app for a human pass over an image folder (flag, keep, note, crop), and applying its results |
-| `scripts/texture-gen/style-and-judging.md`, `.claude/skills/texture-batch/` | Judges' copy of the house texture style, the judging rubric, and the generate–filter–judge workflow |
-| `content/art/textures/` | Generated textures, with their sources in `sources.json` |
-| `scripts/extract-level-data.py` | Regenerates `content/levels/` from `old-game/` |
+| `content/art/` | Ignored, synced to the NAS by `scripts/art-sync.sh`: only art the game draws, converted GLBs and placement files, arms, hotel's held models, textures, UI art (each `sources.json` stays in git) |
+| `authoring/` | What makes the content and is not loaded by the game ([authoring/README.md](authoring/README.md)): `tools/` (tracked) and `assets/` (ignored but for their text, backed up to the NAS by `authoring/tools/assets-sync.sh`) |
+| `authoring/assets/old-game/`, `old-game-fbx2013/` | The old Unity project and its upgraded FBX overlay, the donor source |
+| `authoring/tools/old-game/` | Converters from the old game: art (`import-old-art.sh`, asset-pipeline unity-import), level data, UI sprites |
+| `authoring/tools/textures/`, `.claude/skills/texture-batch/` | Generated textures: generation, tiling and normal maps, checks, judging, LoRA datasets and training; the house style and rubric in `style-and-judging.md` |
+| `authoring/tools/held/` | First-person arms and held models: imports, held-motion bakes, arm clip packs |
+| `authoring/tools/review/` | A LAN web app for a human pass over an image folder (flag, keep, note, crop), and applying its results |
+| `scripts/` | Art sync and live held-tuning checks against a running game |
 | `Directory.Build.props` | Matched Engine SDK/runtime pin |
 | `src/ui/README.md` | DOM companion: modules, facts and intents, the UI art |
 | `src/RustyRiders.Game/Held/README.md` | Tuning held weapons and the arms in a running game |
-| `scripts/arm-clips/README.md` | Arm clip packs from humanoid motion |
+| `authoring/tools/held/arm-clips/README.md` | Arm clip packs from humanoid motion |
 | `docs/agent-review/` | Reusable review workflow and lane packets |
 
 The SDK generates the product's bind entry point inside its ordinary build;

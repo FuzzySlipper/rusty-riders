@@ -1,5 +1,5 @@
 /**
- * The old Rift Riders UI art copied into ./art by scripts/import-ui-art.py: frame and icon URLs. Icon names come from
+ * The old Rift Riders UI art copied into ./art by authoring/tools/old-game/import-ui-art.py: frame and icon URLs. Icon names come from
  * the facts (each item and damage kind names its icon in content); the line-art ones are white and drawn tinted.
  */
 const PAINTED = new Set(['ammo', 'wand', 'medkit', 'tonic', 'shield-cell', 'charge', 'scrap', 'shard']);

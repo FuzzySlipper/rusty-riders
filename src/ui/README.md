@@ -65,13 +65,13 @@ wider than 2:1, so ultrawide screens keep it in view. It was checked at 16:9, 21
 
 ### Art
 
-`scripts/import-ui-art.py` cuts the old Rift Riders UI sprites into `src/ui/art/`:
+`authoring/tools/old-game/import-ui-art.py` cuts the old Rift Riders UI sprites into `src/ui/art/`:
 - the ornaments above, each exported at twice its display size at `--u: 1px`, so it stays sharp up to the largest step;
 - rails and the fill, taken from a flat run of the art and cross-faded over their ends so they repeat without a seam;
 - icons (equipment, items, junk and damage kinds), at 128 px.
 
 Line-art icons are tinted green, as the old game's hotbar icons were; painted ones show as they are. Rerun the script
-to regenerate the folder from `old-game/`.
+to regenerate the folder from `authoring/assets/old-game/`.
 
 Ornaments the old art lacks are generated in its style (GPT image through the `codex-image-gen` skill, with crops of
 the old art as references) on flat green, then keyed and cropped. The masters and their prompts are in

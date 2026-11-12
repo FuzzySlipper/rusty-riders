@@ -1,0 +1,45 @@
+{
+  "about": "The StoneRoadMap kit texture candidates not in use (rusty-riders #10761, 2026-11-12), made and judged with those in content/art/textures/stoneroad (its sources.json says how). Each entry is as recorded there; moving a pair back into content/art/textures/stoneroad with its entry makes it available to the kit recipe.",
+  "floor-2": {
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 2,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a worn flagstone floor of large irregular stone slabs, grey stone with faint violet and dusky red tints, dark inked joints and fine cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, scene, walls, pillars, steps",
+    "review": "judges last (diagonal grain)"
+  },
+  "floor-3": {
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 3,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a worn flagstone floor of large irregular stone slabs, grey stone with faint violet and dusky red tints, dark inked joints and fine cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, scene, walls, pillars, steps",
+    "review": "judges tied 1st"
+  },
+  "trim-5": {
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 5,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of large square dressed stone blocks with chiselled edges and a few carved glyph bands, grey-violet stone with dusky red tints, dark inked joints, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, scene, floor, ground",
+    "review": "kept as a variant"
+  },
+  "wall-1": {
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 1,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a castle wall of irregular hand-cut stone blocks laid in uneven courses, weathered grey stone with faint violet and dusky red tints, dark inked mortar joints and chipped edges, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, scene, floor, ground",
+    "review": "judges 2nd"
+  },
+  "wall-2": {
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 2,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a castle wall of irregular hand-cut stone blocks laid in uneven courses, weathered grey stone with faint violet and dusky red tints, dark inked mortar joints and chipped edges, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, scene, floor, ground",
+    "review": "judges 3rd"
+  },
+  "wall-3": {
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 3,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front view of a castle wall of irregular hand-cut stone blocks laid in uneven courses, weathered grey stone with faint violet and dusky red tints, dark inked mortar joints and chipped edges, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, cast shadow, drop shadow, scene, floor, ground",
+    "review": "judges 5th"
+  }
+}

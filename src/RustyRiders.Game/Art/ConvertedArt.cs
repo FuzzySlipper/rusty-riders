@@ -4,7 +4,7 @@ using Rusty.Engine;
 namespace RustyRiders.Game.Art;
 
 /// <summary>
-/// The converted old-game art under content/&lt;root&gt;/ (scripts/import-old-art.sh): placement files read once and
+/// The converted old-game art under content/&lt;root&gt;/ (authoring/tools/old-game/import-old-art.sh): placement files read once and
 /// each GLB opened once, with one appearance shared by every placement of it. Missing files and refused GLBs are
 /// recorded as problems instead of stopping the scene. With a <see cref="MaterialRecolor"/>, each appearance gets
 /// Engine material factor overrides for the slots whose Unity materials it recolours; the GLB opens once either way.

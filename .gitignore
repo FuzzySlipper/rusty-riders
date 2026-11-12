@@ -11,8 +11,6 @@ target/
 src/ui/generated/
 playwright-report/
 test-results/
-old-game/
-old-game-fbx2013/
 # Art the game draws: kept out of git and synced to the NAS by scripts/art-sync.sh. Each folder's
 # sources.json (how its art was made) stays in git.
 content/art/**
@@ -20,5 +18,15 @@ content/art/**
 !content/art/**/sources.json
 !content/art/LICENSE.md
 __pycache__/
-# Derived training sets and other regenerable outputs (scripts/texture-gen).
-artifacts/
+# Raw and working asset files (the old game, generated candidates, training sets, references, screenshots): kept out
+# of git and backed up to the den NAS by authoring/tools/assets-sync.sh. Their text (recipes, provenance, prompts,
+# READMEs) stays in git beside them. The old Unity project, its FBX overlay and the LoRA training sets (their
+# captions are regenerable) are ignored whole.
+/authoring/assets/**
+!/authoring/assets/**/
+!/authoring/assets/**/*.txt
+!/authoring/assets/**/*.json
+!/authoring/assets/**/*.md
+/authoring/assets/old-game/
+/authoring/assets/old-game-fbx2013/
+/authoring/assets/textures/lora/

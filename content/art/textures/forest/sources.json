@@ -1,5 +1,5 @@
 {
-  "about": "Generated forest floor textures in the house ink style (rusty-riders #9420), user favourites from the blind v4 review of 2026-10-08. Made tileable by scripts/texture-gen/make_tileable.py --model zimage-lora --colour --trim-frame (Z-Image base with the house LoRA rrink_zimage_v4_seg4_2000 repainting the seam cross, denoise 0.75, band 0.08, seed 9373), on the den-m5/den-nimo Strix Halo ComfyUI. Colour albedo, not greyscale.",
+  "about": "Generated forest floor textures in the house ink style (rusty-riders #9420), user favourites from the blind v4 review of 2026-10-08. Made tileable by authoring/tools/textures/make_tileable.py --model zimage-lora --colour --trim-frame (Z-Image base with the house LoRA rrink_zimage_v4_seg4_2000 repainting the seam cross, denoise 0.75, band 0.08, seed 9373), on the den-m5/den-nimo Strix Halo ComfyUI. Colour albedo, not greyscale.",
   "ink-a": {
     "route": "ComfyUI on a Strix Halo: Z-Image base bf16, 25 steps res_multistep cfg 4 shift 3, 1024x1024, LoRA rrink_zimage_v4_seg6_3000_steps_00001_.safetensors at 1.0",
     "seed": 3,

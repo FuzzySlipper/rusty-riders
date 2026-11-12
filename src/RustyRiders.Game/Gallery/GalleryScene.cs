@@ -74,7 +74,7 @@ internal sealed class GalleryScene : IWalkScene
     public IReadOnlyList<string> Problems => [.. art.Problems, .. problems];
 
     public string Status => Exhibits.Count == 0
-        ? "Gallery: no converted art found. Run scripts/import-old-art.sh, then restart."
+        ? "Gallery: no converted art found. Run authoring/tools/old-game/import-old-art.sh, then restart."
         : $"Gallery: {Exhibits.Count} exhibits · {facts.Count - 1} placements · {art.MeshCount} meshes";
 
     public string Describe(Vector3 position) => Exhibits.Count == 0 ? ""

@@ -67,7 +67,7 @@ internal sealed record RigClips(Dictionary<string, MotionClips> Motions)
 
 /// <summary>
 /// How a rig's clip-led main hand is shaped: as its clips shape it (a clip pack with its own hands, such as the PSX
-/// knife clips), or by its look's hand shape over the rig's own hands, which retargeted packs keep (scripts/arm-clips).
+/// knife clips), or by its look's hand shape over the rig's own hands, which retargeted packs keep (authoring/tools/held/arm-clips).
 /// </summary>
 internal enum ClipDigits
 {
