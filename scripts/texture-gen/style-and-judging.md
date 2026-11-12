@@ -16,9 +16,9 @@ were made are in `content/art/textures/` (`sources.json` per set). The batch wor
   Avoid photographic detail, film grain and realistic noise too.
 - **Organic forms.** Rounded stones, cracks, ribs and roots rather than square masonry or geometric tiles.
   Busy fields of oval "cells" were rejected in every version, so treat that motif as off-style for floors.
-- **Neutral values for tinting.** Mid greys, near-black lines and light-grey highlights. Level palettes tint
-  materials, so a texture should carry value and form, not hue. Coloured subjects such as lava and moss keep
-  their colour.
+- **Colour in the texture.** A texture carries its own colour: there are no level palettes to tint it at run time
+  (Patch, 2026-11-12). Variety comes from generating more textures and variants, not from recolouring one. Keep
+  the old art's restrained, painted colour, with value and ink still carrying the form.
 - **Readable at a walking distance.** Forms about 0.3–1.5 m across at the texture's intended repeat length (one
   tile is 4–6 m). Detail much finer than that turns to noise in first person.
 

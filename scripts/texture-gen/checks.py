@@ -10,8 +10,8 @@ Per image (luminance at 512 px):
   zero lag. Near 1 means the image repeats itself inside the frame, which tiles into an obvious grid.
 - gradient: the brightness difference across the image from a plane fitted to its heavily blurred
   luminance, in 0..1 luminance. A lit-from-one-side image shows as stripes when tiled.
-- value: the luminance mean and 2..98% spread, and the mean saturation; palettes tint greyscale-ish
-  textures, so strong colour fights the tint.
+- value: the luminance mean and 2..98% spread, and the mean saturation (reported; textures carry their own
+  colour, so it is no longer a flag).
 - frame: how far a flat border (a comic-panel frame or margin) reaches in from each edge, in pixels of the
   512 px copy; flagged when all four sides have one. frame_box() gives the crop that removes it.
 - perspective: the trend of feature size across four bands, top to bottom and left to right (log of the mean
@@ -31,7 +31,6 @@ SIZE = 512
 SEAM_LIMIT = 2.0
 REPEAT_LIMIT = .45
 GRADIENT_LIMIT = .12
-SATURATION_LIMIT = .25
 FRAME_DEVIATION = .04
 PERSPECTIVE_LIMIT = .13
 
@@ -112,7 +111,7 @@ def perspective(image: Image.Image) -> float:
     return max(abs(slope(edges)), abs(slope(edges.T)), key=abs)
 
 
-def check(path: str, colour_ok: bool = False) -> dict:
+def check(path: str) -> dict:
     image = Image.open(path)
     lum = luminance(image)
     result = {
@@ -130,7 +129,6 @@ def check(path: str, colour_ok: bool = False) -> dict:
     if result["seam"] > SEAM_LIMIT: flags.append("seam")
     if result["repeat"] > REPEAT_LIMIT: flags.append("repeats")
     if result["gradient"] > GRADIENT_LIMIT: flags.append("gradient")
-    if result["saturation"] > SATURATION_LIMIT and not colour_ok: flags.append("colour")
     if result["spread"] < .2: flags.append("flat")
     if min(result["frame"]) > 0: flags.append("framed")
     if result["perspective"] > PERSPECTIVE_LIMIT: flags.append("perspective")
@@ -142,9 +140,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("images", nargs="+")
     parser.add_argument("--json", help="also write the results here")
-    parser.add_argument("--colour-ok", action="store_true", help="the subject is meant to be coloured (lava, moss): no colour flag")
     args = parser.parse_args()
-    results = [check(path, args.colour_ok) for path in args.images]
+    results = [check(path) for path in args.images]
     for r in results:
         print(f"{r['path']}: seam {r['seam']} repeat {r['repeat']} gradient {r['gradient']} mean {r['mean']} "
               f"spread {r['spread']} saturation {r['saturation']} frame {r['frame']} perspective {r['perspective']} "

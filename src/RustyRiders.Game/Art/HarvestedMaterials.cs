@@ -8,7 +8,7 @@ namespace RustyRiders.Game.Art;
 /// Engine materials for new geometry made from the converted old-game materials. A Unity material (Assets-relative
 /// .mat path) is found on a converted GLB of the given prefabs (the converter records it as
 /// <c>extras.unityMaterial</c>); that glTF material's embedded base colour and normal textures are admitted and
-/// opened, and its base colour, emission and the level palette's recolour carry over. Each Unity material is built
+/// opened, and its base colour and emission (with any colour correction) carry over. Each Unity material is built
 /// once; one that no prefab uses, or whose textures fail, is recorded as a problem.
 /// </summary>
 internal sealed class HarvestedMaterials : IDisposable
@@ -31,7 +31,7 @@ internal sealed class HarvestedMaterials : IDisposable
 
     /// <summary>
     /// The material made from a Unity material used by one of the prefabs. With <paramref name="replacement"/>, its
-    /// content textures replace its own while its colour (and palette recolour) stay. One that cannot be made is
+    /// content textures replace its own while its colour (and any colour correction) stays. One that cannot be made is
     /// recorded as a problem and drawn plain grey.
     /// </summary>
     internal Material Get(string unityMaterial, IEnumerable<string> prefabs, HarvestedLook look, ReplacementTextures? replacement = null)

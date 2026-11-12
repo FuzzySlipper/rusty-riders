@@ -13,7 +13,7 @@ disturb Patch's own jobs.
 ## 1. Generate
 
 Write one brief: what surface it is, where it sits, its scale (forms 0.3–1.5 m at a 4–6 m repeat), and
-greyscale values for palette tinting. Attach a style reference; the Cave's is `wall01`.
+its colour (textures carry their own; there are no level palettes). Attach a style reference; the Cave's is `wall01`.
 
 | Route | When | How |
 | --- | --- | --- |
@@ -39,7 +39,8 @@ scripts/texture-gen/make_tileable.py <raw.png> <albedo.png> <normal.png> --promp
 ```
 
 The script rolls the image by half a tile, has Qwen-Image 2.1 repaint the seam cross with the rolled image as its
-reference, saves a greyscale 8-bit RGBA albedo (the Engine admits only RGBA PNGs), and derives a normal map.
+reference, saves an 8-bit RGBA albedo in colour (the Engine admits only RGBA PNGs; `--grey` for greyscale), and derives a
+normal map.
 GPT outputs are often nearly seamless already, but run them through it anyway.
 
 ## 3. Filter with checks
@@ -48,7 +49,7 @@ GPT outputs are often nearly seamless already, but run them through it anyway.
 scripts/texture-gen/checks.py <albedo.png>... --json checks.json
 ```
 
-Drop anything flagged `seam`, `repeats`, `gradient`, `colour` or `flat`. Vision judges are not trusted with
+Drop anything flagged `seam`, `repeats`, `gradient` or `flat`. Vision judges are not trusted with
 tiling: in calibration, Haiku reported seams on seamless textures and ranked a visibly seamed one first.
 
 ## 4. Judge

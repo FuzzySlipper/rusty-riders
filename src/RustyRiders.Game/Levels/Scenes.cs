@@ -30,12 +30,12 @@ internal sealed class Scenes : IDisposable
     internal bool ShowingLevel => Current is LevelScene;
     internal LevelScene? Level => Current as LevelScene;
 
-    /// <summary>Builds and switches to a level of a tileset, layout and seed (the palette is the seed's).</summary>
+    /// <summary>Builds and switches to a level of a tileset, layout and seed.</summary>
     internal void GoTo(string tileset, string layout, int seed)
     {
         LevelSettings previous = Settings;
         int previousSeed = Seed;
-        Settings = Settings with { Tileset = tileset, Layout = layout, Palette = null };
+        Settings = Settings with { Tileset = tileset, Layout = layout };
         Seed = seed;
         try
         {

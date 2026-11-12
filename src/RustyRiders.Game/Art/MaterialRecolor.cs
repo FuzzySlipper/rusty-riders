@@ -6,8 +6,9 @@ using Rusty.Engine;
 namespace RustyRiders.Game.Art;
 
 /// <summary>
-/// Unity-side recolouring of converted materials, as the old game did at run time: per Unity material, a new
-/// Material.color (the shader's _Color) and optionally a new _EmissionColor. The converter records on each glTF
+/// Recolouring of converted materials per Unity material: a new Material.color (the shader's _Color) and optionally a
+/// new _EmissionColor. Riders uses it only to correct materials whose colour the import read wrongly
+/// (<see cref="MaterialColors"/>); the old game's random level palettes are gone. The converter records on each glTF
 /// material which Unity material it came from and which Unity property each factor came from
 /// (<c>extras.unityMaterial</c>, <c>extras.unityProperties</c>); only factors that came from those properties are
 /// overridden, per appearance, through Engine material factors, so the GLB's textures and maps stay as they are.
@@ -30,12 +31,6 @@ internal sealed class MaterialRecolor
 
     /// <summary>Recolours a Unity material (Assets-relative .mat path). Colours are Unity's stored, gamma-encoded values.</summary>
     internal void Set(string unityMaterial, Vector4 baseColor, Vector3? emissive) => colors[unityMaterial] = (baseColor, emissive);
-
-    /// <summary>Sets every colour of this recolour on <paramref name="other"/>, over what it already has.</summary>
-    internal void CopyTo(MaterialRecolor other)
-    {
-        foreach ((string material, (Vector4 baseColor, Vector3? emissive)) in colors) other.Set(material, baseColor, emissive);
-    }
 
     /// <summary>
     /// The Engine factor overrides for one GLB, from its JSON chunk. The Engine numbers a GLB's material slots by
@@ -66,7 +61,7 @@ internal sealed class MaterialRecolor
     }
 
     /// <summary>
-    /// The new linear base colour for one converted glTF material, when this palette recolours its Unity material
+    /// The new linear base colour for one converted glTF material, when this recolours its Unity material
     /// and its base colour factor came from _Color (as <see cref="Factors"/> decides per slot); otherwise null.
     /// </summary>
     internal Color? BaseColor(JsonNode material)

@@ -44,8 +44,7 @@ internal sealed partial class LevelScene : IWalkScene
     internal LevelScene(IEngineContext engine, LevelSettings settings, LevelData data, LayoutDefinition layout, int seed, LevelRules rules)
     {
         this.engine = engine;
-        PaletteDefinition? palette = ChoosePalette(settings, data.Tileset, seed);
-        MaterialRecolor? recolor = rules.MaterialColors.With(palette?.Recolor());
+        MaterialRecolor? recolor = rules.MaterialColors.Recolor();
         art = new ConvertedArt(engine, settings.ArtRoot, recolor);
         materials = new HarvestedMaterials(engine, art, recolor);
         cellSize = data.Generator.CellSize;
@@ -127,7 +126,7 @@ internal sealed partial class LevelScene : IWalkScene
 
         SpawnFeet = Points.Arrival + Vector3.UnitY * spawnLift;
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
-        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · palette {palette?.Id ?? "none"} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · {built}"
+        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · {built}"
             + $"\n{Points.Rifts.Count} rifts · {Points.Caches.Count} caches · {Points.Residents.Count} resident spots · {Navigation.Summary}";
     }
 
@@ -188,18 +187,6 @@ internal sealed partial class LevelScene : IWalkScene
         materials.Dispose();
         art.Dispose();
         Session.Dispose();
-    }
-
-    /// <summary>The named palette, or (as the old LevelFx did) one of the tileset's picked by the level's seed.</summary>
-    private PaletteDefinition? ChoosePalette(LevelSettings settings, TilesetDefinition tileset, int seed)
-    {
-        if (settings.Palette is { } id)
-        {
-            PaletteDefinition? named = tileset.Palettes.FirstOrDefault(palette => palette.Id == id);
-            if (named is null) problems.Add($"{tileset.Id} has no palette '{id}'");
-            return named;
-        }
-        return tileset.Palettes.Length == 0 ? null : tileset.Palettes[new Random(seed).Next(tileset.Palettes.Length)];
     }
 
     /// <summary>The old game's cell placement, in glTF space: Unity is the X mirror, so x flips and the turn reverses.</summary>

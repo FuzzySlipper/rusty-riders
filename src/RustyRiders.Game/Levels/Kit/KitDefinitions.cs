@@ -77,7 +77,7 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 
 /// <summary>
 /// A world's parametric kit (content/levels/kits/&lt;tileset&gt;.json): the old Unity materials its walls, floors,
-/// ceilings and trims take (Assets-relative .mat paths, as palettes name them, so a level's palette tints them), metres
+/// ceilings and trims take (Assets-relative .mat paths, as the converted GLBs name them), metres
 /// per texture repeat on each, how they are drawn, and its typed parts: trims swept along the outlines and pilasters
 /// set against room walls, an arch over every doorway, and <see cref="Dressing"/>: the old game's props placed over the
 /// plan by typed rules. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>

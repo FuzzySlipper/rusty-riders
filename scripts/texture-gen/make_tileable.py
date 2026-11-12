@@ -2,7 +2,7 @@
 """Make a generated texture tile, and derive its normal map.
 
     scripts/texture-gen/make_tileable.py <input.png> <out-albedo.png> <out-normal.png> --prompt "..." [--size 1024]
-        [--model qwen|zimage|zimage-lora] [--lora NAME.safetensors] [--colour] [--trim-frame]
+        [--model qwen|zimage|zimage-lora] [--lora NAME.safetensors] [--grey] [--trim-frame]
 
 Tiling (needs a ComfyUI, COMFY_URL, default the 5090 desktop, with Qwen-Image 2.1 or Z-Image Turbo):
 1. The image is rolled by half its size, so its seams form a cross through the middle and its borders,
@@ -13,7 +13,7 @@ Tiling (needs a ComfyUI, COMFY_URL, default the 5090 desktop, with Qwen-Image 2.
    Z-Image base with a style LoRA (--lora, default the house LoRA) and the house negative prompt: it knows the
    style without a reference, and runs on the Strix Halos, which lack the Qwen-Image 2.1 nodes.
 With --trim-frame an ink border drawn around the image (checks.py flags it "framed") is cut off first.
-The albedo is saved greyscale unless --colour is given: level palettes tint it.
+The albedo keeps its colour (there are no level palettes to tint it); --grey saves a greyscale one.
 
 Normal map: a height from blurred luminance (bright is high, as the old toon textures read) and its
 wrap-around gradient give a tangent-space normal in glTF's convention (x right, y up the image).
@@ -148,14 +148,14 @@ def main() -> None:
     parser.add_argument("--model", choices=["qwen", "zimage", "zimage-lora"], default="qwen", help="what repaints the seams")
     parser.add_argument("--lora", default=HOUSE_LORA, help="style LoRA for --model zimage-lora")
     parser.add_argument("--trim-frame", action="store_true", help="cut off a drawn border before tiling")
-    parser.add_argument("--colour", action="store_true", help="keep colour instead of saving a greyscale albedo")
+    parser.add_argument("--grey", action="store_true", help="save a greyscale albedo instead of keeping its colour")
     args = parser.parse_args()
     source = Image.open(args.input).convert("RGB")
     if args.trim_frame and (box := checks.frame_box(source)):
         source = source.crop(box)
     source = source.resize((args.size, args.size), Image.LANCZOS)
     albedo = tileable(source, args.model, args.prompt, args.seed, args.denoise, args.band, args.lora)
-    if not args.colour:
+    if args.grey:
         albedo = albedo.convert("L").convert("RGB")
     # Engine content textures are 8-bit RGBA PNGs.
     albedo.convert("RGBA").save(args.albedo, optimize=True)

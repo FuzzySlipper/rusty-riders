@@ -7,8 +7,8 @@ namespace RustyRiders.Game.Art;
 
 /// <summary>
 /// Base colours for converted Unity materials whose colour the import took from the wrong property
-/// (content/levels/material-colors.json): applied to every level build with the level's palette, before it, so a
-/// palette entry for the same material still wins. <see cref="MaterialColor.Note"/> says why each is needed.
+/// (content/levels/material-colors.json), applied to every level build. <see cref="MaterialColor.Note"/> says why each
+/// is needed. Rift Riders has no level palettes (Patch, 2026-11-12): a texture carries its own colour.
 /// </summary>
 internal sealed record MaterialColors(MaterialColor[] Materials)
 {
@@ -21,14 +21,13 @@ internal sealed record MaterialColors(MaterialColor[] Materials)
         return colors;
     }
 
-    /// <summary>The corrections, then the palette's colours over them, as one recolour; none when there is neither.</summary>
-    internal MaterialRecolor? With(MaterialRecolor? palette)
+    /// <summary>The corrections as one recolour of the converted art; none when there are none.</summary>
+    internal MaterialRecolor? Recolor()
     {
-        if (Materials.Length == 0) return palette;
-        MaterialRecolor recolor = new(palette?.Id ?? "corrections");
+        if (Materials.Length == 0) return null;
+        MaterialRecolor recolor = new("corrections");
         foreach (MaterialColor material in Materials)
             recolor.Set(material.Material, new Vector4(material.BaseColor[0], material.BaseColor[1], material.BaseColor[2], 1), null);
-        palette?.CopyTo(recolor);
         return recolor;
     }
 }

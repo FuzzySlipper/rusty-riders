@@ -39,7 +39,7 @@ internal sealed partial class LevelScene
 
     /// <summary>
     /// The world's parametric kit over the room plan, in place of the tiles: its wall, floor, ceiling and trim materials
-    /// harvested from the converted art (so the palette tints them), and its dressing of old props placed over the plan. Returns the build's summary, or null (a recorded
+    /// harvested from the converted art, and its dressing of old props placed over the plan. Returns the build's summary, or null (a recorded
     /// problem) when generation fails.
     /// </summary>
     private string? BuildKit(KitRecipe kit, TilesetDefinition tileset, CollisionBuilder collision, int seed, ref ulong nextPlacement)
