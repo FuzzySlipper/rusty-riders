@@ -15,7 +15,7 @@ MakeCircularVAEDiT from ComfyUI-Universal-Seamless-Tiles, installed on den-m5), 
 
 --control (Z-Image only) guides the composition with a line drawing through the Z-Image Fun ControlNet Union 2.1
 (models/model_patches on den-nimo and den-m5), for example a wrapping layout from layouts.py; the README's useful
-strength range is 0.65-1, but with the house LoRA 0.35-0.5 keeps the ink (docs/texture-style.md); do not
+strength range is 0.65-1, but with the house LoRA 0.35-0.5 keeps the ink (scripts/texture-gen/style-and-judging.md); do not
 combine with --seamless.
 
 Writes <out-dir>/<tag>-<seed>.png and appends each run (model, LoRA, prompt, seed, seconds) to

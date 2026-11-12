@@ -21,7 +21,7 @@ OLD_ICONS = "GameData/Icons/Old"
 JUNK = "GameData/Icons/Junk"
 ABILITY = "GameData/Icons/Abilities"
 
-# The art is decoration pinned at a fixed scale, never stretched (docs/ui.md). Each piece is exported at twice its
+# The art is decoration pinned at a fixed scale, never stretched (src/ui/README.md). Each piece is exported at twice its
 # display size at --u: 1px, so it stays sharp up to the largest UI scale step; riders.css gives the display sizes.
 # (output name, source path under old-game/Assets, crop box or None for the whole sprite, export scale)
 PIECES = [

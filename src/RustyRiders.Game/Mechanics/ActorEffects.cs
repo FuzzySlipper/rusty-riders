@@ -29,7 +29,7 @@ internal sealed class LiveEffect(EffectDefinition definition, EffectInstanceId i
 
 /// <summary>
 /// The effects one actor bears, over an Engine <see cref="EffectsComponent"/> that owns stacking and source provenance.
-/// Adapted from rusty-hotel's (itself from rusty-dagger's <c>ActiveEffectLifecycle</c>; docs/reuse.md): every Engine
+/// Adapted from rusty-hotel's (itself from rusty-dagger's <c>ActiveEffectLifecycle</c>; Den doc `reuse`): every Engine
 /// admission and removal goes through one path that keeps the product state and the stat sources in step. Durations and
 /// ticks advance only by the world seconds passed to <see cref="Advance"/>, so a held world holds every effect where it is.
 /// </summary>

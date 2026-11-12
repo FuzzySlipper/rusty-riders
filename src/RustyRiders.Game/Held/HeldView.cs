@@ -13,7 +13,7 @@ namespace RustyRiders.Game.Held;
 /// (the off hand mirrored), and moved through an action by an Engine tween timeline built from the look's motion,
 /// started as the action starts and eased back to rest when it is cut short; the arms reaching both hands' grips. Also
 /// the developer motion viewer, which shows any look in a hand, holds a key's pose, plays an action at a speed or shows
-/// a moment of it. Adapted from rusty-hotel's <c>CombatView</c> held presentation (docs/reuse.md); each hand's tween
+/// a moment of it. Adapted from rusty-hotel's <c>CombatView</c> held presentation (Den doc `reuse`); each hand's tween
 /// state is a <see cref="HeldHand"/> and the arms an <see cref="ArmsSlot"/>.
 /// </summary>
 internal sealed class HeldView : IDisposable

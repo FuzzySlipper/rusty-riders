@@ -10,7 +10,7 @@ namespace RustyRiders.Game.Held;
 /// How what the hands hold is drawn in first person: each held look (a weapon item names one), the stances looks sit
 /// in at rest (<see cref="StanceCatalog"/>) and how looks move through actions (<see cref="HeldMotionCatalog"/>).
 /// Presentation only; what an item does is its actions. Adapted from rusty-hotel's <c>HeldCatalog</c> for two hands that
-/// each hold their own weapon (docs/reuse.md).
+/// each hold their own weapon (Den doc `reuse`).
 /// </summary>
 internal sealed record HeldCatalog(HeldLookDefinition[] Looks)
 {

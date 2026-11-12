@@ -44,7 +44,7 @@ internal sealed class Projectile(ActionDefinition action, IActionActor user, Vec
 /// Lands actions with Engine spatial queries in the scene's session and applies what they deal: damage packets scaled
 /// by the user's stats, then the outgoing contributions of the user and the incoming contributions of the target, then
 /// the target's resistance and wards (<see cref="ActorStats.TakeDamage"/>), then the action's effects. Adapted from
-/// rusty-hotel's (itself from rusty-dagger's <c>CombatResolution</c>; docs/reuse.md): participants' live stats and
+/// rusty-hotel's (itself from rusty-dagger's <c>CombatResolution</c>; Den doc `reuse`): participants' live stats and
 /// contributions, one ordered path. Projectiles fly, and melee sweeps turn, on the world seconds passed to <see cref="Step"/>.
 /// Melee hits are in ActionResolution.Melee.cs.
 /// </summary>

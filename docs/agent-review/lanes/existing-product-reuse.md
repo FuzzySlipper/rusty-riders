@@ -3,7 +3,7 @@
 **Always check.** Does the change extend this repository's actual owner, or
 introduce competing state or behavior?
 
-Start with `AGENTS.md` and `docs/architecture.md`, then search the implementation
+Start with `AGENTS.md` and the Den document `product-map`, then search the implementation
 and callers. The level generator and scene own level geometry and stamping, the gallery scene owns exhibit layout, ConvertedArt owns loaded art, the walker owns movement and camera; the product entry
 owns lifecycle composition; the DOM only displays facts. Customize those owner
 pointers as the product grows.

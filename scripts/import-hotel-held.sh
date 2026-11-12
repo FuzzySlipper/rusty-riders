@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Copies rusty-hotel's held models that riders draws into the ignored content/art/hotel/ (docs/reuse.md): the coach
-# gun, the proof that one held format carries both games' looks (docs/held-format-convergence.md). Needs a sibling
+# Copies rusty-hotel's held models that riders draws into the ignored content/art/hotel/ (Den doc `reuse`): the coach
+# gun, the proof that one held format carries both games' looks (Den doc history/held-format-convergence-2026-10). Needs a sibling
 # ../rusty-hotel (or RUSTY_HOTEL=); it is read, never changed.
 #
 #   scripts/import-hotel-held.sh

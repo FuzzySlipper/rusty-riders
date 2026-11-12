@@ -25,7 +25,7 @@ internal enum ContributionSide { Outgoing, Incoming }
 /// One typed change to how a hit resolves, for hits of the named damage kinds (none is every kind), authored on a worn
 /// item or carried by an effect. A hit gathers the user's outgoing contributions, then the target's incoming ones, at
 /// each stage, around the one change to the target's health. Adapted from rusty-hotel's (itself from rusty-dagger's
-/// <c>ICombatContribution</c>; docs/reuse.md).
+/// <c>ICombatContribution</c>; Den doc `reuse`).
 /// </summary>
 internal sealed record DamageContribution(ContributionStage Stage, ContributionSide Side, string[] Kinds, int Add = 0, float Multiply = 1,
     bool Prevent = false, int Retain = 0)

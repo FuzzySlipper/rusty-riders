@@ -12,7 +12,7 @@ namespace RustyRiders.Game.Developer.Workbench;
 /// stance (every look in it), its nudge and grip, the action's key timing and curves, and the held key's pose. Each
 /// control applies its value to the loaded <see cref="HeldCatalog"/> as the console commands do, and names where it is
 /// saved (its content file and JSON pointer), so the panel's Save writes it there. Adapted from rusty-hotel's
-/// <c>ViewmodelTunables</c> (docs/reuse.md).
+/// <c>ViewmodelTunables</c> (Den doc `reuse`).
 /// </summary>
 internal static class HeldTunables
 {

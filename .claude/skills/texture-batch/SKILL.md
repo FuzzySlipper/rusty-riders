@@ -5,7 +5,7 @@ description: Generate a batch of tiling textures in the Rusty Riders house style
 
 # Texture batch: generate, filter, judge, pick
 
-The house style and the judging rubric are in `docs/texture-style.md`. Read both sections before writing
+The house style and the judging rubric are in `scripts/texture-gen/style-and-judging.md`. Read both sections before writing
 prompts or judging. The tools are in `scripts/texture-gen/`. The 5090's ComfyUI is reached only through its
 HTTP API (`comfy.py`, `COMFY_URL`, default `http://192.168.1.20:8188`); check `/queue` first and never
 disturb Patch's own jobs.
@@ -22,7 +22,7 @@ greyscale values for palette tinting. Attach a style reference; the Cave's is `w
 | Z-Image base + house LoRA | Volume in the ink-toon style, about 18 s each on the 5090 (110 s on a Strix Halo; v5 is on both) | `generate.py --model zimage-base --lora rrink_zimage_v5_seg6_3000_steps_00001_.safetensors --seamless`, prompt starting "rrink style, top-down view of …" |
 | Z-Image Turbo (5090) | Fast text-only drafts, 3 s each | 8 steps, `res_multistep`, shift 3 |
 
-For Z-Image base with the house LoRA, use the house prompt and negative in `docs/texture-style.md` ("House
+For Z-Image base with the house LoRA, use the house prompt and negative in `scripts/texture-gen/style-and-judging.md` ("House
 prompt": Moebius-inked wording). In review it beat plain prompts 12/12 to 5/12. Add `--seamless` (den-m5) for any
 surface: it keeps the model from drawing a scene and makes the image tile as generated, so step 2 is only needed
 for images made without it.
@@ -63,7 +63,7 @@ For every sheet, start one **Sonnet** judge per shuffled order, in parallel and 
 this prompt:
 
 > You are a texture judge for a stylized first-person game. Do only this: 1. Read
-> /home/agent/dev/rusty-riders/docs/texture-style.md, sections "House style" and "Judging" (the part "Judges
+> /home/agent/dev/rusty-riders/scripts/texture-gen/style-and-judging.md, sections "House style" and "Judging" (the part "Judges
 > rank style and appeal"). 2. Look at the style reference: <reference path>. 3. Look at the candidates for
 > <surface and place>: <sheet path> (lettered; tiling has already been checked, do not judge seams). Rank all
 > of them best to worst as the doc says. Reply with ONLY the JSON object {"ranking": [...], "why": {...}}. No

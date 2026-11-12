@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Builds the old game's first-person arms into the ignored content/art/fp-arms/ (docs/direction.md, "First-person
-# arms"): painted.glb (the Hands pack's arms with the hand-painted texture) and leather.glb (MedievalFPArms' male
+# Builds the old game's first-person arms into the ignored content/art/fp-arms/ (Den doc technical/held-weapons):
+# painted.glb (the Hands pack's arms with the hand-painted texture) and leather.glb (MedievalFPArms' male
 # leather armour arms). Their rig profiles are content/held/rigs/. Needs old-game/Assets/MoreArt, Blender 5 and a
 # sibling ../asset-pipeline (or ASSET_PIPELINE=) for unity-import, which reads the Hands pack's ASCII FBX.
 #

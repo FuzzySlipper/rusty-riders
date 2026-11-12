@@ -1,18 +1,19 @@
 # Rusty Riders agent guidance
 
-Rusty Riders is a Rusty Engine game inspired by an unfinished Unity game kept in
-the ignored `old-game/`. It is not a port: old art and data are donor material.
-Its current slice walks levels stamped the old game's way from its chunks,
-layouts and tilesets (docs/levels.md), plus a gallery of the converted combat art.
+Rusty Riders builds *Rift Riders*, a Rusty Engine game inspired by an unfinished
+Unity game of that name kept in the ignored `old-game/`. It is not a port: old art
+and data are donor material. Its current slice is a rift run through levels
+stamped the old game's way from its chunks, layouts and tilesets, plus a gallery
+of the converted combat art.
 
 > The product decides. The Engine guarantees.
 
 ## Start here
 
-Read [README.md](README.md) for setup and commands,
-[docs/architecture.md](docs/architecture.md) for the current owners and
-[docs/direction.md](docs/direction.md) for the game direction and how the old art is used,
-[docs/design.md](docs/design.md) for the gameplay design. Before
+Read [README.md](README.md) for setup and commands, the Den document
+`product-map` (project `rusty-riders`) for the current owners, and the den-wiki
+pages under [Rift Riders](https://wiki.dragonden.stream/wiki/rift-riders)
+(`wiki/rift-riders`) for the game design before design-shaping work. Before
 changing the Engine boundary, read the Engine's
 [C# SDK guide](https://github.com/FuzzySlipper/rusty-engine/blob/main/docs/csharp-sdk.md)
 and architecture. `rusty --help` is the workflow reference. Ordinary builds
@@ -23,6 +24,34 @@ Patch's request and owning task define scope and acceptance. If work is tied
 to Den, resolve that project's live guidance, task, and dependencies. Report
 failed reads; do not invent task state. Continue independently authorized work
 and pause only decisions that need unavailable authority.
+
+## Where documentation lives
+
+Patch's split (2026-11-12):
+
+- **den-wiki** (`wiki/rift-riders` and its subpages, read and edited with the
+  `den-wiki` CLI or MCP): settled game design, edited in place. Where a task,
+  Den document or code comment disagrees with the wiki about design, the wiki
+  is current; raise the conflict rather than following the older text.
+- **Crew board `rusty-riders`** (`crew-claude board threads rusty-riders`):
+  anything still being refined or decided. Once Patch settles it, write the
+  decision onto the wiki page and settle the thread into it
+  (`board settle THREAD --into wiki:rift-riders/<page>`).
+- **Den** (project `rusty-riders`): tasks, which schedule the work; technical
+  documents such as `product-map`, `technical/level-generation`,
+  `technical/held-weapons`, `technical/converted-art` and `reuse`; experiment
+  results under `experiments/`; superseded records under `history/`. If a
+  repository document and a task disagree, the task wins.
+- **The repository:** only narrow technical notes beside the code or tool they
+  describe: `README.md`, this file, `src/ui/README.md`,
+  `src/RustyRiders.Game/Held/README.md`, `scripts/arm-clips/README.md`,
+  `scripts/texture-gen/style-and-judging.md`, `content/art/LICENSE.md` and
+  `docs/agent-review/`. Working notes for work in progress are fine; when the
+  work is done, tidy them into the homes above rather than leaving them.
+
+Update the matching document in the same change as the behaviour it
+describes: a new owner in `product-map`, a level-generation change in
+`technical/level-generation`, a copied donor in `reuse`.
 
 ## Ownership and source
 
@@ -116,7 +145,7 @@ registry, rule engine or plugin system.
   before extending. These are prompts to look, not gates.
 
 Sibling Rusty repositories are one-time code donors, never build or content
-dependencies. Follow [docs/reuse.md](docs/reuse.md) and record what was copied.
+dependencies. Follow the Den document `reuse` and record what was copied there.
 
 Trust first-party runtime state and Engine-admitted data. Preserve concrete
 eligibility rules, current-data errors, and resource lifetime/disposal. Do not

@@ -12,7 +12,7 @@ namespace RustyRiders.Game.Developer;
 /// Developer motion viewer in the Engine console: show any held look in a hand, step its action's keys (each held
 /// exactly), play the action at any speed in real time, show any moment of it, try pose changes, and nudge a look or
 /// move a stance live. Edits change only the loaded content; each prints the JSON to paste into content/held/ (or use
-/// the workbench's Save). Adapted from rusty-hotel's <c>HeldMotionDebugCommands</c> (docs/reuse.md).
+/// the workbench's Save). Adapted from rusty-hotel's <c>HeldMotionDebugCommands</c> (Den doc `reuse`).
 /// </summary>
 /// <param name="publish">Republishes the scene, so a held pose shows at once.</param>
 /// <param name="uses">Each look's actions, from the weapons that show it.</param>

@@ -1,6 +1,8 @@
 # Texture style and judging
 
 What generated textures for Rusty Riders should look like, and the rubric vision judges score them with.
+The settled house style is the den-wiki page `wiki/rift-riders/visual-direction`; the "House style" section below is
+the judges' working copy of it, so change both together.
 The style comes from the old Unity game's level textures. Their source is in the ignored `old-game/`
 (`Art/Models/GridMaps/*`); the Cave's `wall01` is the reference used so far. Generated textures and how they
 were made are in `content/art/textures/` (`sources.json` per set). The batch workflow is in the

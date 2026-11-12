@@ -10,7 +10,7 @@ namespace RustyRiders.Game.Enemies;
 /// plays its kind's clip for what it is doing (standing, walking, flinching), samples the attack clip at its action's
 /// progress so the windup runs up to the strike, and a fallen enemy plays its death once and stays where it fell. A kind
 /// without a model, or whose model or clips did not open, is drawn as its box. Animation runs on the Engine's world
-/// time, so it holds with the world. Adapted from rusty-hotel's <c>ResidentView</c> (docs/reuse.md).
+/// time, so it holds with the world. Adapted from rusty-hotel's <c>ResidentView</c> (Den doc `reuse`).
 /// </summary>
 internal sealed class EnemyView : IDisposable
 {

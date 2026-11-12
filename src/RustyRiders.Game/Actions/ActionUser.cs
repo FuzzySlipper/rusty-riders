@@ -11,7 +11,7 @@ internal enum ActionRefusal { None, Busy, Cooldown, Cost }
 
 /// <summary>
 /// One actor's action timing: the action in progress and its phase, the aim committed when it started, and each
-/// action's cooldown. Adapted from rusty-hotel's (itself from rusty-dagger's <c>AttackExecution</c>; docs/reuse.md): one
+/// action's cooldown. Adapted from rusty-hotel's (itself from rusty-dagger's <c>AttackExecution</c>; Den doc `reuse`): one
 /// owner for readiness, the pending impact and cancellation, on world seconds. Each use's phases are scaled by the
 /// user's action-time stat when it begins. Costs and resolution belong to the caller.
 /// </summary>

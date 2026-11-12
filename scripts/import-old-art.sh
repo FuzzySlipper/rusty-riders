@@ -3,7 +3,7 @@
 # producer: the combat tilesets and levels, the procedural-level tileset tiles, the starter weapons (their item
 # prefabs) and one animated creature per starter enemy kind. It writes the GLBs placement files draw (whole models
 # and per-mesh parts), the animated enemy models, the placement files and per-model reports. The output is
-# generated and ignored. docs/direction.md "Converted weapons and enemies" says which old models were chosen.
+# generated and ignored. Den doc technical/converted-art says which old models were chosen.
 #
 #   scripts/import-old-art.sh            # needs ../asset-pipeline, old-game/ and old-game-fbx2013/
 #   ASSET_PIPELINE=/path/to/asset-pipeline MAX_TEXTURE=2048 scripts/import-old-art.sh

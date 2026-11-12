@@ -11,7 +11,7 @@ namespace RustyRiders.Game.Developer.Workbench;
 /// viewer shows, the action's keys as the timeline (held, sought and played through the motion viewer's commands), and
 /// the values from <see cref="HeldTunables"/>. The Engine's <see cref="TunablesDebugModule"/> serves it, and its panel
 /// renders it and saves each control where its source names. Adapted from rusty-hotel's <c>HotelWorkbench</c>
-/// (docs/reuse.md).
+/// (Den doc `reuse`).
 /// </summary>
 internal sealed class HeldWorkbench(IContentSourceService source, PlayerCombat combat, HeldMotionDebugCommands viewer, Action publish)
 {
