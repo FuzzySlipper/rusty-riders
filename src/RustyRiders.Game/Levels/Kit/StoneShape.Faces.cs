@@ -1,12 +1,12 @@
 using System.Numerics;
-using Rusty.Engine;
 
 namespace RustyRiders.Game.Levels.Kit;
 
 /// <summary>
 /// Stones whose faces the shader carves (<see cref="StoneFacesDefinition"/>): a plain box of the stone's rectangle (or rim),
 /// standing out to its relief plus its kind's bulge, whose face vertices carry to the shader where they lie on the stone
-/// and the stone's shape (<see cref="Data"/>). Its sides and every other vertex are white, drawn as usual.
+/// and the stone's shape (<see cref="Data"/>). It is built in the mesh's <see cref="MeshBuilder.Shaded"/> companion; its
+/// sides carry zero, which the shader draws as usual.
 /// </summary>
 internal static partial class StoneShape
 {
@@ -15,9 +15,10 @@ internal static partial class StoneShape
 
     /// <param name="box">The stone's outline: its rectangle, or its chipped rim when <paramref name="chips"/> is false
     /// (the mesh keeps the chips, so the shader cuts none).</param>
-    private static void Faced(MeshBuilder mesh, int slot, float metres, float bevel, StoneKind kind, StoneFrame frame, List<Vector2> box,
+    private static void Faced(MeshBuilder level, int slot, float metres, float bevel, StoneKind kind, StoneFrame frame, List<Vector2> box,
         bool chips, float relief, Vector2 patch, float back)
     {
+        MeshBuilder mesh = level.Shaded;
         float minX = box.Min(p => p.X), maxX = box.Max(p => p.X), minY = box.Min(p => p.Y), maxY = box.Max(p => p.Y);
         float width = maxX - minX, height = maxY - minY;
         float b = MathF.Min(bevel, MathF.Min(relief / 2, MathF.Min(width / 4, height / 4)));
@@ -29,7 +30,7 @@ internal static partial class StoneShape
         Vector2 offset = patch * metres;
         Vector2 Uv(Vector2 p) => new((offset.X + p.X) / metres, -(offset.Y + p.Y) / metres);
         (float a, float c) = Data(chips ? kind : kind with { ChipChance = 0, Nicks = 0 }, b, patch);
-        Color Local(Vector2 p) => new((p.X - minX) / width, (p.Y - minY) / height, a, c);
+        Vector4 Local(Vector2 p) => new((p.X - minX) / width, (p.Y - minY) / height, a, c);
 
         int n = box.Count;
         float around = 0;
@@ -56,20 +57,19 @@ internal static partial class StoneShape
     }
 
     /// <summary>
-    /// A stone's shape as two whole numbers the shader decodes (stone-faces.wgsl, <c>decode</c>), each over 2^19 so it
-    /// fits a colour channel (the Engine takes 0 to 1) and stays exact in a float through interpolation; a stone's alpha is
-    /// then under a half, and a white vertex's 1 marks it as no stone. The first: a seed from the stone's texture patch
-    /// (8 bits), hewn (1), chip and nick chances in sevenths (3 and 3), bevel in centimetres (4). The second: bulge in
-    /// millimetres (7 bits), facets in millimetres (6), chips in centimetres (5).
+    /// A stone's shape as two whole numbers the shader decodes (stone-faces.wgsl, <c>decode</c>), exact in a float through
+    /// interpolation. The first: a seed from the stone's texture patch (8 bits), hewn (1), chip and nick chances in sevenths
+    /// (3 and 3), bevel in centimetres (4), and bit 19 set, which marks a stone (a vertex without data reads zero). The
+    /// second: bulge in millimetres (7 bits), facets in millimetres (6), chips in centimetres (5).
     /// </summary>
-    private const float Scale = 1 << 19;
+    private const int Stone = 1 << 19;
 
     private static (float A, float B) Data(StoneKind kind, float bevel, Vector2 patch)
     {
         static int Bits(float value, int max) => Math.Clamp((int)MathF.Round(value), 0, max);
         int seed = Bits(patch.X * 255, 255);
-        int a = seed | (kind.Hewn ? 1 << 8 : 0) | Bits(kind.ChipChance * 7, 7) << 9 | Bits(kind.Nicks * 7, 7) << 12 | Bits(bevel * 100, 15) << 15;
+        int a = Stone | seed | (kind.Hewn ? 1 << 8 : 0) | Bits(kind.ChipChance * 7, 7) << 9 | Bits(kind.Nicks * 7, 7) << 12 | Bits(bevel * 100, 15) << 15;
         int c = Bits(kind.Pillow * 1000, 127) | Bits(kind.Facet * 1000, 63) << 7 | Bits(kind.Chip * 100, 31) << 13;
-        return (a / Scale, c / Scale);
+        return (a, c);
     }
 }

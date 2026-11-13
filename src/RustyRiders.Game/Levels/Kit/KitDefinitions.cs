@@ -116,8 +116,6 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         recipe.Columns?.Validate(path);
         recipe.WallStones?.Validate(path);
         recipe.StoneFaces?.Validate(path);
-        Authored.Require(recipe.StoneFaces is null || recipe.StoneSurfaces().All(s => recipe.Textures?.For(s)?.Colour == true), path, "stoneFaces",
-            "the stones' surfaces need colour textures (drawn untinted): their vertex colours carry the stones' shapes.");
         return recipe;
     }
 

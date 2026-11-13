@@ -3,22 +3,32 @@ using Rusty.Engine;
 
 namespace RustyRiders.Game.Levels;
 
-/// <summary>Positions, smooth normals, uvs and per-material triangle lists for one retained mesh (the generated level builds).</summary>
+/// <summary>
+/// Positions, smooth normals, uvs and per-material triangle lists for one retained mesh (the generated level builds).
+/// Geometry whose vertices carry data for a material's shader (stone faces) goes to its companion, <see cref="Shaded"/>:
+/// a mesh with product data is drawn outside the Engine's static mesh pool, so the rest of the level stays in it.
+/// </summary>
 internal sealed class MeshBuilder
 {
     // Growable streams, handed to the Engine as they stand (it copies them), so a large build is not copied again first.
     private Vector3[] positions = new Vector3[1024], normals = new Vector3[1024];
     private Vector2[] uvs = new Vector2[1024];
-    private Color[]? colors; // only once a vertex carries data for a shader; the rest are white
+    private Vector4[]? data; // only in the companion, once a vertex carries data for a shader; the rest read zero
     private int count;
     private readonly List<uint>[] slots;
-    private static readonly Color White = new(1, 1, 1, 1);
+    private MeshBuilder? shaded;
 
     /// <summary>A builder with <paramref name="slotCount"/> material slots, numbered from 0.</summary>
     internal MeshBuilder(int slotCount) => slots = Enumerable.Range(0, slotCount).Select(_ => new List<uint>()).ToArray();
 
-    internal int VertexCount => count;
-    internal int TriangleCount => slots.Sum(slot => slot.Count) / 3;
+    internal int VertexCount => count + (shaded?.count ?? 0);
+    internal int TriangleCount => slots.Sum(slot => slot.Count) / 3 + (shaded?.TriangleCount ?? 0);
+
+    /// <summary>The companion builder, with the same slots, for geometry whose vertices carry shader data.</summary>
+    internal MeshBuilder Shaded => shaded ??= new MeshBuilder(slots.Length);
+
+    /// <summary>Whether anything was built in <see cref="Shaded"/>.</summary>
+    internal bool HasShaded => shaded is { count: > 0 };
 
     internal uint Vertex(Vector3 position, Vector2 uv)
     {
@@ -27,23 +37,19 @@ internal sealed class MeshBuilder
             Array.Resize(ref positions, count * 2);
             Array.Resize(ref normals, count * 2);
             Array.Resize(ref uvs, count * 2);
-            if (colors is not null) Array.Resize(ref colors, count * 2);
+            if (data is not null) Array.Resize(ref data, count * 2);
         }
         (positions[count], uvs[count]) = (position, uv);
-        if (colors is not null) colors[count] = White;
+        if (data is not null) data[count] = Vector4.Zero;
         return (uint)count++;
     }
 
-    /// <summary>A vertex whose colour carries <paramref name="data"/> to its material's shader (stone faces); every other vertex is white.</summary>
-    internal uint Vertex(Vector3 position, Vector2 uv, Color data)
+    /// <summary>A vertex carrying <paramref name="values"/> to its material's shader (stone faces); every other vertex carries zero.</summary>
+    internal uint Vertex(Vector3 position, Vector2 uv, Vector4 values)
     {
-        if (colors is null)
-        {
-            colors = new Color[positions.Length];
-            Array.Fill(colors, White, 0, count);
-        }
+        data ??= new Vector4[positions.Length];
         uint index = Vertex(position, uv);
-        colors[index] = data;
+        data[index] = values;
         return index;
     }
 
@@ -54,7 +60,7 @@ internal sealed class MeshBuilder
         Triangle(slot, a, c, d, facing);
     }
 
-    /// <summary>The mesh as built so far, with its normals made final: nothing is added after.</summary>
+    /// <summary>The mesh as built so far (not its <see cref="Shaded"/> companion), with its normals made final: nothing is added after.</summary>
     internal MeshResource Create(IEngineContext engine, Material[] materials)
     {
         uint[] indices = new uint[slots.Sum(slot => slot.Count)];
@@ -70,7 +76,7 @@ internal sealed class MeshBuilder
         for (int i = 0; i < count; i++) normals[i] = normals[i] == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(normals[i]); // final: no more triangles accumulate
         MeshMaterialBinding[] bindings = materials.Select((material, slot) => new MeshMaterialBinding((uint)slot, material)).ToArray();
         return engine.Graphics.CreateMeshResource(new MeshResourceCreateRequest(positions.AsMemory(0, count), normals.AsMemory(0, count), uvs.AsMemory(0, count),
-            colors is null ? ReadOnlyMemory<Color>.Empty : colors.AsMemory(0, count), indices, groups.ToArray(), bindings));
+            ReadOnlyMemory<Color>.Empty, indices, groups.ToArray(), bindings) { ProductData = data is null ? ReadOnlyMemory<Vector4>.Empty : data.AsMemory(0, count) });
     }
 
     /// <summary>A quad from four new corners with their UVs, wound to face <paramref name="facing"/>.</summary>

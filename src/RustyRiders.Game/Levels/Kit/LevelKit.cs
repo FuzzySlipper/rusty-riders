@@ -16,7 +16,7 @@ namespace RustyRiders.Game.Levels.Kit;
 ///   (<see cref="KitColumns"/>).
 ///
 /// Texture coordinates run in world metres (walls by metres along their outline and up), so adjoining pieces keep one
-/// texture phase. One mesh is drawn in level-cell sections. A second mesh, without the thin trims, is the collision.
+/// texture phase. One mesh is drawn in level-cell sections, and stones whose faces the shader carves in sections of their own. A second mesh, without the thin trims, is the collision.
 /// Adapted from rusty-hotel's KitBuilder (Den doc `reuse`): rooms from a plan with openings, lintels over them and
 /// profiled mouldings, with world-metre UVs.
 /// </summary>
@@ -81,13 +81,25 @@ internal sealed partial class LevelKit : IGeneratedLevel
             if (prop.Box is { } box) Box(collision, prop.Pose.Translation, box);
 
         double geometry = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds;
-        // The whole drawn mesh is only the partition's source: the sections are copies, so it goes once they are taken.
+        // The whole drawn meshes are only the partitions' sources: the sections are copies, so they go once those are taken.
         using MeshResource drawn = mesh.Create(engine, materials);
+        using MeshResource? shaded = mesh.HasShaded ? mesh.Shaded.Create(engine, materials) : null;
         foreach (LightDescriptor light in sconces) lights.Add(engine.Graphics.CreateLight(new LightRequest(nextLightId++, false, 0, light)));
         solid = collision.Create(engine, [materials[WallSlot]]);
         double upload = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds - geometry;
         Vector3 min = Vector3.Min(OpenGround.Gltf(plan.Metres(new Vector2(ground.Keys.Min(c => c.X), ground.Keys.Min(c => c.Z))), 0),
             OpenGround.Gltf(plan.Metres(new Vector2(ground.Keys.Max(c => c.X) + 1, ground.Keys.Max(c => c.Z) + 1)), 0));
+        Cut(engine, drawn, min, cellSize);
+        if (shaded is not null) Cut(engine, shaded, min, cellSize);
+        double seconds = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds;
+        double partitioned = seconds - geometry - upload;
+        Summary = FormattableString.Invariant(
+            $"kit: {loops.Count} outlines, {diagonals} diagonal walls, {arches} arches, {pilasters} pilasters, {string.Concat(details.Select(d => d + ", "))}{mesh.VertexCount} vertices, {mesh.TriangleCount} triangles ({collision.TriangleCount} colliding), {sections.Count} sections, {seconds:0.000} s (geometry {geometry:0.000}, upload {upload:0.000}, sections {partitioned:0.000})");
+    }
+
+    /// <summary>Cuts a drawn mesh into level-cell sections, each drawn by its own appearance.</summary>
+    private void Cut(IEngineContext engine, MeshResource drawn, Vector3 min, float cellSize)
+    {
         using MeshPartition partition = engine.Graphics.PartitionMesh(new MeshPartitionRequest(drawn, min, new Vector3(cellSize)));
         uint parts = engine.Graphics.ReadMeshPartition(partition).PartCount;
         for (uint index = 0; index < parts; index++)
@@ -95,10 +107,6 @@ internal sealed partial class LevelKit : IGeneratedLevel
             MeshResource section = engine.Graphics.TakeMeshPartitionPart(new MeshPartitionPartRequest(partition, index));
             sections.Add((section, engine.Graphics.CreateMeshAppearance(section)));
         }
-        double seconds = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds;
-        double partitioned = seconds - geometry - upload;
-        Summary = FormattableString.Invariant(
-            $"kit: {loops.Count} outlines, {diagonals} diagonal walls, {arches} arches, {pilasters} pilasters, {string.Concat(details.Select(d => d + ", "))}{mesh.VertexCount} vertices, {mesh.TriangleCount} triangles ({collision.TriangleCount} colliding), {sections.Count} sections, {seconds:0.000} s (geometry {geometry:0.000}, upload {upload:0.000}, sections {partitioned:0.000})");
     }
 
     public Transform Placement { get; } = new(Vector3.Zero, Quaternion.Identity, Vector3.One);

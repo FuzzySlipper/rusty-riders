@@ -1,10 +1,10 @@
 // Stone faces carved in the shader (kit recipe `stoneFaces`; StoneShape.Faces.cs builds the stones).
 //
-// A stone is a plain box of its size and jut. Its face vertices' colour carries where they lie on the stone (rg: 0 to 1
-// along and up) and the stone's shape (b and a: whole numbers over 2^19, decoded below as StoneShape.Data packs them).
-// This stage finds where the view ray meets the carved face under the box's top (parallax), then shades the stone's
+// A stone is a plain box of its size and jut. Its face vertices' product data carries where they lie on the stone (xy: 0
+// to 1 along and up) and the stone's shape (zw: whole numbers, decoded below as StoneShape.Data packs them; z has bit 19
+// set). This stage finds where the view ray meets the carved face under the box's top (parallax), then shades the stone's
 // texture there with the carved face's normal: its bevel, the bulge and facets of its kind, chipped corners and nicked
-// edges. White vertices (alpha 1; a stone's is under a half) are not stones and draw as usual.
+// edges. Vertices without data (zero) are not stones and draw as usual.
 //
 // material.parameters[0]: x how deep the carving is, times the kind's; y parallax steps; z how dark the hollows go.
 
@@ -34,9 +34,11 @@ fn hash(seed: u32, salt: u32) -> f32 {
     return f32(x & 0xffffffu) / 16777216.0;
 }
 
+const STONE: u32 = 1u << 19u;
+
 fn decode(data: vec4<f32>, size: vec2<f32>) -> Stone {
-    let a = u32(round(data.b * 524288.0));
-    let c = u32(round(data.a * 524288.0));
+    let a = u32(round(data.z));
+    let c = u32(round(data.w));
     let depth = material.parameters[0].x;
     var s: Stone;
     s.size = size;
@@ -143,7 +145,7 @@ fn normal_gradient(g: vec2<f32>) -> vec2<f32> {
 }
 
 fn shade(surface: Surface) -> vec4<f32> {
-    let data = surface.tint;
+    let data = surface.product_data;
     // Screen derivatives first, in uniform control flow: the stone's place, the world and the texture uv.
     let dp_dx = dpdx(surface.world_position);
     let dp_dy = dpdy(surface.world_position);
@@ -153,7 +155,7 @@ fn shade(surface: Surface) -> vec4<f32> {
     let dt_dy = dpdy(surface.uv);
     let det = dl_dx.x * dl_dy.y - dl_dy.x * dl_dx.y;
     var lit = surface;
-    if data.a < 0.75 && abs(det) > 1e-14 {
+    if (u32(round(data.z)) & STONE) != 0u && abs(det) > 1e-14 {
         // The stone's frame: world and texture uv per unit of its place along (u) and up (v).
         let along_u = (dp_dx * dl_dy.y - dp_dy * dl_dx.y) / det;
         let along_v = (dp_dy * dl_dx.x - dp_dx * dl_dy.x) / det;
@@ -217,7 +219,6 @@ fn shade(surface: Surface) -> vec4<f32> {
         let hollow = clamp(carved(s, p) / max(s.pillow + s.bevel + 0.02, 1e-3), 0.0, 1.5) / 1.5;
         let cavity = material.parameters[0].z;
         lit.base = vec4<f32>(color.rgb * (1.0 - 0.5 * cavity * hollow), 1.0);
-        lit.tint = vec4<f32>(1.0);
         lit.occlusion *= 1.0 - cavity * hollow;
     }
     return standard_shade(lit);
