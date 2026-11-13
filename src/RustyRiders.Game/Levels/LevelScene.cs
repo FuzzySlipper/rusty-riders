@@ -35,15 +35,17 @@ internal sealed partial class LevelScene : IWalkScene
     private readonly HarvestedMaterials materials;
     private IGeneratedLevel? generated;
     private PlanOverlay? overlay;
-    private readonly Portals portals;
+    private Portals? portals; // with the points, once navigation is installed
     private readonly PortalLook portalLook;
+    private Action? placePoints; // until navigation is installed (Settle)
     private double worldSeconds;
     private readonly List<AppearanceFact> facts = [];
     private readonly List<string> problems = [];
     private readonly Dictionary<(int X, int Z), (PlannedTile Tile, string Prefab)> tiles = [];
     private readonly float cellSize;
     private readonly Color background;
-    private readonly string level, found;
+    private readonly string level;
+    private string found = "";
     private Func<string> built = () => "tiles";
     private bool shown;
 
@@ -120,31 +122,36 @@ internal sealed partial class LevelScene : IWalkScene
             collision.AddGround(GroundObjectId, floorMin, floorMax);
         }
         engine.Spatial.ReplaceCollision(collision.Request(Session));
-        Navigation = new LevelNavigation(engine, Session, rules.Navigation, floorMin, floorMax);
-        Points = LevelPoints.Place(plan, rules.Points, rules.Worlds, data.Tileset.Id, seed, cell => CellCenter(cell.X, cell.Z), Navigation);
-        problems.AddRange(Points.Problems);
+        Navigation = new LevelNavigation(engine, Session, rules.Navigation, floorMin, floorMax, deferred);
         portalLook = rules.Points.Portal;
-        portals = new Portals(engine, rules.Points, Points);
+        placePoints = () =>
+        {
+            Points = LevelPoints.Place(plan, rules.Points, rules.Worlds, data.Tileset.Id, seed, cell => CellCenter(cell.X, cell.Z), Navigation);
+            problems.AddRange(Points.Problems);
+            portals = new Portals(engine, rules.Points, Points);
+            Playable = Points.Rifts.Count >= rules.Points.MinimumRifts;
+            SpawnFeet = Points.Arrival + Vector3.UnitY * spawnLift;
+            found = $"\n{Points.Rifts.Count} rifts · {Points.Caches.Count} caches · {Points.Residents.Count} resident spots · {Navigation.Summary}";
+        };
+        if (!deferred) Settle();
         ShowPlan = rules.Plan.Overlay.Show;
-        Playable = Points.Rifts.Count >= rules.Points.MinimumRifts;
         TravelLayouts = data.Layouts.Where(l => !l.Special).Select(l => l.Id).ToArray();
         background = new Color(settings.BackgroundColor[0], settings.BackgroundColor[1], settings.BackgroundColor[2], 1);
 
-        SpawnFeet = Points.Arrival + Vector3.UnitY * spawnLift;
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
         level = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · ";
-        found = $"\n{Points.Rifts.Count} rifts · {Points.Caches.Count} caches · {Points.Residents.Count} resident spots · {Navigation.Summary}";
     }
 
     public SpatialSession Session { get; }
-    public Vector3 SpawnFeet { get; }
+    public Vector3 SpawnFeet { get; private set; }
     public float SpawnYawDegrees { get; }
     public string Status => level + built() + found;
     public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. problems];
     internal LevelNavigation Navigation { get; }
     /// <summary>Whether the arrival can walk to at least the minimum number of rifts; a level that cannot is rejected.</summary>
-    internal bool Playable { get; }
-    internal LevelPoints Points { get; }
+    internal bool Playable { get; private set; }
+    /// <summary>The gameplay points, placed on the navigation once it is installed (<see cref="Settle"/>).</summary>
+    internal LevelPoints Points { get; private set; } = null!;
     /// <summary>The level as rooms, corridors and doorways in metres, which the kit build stands on.</summary>
     internal RoomPlan Plan { get; }
 
@@ -181,8 +188,21 @@ internal sealed partial class LevelScene : IWalkScene
     }
 
     public IEnumerable<AppearanceFact> Facts => ShowPlan
-        ? [.. facts, .. SectionFacts, .. portals.Facts(worldSeconds), .. overlay!.Facts]
-        : [.. facts, .. SectionFacts, .. portals.Facts(worldSeconds)];
+        ? [.. facts, .. SectionFacts, .. portals?.Facts(worldSeconds) ?? [], .. overlay!.Facts]
+        : [.. facts, .. SectionFacts, .. portals?.Facts(worldSeconds) ?? []];
+
+    /// <summary>
+    /// Places the level's points once its navigation is installed (a level built in the background derives it on the
+    /// Engine's workers); true once they are, and with them <see cref="Playable"/> and the spawn.
+    /// </summary>
+    internal bool Settle()
+    {
+        if (placePoints is null) return true;
+        if (!Navigation.Installed()) return false;
+        placePoints();
+        placePoints = null;
+        return true;
+    }
 
     /// <summary>
     /// One update's share of making a kit level's sections in the background (<see cref="LevelKit.Prepare"/>); true once
@@ -190,11 +210,15 @@ internal sealed partial class LevelScene : IWalkScene
     /// </summary>
     internal bool Prepare(double budgetSeconds) => generated is not LevelKit kit || kit.Prepare(engine, budgetSeconds);
 
-    /// <summary>The level becomes the one shown: its background colour is set (its facts are published by the product).</summary>
+    /// <summary>
+    /// The level becomes the one shown: its background colour is set and a kit's lights created (its facts are published by
+    /// the product).
+    /// </summary>
     internal void Show()
     {
         shown = true;
         engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(background));
+        (generated as LevelKit)?.Light(engine);
     }
 
     public void Dispose()
@@ -202,7 +226,7 @@ internal sealed partial class LevelScene : IWalkScene
         if (shown) engine.Graphics.PublishSnapshot([]); // its appearances leave the published set before they are disposed
         generated?.Dispose();
         overlay?.Dispose();
-        portals.Dispose();
+        portals?.Dispose();
         materials.Dispose();
         art.Dispose();
         Session.Dispose();

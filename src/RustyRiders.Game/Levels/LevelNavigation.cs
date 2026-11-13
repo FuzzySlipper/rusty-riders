@@ -7,6 +7,8 @@ namespace RustyRiders.Game.Levels;
 /// The level's Engine navigation: a planar projection derived from the session's collision for the body enemies walk
 /// with, and the queries other owners use on it. A query names live foot positions; the Engine resolves each to the
 /// nearest support within the tuning's snap. Routes are suggestions: character steps stay the authority for movement.
+/// Derived at once, or on Engine workers (a level built in the background): then it answers nothing until
+/// <see cref="Installed"/>.
 /// </summary>
 internal sealed class LevelNavigation
 {
@@ -16,7 +18,8 @@ internal sealed class LevelNavigation
     private readonly SpatialSession session;
     private readonly NavigationTuning tuning;
 
-    internal LevelNavigation(IEngineContext engine, SpatialSession session, NavigationTuning tuning, Vector3 floorMin, Vector3 floorMax)
+    /// <param name="deferred">Whether the grid is derived on the Engine's workers from the session's collision as it stands.</param>
+    internal LevelNavigation(IEngineContext engine, SpatialSession session, NavigationTuning tuning, Vector3 floorMin, Vector3 floorMax, bool deferred)
     {
         this.engine = engine;
         this.session = session;
@@ -38,10 +41,21 @@ internal sealed class LevelNavigation
             SnapAcross = tuning.SnapAcrossMetres,
         };
         Receipt = engine.Spatial.ReplaceCollisionNavigation(new CollisionNavigationReplaceRequest(session,
-            floorMin - Vector3.UnitY * tuning.BelowFloorMetres, floorMax + Vector3.UnitY * tuning.AboveFloorMetres, config));
+            floorMin - Vector3.UnitY * tuning.BelowFloorMetres, floorMax + Vector3.UnitY * tuning.AboveFloorMetres, config, deferred));
     }
 
-    internal CollisionNavigationReplaceReceipt Receipt { get; }
+    internal CollisionNavigationReplaceReceipt Receipt { get; private set; }
+
+    /// <summary>Whether the grid is derived and answers queries; a derivation the Engine refused fails the level.</summary>
+    internal bool Installed()
+    {
+        if (!Receipt.Pending) return true;
+        CollisionNavigationReadout read = engine.Spatial.ReadCollisionNavigation(new CollisionNavigationReadRequest(session, GridId));
+        if (read.Refused) throw new InvalidOperationException("The level's navigation could not be derived; the host log says why.");
+        if (read.Pending) return false;
+        Receipt = read.Installed;
+        return true;
+    }
 
     internal string Summary => FormattableString.Invariant(
         $"nav {Receipt.WalkableCellCount} cells, {Receipt.ComponentCount} parts, {Receipt.DerivationMicroseconds / 1000.0:0} ms");

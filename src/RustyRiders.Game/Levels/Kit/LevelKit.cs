@@ -5,7 +5,8 @@ using Rusty.Engine;
 namespace RustyRiders.Game.Levels.Kit;
 
 /// <summary>
-/// A kit level's Engine resources, made from its <see cref="KitGeometry"/>: the sconces' lights, the collision mesh, and
+/// A kit level's Engine resources, made from its <see cref="KitGeometry"/>: the sconces' lights (created once the level
+/// is shown, <see cref="Light"/>: a light without a parent shows as soon as it exists), the collision mesh, and
 /// the drawn sections, each band made one mesh and cut by level cell. Made at once, or in the background: then
 /// <see cref="Prepare"/> creates and cuts the bands off the update a few at a time, takes the sections once every cut is
 /// ready, and reports them ready once the renderer has drawn them.
@@ -24,6 +25,7 @@ internal sealed class LevelKit : IGeneratedLevel
     private readonly Queue<MeshBuilder> waiting;
     private readonly List<MeshPartition> cutting = [];
     private readonly List<(MeshResource Mesh, Appearance Appearance)> sections = [];
+    private readonly List<LightDescriptor> sconces;
     private readonly List<Light> lights = [];
     private readonly MeshResource solid;
     private readonly int bands;
@@ -41,7 +43,7 @@ internal sealed class LevelKit : IGeneratedLevel
         this.materials = materials;
         waiting = new Queue<MeshBuilder>(geometry.Bands);
         bands = waiting.Count;
-        foreach (LightDescriptor light in geometry.Sconces) lights.Add(engine.Graphics.CreateLight(new LightRequest(nextLightId++, false, 0, light)));
+        sconces = geometry.Sconces;
         solid = geometry.Solid.Create(engine, [materials[WallSlot]]);
         if (deferred) return;
         long started = Stopwatch.GetTimestamp();
@@ -101,6 +103,13 @@ internal sealed class LevelKit : IGeneratedLevel
         longestUpdate = Math.Max(longestUpdate, seconds);
         updates++;
         return ready;
+    }
+
+    /// <summary>Creates the sconces' lights, as the level is shown.</summary>
+    internal void Light(IEngineContext engine)
+    {
+        if (lights.Count > 0) return;
+        foreach (LightDescriptor light in sconces) lights.Add(engine.Graphics.CreateLight(new LightRequest(nextLightId++, false, 0, light)));
     }
 
     public void Dispose()

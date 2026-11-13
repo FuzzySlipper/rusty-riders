@@ -7,8 +7,9 @@ namespace RustyRiders.Game.Levels;
 /// <summary>
 /// One level being built, at once or in the background. In the background its <see cref="LevelBlueprint"/> is made on the
 /// Engine's worker lane; a later update makes the scene from it (art, materials, collision, navigation and points, which
-/// need the Engine), rejecting it for the next seed when its arrival cannot reach enough rifts; later updates then make
-/// its sections a few at a time (<see cref="LevelScene.Prepare"/>) until the renderer has drawn them.
+/// need the Engine), its navigation derived on Engine workers; once that is installed its points are placed, and it is
+/// rejected for the next seed when its arrival cannot reach enough rifts; later updates then make its sections a few at
+/// a time (<see cref="LevelScene.Prepare"/>) until the renderer has drawn them.
 /// </summary>
 internal sealed class LevelBuild : IDisposable
 {
@@ -22,7 +23,8 @@ internal sealed class LevelBuild : IDisposable
     private PreparationJob<LevelBlueprint>? job;
     private LevelScene? scene;
     private int attempts, updates;
-    private double longestUpdate, sceneSeconds;
+    private double longestUpdate, sceneSeconds, pointsSeconds;
+    private bool settled;
 
     /// <summary>Starts building a level of <paramref name="settings"/> and <paramref name="seed"/> in the background.</summary>
     internal LevelBuild(IEngineContext engine, PreparationJobs jobs, LevelRules rules, LevelSettings settings, int seed)
@@ -42,7 +44,7 @@ internal sealed class LevelBuild : IDisposable
 
     /// <summary>What the build cost (load-cost evidence): its seconds, attempts and updates, and the most it took of one.</summary>
     internal string Report => FormattableString.Invariant(
-        $"{Settings.Tileset} · {Settings.Layout} · seed {Seed}: {Stopwatch.GetElapsedTime(started).TotalSeconds:0.000} s, {attempts} attempts, {updates} updates, longest {longestUpdate * 1000:0.0} ms (making the scene {sceneSeconds * 1000:0.0} ms)");
+        $"{Settings.Tileset} · {Settings.Layout} · seed {Seed}: {Stopwatch.GetElapsedTime(started).TotalSeconds:0.000} s, {attempts} attempts, {updates} updates, longest {longestUpdate * 1000:0.0} ms (making the scene {sceneSeconds * 1000:0.0} ms, placing its points {pointsSeconds * 1000:0.0} ms)");
 
     /// <summary>Builds a level of <paramref name="settings"/> at once, from <paramref name="seed"/> on, keeping the last when every attempt is rejected.</summary>
     internal static LevelScene Now(IEngineContext engine, LevelRules rules, LevelSettings settings, ref int seed)
@@ -88,6 +90,16 @@ internal sealed class LevelBuild : IDisposable
             long making = Stopwatch.GetTimestamp();
             scene = new LevelScene(engine, Settings, data, layout, Seed, rules, blueprint, deferred: true);
             sceneSeconds = Stopwatch.GetElapsedTime(making).TotalSeconds;
+            settled = false;
+            return null;
+        }
+        if (scene is null) return null;
+        if (!settled)
+        {
+            long placing = Stopwatch.GetTimestamp();
+            if (!scene.Settle()) return null;
+            pointsSeconds = Stopwatch.GetElapsedTime(placing).TotalSeconds;
+            settled = true;
             if (!scene.Playable && attempts < rules.Points.LevelAttempts)
             {
                 scene.Dispose();
@@ -97,7 +109,7 @@ internal sealed class LevelBuild : IDisposable
             }
             return null;
         }
-        if (scene is null || !scene.Prepare(budgetSeconds)) return null;
+        if (!scene.Prepare(budgetSeconds)) return null;
         LevelScene ready = scene;
         scene = null;
         return ready;
