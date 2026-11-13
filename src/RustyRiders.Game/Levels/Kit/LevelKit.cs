@@ -54,7 +54,8 @@ internal sealed partial class LevelKit : IGeneratedLevel
         Steps(mesh, collision, ground, arched);
         foreach (WalkRectangle r in WalkCells.Merge(ground).Where(r => !arched || r.Height != plan.Rules.DoorHeight))
             Flat(mesh, collision, CeilingSlot, r, r.Height, recipe.Metres(KitSurface.Ceiling), -Vector3.UnitY);
-        int arches = recipe.DoorArch is { } arch ? DoorArches.Build(mesh, collision, plan, recipe, arch, seed, ref stones) : 0;
+        int voussoirs = 0;
+        int arches = recipe.DoorArch is { } arch ? DoorArches.Build(mesh, collision, plan, recipe, arch, seed, ref stones, ref voussoirs) : 0;
         int diagonals = loops.Sum(loop => loop.Where((p, i) => p.Point.X != loop[(i + 1) % loop.Count].Point.X
             && p.Point.Y != loop[(i + 1) % loop.Count].Point.Y).Count());
         foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, FloorSlot, r, 0, recipe.Metres(KitSurface.Floor), Vector3.UnitY);
@@ -63,9 +64,11 @@ internal sealed partial class LevelKit : IGeneratedLevel
         foreach (PilasterPlace place in places) Pilaster(mesh, collision, place, recipe.Pilasters!);
         List<string> details = recipe.WallStones is null ? [] : [$"{stones} wall stones"];
         if (recipe.Runners is { } runners) details.Add($"{KitRunners.Build(mesh, plan, recipe, runners)} runners");
-        if (recipe.Ribs is { } ribs) details.Add($"{CeilingRibs.Build(mesh, plan, recipe, ribs, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room))} ribs");
+        if (recipe.Ribs is { } ribs)
+            details.Add($"{CeilingRibs.Build(mesh, plan, recipe, ribs, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), seed, ref voussoirs)} ribs");
         if (recipe.BlindArches is { } blind)
-            details.Add($"{BlindArches.Build(mesh, recipe, blind, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground))} blind arches");
+            details.Add($"{BlindArches.Build(mesh, recipe, blind, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground), seed, ref voussoirs)} blind arches");
+        if (recipe.Voussoirs is not null) details.Add($"{voussoirs} voussoirs");
         if (recipe.Columns is { } columns)
         {
             (int hall, int corners) = KitColumns.Build(mesh, collision, plan, recipe, columns, seed);

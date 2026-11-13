@@ -1,12 +1,12 @@
 using System.Numerics;
+using static RustyRiders.Game.Levels.Kit.StoneShape;
 
 namespace RustyRiders.Game.Levels.Kit;
 
 /// <summary>
 /// Walls of real stones (<see cref="WallStonesDefinition"/>). A stretch of wall is laid in courses; each course is a
-/// row of stones of the recipe's kinds, nudged so no joint sits right over one in the course below. Each stone is its
-/// kind's irregular outline (chipped corners, nicked edges) run out from the wall to its relief, bevelled in to a
-/// pillowed or hewn face, with the joints between stones showing the wall behind. Outlines and column shafts are laid
+/// row of stones of the recipe's kinds, nudged so no joint sits right over one in the course below. Each stone is a
+/// <see cref="StoneShape"/> standing out from the wall to its relief, with the joints between stones showing the wall behind. Outlines and column shafts are laid
 /// as loops whose corners interlock (WallStones.Corners.cs); a doorway's head is laid on its own (<see cref="Lay"/>).
 /// Layouts come from <see cref="Random"/>s seeded by the level, so a level always lays the same stones.
 /// </summary>
@@ -57,6 +57,7 @@ internal static partial class WallStones
         List<float> joints = [];
         float x = x0, total = stones.Stones.Sum(s => s.Weight), g = stones.Joint / 2;
         bool first = true;
+        StoneFrame frame = new(p => OpenGround.Gltf(origin + along * p.X, p.Y), OpenGround.Gltf(inward, 0));
         while (x < x1 - 1e-3f)
         {
             StoneKind kind = Pick(random, stones.Stones, total);
@@ -70,7 +71,8 @@ internal static partial class WallStones
             Vector2 patch = new((float)random.NextDouble(), (float)random.NextDouble());
             if (skip?.Invoke(x, end, y0, y1) != true && end - x > 2 * g)
             {
-                Stone(mesh, recipe, stones, surface, kind, random, origin, along, inward, x + g, end - g, y0 + g, y1 - g, relief, patch);
+                StoneShape.Build(mesh, LevelKit.Slot(surface), recipe.Metres(surface), stones.Bevel, kind, random, frame,
+                    Outline(kind, random, x + g, end - g, y0 + g, y1 - g), relief, patch);
                 laid++;
             }
             x = end;
@@ -79,99 +81,4 @@ internal static partial class WallStones
         below = joints;
         return laid;
     }
-
-    /// <summary>
-    /// One stone: its outline (the rectangle with chipped corners and nicked edges, <see cref="Outline"/>) runs straight
-    /// out from the wall, then bevels in to its face, which bulges to a point over the middle and stands a little
-    /// unevenly round its edge; a hewn face is flat facets, any other smooth.
-    /// </summary>
-    private static void Stone(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, KitSurface surface, StoneKind kind, Random random,
-        Vector2 origin, Vector2 along, Vector2 inward, float x0, float x1, float y0, float y1, float relief, Vector2 patch)
-    {
-        int slot = LevelKit.Slot(surface);
-        float metres = recipe.Metres(surface);
-        float b = MathF.Min(stones.Bevel, MathF.Min(relief / 2, MathF.Min((x1 - x0) / 4, (y1 - y0) / 4)));
-        float edge = relief - b; // where the sides meet the bevel
-        Vector3 At(Vector2 p, float d) => OpenGround.Gltf(origin + along * p.X + inward * d, p.Y);
-        Vector2 offset = patch * metres; // each stone shows its own patch of the texture
-        Vector2 Uv(Vector2 p) => new((offset.X + p.X) / metres, -(offset.Y + p.Y) / metres);
-        Vector3 out_ = OpenGround.Gltf(inward, 0);
-        Vector3 Across(Vector2 local) => OpenGround.Gltf(along * local.X, local.Y); // a wall-plane direction in glTF
-
-        List<Vector2> rim = Outline(kind, random, x0, x1, y0, y1);
-        Vector2 middle = rim.Aggregate(Vector2.Zero, (sum, p) => sum + p) / rim.Count;
-        Vector2[] face = rim.Select(p => p + Vector2.Normalize(middle - p) * b * 1.4f).ToArray();
-        float[] lift = rim.Select(_ => relief + Between(random, -kind.Facet, kind.Facet)).ToArray();
-        int n = rim.Count;
-        for (int i = 0; i < n; i++)
-        {
-            Vector2 p = rim[i], q = rim[(i + 1) % n], d = q - p;
-            Vector3 outward = Across(new Vector2(d.Y, -d.X)); // the outline runs anticlockwise seen from the room
-            float l0 = (p - rim[0]).Length(), l1 = l0 + d.Length();
-            mesh.Face(slot, At(p, 0), At(q, 0), At(q, edge), At(p, edge),
-                new Vector2((offset.X + l0) / metres, 0), new Vector2((offset.X + l1) / metres, 0),
-                new Vector2((offset.X + l1) / metres, edge / metres), new Vector2((offset.X + l0) / metres, edge / metres), outward);
-            if (b > 0)
-                mesh.Face(slot, At(p, edge), At(q, edge), At(face[(i + 1) % n], lift[(i + 1) % n]), At(face[i], lift[i]),
-                    Uv(p), Uv(q), Uv(face[(i + 1) % n]), Uv(face[i]), outward + out_);
-        }
-        // The face: a fan from its peak, bulged by the kind's pillow; a hewn face's peak sits off the middle, so its facets differ.
-        Vector2 peak = kind.Hewn ? middle + new Vector2(Between(random, -.25f, .25f) * (x1 - x0), Between(random, -.25f, .25f) * (y1 - y0)) : middle;
-        Vector3 top = At(peak, relief + kind.Pillow);
-        if (kind.Hewn)
-            for (int i = 0; i < n; i++)
-                mesh.Triangle(slot, mesh.Vertex(top, Uv(peak)), mesh.Vertex(At(face[i], lift[i]), Uv(face[i])),
-                    mesh.Vertex(At(face[(i + 1) % n], lift[(i + 1) % n]), Uv(face[(i + 1) % n])), out_);
-        else
-        {
-            uint hub = mesh.Vertex(top, Uv(middle));
-            uint[] ring = Enumerable.Range(0, n).Select(i => mesh.Vertex(At(face[i], lift[i]), Uv(face[i]))).ToArray();
-            for (int i = 0; i < n; i++) mesh.Triangle(slot, hub, ring[i], ring[(i + 1) % n], out_);
-        }
-    }
-
-    /// <summary>
-    /// A stone's outline, anticlockwise from its bottom-left as seen from the room: each corner of the rectangle chipped
-    /// off by chance, and each edge by chance nicked with a shallow notch. Chips and nicks stay within a third of the
-    /// stone's smaller side.
-    /// </summary>
-    private static List<Vector2> Outline(StoneKind kind, Random random, float x0, float x1, float y0, float y1)
-    {
-        Vector2[] corners = [new(x0, y0), new(x1, y0), new(x1, y1), new(x0, y1)];
-        float most = MathF.Min(kind.Chip, MathF.Min(x1 - x0, y1 - y0) / 3);
-        List<Vector2> rim = [];
-        for (int c = 0; c < 4; c++)
-        {
-            Vector2 corner = corners[c], before = corners[(c + 3) % 4], after = corners[(c + 1) % 4];
-            if (most > 0 && random.NextDouble() < kind.ChipChance)
-            {
-                rim.Add(corner + Vector2.Normalize(before - corner) * Between(random, most * .3f, most));
-                rim.Add(corner + Vector2.Normalize(after - corner) * Between(random, most * .3f, most));
-            }
-            else rim.Add(corner);
-            if (most > 0 && random.NextDouble() < kind.Nicks)
-            {
-                // A nick partway along the edge to the next corner, cut into the stone.
-                Vector2 edge = after - corner, dir = Vector2.Normalize(edge), into = new(-dir.Y, dir.X);
-                float length = edge.Length(), width = Between(random, most * .4f, most), at = Between(random, .25f, .75f) * length;
-                if (width < length / 3)
-                {
-                    rim.Add(corner + dir * (at - width / 2));
-                    rim.Add(corner + dir * at + into * Between(random, most * .2f, most * .5f));
-                    rim.Add(corner + dir * (at + width / 2));
-                }
-            }
-        }
-        return rim;
-    }
-
-    private static StoneKind Pick(Random random, StoneKind[] kinds, float total)
-    {
-        double pick = random.NextDouble() * total;
-        foreach (StoneKind kind in kinds)
-            if ((pick -= kind.Weight) < 0) return kind;
-        return kinds[^1];
-    }
-
-    private static float Between(Random random, float min, float max) => min + (float)random.NextDouble() * (max - min);
 }

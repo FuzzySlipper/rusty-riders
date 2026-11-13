@@ -131,12 +131,12 @@ internal sealed class Walker : IDisposable
         Reset();
     }
 
-    /// <summary>Stands the walker at <paramref name="feet"/> facing a yaw (developer overrides).</summary>
-    internal void Place(Vector3 feet, float yawDegrees)
+    /// <summary>Stands the walker at <paramref name="feet"/> facing a yaw, and a pitch if given (developer overrides).</summary>
+    internal void Place(Vector3 feet, float yawDegrees, float pitchDegrees = 0)
     {
         Position = feet + Vector3.UnitY * (Height / 2);
         Motion = default;
-        LookState = new LookState(yawDegrees * MathF.PI / 180, 0);
+        LookState = new LookState(yawDegrees * MathF.PI / 180, pitchDegrees * MathF.PI / 180);
         Stood();
     }
 

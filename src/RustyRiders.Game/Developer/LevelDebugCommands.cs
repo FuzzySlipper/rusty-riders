@@ -59,13 +59,16 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
     }
 
     [DebugCommand("riders.dev.goto", Description = "Developer override: stand at floor point (x, z) facing a yaw in degrees (0 faces -Z, 90 faces +X), for repeatable captures.")]
-    public DebugCommandResult GoTo(float x, float z, float yaw)
+    public DebugCommandResult GoTo(float x, float z, float yaw) => View(x, z, yaw, 0);
+
+    [DebugCommand("riders.dev.view", Description = "Developer override: as riders.dev.goto, looking up (positive pitch) or down by a pitch in degrees.")]
+    public DebugCommandResult View(float x, float z, float yaw, float pitch)
     {
-        if (!float.IsFinite(x) || !float.IsFinite(z) || !float.IsFinite(yaw))
-            return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "The point and yaw must be finite numbers.");
+        if (!float.IsFinite(x) || !float.IsFinite(z) || !float.IsFinite(yaw) || !float.IsFinite(pitch))
+            return DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, "The point, yaw and pitch must be finite numbers.");
         Vector3 point = new(x, 0, z);
         Vector3 stand = scene() is LevelScene level ? level.Navigation.Nearest(point) ?? point : point;
-        walker.Place(stand, yaw);
+        walker.Place(stand, yaw, pitch);
         return DebugCommandResult.Success(FormattableString.Invariant($"Standing at {stand.X:0.0}, {stand.Y:0.0}, {stand.Z:0.0}."));
     }
 

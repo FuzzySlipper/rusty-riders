@@ -82,7 +82,8 @@ internal sealed record PlanOverlayLook(bool Show, float Lift, float[] RoomColor,
 /// set against room walls, an arch over every doorway, and <see cref="Dressing"/>: the old game's props placed over the
 /// plan by typed rules. Its details (KitDetailDefinitions.cs) build toward the world's concept scene:
 /// <see cref="Runners"/> on the floor, <see cref="Ribs"/> across ceilings, <see cref="BlindArches"/> on walls and
-/// <see cref="Sconces"/> lighting the doorways, its own <see cref="Columns"/>, and <see cref="WallStones"/> laid on its walls. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
+/// <see cref="Sconces"/> lighting the doorways, its own <see cref="Columns"/>, <see cref="WallStones"/> laid on its walls and
+/// the <see cref="Voussoirs"/> its arches and ribs may be built of. Converted models of each tile prefab whose file names start with one of <see cref="Props"/>
 /// stay where the tile prefab put them.
 /// </summary>
 internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, string CeilingMaterial, string TrimMaterial,
@@ -90,7 +91,7 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
     DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null, RunnerDefinition? Runners = null,
     RibDefinition? Ribs = null, BlindArchDefinition? BlindArches = null, SconceDefinition? Sconces = null, ColumnsDefinition? Columns = null,
-    WallStonesDefinition? WallStones = null)
+    WallStonesDefinition? WallStones = null, VoussoirDefinition? Voussoirs = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
@@ -114,6 +115,16 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         recipe.Sconces?.Validate(path, plan);
         recipe.Columns?.Validate(path);
         recipe.WallStones?.Validate(path);
+        recipe.Voussoirs?.Validate(path);
+        foreach ((string field, bool stones, float face) in (IEnumerable<(string, bool, float)>)[
+            ("ribs.stones", recipe.Ribs?.Stones ?? false, (recipe.Ribs?.Width ?? 0) / 2),
+            ("doorArch.ring.stones", recipe.DoorArch?.Ring?.Stones ?? false, recipe.DoorArch?.Ring?.Depth ?? 0),
+            ("blindArches.ring.stones", recipe.BlindArches?.Ring.Stones ?? false, recipe.BlindArches?.Ring.Depth ?? 0)])
+            if (stones)
+            {
+                Authored.Require(recipe.Voussoirs is not null, path, field, "needs the kit's voussoirs.");
+                recipe.Voussoirs!.Fits(path, field, face);
+            }
         return recipe;
     }
 
@@ -208,8 +219,11 @@ internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surfa
     }
 }
 
-/// <summary>A band of voussoirs <see cref="Width"/> wide round an arch, standing <see cref="Depth"/> out from the room's wall.</summary>
-internal sealed record ArchRingDefinition(float Width, float Depth, KitSurface Surface);
+/// <summary>
+/// A band <see cref="Width"/> wide round an arch, standing <see cref="Depth"/> out from the room's wall; with
+/// <see cref="Stones"/> and the kit's voussoirs, built of voussoirs, otherwise one smooth band.
+/// </summary>
+internal sealed record ArchRingDefinition(float Width, float Depth, KitSurface Surface, bool Stones = false);
 
 /// <summary>
 /// A kind of room a world's kit builds. Each room of a level takes one of the families whose size range fits its cells,

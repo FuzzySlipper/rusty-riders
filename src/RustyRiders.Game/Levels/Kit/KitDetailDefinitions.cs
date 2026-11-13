@@ -21,9 +21,10 @@ internal sealed record RunnerDefinition(float Width, float Lift)
 /// <summary>
 /// Ribs across room ceilings, springing from opposite pilasters (<see cref="CeilingRibs"/>): <see cref="Width"/> wide and
 /// <see cref="Depth"/> deep under the ceiling in the middle of their span, curving down <see cref="Haunch"/> more to the
-/// walls in a half-ellipse drawn with <see cref="Segments"/> pieces. They take <see cref="Surface"/>.
+/// walls in a half-ellipse drawn with <see cref="Segments"/> pieces. They take <see cref="Surface"/>; with
+/// <see cref="Stones"/> and the kit's voussoirs, they are built of voussoirs in it.
 /// </summary>
-internal sealed record RibDefinition(float Width, float Depth, float Haunch, int Segments, KitSurface Surface = KitSurface.Trim)
+internal sealed record RibDefinition(float Width, float Depth, float Haunch, int Segments, KitSurface Surface = KitSurface.Trim, bool Stones = false)
 {
     internal void Validate(string path, PilasterDefinition? pilasters)
     {
@@ -138,17 +139,7 @@ internal sealed record WallStonesDefinition(float MinCourse, float MaxCourse, St
         Authored.Positive(path, "wallStones.minCourse", MinCourse);
         Authored.AtLeast(path, "wallStones.maxCourse", MaxCourse, MinCourse);
         Authored.Require(Stones.Length > 0, path, "wallStones.stones", "must name at least one kind of stone.");
-        for (int i = 0; i < Stones.Length; i++)
-        {
-            Authored.Positive(path, $"wallStones.stones[{i}].weight", Stones[i].Weight);
-            Authored.Positive(path, $"wallStones.stones[{i}].minLength", Stones[i].MinLength);
-            Authored.AtLeast(path, $"wallStones.stones[{i}].maxLength", Stones[i].MaxLength, Stones[i].MinLength);
-            Authored.Within(path, $"wallStones.stones[{i}].chipChance", Stones[i].ChipChance, 0, 1);
-            Authored.AtLeast(path, $"wallStones.stones[{i}].chip", Stones[i].Chip, 0);
-            Authored.Within(path, $"wallStones.stones[{i}].nicks", Stones[i].Nicks, 0, 1);
-            Authored.AtLeast(path, $"wallStones.stones[{i}].pillow", Stones[i].Pillow, 0);
-            Authored.AtLeast(path, $"wallStones.stones[{i}].facet", Stones[i].Facet, 0);
-        }
+        for (int i = 0; i < Stones.Length; i++) Stones[i].Validate(path, $"wallStones.stones[{i}]");
         Authored.Positive(path, "wallStones.joint", Joint);
         Authored.Require(Joint < MinCourse / 2, path, "wallStones.joint", "must be well under a course's height.");
         Authored.Positive(path, "wallStones.minRelief", MinRelief);
@@ -173,4 +164,49 @@ internal sealed record WallStonesDefinition(float MinCourse, float MaxCourse, St
 /// metres proud of or below the rest. A <see cref="Hewn"/> face is cut in flat facets; otherwise it is smooth.
 /// </summary>
 internal sealed record StoneKind(string Id, float Weight, float MinLength, float MaxLength, float ChipChance = 0, float Chip = 0, float Nicks = 0,
-    float Pillow = 0, float Facet = 0, bool Hewn = false);
+    float Pillow = 0, float Facet = 0, bool Hewn = false)
+{
+    internal void Validate(string path, string field)
+    {
+        Authored.Positive(path, $"{field}.weight", Weight);
+        Authored.Positive(path, $"{field}.minLength", MinLength);
+        Authored.AtLeast(path, $"{field}.maxLength", MaxLength, MinLength);
+        Authored.Within(path, $"{field}.chipChance", ChipChance, 0, 1);
+        Authored.AtLeast(path, $"{field}.chip", Chip, 0);
+        Authored.Within(path, $"{field}.nicks", Nicks, 0, 1);
+        Authored.AtLeast(path, $"{field}.pillow", Pillow, 0);
+        Authored.AtLeast(path, $"{field}.facet", Facet, 0);
+    }
+}
+
+/// <summary>
+/// The stones arches and ribs are built of, when a part asks for them (its <c>stones</c>): its band is cut into
+/// voussoirs of <see cref="Stones"/>' kinds and lengths, picked by weight, laid from each springing toward a keystone at
+/// the crown that stands <see cref="Keystone"/> further out and reaches as much past the band's edges (none when 0).
+/// <see cref="Joint"/> metres separate them, showing a core of the <see cref="Backing"/> material. Each stone's face
+/// stands <see cref="MinJut"/> to <see cref="MaxJut"/> off the part's own face, its inner and outer edges up to
+/// <see cref="Sag"/> off the band's, and its front edges are cut back by <see cref="Bevel"/>. Seen from further off than
+/// a wall, they are meant to take simpler kinds than the wall's (few nicks, little facet).
+/// </summary>
+internal sealed record VoussoirDefinition(StoneKind[] Stones, float Joint, float Bevel, float MinJut, float MaxJut, float Sag, float Keystone,
+    KitSurface Backing = KitSurface.Ceiling)
+{
+    internal void Validate(string path)
+    {
+        Authored.Require(Stones.Length > 0, path, "voussoirs.stones", "must name at least one kind of stone.");
+        for (int i = 0; i < Stones.Length; i++) Stones[i].Validate(path, $"voussoirs.stones[{i}]");
+        Authored.Positive(path, "voussoirs.joint", Joint);
+        Authored.Require(Joint < Shortest / 2, path, "voussoirs.joint", "must be well under the shortest stone.");
+        Authored.AtLeast(path, "voussoirs.bevel", Bevel, 0);
+        Authored.AtLeast(path, "voussoirs.maxJut", MaxJut, MinJut);
+        Authored.AtLeast(path, "voussoirs.sag", Sag, 0);
+        Authored.AtLeast(path, "voussoirs.keystone", Keystone, 0);
+    }
+
+    /// <summary>Checks a part built of these stones keeps every stone's face out: <paramref name="face"/> is how far the part's face stands from its base.</summary>
+    internal void Fits(string path, string field, float face) =>
+        Authored.Require(face + MinJut > Joint, path, field, $"is too shallow for voussoirs that jut as little as {MinJut} m.");
+
+    /// <summary>The shortest stone of any kind.</summary>
+    internal float Shortest => Stones.Min(s => s.MinLength);
+}

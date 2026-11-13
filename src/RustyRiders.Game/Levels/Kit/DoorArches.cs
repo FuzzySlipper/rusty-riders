@@ -7,7 +7,7 @@ namespace RustyRiders.Game.Levels.Kit;
 /// outline's walls) stand to the plan's door height, the springing line. Above it the kit builds:
 /// - the arched soffit through the wall band, from the corridor's face to the room's;
 /// - the room-side and corridor-side wall faces between the arch and each side's ceiling, over the door's width;
-/// - the optional ring of voussoirs standing out from the room-side face (clear of any wall stones);
+/// - the optional ring standing out from the room-side face (clear of any wall stones), smooth or laid in voussoirs;
 /// - with wall stones, stones laid on both faces above the arch, clear of it and its ring.
 ///
 /// Walls take world-metre UVs along the wall's axis and up, as the kit's step faces do; the soffit and the ring run in
@@ -15,8 +15,19 @@ namespace RustyRiders.Game.Levels.Kit;
 /// </summary>
 internal static class DoorArches
 {
+    private const float StripOff = .01f; // metres the strip behind a ring's voussoirs stands off the wall
+
+    /// <summary>Point <paramref name="k"/> of a ring's outer edge: the head's half-ellipse grown by <paramref name="width"/>.</summary>
+    private static (float S, float Y) Outer(int k, int segments, float half, float spring, float rise, float width)
+    {
+        float angle = MathF.PI * (1 - k / (float)segments);
+        return ((half + width) * MathF.Cos(angle), spring + (rise + width) * MathF.Sin(angle));
+    }
+
     /// <param name="stones">Counts the wall stones laid over the doorways.</param>
-    internal static int Build(MeshBuilder mesh, MeshBuilder collision, RoomPlan plan, KitRecipe recipe, ArchDefinition arch, int seed, ref int stones)
+    /// <param name="voussoirs">Counts the voussoirs of their rings.</param>
+    internal static int Build(MeshBuilder mesh, MeshBuilder collision, RoomPlan plan, KitRecipe recipe, ArchDefinition arch, int seed, ref int stones,
+        ref int voussoirs)
     {
         int index = 0;
         PlanRules rules = plan.Rules;
@@ -70,7 +81,19 @@ internal static class DoorArches
             }
 
             float ringWidth = arch.Ring?.Width ?? 0;
-            if (arch.Ring is { } ring) Ring(mesh, recipe, ring, head, half, spring, arch.Rise, depth, recipe.WallStones?.Deepest ?? 0, At);
+            float proud = recipe.WallStones?.Deepest ?? 0;
+            if (arch.Ring is { Stones: true } stoneRing && recipe.Voussoirs is { } ringStones)
+            {
+                // The ring's band on the room's wall face; its joints show a strip of the voussoirs' backing just off it.
+                VoussoirBand band = new(head.Select(p => At(p.S, depth, p.Y)).ToArray(),
+                    Enumerable.Range(0, head.Length).Select(k => Outer(k, head.Length - 1, half, spring, arch.Rise, stoneRing.Width))
+                        .Select(p => At(p.S, depth, p.Y)).ToArray(), stoneRing.Width);
+                Vector3 toRoom = OpenGround.Gltf(into, 0);
+                band.Strip(mesh, LevelKit.Slot(ringStones.Backing), recipe.Metres(ringStones.Backing), toRoom, StripOff, 0);
+                voussoirs += Voussoirs.Lay(mesh, recipe, ringStones, stoneRing.Surface, band, toRoom, proud + stoneRing.Depth, 0,
+                    new Random(unchecked(seed * 7919 + 3_000_017 + index * 104729)));
+            }
+            else if (arch.Ring is { } ring) Ring(mesh, recipe, ring, head, half, spring, arch.Rise, depth, proud, At);
             if (recipe.WallStones is { } wall)
             {
                 // A stone stays clear of the arch (and, on the room side, its ring): none comes nearer its middle than that.
@@ -102,11 +125,7 @@ internal static class DoorArches
         int slot = LevelKit.Slot(ring.Surface);
         float metres = recipe.Metres(ring.Surface), front = depth + proud + ring.Depth, around = 0;
         int segments = head.Length - 1;
-        (float S, float Y) Outer(int k)
-        {
-            float angle = MathF.PI * (1 - k / (float)segments);
-            return ((half + ring.Width) * MathF.Cos(angle), spring + (rise + ring.Width) * MathF.Sin(angle));
-        }
+        (float S, float Y) Outer(int k) => DoorArches.Outer(k, segments, half, spring, rise, ring.Width);
         for (int k = 0; k < segments; k++)
         {
             (float s0, float y0) = head[k];

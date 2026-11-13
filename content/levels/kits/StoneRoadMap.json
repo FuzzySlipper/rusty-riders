@@ -59,7 +59,8 @@
     "ring": {
       "width": 0.6,
       "depth": 0.15,
-      "surface": "Trim"
+      "surface": "Trim",
+      "stones": true
     }
   },
   "dressing": [
@@ -81,10 +82,10 @@
     }
   ],
   "runners": { "width": 2.5, "lift": 0.02 },
-  "ribs": { "width": 0.6, "depth": 0.45, "haunch": 2.5, "segments": 16 },
+  "ribs": { "width": 0.6, "depth": 0.45, "haunch": 2.5, "segments": 16, "stones": true },
   "blindArches": {
     "sill": 1.6, "spring": 4.5, "margin": 0.4, "topClearance": 1.2, "segments": 12, "panel": "Ceiling",
-    "ring": { "width": 0.45, "depth": 0.18, "surface": "Trim" }
+    "ring": { "width": 0.45, "depth": 0.18, "surface": "Trim", "stones": true }
   },
   "sconces": {
     "height": 3.2, "gap": 0.6, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.32, 0.05], "flameEmission": 2,
@@ -93,6 +94,13 @@
   "columns": {
     "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9, "stones": true },
     "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1, "stones": true }
+  },
+  "voussoirs": {
+    "joint": 0.04, "bevel": 0.03, "minJut": -0.03, "maxJut": 0.04, "sag": 0.04, "keystone": 0.08,
+    "stones": [
+      { "id": "dressed", "weight": 3, "minLength": 0.5, "maxLength": 0.8, "chipChance": 0.5, "chip": 0.08, "pillow": 0.015, "facet": 0.008 },
+      { "id": "rough", "weight": 1, "minLength": 0.4, "maxLength": 0.6, "chipChance": 0.85, "chip": 0.12, "nicks": 0.2, "pillow": 0.02, "facet": 0.02, "hewn": true }
+    ]
   },
   "wallStones": {
     "minCourse": 0.7, "maxCourse": 1.1, "joint": 0.06, "minRelief": 0.04, "maxRelief": 0.12, "pushedChance": 0.12, "pushed": 0.1,

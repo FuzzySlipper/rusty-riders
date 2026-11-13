@@ -1,4 +1,5 @@
 using System.Numerics;
+using static RustyRiders.Game.Levels.Kit.StoneShape;
 
 namespace RustyRiders.Game.Levels.Kit;
 
