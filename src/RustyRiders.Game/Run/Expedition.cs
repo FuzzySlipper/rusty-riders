@@ -59,7 +59,8 @@ internal sealed class Expedition : IDisposable
 
     /// <summary>
     /// Goes through a rift. The return rift banks the haul and begins a new run; any other leads one level deeper, to a
-    /// level of its world on a layout and seed drawn from this level's seed.
+    /// level of its world on a layout and seed drawn from this level's seed. The next level is built in the background,
+    /// and play enters it (<see cref="EnterScene"/>) once it is drawn.
     /// </summary>
     internal void Travel(LevelScene from, RiftPoint rift)
     {
@@ -71,8 +72,7 @@ internal sealed class Expedition : IDisposable
         }
         Random random = new(unchecked(scenes.Seed * 31 + rift.Index + 1));
         Depth++;
-        scenes.GoTo(world.Tileset, from.TravelLayouts[random.Next(from.TravelLayouts.Length)], random.Next());
-        EnterScene();
+        scenes.Travel(world.Tileset, from.TravelLayouts[random.Next(from.TravelLayouts.Length)], random.Next());
     }
 
     /// <summary>The player fell: the run ends and its haul is lost.</summary>
@@ -95,7 +95,8 @@ internal sealed class Expedition : IDisposable
 
     public void Dispose() => store.Dispose();
 
-    // A run ends: the bank and run count are saved, the summary is written, and the next run begins at the start level.
+    // A run ends: the bank and run count are saved, the summary is written, and the next run begins at the start level
+    // (built in the background; play enters it once it is drawn).
     private void End(BankState next, string summary, int haul)
     {
         Bank = next with { Runs = Run };
@@ -105,8 +106,7 @@ internal sealed class Expedition : IDisposable
         Run++;
         Depth = 0;
         play.ResetPlayer();
-        scenes.GoTo(startTileset, startLayout, unchecked(startSeed + Run * tuning.SeedStride));
-        EnterScene();
+        scenes.Travel(startTileset, startLayout, unchecked(startSeed + Run * tuning.SeedStride));
     }
 }
 

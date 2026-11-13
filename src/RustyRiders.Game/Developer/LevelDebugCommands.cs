@@ -13,7 +13,7 @@ namespace RustyRiders.Game.Developer;
 /// points, and developer overrides that stand the walker somewhere for inspection and playtests.
 /// </summary>
 internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, Func<string, string, int, string?> buildLevel,
-    Func<string, string?> setBuild) : IDebugCommandModule
+    Func<string, string?> setBuild, Func<(bool Building, string Last)> background, Action<string, string, int> travel) : IDebugCommandModule
 {
     private const float ApproachMetres = 4;
 
@@ -33,6 +33,20 @@ internal sealed class LevelDebugCommands(Func<IWalkScene> scene, Walker walker, 
         buildLevel(tileset, layout, seed) is { } refusal
             ? DebugCommandResult.Failure(DebugCommandStatus.InvalidArguments, refusal)
             : Inspect();
+
+    [DebugCommand("riders.dev.travelto", Description = "Developer override: build a level of a tileset, layout and seed in the background, as a rift's destination is, and enter it once drawn; riders.level.building reports when and what it cost.")]
+    public DebugCommandResult TravelTo(string tileset, string layout, int seed)
+    {
+        travel(tileset, layout, seed);
+        return Building();
+    }
+
+    [DebugCommand("riders.level.building", Description = "Read whether a level is being built in the background (travel, the developer keys) and what the last such build cost: its seconds, attempts, updates and the longest update's share.")]
+    public DebugCommandResult Building()
+    {
+        (bool building, string last) = background();
+        return DebugCommandResult.Success(building ? $"building; last: {last}" : $"idle; last: {last}");
+    }
 
     [DebugCommand("riders.level.route", Description = "Route from the arrival point to rift <index>: outcome, cells visited, and the nearest point reached when there is no path.")]
     public DebugCommandResult Route(int index)

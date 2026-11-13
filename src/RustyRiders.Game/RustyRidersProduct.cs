@@ -37,7 +37,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
     {
         ArgumentNullException.ThrowIfNull(context);
         engine = context.Engine;
-        scenes = new Scenes(engine, LevelRules.Load(engine));
+        scenes = new Scenes(engine, context.Jobs, LevelRules.Load(engine));
         WalkerTuning walking = WalkerTuning.Load(engine);
         walker = new Walker(engine, walking, HeadBobFile.Load(engine), scenes.Current);
         play = new Play(engine, walker, walking.Radius);
@@ -65,6 +65,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         }
         ReloadHeld(update.ContentChanges);
         time.Observe(update.Facts);
+        if (scenes.Advance()) EnterScene(); // a level built in the background is drawn: play moves into it
         float delta = (float)update.Facts.FixedDeltaSeconds;
         // Look and controls in host time, so they stay live while the world holds; the body per admitted step.
         FpsInputFrame frame = walker.ReadInput(update.Input, (float)update.Facts.HostElapsedSeconds);
@@ -75,6 +76,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
             return ProductUpdateResult.None;
         }
         if (DeveloperKeys(physical)) EnterScene();
+        bool building = scenes.Building; // the world holds, and nothing leaves the level, until the next is drawn
         play.HandleIntents(update.Input);
         if (physical.Pressed(KeyboardControl.KeyF)) walker.ToggleFlight();
         jumpPending |= frame.JumpPressed;
@@ -86,10 +88,10 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
             fell = play.Step(delta, frame, jumpPending);
             jumpPending = false;
         }
-        if (fell || play.Vitals.Defeated) Defeated(); // a hit can land while the world holds, as well as in a step
+        if (!building && (fell || play.Vitals.Defeated)) Defeated(); // a hit can land while the world holds, as well as in a step
         play.Settle();
         if (update.Facts.AdmittedStepCount > 0) scenes.Current.Animate(time.WorldSeconds);
-        if (scenes.Level is { } level && level.RiftAt(walker.Feet) is { } rift)
+        if (!building && scenes.Level is { } level && level.RiftAt(walker.Feet) is { } rift)
         {
             run.Travel(level, rift);
             jumpPending = false;
@@ -97,7 +99,8 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
             return ProductUpdateResult.None;
         }
         sampleTime = time.WorldSeconds;
-        time.Choose(new TimeDemand(!scenes.ShowingLevel || walker.Flying, frame.Movement.Length(), frame.SprintHeld && !frame.CrouchHeld,
+        if (scenes.Building) time.Hold();
+        else time.Choose(new TimeDemand(!scenes.ShowingLevel || walker.Flying, frame.Movement.Length(), frame.SprintHeld && !frame.CrouchHeld,
             walker.Airborne || jumpPending, physical.Pressed(KeyboardControl.KeyT), actionSeconds));
         walker.Present(update.Facts.HostElapsedSeconds);
         play.Combat.Present(update.Facts.HostElapsedSeconds);
@@ -140,7 +143,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
 
     public void RegisterDebugCommands(IDebugCommandModuleRegistrar registrar)
     {
-        registrar.Register(new LevelDebugCommands(() => scenes.Current, walker, EnterLevel, RebuildAs));
+        registrar.Register(new LevelDebugCommands(() => scenes.Current, walker, EnterLevel, RebuildAs, () => (scenes.Building, scenes.LastBuild), scenes.Travel));
         registrar.Register(new PlayerDebugCommands(play.Vitals, walker, Publish));
         registrar.Register(new CombatDebugCommands(play.Combat, walker));
         registrar.Register(new EnemyDebugCommands(play.Enemies, walker));
@@ -175,16 +178,22 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         fonts.Dispose();
     }
 
-    /// <summary>G toggles the gallery; in a level N takes the next seed, B the next build and V the next floor texture.</summary>
+    /// <summary>
+    /// G toggles the gallery at once (true: play takes up the new scene); in a level N takes the next seed, B the next
+    /// build and V the next floor texture, built in the background.
+    /// </summary>
     private bool DeveloperKeys(PhysicalInputState physical)
     {
-        if (physical.Pressed(KeyboardControl.KeyG)) scenes.ToggleGallery();
-        else if (!scenes.ShowingLevel) return false;
-        else if (physical.Pressed(KeyboardControl.KeyN)) scenes.NextSeed();
+        if (physical.Pressed(KeyboardControl.KeyG))
+        {
+            scenes.ToggleGallery();
+            return true;
+        }
+        if (!scenes.ShowingLevel) return false;
+        if (physical.Pressed(KeyboardControl.KeyN)) scenes.NextSeed();
         else if (physical.Pressed(KeyboardControl.KeyB)) scenes.NextBuild();
         else if (physical.Pressed(KeyboardControl.KeyV)) scenes.NextFloorTexture();
-        else return false;
-        return true;
+        return false;
     }
 
     /// <summary>Builds and enters a level (developer override); returns why it could not, or null.</summary>

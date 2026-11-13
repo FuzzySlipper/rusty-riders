@@ -45,7 +45,7 @@ internal static class KitColumns
         }
         else Block(shaftBottom, shaftTop, column.Width / 2, top: false, bottom: false);
         Block(shaftTop, top, column.CapitalWidth / 2, top: false, bottom: true);
-        LevelKit.Box(collision, OpenGround.Gltf(at, 0), new Vector3(column.Footprint, top, column.Footprint));
+        KitGeometry.Box(collision, OpenGround.Gltf(at, 0), new Vector3(column.Footprint, top, column.Footprint));
 
         // A square block between two heights: its four sides, and its top or underside where it steps in or out.
         void Block(float y0, float y1, float half, bool top, bool bottom)

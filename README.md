@@ -65,7 +65,7 @@ Open the URL printed by the host and click to capture the mouse:
 The level collides with its ground and walls. In the gallery only the ground
 collides, so fly to see raised floors.
 
-The level's tileset, layout and seed are set in `content/level.json`. Its `build` is `tiles` (the default), `shells` or `sweeps`, generated level geometry for tilesets with a recipe in `content/levels/shells/` (CaveMap, LavaMap and ForestMap), or `kit`, a world's parametric kit over the room plan for tilesets with a recipe in `content/levels/kits/` (StoneRoadMap); see Den `technical/level-generation`. With `--live-debug`, `riders.level.plan` reads the room plan, `riders.dev.plan true` draws it over the level, and `riders.dev.build kit` rebuilds the level as another build. The
+The level's tileset, layout and seed are set in `content/level.json`. Its `build` is `tiles` (the default), `shells` or `sweeps`, generated level geometry for tilesets with a recipe in `content/levels/shells/` (CaveMap, LavaMap and ForestMap), or `kit`, a world's parametric kit over the room plan for tilesets with a recipe in `content/levels/kits/` (StoneRoadMap); see Den `technical/level-generation`. With `--live-debug`, `riders.level.plan` reads the room plan, `riders.dev.plan true` draws it over the level, `riders.dev.build kit` rebuilds the level as another build, and `riders.dev.travelto` builds a level in the background as a rift does (`riders.level.building` reports its cost). The
 walker tuning is in `content/walker.json`, and the gallery's exhibits in
 `content/gallery.json`.
 To run it in the background instead, `rusty dev start` (same options) returns once the

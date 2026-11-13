@@ -3,7 +3,7 @@ using System.Numerics;
 namespace RustyRiders.Game.Levels.Kit;
 
 /// <summary>The kit's trims: mouldings and ledges swept along the plan's walls (see <see cref="TrimDefinition"/>).</summary>
-internal sealed partial class LevelKit
+internal sealed partial class KitGeometry
 {
     /// <summary>
     /// A trim swept along walls. A ceiling trim goes round the whole outline of its one area. A floor trim runs along
@@ -49,7 +49,7 @@ internal sealed partial class LevelKit
         Vector2 Point(int i) => plan.Metres(loop[i % n].Point);
         Vector2 RunInward(int run) => Inward(Point(run), Point(run + 1));
         Vector2 Mitre(Vector2 before, Vector2 after) => (before + after) / (1 + Vector2.Dot(before, after));
-        int slot = Slot(trim.Surface);
+        int slot = LevelKit.Slot(trim.Surface);
         float metres = recipe.Metres(trim.Surface);
         float[] arc = new float[trim.Profile.Length];
         for (int p = 1; p < arc.Length; p++)

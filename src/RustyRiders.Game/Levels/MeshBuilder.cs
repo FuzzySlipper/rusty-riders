@@ -60,9 +60,13 @@ internal sealed class MeshBuilder
         Triangle(slot, a, c, d, facing);
     }
 
-    /// <summary>The mesh as built so far (not its <see cref="Shaded"/> companion), with its normals made final: nothing is added after.</summary>
-    internal MeshResource Create(IEngineContext engine, Material[] materials)
+    /// <summary>
+    /// The mesh as built so far (not its <see cref="Shaded"/> companion), with its normals made final: nothing is added
+    /// after. <paramref name="deferred"/> uploads it on the renderer's workers, off the update.
+    /// </summary>
+    internal MeshResource Create(IEngineContext engine, Material[] materials, bool deferred = false)
     {
+        Finish();
         uint[] indices = new uint[slots.Sum(slot => slot.Count)];
         List<MeshGroup> groups = [];
         int start = 0;
@@ -73,10 +77,66 @@ internal sealed class MeshBuilder
             slots[slot].CopyTo(indices, start);
             start += slots[slot].Count;
         }
-        for (int i = 0; i < count; i++) normals[i] = normals[i] == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(normals[i]); // final: no more triangles accumulate
         MeshMaterialBinding[] bindings = materials.Select((material, slot) => new MeshMaterialBinding((uint)slot, material)).ToArray();
         return engine.Graphics.CreateMeshResource(new MeshResourceCreateRequest(positions.AsMemory(0, count), normals.AsMemory(0, count), uvs.AsMemory(0, count),
-            ReadOnlyMemory<Color>.Empty, indices, groups.ToArray(), bindings) { ProductData = data is null ? ReadOnlyMemory<Vector4>.Empty : data.AsMemory(0, count) });
+            ReadOnlyMemory<Color>.Empty, indices, groups.ToArray(), bindings)
+        {
+            ProductData = data is null ? ReadOnlyMemory<Vector4>.Empty : data.AsMemory(0, count),
+            Deferred = deferred,
+        });
+    }
+
+    /// <summary>
+    /// The mesh (not its companion) cut into <paramref name="count"/> meshes, each triangle going whole to the band
+    /// <paramref name="band"/> names for its centroid, with its normals made final first. Nothing is added to either after.
+    /// </summary>
+    internal MeshBuilder[] Split(int count, Func<Vector3, int> band)
+    {
+        Finish();
+        MeshBuilder[] bands = Enumerable.Range(0, count).Select(_ => new MeshBuilder(slots.Length) { finished = true }).ToArray();
+        int[][] which = slots.Select(indices =>
+        {
+            int[] of = new int[indices.Count / 3];
+            for (int t = 0; t < of.Length; t++) of[t] = band((positions[indices[3 * t]] + positions[indices[3 * t + 1]] + positions[indices[3 * t + 2]]) / 3);
+            return of;
+        }).ToArray();
+        int[] map = new int[this.count];
+        for (int b = 0; b < count; b++)
+        {
+            MeshBuilder into = bands[b];
+            Array.Fill(map, -1);
+            for (int slot = 0; slot < slots.Length; slot++)
+            {
+                List<uint> indices = slots[slot];
+                for (int t = 0; t < indices.Count; t += 3)
+                {
+                    if (which[slot][t / 3] != b) continue;
+                    into.slots[slot].Add(Copy(indices[t]));
+                    into.slots[slot].Add(Copy(indices[t + 1]));
+                    into.slots[slot].Add(Copy(indices[t + 2]));
+                }
+            }
+
+            uint Copy(uint index)
+            {
+                if (map[index] >= 0) return (uint)map[index];
+                uint copied = data is null ? into.Vertex(positions[index], uvs[index]) : into.Vertex(positions[index], uvs[index], data[index]);
+                into.normals[copied] = normals[index];
+                map[index] = (int)copied;
+                return copied;
+            }
+        }
+        return bands;
+    }
+
+    // Normals accumulate per triangle until the mesh is made; then they are final.
+    private bool finished;
+
+    private void Finish()
+    {
+        if (finished) return;
+        finished = true;
+        for (int i = 0; i < count; i++) normals[i] = normals[i] == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(normals[i]);
     }
 
     /// <summary>A quad from four new corners with their UVs, wound to face <paramref name="facing"/>.</summary>
@@ -86,6 +146,7 @@ internal sealed class MeshBuilder
     /// <summary>One triangle wound to face <paramref name="facing"/>; its normal accumulates on its corners.</summary>
     internal void Triangle(int slot, uint a, uint b, uint c, Vector3 facing)
     {
+        if (finished) throw new InvalidOperationException("The mesh was made: its normals are final.");
         Vector3 normal = Vector3.Cross(positions[(int)b] - positions[(int)a], positions[(int)c] - positions[(int)a]);
         if (normal.LengthSquared() < 1e-12f) return;
         if (Vector3.Dot(normal, facing) < 0)

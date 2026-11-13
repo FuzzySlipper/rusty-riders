@@ -39,13 +39,14 @@ internal sealed partial class LevelScene
     }
 
     /// <summary>
-    /// The world's parametric kit over the room plan, in place of the tiles: its wall, floor, ceiling and trim materials
-    /// harvested from the converted art, and its dressing of old props placed over the plan. Returns the build's summary, or null (a recorded
-    /// problem) when generation fails.
+    /// The world's parametric kit over the room plan, in place of the tiles: its geometry (made with the blueprint) made
+    /// into meshes with its wall, floor, ceiling and trim materials harvested from the converted art, and its dressing of
+    /// old props placed over the plan. Returns the build's summary, read when shown (a kit made in the background counts its
+    /// sections as it makes them), or null (a recorded problem) when making it fails.
     /// </summary>
-    private string? BuildKit(KitRecipe kit, TilesetDefinition tileset, CollisionBuilder collision, int seed, ref ulong nextPlacement)
+    private Func<string>? BuildKit(KitRecipe kit, KitGeometry geometry, IReadOnlyList<DressingPlacement> dressing, TilesetDefinition tileset,
+        CollisionBuilder collision, ref ulong nextPlacement, bool deferred)
     {
-        List<DressingPlacement> dressing = KitDressing.Place(Plan, kit, seed);
         HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
         // Slots that hold stones whose faces the shader draws take it; their other geometry is white and drawn as usual.
@@ -63,7 +64,7 @@ internal sealed partial class LevelScene
             kit.Runners is null ? Slot(kit.FloorMaterial, KitSurface.Floor) : Slot(kit.FloorMaterial, KitSurface.Runner), flame];
         try
         {
-            generated = new LevelKit(engine, Plan, kit, slots, cellSize, dressing, seed);
+            generated = new LevelKit(engine, geometry, slots, deferred);
         }
         catch (EngineCallException error)
         {
@@ -78,15 +79,13 @@ internal sealed partial class LevelScene
             facts.Add(new AppearanceFact(nextPlacement++, false, 0, prop.Pose, model.Appearance, true, RenderLayer.Scene));
             dressed++;
         }
-        return $"{generated.Summary}, {dressed} props";
+        IGeneratedLevel made = generated;
+        return () => $"{made.Summary}, {dressed} props";
     }
 
-    /// <summary>A generated build's sections drawn where it is placed, and its collision meshes as their own assets.</summary>
+    /// <summary>A generated build's collision meshes as their own assets (its sections are drawn by <see cref="SectionFacts"/>).</summary>
     private void Place(IGeneratedLevel built, CollisionBuilder collision)
     {
-        ulong id = FirstShellSectionObjectId;
-        foreach (Appearance section in built.Sections)
-            facts.Add(new AppearanceFact(id++, false, 0, built.Placement, section, true, RenderLayer.Scene));
         ulong collisionId = FirstShellCollisionId;
         foreach (MeshResource mesh in built.Collision) collision.AddMesh(collisionId++, mesh, built.Placement);
     }

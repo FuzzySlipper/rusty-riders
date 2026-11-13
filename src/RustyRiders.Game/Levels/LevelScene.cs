@@ -14,6 +14,8 @@ namespace RustyRiders.Game.Levels;
 /// over the <see cref="RoomPlan"/>, which every build measures and can show as an overlay.
 /// Engine navigation is derived from that collision, and the level's gameplay points (<see cref="LevelPoints"/>) stand
 /// on it: the entry portal the walker arrives in front of, the rifts out, caches and resident spots.
+/// It is made on the update from a <see cref="LevelBlueprint"/>; a kit level made in the background draws its sections
+/// once <see cref="Prepare"/> has made them, and is shown (<see cref="Show"/>) only then.
 /// </summary>
 internal sealed partial class LevelScene : IWalkScene
 {
@@ -40,8 +42,14 @@ internal sealed partial class LevelScene : IWalkScene
     private readonly List<string> problems = [];
     private readonly Dictionary<(int X, int Z), (PlannedTile Tile, string Prefab)> tiles = [];
     private readonly float cellSize;
+    private readonly Color background;
+    private readonly string level, found;
+    private Func<string> built = () => "tiles";
+    private bool shown;
 
-    internal LevelScene(IEngineContext engine, LevelSettings settings, LevelData data, LayoutDefinition layout, int seed, LevelRules rules)
+    /// <param name="deferred">Whether a kit's drawn sections are made later, by <see cref="Prepare"/>, rather than now.</param>
+    internal LevelScene(IEngineContext engine, LevelSettings settings, LevelData data, LayoutDefinition layout, int seed, LevelRules rules,
+        LevelBlueprint blueprint, bool deferred)
     {
         this.engine = engine;
         MaterialRecolor? recolor = rules.MaterialColors.Recolor();
@@ -49,17 +57,17 @@ internal sealed partial class LevelScene : IWalkScene
         materials = new HarvestedMaterials(engine, art, recolor);
         cellSize = data.Generator.CellSize;
         ShellDefinition? shell = null;
-        KitRecipe? kit = null;
+        KitRecipe? kit = blueprint.Kit;
         if (settings.Build == LevelSettings.KitBuild)
         {
-            if ((kit = KitRecipe.Load(engine, data.Tileset.Id, rules.Plan, cellSize)) is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
+            if (kit is null) problems.Add($"no content/levels/kits/{data.Tileset.Id}.json: stamped the tiles instead");
         }
         else if (settings.Build != LevelSettings.TilesBuild && (shell = ShellDefinition.Load(engine, data.Tileset.Id)) is null)
         {
             problems.Add($"no content/levels/shells/{data.Tileset.Id}.json: stamped the tiles instead");
         }
         Session = engine.Spatial.CreateSession(new SpatialSessionConfig(CollisionVoxelSize, CollisionChunkSize, VoxelSurfaceMode.GreedyCubes));
-        LevelPlan plan = LevelGenerator.Generate(data, layout, seed);
+        LevelPlan plan = blueprint.Plan;
         problems.AddRange(plan.Notes);
         Random variants = new(seed);
 
@@ -95,17 +103,16 @@ internal sealed partial class LevelScene : IWalkScene
                 collisionAssets[prefab] = asset = collision.AddBlockedCells(walkable, cellSize, settings.WallHeight);
             collision.Place(nextTile++, asset, cell);
         }
-        string built = "tiles";
         float spawnLift = SpawnLift;
         (Vector3 floorMin, Vector3 floorMax) = Extent(plan);
-        Plan = new RoomPlan(plan, rules.Plan, cellSize, kit?.Rooms, seed);
-        if (kit is not null && BuildKit(kit, data.Tileset, collision, seed, ref nextPlacement) is { } kitSummary)
+        Plan = blueprint.Rooms;
+        if (kit is not null && blueprint.Geometry is { } geometry && BuildKit(kit, geometry, blueprint.Dressing, data.Tileset, collision, ref nextPlacement, deferred) is { } kitSummary)
         {
             built = kitSummary;
         }
         else if (shell is not null && walkGrids.Count > 0 && BuildShells(settings.Build, settings.FloorTexture, shell, data.Tileset, walkGrids, seed, collision) is { } summary)
         {
-            built = summary;
+            built = () => summary;
             spawnLift += shell.FloorNoise.Amplitude;
         }
         else
@@ -121,19 +128,18 @@ internal sealed partial class LevelScene : IWalkScene
         ShowPlan = rules.Plan.Overlay.Show;
         Playable = Points.Rifts.Count >= rules.Points.MinimumRifts;
         TravelLayouts = data.Layouts.Where(l => !l.Special).Select(l => l.Id).ToArray();
-        engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(new Color(settings.BackgroundColor[0],
-            settings.BackgroundColor[1], settings.BackgroundColor[2], 1)));
+        background = new Color(settings.BackgroundColor[0], settings.BackgroundColor[1], settings.BackgroundColor[2], 1);
 
         SpawnFeet = Points.Arrival + Vector3.UnitY * spawnLift;
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
-        Status = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · {built}"
-            + $"\n{Points.Rifts.Count} rifts · {Points.Caches.Count} caches · {Points.Residents.Count} resident spots · {Navigation.Summary}";
+        level = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · ";
+        found = $"\n{Points.Rifts.Count} rifts · {Points.Caches.Count} caches · {Points.Residents.Count} resident spots · {Navigation.Summary}";
     }
 
     public SpatialSession Session { get; }
     public Vector3 SpawnFeet { get; }
     public float SpawnYawDegrees { get; }
-    public string Status { get; }
+    public string Status => level + built() + found;
     public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. problems];
     internal LevelNavigation Navigation { get; }
     /// <summary>Whether the arrival can walk to at least the minimum number of rifts; a level that cannot is rejected.</summary>
@@ -175,12 +181,25 @@ internal sealed partial class LevelScene : IWalkScene
     }
 
     public IEnumerable<AppearanceFact> Facts => ShowPlan
-        ? [.. facts, .. portals.Facts(worldSeconds), .. overlay!.Facts]
-        : [.. facts, .. portals.Facts(worldSeconds)];
+        ? [.. facts, .. SectionFacts, .. portals.Facts(worldSeconds), .. overlay!.Facts]
+        : [.. facts, .. SectionFacts, .. portals.Facts(worldSeconds)];
+
+    /// <summary>
+    /// One update's share of making a kit level's sections in the background (<see cref="LevelKit.Prepare"/>); true once
+    /// the renderer has drawn them, and at once for any other level.
+    /// </summary>
+    internal bool Prepare(double budgetSeconds) => generated is not LevelKit kit || kit.Prepare(engine, budgetSeconds);
+
+    /// <summary>The level becomes the one shown: its background colour is set (its facts are published by the product).</summary>
+    internal void Show()
+    {
+        shown = true;
+        engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(background));
+    }
 
     public void Dispose()
     {
-        engine.Graphics.PublishSnapshot([]);
+        if (shown) engine.Graphics.PublishSnapshot([]); // its appearances leave the published set before they are disposed
         generated?.Dispose();
         overlay?.Dispose();
         portals.Dispose();
@@ -188,6 +207,10 @@ internal sealed partial class LevelScene : IWalkScene
         art.Dispose();
         Session.Dispose();
     }
+
+    /// <summary>A generated build's sections, drawn where it is placed (a kit made in the background has them once made).</summary>
+    private IEnumerable<AppearanceFact> SectionFacts => generated is null ? []
+        : generated.Sections.Select((section, i) => new AppearanceFact(FirstShellSectionObjectId + (ulong)i, false, 0, generated.Placement, section, true, RenderLayer.Scene));
 
     /// <summary>The old game's cell placement, in glTF space: Unity is the X mirror, so x flips and the turn reverses.</summary>
     private Transform CellTransform(PlannedTile tile) => new(CellCenter(tile.X, tile.Z),
