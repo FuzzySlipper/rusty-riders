@@ -30,7 +30,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
 
     private readonly List<(MeshResource Mesh, Appearance Appearance)> sections = [];
     private readonly List<Light> lights = [];
-    private readonly MeshResource drawn, solid;
+    private readonly MeshResource solid;
     private readonly RoomPlan plan;
     private readonly KitRecipe recipe;
     private int pilasters;
@@ -80,9 +80,12 @@ internal sealed partial class LevelKit : IGeneratedLevel
         foreach (DressingPlacement prop in dressing)
             if (prop.Box is { } box) Box(collision, prop.Pose.Translation, box);
 
-        drawn = mesh.Create(engine, materials);
+        double geometry = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds;
+        // The whole drawn mesh is only the partition's source: the sections are copies, so it goes once they are taken.
+        using MeshResource drawn = mesh.Create(engine, materials);
         foreach (LightDescriptor light in sconces) lights.Add(engine.Graphics.CreateLight(new LightRequest(nextLightId++, false, 0, light)));
         solid = collision.Create(engine, [materials[WallSlot]]);
+        double upload = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds - geometry;
         Vector3 min = Vector3.Min(OpenGround.Gltf(plan.Metres(new Vector2(ground.Keys.Min(c => c.X), ground.Keys.Min(c => c.Z))), 0),
             OpenGround.Gltf(plan.Metres(new Vector2(ground.Keys.Max(c => c.X) + 1, ground.Keys.Max(c => c.Z) + 1)), 0));
         using MeshPartition partition = engine.Graphics.PartitionMesh(new MeshPartitionRequest(drawn, min, new Vector3(cellSize)));
@@ -93,8 +96,9 @@ internal sealed partial class LevelKit : IGeneratedLevel
             sections.Add((section, engine.Graphics.CreateMeshAppearance(section)));
         }
         double seconds = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalSeconds;
+        double partitioned = seconds - geometry - upload;
         Summary = FormattableString.Invariant(
-            $"kit: {loops.Count} outlines, {diagonals} diagonal walls, {arches} arches, {pilasters} pilasters, {string.Concat(details.Select(d => d + ", "))}{mesh.VertexCount} vertices, {mesh.TriangleCount} triangles ({collision.TriangleCount} colliding), {sections.Count} sections, {seconds:0.000} s");
+            $"kit: {loops.Count} outlines, {diagonals} diagonal walls, {arches} arches, {pilasters} pilasters, {string.Concat(details.Select(d => d + ", "))}{mesh.VertexCount} vertices, {mesh.TriangleCount} triangles ({collision.TriangleCount} colliding), {sections.Count} sections, {seconds:0.000} s (geometry {geometry:0.000}, upload {upload:0.000}, sections {partitioned:0.000})");
     }
 
     public Transform Placement { get; } = new(Vector3.Zero, Quaternion.Identity, Vector3.One);
@@ -112,7 +116,6 @@ internal sealed partial class LevelKit : IGeneratedLevel
             mesh.Dispose();
         }
         sections.Clear();
-        drawn.Dispose();
         solid.Dispose();
     }
 

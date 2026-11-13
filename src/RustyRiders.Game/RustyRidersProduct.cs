@@ -144,6 +144,7 @@ public sealed class RustyRidersProduct : IEngineProduct, IDebugCommandModuleSour
         registrar.Register(new PlayerDebugCommands(play.Vitals, walker, Publish));
         registrar.Register(new CombatDebugCommands(play.Combat, walker));
         registrar.Register(new EnemyDebugCommands(play.Enemies, walker));
+        registrar.Register(new MemoryDebugCommands());
         registrar.Register(new ItemDebugCommands(play.Inventory, play.Pickups, play.Loot, play.Items, walker));
         HeldMotionDebugCommands motionViewer = new(play.Combat, Publish, play.Combat.LookUses());
         registrar.Register(motionViewer);

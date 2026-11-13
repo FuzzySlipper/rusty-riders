@@ -6,23 +6,28 @@ namespace RustyRiders.Game.Levels;
 /// <summary>Positions, smooth normals, uvs and per-material triangle lists for one retained mesh (the generated level builds).</summary>
 internal sealed class MeshBuilder
 {
-    private readonly List<Vector3> positions = [];
-    private readonly List<Vector3> normals = [];
-    private readonly List<Vector2> uvs = [];
+    // Growable streams, handed to the Engine as they stand (it copies them), so a large build is not copied again first.
+    private Vector3[] positions = new Vector3[1024], normals = new Vector3[1024];
+    private Vector2[] uvs = new Vector2[1024];
+    private int count;
     private readonly List<uint>[] slots;
 
     /// <summary>A builder with <paramref name="slotCount"/> material slots, numbered from 0.</summary>
     internal MeshBuilder(int slotCount) => slots = Enumerable.Range(0, slotCount).Select(_ => new List<uint>()).ToArray();
 
-    internal int VertexCount => positions.Count;
+    internal int VertexCount => count;
     internal int TriangleCount => slots.Sum(slot => slot.Count) / 3;
 
     internal uint Vertex(Vector3 position, Vector2 uv)
     {
-        positions.Add(position);
-        normals.Add(Vector3.Zero);
-        uvs.Add(uv);
-        return (uint)positions.Count - 1;
+        if (count == positions.Length)
+        {
+            Array.Resize(ref positions, count * 2);
+            Array.Resize(ref normals, count * 2);
+            Array.Resize(ref uvs, count * 2);
+        }
+        (positions[count], uvs[count]) = (position, uv);
+        return (uint)count++;
     }
 
     /// <summary>Two triangles wound to face <paramref name="facing"/>; their normals accumulate on the corners.</summary>
@@ -32,20 +37,23 @@ internal sealed class MeshBuilder
         Triangle(slot, a, c, d, facing);
     }
 
+    /// <summary>The mesh as built so far, with its normals made final: nothing is added after.</summary>
     internal MeshResource Create(IEngineContext engine, Material[] materials)
     {
-        List<uint> indices = [];
+        uint[] indices = new uint[slots.Sum(slot => slot.Count)];
         List<MeshGroup> groups = [];
+        int start = 0;
         for (int slot = 0; slot < slots.Length; slot++)
         {
             if (slots[slot].Count == 0) continue;
-            groups.Add(new MeshGroup((uint)slot, (uint)indices.Count, (uint)slots[slot].Count));
-            indices.AddRange(slots[slot]);
+            groups.Add(new MeshGroup((uint)slot, (uint)start, (uint)slots[slot].Count));
+            slots[slot].CopyTo(indices, start);
+            start += slots[slot].Count;
         }
-        Vector3[] unit = normals.Select(n => n == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(n)).ToArray();
+        for (int i = 0; i < count; i++) normals[i] = normals[i] == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(normals[i]); // final: no more triangles accumulate
         MeshMaterialBinding[] bindings = materials.Select((material, slot) => new MeshMaterialBinding((uint)slot, material)).ToArray();
-        return engine.Graphics.CreateMeshResource(new MeshResourceCreateRequest(positions.ToArray(), unit, uvs.ToArray(),
-            indices.ToArray(), groups.ToArray(), bindings));
+        return engine.Graphics.CreateMeshResource(new MeshResourceCreateRequest(positions.AsMemory(0, count), normals.AsMemory(0, count), uvs.AsMemory(0, count),
+            indices, groups.ToArray(), bindings));
     }
 
     /// <summary>A quad from four new corners with their UVs, wound to face <paramref name="facing"/>.</summary>
@@ -62,7 +70,12 @@ internal sealed class MeshBuilder
             (b, c) = (c, b);
             normal = -normal;
         }
-        slots[slot].AddRange([a, b, c]);
-        foreach (uint corner in (uint[])[a, b, c]) normals[(int)corner] += normal;
+        List<uint> indices = slots[slot];
+        indices.Add(a);
+        indices.Add(b);
+        indices.Add(c);
+        normals[(int)a] += normal;
+        normals[(int)b] += normal;
+        normals[(int)c] += normal;
     }
 }

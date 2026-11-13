@@ -94,6 +94,9 @@ internal sealed class Scenes : IDisposable
         IWalkScene next = Build(level); // the current scene stays whole until the next one is built
         Current.Dispose();
         Current = next;
+        // A level's build leaves its builders' arrays behind, up to a gigabyte for a large stone kit, which the collector
+        // could keep committed long into play; it is collected here, inside the switch's pause, while little else lives.
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
     }
 
     private IWalkScene Build(bool level)
