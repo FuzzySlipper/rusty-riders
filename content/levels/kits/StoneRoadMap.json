@@ -128,5 +128,6 @@
       { "id": "pillow", "weight": 2, "minLength": 0.8, "maxLength": 1.3, "chipChance": 0.5, "chip": 0.16, "nicks": 0.3, "pillow": 0.1, "facet": 0.015 },
       { "id": "short", "weight": 1, "minLength": 0.5, "maxLength": 0.8, "chipChance": 0.6, "chip": 0.12, "nicks": 0.3, "pillow": 0.03, "facet": 0.03, "hewn": true }
     ]
-  }
+  },
+  "stoneFaces": { "shader": "shaders/stone-faces.wgsl", "meshOutlines": true }
 }
