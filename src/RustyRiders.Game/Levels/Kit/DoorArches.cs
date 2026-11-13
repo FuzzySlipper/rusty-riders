@@ -82,7 +82,7 @@ internal static class DoorArches
 
             float ringWidth = arch.Ring?.Width ?? 0;
             float proud = recipe.WallStones?.Deepest ?? 0;
-            if (arch.Ring is { Stones: true } stoneRing && recipe.Voussoirs is { } ringStones)
+            if (arch.Ring is { Stones: { } ringStones } stoneRing)
             {
                 // The ring's band on the room's wall face; its joints show a strip of the voussoirs' backing just off it.
                 VoussoirBand band = new(head.Select(p => At(p.S, depth, p.Y)).ToArray(),

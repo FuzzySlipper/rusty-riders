@@ -66,7 +66,7 @@ internal static class BlindArches
         float rm = recipe.Metres(arch.Ring.Surface), around = 0;
         (float S, float Y)[] inner = [(-r, sill), .. head, (r, sill)];
         (float S, float Y)[] outer = [(-r - w, sill), .. Arc(r + w, spring, arch.Segments), (r + w, sill)];
-        if (arch.Ring.Stones && recipe.Voussoirs is { } v)
+        if (arch.Ring.Stones is { } v)
         {
             VoussoirBand band = new(inner.Select(p => At(p.S, p.Y, 0)).ToArray(), outer.Select(p => At(p.S, p.Y, 0)).ToArray(), w);
             band.Strip(mesh, LevelKit.Slot(v.Backing), recipe.Metres(v.Backing), toRoom, proud, 0);

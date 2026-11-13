@@ -68,7 +68,7 @@ internal sealed partial class LevelKit : IGeneratedLevel
             details.Add($"{CeilingRibs.Build(mesh, plan, recipe, ribs, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), seed, ref voussoirs)} ribs");
         if (recipe.BlindArches is { } blind)
             details.Add($"{BlindArches.Build(mesh, recipe, blind, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground), seed, ref voussoirs)} blind arches");
-        if (recipe.Voussoirs is not null) details.Add($"{voussoirs} voussoirs");
+        if (recipe.Ribs?.Stones is not null || recipe.DoorArch?.Ring?.Stones is not null || recipe.BlindArches?.Ring.Stones is not null) details.Add($"{voussoirs} voussoirs");
         if (recipe.Columns is { } columns)
         {
             (int hall, int corners) = KitColumns.Build(mesh, collision, plan, recipe, columns, seed);

@@ -94,7 +94,7 @@ internal static class Voussoirs
         {
             if (x1 - x0 <= 2 * g) continue;
             float extra = key ? v.Keystone : 0;
-            float y0 = Between(random, -v.Sag, v.Sag) - extra, y1 = band.Thickness + Between(random, -v.Sag, v.Sag) + extra;
+            float y0 = Between(random, -v.InnerSag, v.InnerSag) - extra, y1 = band.Thickness + Between(random, -v.OuterSag, v.OuterSag) + extra;
             List<Vector2> rim = band.Bend(Outline(kind, random, x0 + g, x1 - g, y0, y1));
             float jut = key ? v.MaxJut + extra : Between(random, v.MinJut, v.MaxJut);
             Vector2 patch = new((float)random.NextDouble(), (float)random.NextDouble());

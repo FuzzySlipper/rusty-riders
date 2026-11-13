@@ -27,7 +27,7 @@ internal static class CeilingRibs
     {
         Dictionary<(int X, int Z), float> rooms = plan.Heights([PlanArea.Room]);
         float step = plan.Rules.GridMetres;
-        VoussoirDefinition? stones = rib.Stones ? recipe.Voussoirs : null;
+        VoussoirDefinition? stones = rib.Stones;
         int built = 0;
         foreach (PilasterPlace place in places)
         {

@@ -22,9 +22,10 @@ internal sealed record RunnerDefinition(float Width, float Lift)
 /// Ribs across room ceilings, springing from opposite pilasters (<see cref="CeilingRibs"/>): <see cref="Width"/> wide and
 /// <see cref="Depth"/> deep under the ceiling in the middle of their span, curving down <see cref="Haunch"/> more to the
 /// walls in a half-ellipse drawn with <see cref="Segments"/> pieces. They take <see cref="Surface"/>; with
-/// <see cref="Stones"/> and the kit's voussoirs, they are built of voussoirs in it.
+/// <see cref="Stones"/>, they are built of those voussoirs in it.
 /// </summary>
-internal sealed record RibDefinition(float Width, float Depth, float Haunch, int Segments, KitSurface Surface = KitSurface.Trim, bool Stones = false)
+internal sealed record RibDefinition(float Width, float Depth, float Haunch, int Segments, KitSurface Surface = KitSurface.Trim,
+    VoussoirDefinition? Stones = null)
 {
     internal void Validate(string path, PilasterDefinition? pilasters)
     {
@@ -33,6 +34,7 @@ internal sealed record RibDefinition(float Width, float Depth, float Haunch, int
         Authored.Positive(path, "ribs.depth", Depth);
         Authored.AtLeast(path, "ribs.haunch", Haunch, 0);
         Authored.Require(Segments >= 2, path, "ribs.segments", "must be at least 2.");
+        Stones?.Validate(path, "ribs.stones", Width / 2);
     }
 }
 
@@ -56,6 +58,7 @@ internal sealed record BlindArchDefinition(float Sill, float Spring, float Margi
         Authored.Require(Segments >= 2, path, "blindArches.segments", "must be at least 2.");
         Authored.Positive(path, "blindArches.ring.width", Ring.Width);
         Authored.Positive(path, "blindArches.ring.depth", Ring.Depth);
+        Ring.Stones?.Validate(path, "blindArches.ring.stones", Ring.Depth);
         Authored.Require(pilasters is null || pilasters.Spacing - pilasters.Width - 2 * Margin - 2 * Ring.Width > 1, path, "blindArches.margin",
             "leaves no bay a metre wide between the pilasters.");
     }
@@ -180,32 +183,33 @@ internal sealed record StoneKind(string Id, float Weight, float MinLength, float
 }
 
 /// <summary>
-/// The stones arches and ribs are built of, when a part asks for them (its <c>stones</c>): its band is cut into
-/// voussoirs of <see cref="Stones"/>' kinds and lengths, picked by weight, laid from each springing toward a keystone at
-/// the crown that stands <see cref="Keystone"/> further out and reaches as much past the band's edges (none when 0).
-/// <see cref="Joint"/> metres separate them, showing a core of the <see cref="Backing"/> material. Each stone's face
-/// stands <see cref="MinJut"/> to <see cref="MaxJut"/> off the part's own face, its inner and outer edges up to
-/// <see cref="Sag"/> off the band's, and its front edges are cut back by <see cref="Bevel"/>. Seen from further off than
-/// a wall, they are meant to take simpler kinds than the wall's (few nicks, little facet).
+/// The stones an arch's ring or a rib is built of (its <c>stones</c>): its band is cut into voussoirs of
+/// <see cref="Stones"/>' kinds and lengths, picked by weight, laid from each springing toward a keystone at the crown that
+/// stands <see cref="Keystone"/> further out and reaches as much past the band's edges (none when 0). <see cref="Joint"/>
+/// metres separate them, showing the <see cref="Backing"/> material behind: an open joint for a rib, a hairline for a
+/// tight ring. Each stone's face stands <see cref="MinJut"/> to <see cref="MaxJut"/> off the part's own face, so the
+/// stones step in and out; its inner edge stands up to <see cref="InnerSag"/> off the band's and its outer edge up to
+/// <see cref="OuterSag"/>; its front edges are cut back by <see cref="Bevel"/> (none by default). Seen from further off
+/// than a wall, they take simpler kinds than the wall's (few nicks); a tight ring's kinds take no chips, so nothing opens
+/// between its stones, and get their variety from bulging, hewn faces and an uneven outer edge.
 /// </summary>
-internal sealed record VoussoirDefinition(StoneKind[] Stones, float Joint, float Bevel, float MinJut, float MaxJut, float Sag, float Keystone,
-    KitSurface Backing = KitSurface.Ceiling)
+internal sealed record VoussoirDefinition(StoneKind[] Stones, float Joint, float MinJut, float MaxJut, float InnerSag, float OuterSag, float Keystone,
+    float Bevel = 0, KitSurface Backing = KitSurface.Ceiling)
 {
-    internal void Validate(string path)
+    /// <param name="face">How far the part's face stands from its base, which every stone's face must stay beyond.</param>
+    internal void Validate(string path, string field, float face)
     {
-        Authored.Require(Stones.Length > 0, path, "voussoirs.stones", "must name at least one kind of stone.");
-        for (int i = 0; i < Stones.Length; i++) Stones[i].Validate(path, $"voussoirs.stones[{i}]");
-        Authored.Positive(path, "voussoirs.joint", Joint);
-        Authored.Require(Joint < Shortest / 2, path, "voussoirs.joint", "must be well under the shortest stone.");
-        Authored.AtLeast(path, "voussoirs.bevel", Bevel, 0);
-        Authored.AtLeast(path, "voussoirs.maxJut", MaxJut, MinJut);
-        Authored.AtLeast(path, "voussoirs.sag", Sag, 0);
-        Authored.AtLeast(path, "voussoirs.keystone", Keystone, 0);
+        Authored.Require(Stones.Length > 0, path, $"{field}.stones", "must name at least one kind of stone.");
+        for (int i = 0; i < Stones.Length; i++) Stones[i].Validate(path, $"{field}.stones[{i}]");
+        Authored.Positive(path, $"{field}.joint", Joint);
+        Authored.Require(Joint < Shortest / 2, path, $"{field}.joint", "must be well under the shortest stone.");
+        Authored.AtLeast(path, $"{field}.bevel", Bevel, 0);
+        Authored.AtLeast(path, $"{field}.maxJut", MaxJut, MinJut);
+        Authored.Require(face + MinJut > Joint, path, $"{field}.minJut", $"leaves a stone's face behind the part's base: the part stands {face} m out.");
+        Authored.AtLeast(path, $"{field}.innerSag", InnerSag, 0);
+        Authored.AtLeast(path, $"{field}.outerSag", OuterSag, 0);
+        Authored.AtLeast(path, $"{field}.keystone", Keystone, 0);
     }
-
-    /// <summary>Checks a part built of these stones keeps every stone's face out: <paramref name="face"/> is how far the part's face stands from its base.</summary>
-    internal void Fits(string path, string field, float face) =>
-        Authored.Require(face + MinJut > Joint, path, field, $"is too shallow for voussoirs that jut as little as {MinJut} m.");
 
     /// <summary>The shortest stone of any kind.</summary>
     internal float Shortest => Stones.Min(s => s.MinLength);
