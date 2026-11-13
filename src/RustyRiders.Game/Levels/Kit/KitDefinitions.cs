@@ -91,7 +91,7 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
     DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null, RunnerDefinition? Runners = null,
     RibDefinition? Ribs = null, BlindArchDefinition? BlindArches = null, SconceDefinition? Sconces = null, ColumnsDefinition? Columns = null,
-    WallStonesDefinition? WallStones = null)
+    WallStonesDefinition? WallStones = null, StoneFacesDefinition? StoneFaces = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
@@ -115,6 +115,9 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         recipe.Sconces?.Validate(path, plan);
         recipe.Columns?.Validate(path);
         recipe.WallStones?.Validate(path);
+        recipe.StoneFaces?.Validate(path);
+        Authored.Require(recipe.StoneFaces is null || recipe.StoneSurfaces().All(s => recipe.Textures?.For(s)?.Colour == true), path, "stoneFaces",
+            "the stones' surfaces need colour textures (drawn untinted): their vertex colours carry the stones' shapes.");
         return recipe;
     }
 
@@ -127,6 +130,20 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         KitSurface.Runner => FloorMetres,
         _ => TrimMetres,
     };
+
+    /// <summary>The surfaces stones are laid in: walls (doorway heads too), stone columns, and the ribs and arch rings built of stones.</summary>
+    internal IEnumerable<KitSurface> StoneSurfaces()
+    {
+        if (WallStones is { } stones)
+        {
+            yield return stones.Surface;
+            foreach (ColumnDefinition column in new[] { Columns?.Hall, Columns?.Corners }.OfType<ColumnDefinition>().Where(c => c.Stones))
+                yield return column.Surface;
+        }
+        if (DoorArch?.Ring is { Stones: not null } ring) yield return ring.Surface;
+        if (Ribs is { Stones: not null } ribs) yield return ribs.Surface;
+        if (BlindArches is { Ring.Stones: not null } blind) yield return blind.Ring.Surface;
+    }
 
     internal bool KeepsProp(string? model) => model is not null
         && Props.Any(prefix => System.IO.Path.GetFileName(model).StartsWith(prefix, StringComparison.OrdinalIgnoreCase));

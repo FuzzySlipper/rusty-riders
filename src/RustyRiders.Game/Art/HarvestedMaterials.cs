@@ -18,6 +18,7 @@ internal sealed class HarvestedMaterials : IDisposable
     private readonly MaterialRecolor? recolor;
     private readonly Dictionary<string, Material> materials = [];
     private readonly List<RenderResource> textures = [];
+    private readonly Dictionary<string, RenderResourceReference> shaders = [];
     private readonly List<string> problems = [];
 
     internal HarvestedMaterials(IEngineContext engine, ConvertedArt art, MaterialRecolor? recolor)
@@ -31,12 +32,15 @@ internal sealed class HarvestedMaterials : IDisposable
 
     /// <summary>
     /// The material made from a Unity material used by one of the prefabs. With <paramref name="replacement"/>, its
-    /// content textures replace its own while its colour (and any colour correction) stays. One that cannot be made is
+    /// content textures replace its own while its colour (and any colour correction) stays; with <paramref name="shaded"/>,
+    /// a product shader draws it (one material per key). One that cannot be made is
     /// recorded as a problem and drawn plain grey.
     /// </summary>
-    internal Material Get(string unityMaterial, IEnumerable<string> prefabs, HarvestedLook look, ReplacementTextures? replacement = null)
+    internal Material Get(string unityMaterial, IEnumerable<string> prefabs, HarvestedLook look, ReplacementTextures? replacement = null,
+        (MaterialShader Shader, string Key)? shaded = null)
     {
-        string key = replacement is null ? unityMaterial : $"{unityMaterial}|{replacement.Albedo}";
+        string key = (replacement is null ? unityMaterial : $"{unityMaterial}|{replacement.Albedo}") + (shaded is { } s ? $"|{s.Key}" : "");
+        MaterialShader? shader = shaded?.Shader;
         if (materials.TryGetValue(key, out Material? cached)) return cached;
         Material? made = null;
         string? glb = prefabs.SelectMany(prefab => art.Placements(prefab)?.Placements ?? [])
@@ -46,7 +50,7 @@ internal sealed class HarvestedMaterials : IDisposable
         {
             try
             {
-                made = Make(art.PathOf(glb), unityMaterial, look, replacement);
+                made = Make(art.PathOf(glb), unityMaterial, look, replacement, shader);
             }
             catch (EngineCallException error)
             {
@@ -80,7 +84,16 @@ internal sealed class HarvestedMaterials : IDisposable
         textures.Clear();
     }
 
-    private Material? Make(string glbPath, string unityMaterial, HarvestedLook look, ReplacementTextures? replacement)
+    /// <summary>A product shader (<c>.wgsl</c> in content), opened once and released with the textures.</summary>
+    internal RenderResourceReference Shader(string path)
+    {
+        if (shaders.TryGetValue(path, out RenderResourceReference cached)) return cached;
+        RenderResource shader = engine.Graphics.OpenResource(new RenderResourceRequest(path)).Handle;
+        textures.Add(shader);
+        return shaders[path] = new RenderResourceReference(shader);
+    }
+
+    private Material? Make(string glbPath, string unityMaterial, HarvestedLook look, ReplacementTextures? replacement, MaterialShader? shader)
     {
         JsonNode document = art.ReadJson(glbPath);
         JsonNode? material = (document["materials"] as JsonArray ?? [])
@@ -100,9 +113,10 @@ internal sealed class HarvestedMaterials : IDisposable
         Color color = replacement is { Untinted: true } ? new Color(1, 1, 1, 1)
             : recolor?.BaseColor(material) ?? ColorOf(pbr?["baseColorFactor"], new Color(1, 1, 1, 1));
         Color emissive = replacement is { Untinted: true } ? new Color(0, 0, 0, 1) : ColorOf(material["emissiveFactor"], new Color(0, 0, 0, 1));
-        return engine.Graphics.CreateMaterial(new MaterialRequest(color, albedo, look.Roughness, new Color(1, 1, 1, 1),
+        MaterialRequest request = new(color, albedo, look.Roughness, new Color(1, 1, 1, 1),
             new Vector3(emissive.R, emissive.G, emissive.B), 1, false, MaterialAlphaMode.Opaque, .5f, 0,
-            normal, look.NormalScale, look.TriplanarSharpness));
+            normal, look.NormalScale, look.TriplanarSharpness);
+        return engine.Graphics.CreateMaterial(shader is { } s ? request with { Shader = s } : request);
     }
 
     /// <summary>An embedded image of the GLB, admitted as content and opened as a repeating texture; none for no index.</summary>

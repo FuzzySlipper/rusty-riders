@@ -14,7 +14,7 @@ internal readonly record struct StoneFrame(Func<Vector2, Vector3> On, Vector3 Ou
 /// edges) run out from its surface to its relief, bevelled in to a face that bulges to a peak and stands a little
 /// unevenly round its edge; a hewn face is flat facets, any other smooth.
 /// </summary>
-internal static class StoneShape
+internal static partial class StoneShape
 {
     /// <summary>
     /// A stone's outline, anticlockwise from its bottom-left: each corner of the rectangle chipped off by chance, and
@@ -53,11 +53,20 @@ internal static class StoneShape
     /// <summary>
     /// Builds a stone of outline <paramref name="rim"/> (from <see cref="Outline"/>) in <paramref name="frame"/>, its face
     /// <paramref name="relief"/> out. With a <paramref name="back"/>, it is two-faced: it runs that far the other way
-    /// too, to a second face (a rib's stone, seen from both sides).
+    /// too, to a second face (a rib's stone, seen from both sides). With a <paramref name="box"/> (its rectangle, laid
+    /// as the rim is) and <paramref name="faces"/>, it is that plain box instead (or its rim, with the faces' mesh
+    /// outlines), its face left to the shader (<see cref="Faced"/>).
     /// </summary>
     internal static void Build(MeshBuilder mesh, int slot, float metres, float bevel, StoneKind kind, Random random, StoneFrame frame,
-        List<Vector2> rim, float relief, Vector2 patch, float back = 0)
+        List<Vector2> rim, float relief, Vector2 patch, float back = 0, StoneFacesDefinition? faces = null, List<Vector2>? box = null)
     {
+        if (faces is not null && box is not null)
+        {
+            // Draw what the carved faces would, so a level lays the same stones either way.
+            for (int i = 0; i < (back > 0 ? 2 : 1) * (rim.Count + (kind.Hewn ? 2 : 0)); i++) random.NextDouble();
+            Faced(mesh, slot, metres, bevel, kind, frame, faces.MeshOutlines ? rim : box, !faces.MeshOutlines, relief, patch, back);
+            return;
+        }
         float width = rim.Max(p => p.X) - rim.Min(p => p.X), height = rim.Max(p => p.Y) - rim.Min(p => p.Y);
         float b = MathF.Min(bevel, MathF.Min(relief / 2, MathF.Min(width / 4, height / 4)));
         if (back > 0) b = MathF.Min(b, back / 2);

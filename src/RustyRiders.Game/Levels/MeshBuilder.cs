@@ -9,8 +9,10 @@ internal sealed class MeshBuilder
     // Growable streams, handed to the Engine as they stand (it copies them), so a large build is not copied again first.
     private Vector3[] positions = new Vector3[1024], normals = new Vector3[1024];
     private Vector2[] uvs = new Vector2[1024];
+    private Color[]? colors; // only once a vertex carries data for a shader; the rest are white
     private int count;
     private readonly List<uint>[] slots;
+    private static readonly Color White = new(1, 1, 1, 1);
 
     /// <summary>A builder with <paramref name="slotCount"/> material slots, numbered from 0.</summary>
     internal MeshBuilder(int slotCount) => slots = Enumerable.Range(0, slotCount).Select(_ => new List<uint>()).ToArray();
@@ -25,9 +27,24 @@ internal sealed class MeshBuilder
             Array.Resize(ref positions, count * 2);
             Array.Resize(ref normals, count * 2);
             Array.Resize(ref uvs, count * 2);
+            if (colors is not null) Array.Resize(ref colors, count * 2);
         }
         (positions[count], uvs[count]) = (position, uv);
+        if (colors is not null) colors[count] = White;
         return (uint)count++;
+    }
+
+    /// <summary>A vertex whose colour carries <paramref name="data"/> to its material's shader (stone faces); every other vertex is white.</summary>
+    internal uint Vertex(Vector3 position, Vector2 uv, Color data)
+    {
+        if (colors is null)
+        {
+            colors = new Color[positions.Length];
+            Array.Fill(colors, White, 0, count);
+        }
+        uint index = Vertex(position, uv);
+        colors[index] = data;
+        return index;
     }
 
     /// <summary>Two triangles wound to face <paramref name="facing"/>; their normals accumulate on the corners.</summary>
@@ -53,7 +70,7 @@ internal sealed class MeshBuilder
         for (int i = 0; i < count; i++) normals[i] = normals[i] == Vector3.Zero ? Vector3.UnitY : Vector3.Normalize(normals[i]); // final: no more triangles accumulate
         MeshMaterialBinding[] bindings = materials.Select((material, slot) => new MeshMaterialBinding((uint)slot, material)).ToArray();
         return engine.Graphics.CreateMeshResource(new MeshResourceCreateRequest(positions.AsMemory(0, count), normals.AsMemory(0, count), uvs.AsMemory(0, count),
-            indices, groups.ToArray(), bindings));
+            colors is null ? ReadOnlyMemory<Color>.Empty : colors.AsMemory(0, count), indices, groups.ToArray(), bindings));
     }
 
     /// <summary>A quad from four new corners with their UVs, wound to face <paramref name="facing"/>.</summary>

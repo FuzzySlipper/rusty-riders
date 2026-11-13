@@ -214,3 +214,21 @@ internal sealed record VoussoirDefinition(StoneKind[] Stones, float Joint, float
     /// <summary>The shortest stone of any kind.</summary>
     internal float Shortest => Stones.Min(s => s.MinLength);
 }
+
+/// <summary>
+/// Stones whose faces the shader draws (<c>stoneFaces</c>): each stone is a plain box of its size and jut, and
+/// <see cref="Shader"/> carves its face in place of the mesh: the bevel, the bulge and facets of its kind, its chipped
+/// corners and nicked edges, by parallax over <see cref="Steps"/> steps, <see cref="Depth"/> times as deep as the kind
+/// says, its hollows darkened by up to <see cref="Cavity"/>. The stones' surfaces take untinted textures: their vertex
+/// colours carry each stone's place and shape to the shader. With <see cref="MeshOutlines"/>, a stone keeps its chipped
+/// and nicked outline in the mesh and the shader carves only its face.
+/// </summary>
+internal sealed record StoneFacesDefinition(string Shader, float Depth = 1, int Steps = 24, float Cavity = .35f, bool MeshOutlines = false)
+{
+    internal void Validate(string path)
+    {
+        Authored.Positive(path, "stoneFaces.depth", Depth);
+        Authored.Require(Steps is >= 4 and <= 64, path, "stoneFaces.steps", "must be 4 to 64.");
+        Authored.Within(path, "stoneFaces.cavity", Cavity, 0, 1);
+    }
+}

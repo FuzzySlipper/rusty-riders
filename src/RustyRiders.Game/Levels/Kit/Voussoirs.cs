@@ -99,7 +99,8 @@ internal static class Voussoirs
             float jut = key ? v.MaxJut + extra : Between(random, v.MinJut, v.MaxJut);
             Vector2 patch = new((float)random.NextDouble(), (float)random.NextDouble());
             float backJut = key ? v.MaxJut + extra : Between(random, v.MinJut, v.MaxJut);
-            Build(mesh, slot, metres, v.Bevel, kind, random, frame, rim, face + jut, patch, back > 0 ? back + backJut : 0);
+            Build(mesh, slot, metres, v.Bevel, kind, random, frame, rim, face + jut, patch, back > 0 ? back + backJut : 0,
+                recipe.StoneFaces, recipe.StoneFaces is null ? null : band.Bend(Box(x0 + g, x1 - g, y0, y1)));
         }
         return blocks.Count;
 

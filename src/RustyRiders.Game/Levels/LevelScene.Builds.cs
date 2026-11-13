@@ -1,3 +1,4 @@
+using System.Numerics;
 using Rusty.Engine;
 using RustyRiders.Game.Art;
 using RustyRiders.Game.Levels.Kit;
@@ -47,7 +48,13 @@ internal sealed partial class LevelScene
         List<DressingPlacement> dressing = KitDressing.Place(Plan, kit, seed);
         HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        Material Slot(string material, KitSurface surface) => materials.Get(material, prefabs, look, kit.Textures?.For(surface)?.Replacement);
+        // Slots that hold stones whose faces the shader draws take it; their other geometry is white and drawn as usual.
+        HashSet<int> faced = kit.StoneFaces is null ? [] : kit.StoneSurfaces().Select(LevelKit.Slot).ToHashSet();
+        (MaterialShader, string)? Faces(KitSurface surface) => kit.StoneFaces is { } faces && faced.Contains(LevelKit.Slot(surface))
+            ? (new MaterialShader(materials.Shader(faces.Shader), new Vector4(faces.Depth, faces.Steps, faces.Cavity, 0)),
+                FormattableString.Invariant($"{faces.Shader}|{faces.Depth}|{faces.Steps}|{faces.Cavity}"))
+            : null;
+        Material Slot(string material, KitSurface surface) => materials.Get(material, prefabs, look, kit.Textures?.For(surface)?.Replacement, Faces(surface));
         // The runner is the floor's material under its own texture; the flame glows in the sconces' colour.
         Material flame = kit.Sconces is { } sconce ? materials.Glow(Content.Authored.Color(sconce.FlameColor), sconce.FlameEmission)
             : Slot(kit.TrimMaterial, KitSurface.Trim);

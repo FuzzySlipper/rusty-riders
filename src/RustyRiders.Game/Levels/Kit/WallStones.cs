@@ -72,7 +72,8 @@ internal static partial class WallStones
             if (skip?.Invoke(x, end, y0, y1) != true && end - x > 2 * g)
             {
                 StoneShape.Build(mesh, LevelKit.Slot(surface), recipe.Metres(surface), stones.Bevel, kind, random, frame,
-                    Outline(kind, random, x + g, end - g, y0 + g, y1 - g), relief, patch);
+                    Outline(kind, random, x + g, end - g, y0 + g, y1 - g), relief, patch,
+                    faces: recipe.StoneFaces, box: recipe.StoneFaces is null ? null : Box(x + g, end - g, y0 + g, y1 - g));
                 laid++;
             }
             x = end;
