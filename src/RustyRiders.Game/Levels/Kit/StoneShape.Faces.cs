@@ -5,8 +5,9 @@ namespace RustyRiders.Game.Levels.Kit;
 /// <summary>
 /// Stones whose faces the shader carves (<see cref="StoneFacesDefinition"/>): a plain box of the stone's rectangle (or rim),
 /// standing out to its relief plus its kind's bulge, whose face vertices carry to the shader where they lie on the stone
-/// and the stone's shape (<see cref="Data"/>). It is built in the mesh's <see cref="MeshBuilder.Shaded"/> companion; its
-/// sides carry zero, which the shader draws as usual.
+/// and the stone's shape (<see cref="Data"/>). It is built in the mesh's <see cref="MeshBuilder.Shaded"/> companion. A
+/// plain box's sides are carved too, from the face's top down; a rim's (mesh outlines) carry zero, which the shader draws
+/// as usual.
 /// </summary>
 internal static partial class StoneShape
 {
@@ -33,16 +34,30 @@ internal static partial class StoneShape
         Vector4 Local(Vector2 p) => new((p.X - minX) / width, (p.Y - minY) / height, a, c);
 
         int n = box.Count;
-        float around = 0;
-        for (int i = 0; i < n; i++)
+        if (chips)
         {
-            Vector2 p = box[i], q = box[(i + 1) % n], d = q - p, half = (p + q) / 2;
-            Vector3 outward = Vector3.Normalize(frame.On(half + Vector2.Normalize(new Vector2(d.Y, -d.X)) * .01f) - frame.On(half));
-            float l0 = around, l1 = around + d.Length();
-            mesh.Face(slot, At(p, sideRear), At(q, sideRear), At(q, sideFront), At(p, sideFront),
-                new Vector2((offset.X + l0) / metres, sideRear / metres), new Vector2((offset.X + l1) / metres, sideRear / metres),
-                new Vector2((offset.X + l1) / metres, sideFront / metres), new Vector2((offset.X + l0) / metres, sideFront / metres), outward);
-            around = l1;
+            // A plain box: its sides stand to the face's top too, and carry where they lie on the stone and how deep, so
+            // the shader carves them as it carves the face (CarvedSide). A two-faced stone's sides meet halfway, each half
+            // measured from its own face.
+            float halfway = back > 0 ? (front + rear) / 2 : 0;
+            for (int i = 0; i < n; i++)
+            {
+                CarvedSide(box[i], box[(i + 1) % n], front, halfway, 1);
+                if (back > 0) CarvedSide(box[i], box[(i + 1) % n], -rear, -halfway, -1);
+            }
+        }
+        else
+        {
+            float around = 0;
+            for (int i = 0; i < n; i++)
+            {
+                Vector2 p = box[i], q = box[(i + 1) % n], d = q - p;
+                float l0 = around, l1 = around + d.Length();
+                mesh.Face(slot, At(p, sideRear), At(q, sideRear), At(q, sideFront), At(p, sideFront),
+                    new Vector2((offset.X + l0) / metres, sideRear / metres), new Vector2((offset.X + l1) / metres, sideRear / metres),
+                    new Vector2((offset.X + l1) / metres, sideFront / metres), new Vector2((offset.X + l0) / metres, sideFront / metres), Outward(p, q));
+                around = l1;
+            }
         }
         Cap(1, front);
         if (back > 0) Cap(-1, -rear);
@@ -54,6 +69,41 @@ internal static partial class StoneShape
             uint[] ring = box.Select(p => mesh.Vertex(At(p, sign * r), Uv(p), Local(p))).ToArray();
             for (int i = 0; i < n; i++) mesh.Triangle(slot, hub, ring[i], ring[(i + 1) % n], frame.Out * sign);
         }
+
+        Vector3 Outward(Vector2 p, Vector2 q)
+        {
+            Vector2 d = q - p, half = (p + q) / 2;
+            // The outline runs anticlockwise, so (d.Y, -d.X) points out of it; the frame carries that onto its surface.
+            return Vector3.Normalize(frame.On(half + Vector2.Normalize(new Vector2(d.Y, -d.X)) * .01f) - frame.On(half));
+        }
+
+        // One side piece from p to q, from the face at `top` (out along `sign`) in to `bottom`. Its data: x where it lies
+        // along its edge of the rectangle (0 to 1 from the edge's first corner, anticlockwise), y its depth under the
+        // face over the stone's size across that edge, and the stone's codes with the edge (bits 20-21), a side mark
+        // (bit 22), a two-faced mark (bit 23) and how deep the side runs in centimetres (bits 18-23 of the second). Its
+        // uv folds the face's over the edge, so the texture runs on down the side.
+        void CarvedSide(Vector2 p, Vector2 q, float top, float bottom, float sign)
+        {
+            const float Near = 1e-3f;
+            int edge = MathF.Abs(p.Y - minY) < Near && MathF.Abs(q.Y - minY) < Near ? 0
+                : MathF.Abs(p.X - maxX) < Near && MathF.Abs(q.X - maxX) < Near ? 1
+                : MathF.Abs(p.Y - maxY) < Near && MathF.Abs(q.Y - maxY) < Near ? 2 : 3;
+            Vector2 dir = edge switch { 0 => new(0, -1), 1 => new(1, 0), 2 => new(0, 1), _ => new(-1, 0) };
+            float across = edge % 2 == 0 ? height : width;
+            float Along(Vector2 v) => edge switch
+            {
+                0 => (v.X - minX) / width,
+                1 => (v.Y - minY) / height,
+                2 => (maxX - v.X) / width,
+                _ => (maxY - v.Y) / height,
+            };
+            float deep = top - bottom;
+            int depthCm = Math.Clamp((int)MathF.Ceiling(deep * 100), 0, 63);
+            int marks = (edge << 20) + Side + (back > 0 ? TwoFaced : 0);
+            Vector4 Values(Vector2 v, float h) => new(Along(v), h / across, a + marks, c + (depthCm << 18));
+            uint V(Vector2 v, float h) => mesh.Vertex(At(v, sign * (top - h)), Uv(v + dir * h), Values(v, h));
+            mesh.Quad(slot, V(p, deep), V(q, deep), V(q, 0), V(p, 0), Outward(p, q));
+        }
     }
 
     /// <summary>
@@ -62,7 +112,7 @@ internal static partial class StoneShape
     /// (3 and 3), bevel in centimetres (4), and bit 19 set, which marks a stone (a vertex without data reads zero). The
     /// second: bulge in millimetres (7 bits), facets in millimetres (6), chips in centimetres (5).
     /// </summary>
-    private const int Stone = 1 << 19;
+    private const int Stone = 1 << 19, Side = 1 << 22, TwoFaced = 1 << 23;
 
     private static (float A, float B) Data(StoneKind kind, float bevel, Vector2 patch)
     {
