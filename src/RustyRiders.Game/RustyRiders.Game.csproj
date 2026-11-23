@@ -19,6 +19,8 @@
     <RustyEngineProductLifecycleMode>realtime</RustyEngineProductLifecycleMode>
     <RustyEngineProductFixedStepHz>60</RustyEngineProductFixedStepHz>
     <RustyEngineProductFixedStepMaxCatchUpSteps>4</RustyEngineProductFixedStepMaxCatchUpSteps>
+    <!-- Turns on the Engine's occlusion culling of hidden opaque parts and splats; disabled is the off switch. -->
+    <RustyEngineProductOcclusionCulling>enabled</RustyEngineProductOcclusionCulling>
     <RustyEngineProductInputCursorMode>pointer-lock</RustyEngineProductInputCursorMode>
     <RustyEngineWatchPaths>$(MSBuildProjectDirectory);$(RustyEngineProductUiRoot);$(RustyEngineProductContentRoot)</RustyEngineWatchPaths>
   </PropertyGroup>
