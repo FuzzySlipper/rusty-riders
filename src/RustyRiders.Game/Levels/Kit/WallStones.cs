@@ -56,13 +56,14 @@ internal static partial class WallStones
         int laid = 0;
         List<float> joints = [];
         float x = x0, total = stones.Stones.Sum(s => s.Weight), g = stones.Joint / 2;
+        float clearance = MathF.Max(JointClearance, stones.Shortest * .35f);
         bool first = true;
         StoneFrame frame = new(p => OpenGround.Gltf(origin + along * p.X, p.Y), OpenGround.Gltf(inward, 0));
         while (x < x1 - 1e-3f)
         {
             StoneKind kind = Pick(random, stones.Stones, total);
             float length = Between(random, kind.MinLength, kind.MaxLength), end = x + length;
-            if (below.Any(j => MathF.Abs(j - end) < JointClearance)) end += JointClearance * 2; // break the joint
+            if (below.Any(j => MathF.Abs(j - end) < clearance)) end += clearance * 2; // break the joint
             if (x1 - end < stones.Shortest * .6f) end = x1; // no sliver of a stone at the end
             if (end < x1) joints.Add(end);
             float relief = Between(random, stones.MinRelief, stones.MaxRelief) + (random.NextDouble() < stones.PushedChance ? stones.Pushed : 0);

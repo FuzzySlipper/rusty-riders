@@ -77,28 +77,28 @@ fn carved(s: Stone, p: vec2<f32>) -> f32 {
     let size = s.size;
     let edge = min(min(p.x, size.x - p.x), min(p.y, size.y - p.y));
     var d = 0.0;
-    // The bevel: down `bevel` at the edge, meeting the face 1.4 bevels in, as the mesh's ring does.
+    // Crisp architectural bevel: down `bevel` at the edge, meeting the face 1.35 bevels in.
     if s.bevel > 0.0 {
-        d += s.bevel * max(1.0 - edge / (s.bevel * 1.4), 0.0);
+        d += s.bevel * max(1.0 - edge / (s.bevel * 1.35), 0.0);
     }
-    // The bulge, from a peak (off the middle for a hewn face) out to the rim, which stands up to `facet` proud of or
-    // below the rest by sector round the peak: straight between sectors (facets) when hewn, eased otherwise.
-    var peak = size * 0.5;
+    // Calm shoulder rolloff only near the outer rim, leaving the middle of each megalith a flat ligne-claire plane
+    // instead of a radial pyramid or cushion.
+    let margin = max(min(size.x, size.y) * 0.22, 0.08);
+    let rim = clamp(edge / margin, 0.0, 1.0);
+    d += s.pillow * (1.0 - rim) * (1.0 - rim);
+
+    // Subtle hand-laid plane tilt across the slab so neighbouring blocks catch torchlight slightly differently
+    // without center peaks or radial crease ridges.
+    let u = p / max(size, vec2<f32>(1e-4)) - vec2<f32>(0.5);
+    let tilt = (vec2<f32>(hash(s.seed, 1u), hash(s.seed, 2u)) - vec2<f32>(0.5)) * 2.0;
+    d += (dot(u, tilt) + 0.5 * (abs(tilt.x) + abs(tilt.y))) * s.facet * 0.65;
     if s.hewn {
-        peak += (vec2<f32>(hash(s.seed, 1u), hash(s.seed, 2u)) - 0.5) * 0.5 * size;
-    }
-    let q = p - peak;
-    let reach = vec2<f32>(select(peak.x, size.x - peak.x, q.x > 0.0), select(peak.y, size.y - peak.y, q.y > 0.0));
-    let t = clamp(max(abs(q.x) / max(reach.x, 1e-4), abs(q.y) / max(reach.y, 1e-4)), 0.0, 1.0);
-    let turn = (atan2(q.y, q.x) / 6.2831853 + 0.5) * 7.0;
-    let k = min(u32(floor(turn)), 6u);
-    let f = turn - f32(k);
-    let l0 = hash(s.seed, 10u + k) * 2.0 - 1.0;
-    let l1 = hash(s.seed, 10u + (k + 1u) % 7u) * 2.0 - 1.0;
-    if s.hewn {
-        d += (s.pillow - mix(l0, l1, f) * s.facet) * t;
-    } else {
-        d += s.pillow * t * t - mix(l0, l1, smoothstep(0.0, 1.0, f)) * s.facet * t;
+        // One broad subtle chisel plane across an off-centre line, never a multi-spoke pinwheel.
+        let angle = hash(s.seed, 3u) * 6.2831853;
+        let dir = vec2<f32>(cos(angle), sin(angle));
+        let offset = (hash(s.seed, 4u) - 0.5) * 0.45;
+        let across = max(dot(u, dir) - offset, 0.0);
+        d += across * s.facet * 1.35;
     }
     let broken = breaks(s, p);
     if broken.y > 0.0 {

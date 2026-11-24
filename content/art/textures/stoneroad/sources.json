@@ -95,8 +95,19 @@
     "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a smooth dressed stone surface, one continuous plane of cut slate stone in uniform muted cool grey-violet colour, sparse fine ink hatching, small chips, pits and hairline cracks scattered evenly, filling the whole image, even flat lighting, no shadows",
     "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow",
     "checks": "ok",
-    "review": "in use (wall stones)",
-    "use": "each wall stone's face (kit textures.wall, 3 m), each stone showing its own patch",
+    "review": "replaced by stone-calm-41 (#11020)",
+    "use": "previous wall stone surface (had heavy diagonal dark veins)",
     "candidates": "authoring/assets/textures/stoneroad-stones/sources.json"
+  },
+  "stone-calm-41": {
+    "host": "nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless",
+    "seed": 41,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down close-up view of a very calm smooth dressed sandstone-slate surface, one continuous unbroken flat plane of cool muted lavender-slate grey stone in uniform tone across the whole image, mostly clean quiet flat cel-shaded stone with tiny sparse stipple dots, small shallow pinholes and very delicate short hairline scratches, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, face, nose, lips, eyes, multicolored stones, pastel pink, rainbow, cast shadow, deep fissure, wide crack, thick dark crack, chasm, canyon, heavy black veins, diagonal slash, marble streaks, heavy dark band",
+    "checks": { "seam": 1.17, "repeat": 0.086, "gradient": 0.006, "mean": 0.487, "spread": 0.188, "saturation": 0.116, "perspective": 0.122 },
+    "review": "in use (megalithic wall slabs and curb ledge, #11020)",
+    "use": "each wall stone and base curb stone's face (kit textures.wall, 3.8 m), RGBA albedo + RGBA normal (strength 2.2)",
+    "candidates": "authoring/assets/textures/stoneroad-stones/calm-nimo/runs.jsonl"
   }
 }

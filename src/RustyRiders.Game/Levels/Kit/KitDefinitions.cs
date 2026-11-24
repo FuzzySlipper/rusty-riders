@@ -159,7 +159,7 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
 /// stop the walker (a ledge, not a thin moulding).
 /// </summary>
 internal sealed record TrimDefinition(string Id, TrimAnchor Anchor, PlanArea[] Areas, float[][] Profile, KitSurface Surface = KitSurface.Trim,
-    bool Collides = false)
+    bool Collides = false, bool Stones = false)
 {
     internal void Validate(string path, string field)
     {
@@ -168,6 +168,8 @@ internal sealed record TrimDefinition(string Id, TrimAnchor Anchor, PlanArea[] A
         Authored.Require(Profile.Length >= 2 && Profile.All(point => point.Length == 2 && point.All(float.IsFinite)), path, $"{field}.profile",
             "must be at least two [out, up] points.");
         Authored.Require(Profile[0][0] == 0 && Profile[^1][1] == 0, path, $"{field}.profile", "must start on the wall face (out 0) and end on its anchor (up 0).");
+        Authored.Require(!Stones || (Anchor == TrimAnchor.Floor && Profile.Length == 3 && Profile[0][1] > 0 && Profile[1][0] > 0),
+            path, $"{field}.stones", "stone trim requires a squared floor ledge profile [[0, h], [d, h], [d, 0]].");
     }
 }
 

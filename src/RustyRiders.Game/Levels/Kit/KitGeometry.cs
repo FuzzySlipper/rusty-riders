@@ -55,7 +55,7 @@ internal sealed partial class KitGeometry
         int diagonals = loops.Sum(loop => loop.Where((p, i) => p.Point.X != loop[(i + 1) % loop.Count].Point.X
             && p.Point.Y != loop[(i + 1) % loop.Count].Point.Y).Count());
         foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, LevelKit.FloorSlot, r, 0, recipe.Metres(KitSurface.Floor), Vector3.UnitY);
-        foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground);
+        foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground, seed);
         List<PilasterPlace> places = recipe.Pilasters is { } pilaster ? Places(pilaster, ground) : [];
         foreach (PilasterPlace place in places) Pilaster(mesh, collision, place, recipe.Pilasters!);
         List<string> details = recipe.WallStones is null ? [] : [$"{stones} wall stones"];
