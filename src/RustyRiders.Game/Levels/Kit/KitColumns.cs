@@ -15,24 +15,25 @@ internal static class KitColumns
     {
         Dictionary<(int X, int Z), float> rooms = plan.Heights([PlanArea.Room]);
         int hall = 0, corners = 0;
+        WallStonesDefinition? stonework = columns.Stonework ?? recipe.WallStones;
         if (columns.Hall is { } h)
             foreach (Vector2 at in KitDressing.HallColumnPlaces(plan))
-                if (rooms.TryGetValue(plan.Square(at), out float top)) Column(mesh, collision, recipe, h, at, Vector2.UnitY, top, seed + 1_000_033 * ++hall);
+                if (rooms.TryGetValue(plan.Square(at), out float top)) Column(mesh, collision, recipe, h, stonework, at, Vector2.UnitY, top, seed + 1_000_033 * ++hall);
         if (columns.Corners is { } c)
             foreach ((Vector2 at, Vector2 front) in KitDressing.RoomCornerPlaces(plan, c.Footprint))
-                if (rooms.TryGetValue(plan.Square(at), out float top)) Column(mesh, collision, recipe, c, at, front, top, seed + 2_000_029 * ++corners);
+                if (rooms.TryGetValue(plan.Square(at), out float top)) Column(mesh, collision, recipe, c, stonework, at, front, top, seed + 2_000_029 * ++corners);
         return (hall, corners);
     }
 
-    private static void Column(MeshBuilder mesh, MeshBuilder collision, KitRecipe recipe, ColumnDefinition column, Vector2 at, Vector2 front, float top,
-        int seed)
+    private static void Column(MeshBuilder mesh, MeshBuilder collision, KitRecipe recipe, ColumnDefinition column, WallStonesDefinition? stonework,
+        Vector2 at, Vector2 front, float top, int seed)
     {
         int slot = LevelKit.Slot(column.Surface);
         float metres = recipe.Metres(column.Surface);
         Vector2 side = new(-front.Y, front.X);
         float shaftBottom = column.PlinthHeight, shaftTop = top - column.CapitalHeight;
         Block(0, column.PlinthHeight, column.PlinthWidth / 2, top: true, bottom: false);
-        if (column.Stones && recipe.WallStones is { } stones)
+        if (column.Stones && stonework is { } stones)
         {
             // The core sits back by a middling relief, so the stones bring the shaft out to about its width.
             float core = column.Width / 2 - (stones.MinRelief + stones.MaxRelief) / 2;

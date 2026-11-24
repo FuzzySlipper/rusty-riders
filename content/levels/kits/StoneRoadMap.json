@@ -42,10 +42,10 @@
   "props": [],
   "textures": {
     "wall": { "id": "stone-calm-41", "albedo": "art/textures/stoneroad/stone-calm-41.png", "normal": "art/textures/stoneroad/stone-calm-41-normal.png", "metres": 3.8, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, calm cool lavender-slate dressed stone for megalithic wall slabs (#11020); see art/textures/stoneroad/sources.json", "colour": true },
-    "floor": { "id": "floor-slate-basalt", "albedo": "art/textures/stoneroad/floor-slate-basalt.png", "normal": "art/textures/stoneroad/floor-slate-basalt-normal.png", "metres": 4, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
+    "floor": { "id": "floor-slate-flagstones", "albedo": "art/textures/stoneroad/floor-slate-flagstones.png", "normal": "art/textures/stoneroad/floor-slate-flagstones-normal.png", "metres": 4.2, "source": "Z-Image base + house LoRA rrink v5-3000, seamless img2img from rectilinear flagstone guide (#11021); see art/textures/stoneroad/sources.json", "colour": true },
     "ceiling": { "id": "ceiling-obsidian-vault", "albedo": "art/textures/stoneroad/ceiling-obsidian-vault.png", "normal": "art/textures/stoneroad/ceiling-obsidian-vault-normal.png", "metres": 3, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
-    "trim": { "id": "trim-oxblood-dressed", "albedo": "art/textures/stoneroad/trim-oxblood-dressed.png", "normal": "art/textures/stoneroad/trim-oxblood-dressed-normal.png", "metres": 2.5, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
-    "runner": { "id": "runner-crimson-inlay", "albedo": "art/textures/stoneroad/runner-crimson-inlay.png", "normal": "art/textures/stoneroad/runner-crimson-inlay-normal.png", "metres": 3, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true }
+    "trim": { "id": "trim-terracotta-smooth", "albedo": "art/textures/stoneroad/trim-terracotta-smooth.png", "normal": "art/textures/stoneroad/trim-terracotta-smooth-normal.png", "metres": 2.8, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, smooth dressed terracotta-vermilion stone with no baked mortar grid (#11021); see art/textures/stoneroad/sources.json", "colour": true },
+    "runner": { "id": "runner-plum-runic", "albedo": "art/textures/stoneroad/runner-plum-runic.png", "normal": "art/textures/stoneroad/runner-plum-runic-normal.png", "metres": 2.5, "source": "Z-Image base + house LoRA rrink v5-3000, seamless img2img bordered dusty plum-violet carved stone runner with ochre-orange runic inlay (#11021); see art/textures/stoneroad/sources.json", "colour": true }
   },
   "rooms": [
     { "id": "hall", "weight": 3, "height": 9, "columns": true },
@@ -122,7 +122,15 @@
   },
   "columns": {
     "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9, "stones": true },
-    "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1, "stones": true }
+    "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1, "stones": true },
+    "stonework": {
+      "minCourse": 0.52, "maxCourse": 0.88, "joint": 0.026, "minRelief": 0.026, "maxRelief": 0.058, "pushedChance": 0.25, "pushed": 0.032,
+      "bevel": 0.024,
+      "stones": [
+        { "id": "dressed", "weight": 3, "minLength": 0.48, "maxLength": 0.85, "chipChance": 0.55, "chip": 0.075, "nicks": 0.20, "pillow": 0.012, "facet": 0.014 },
+        { "id": "hewn", "weight": 2, "minLength": 0.38, "maxLength": 0.68, "chipChance": 0.72, "chip": 0.095, "nicks": 0.28, "pillow": 0.016, "facet": 0.022, "hewn": true }
+      ]
+    }
   },
   "wallStones": {
     "minCourse": 1.25, "maxCourse": 1.95, "joint": 0.022, "minRelief": 0.012, "maxRelief": 0.028, "pushedChance": 0.08, "pushed": 0.022,

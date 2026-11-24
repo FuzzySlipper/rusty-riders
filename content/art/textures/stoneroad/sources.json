@@ -19,7 +19,7 @@
       "saturation": 0.275,
       "flags": []
     },
-    "review": "selected as primary for surface",
+    "review": "replaced by floor-slate-flagstones (#11021)",
     "picked_seed": "floor-slate-basalt-11"
   },
   "trim-oxblood-dressed": {
@@ -41,7 +41,7 @@
       "saturation": 0.76,
       "flags": []
     },
-    "review": "selected as primary for surface",
+    "review": "replaced by trim-terracotta-smooth (#11021)",
     "picked_seed": "trim-oxblood-dressed-12"
   },
   "ceiling-obsidian-vault": {
@@ -85,7 +85,7 @@
       "saturation": 0.858,
       "flags": []
     },
-    "review": "selected as primary for surface",
+    "review": "replaced by runner-plum-runic (#11021)",
     "picked_seed": "runner-crimson-inlay-12"
   },
   "stone-surface-36": {
@@ -109,5 +109,47 @@
     "review": "in use (megalithic wall slabs and curb ledge, #11020)",
     "use": "each wall stone and base curb stone's face (kit textures.wall, 3.8 m), RGBA albedo + RGBA normal (strength 2.2)",
     "candidates": "authoring/assets/textures/stoneroad-stones/calm-nimo/runs.jsonl"
+  },
+  "trim-terracotta-smooth": {
+    "role": "Trim (Columns, Pilasters, Arches, Ribs)",
+    "target_hex": "#a55042",
+    "metres": 2.8,
+    "host": "den-m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless img2img (denoise 0.82 from #9e3a32 speckled guide)",
+    "seed": 17,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat front close-up view of a calm smooth dressed terracotta-vermilion stone surface, one continuous unbroken flat plane of earthy dusty terracotta-vermilion red stone in uniform tone across the whole image, mostly clean quiet flat cel-shaded stone with subtle fine ink cross-hatching, small shallow pits, tiny chips and delicate short hairline stone cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "text, letters, words, title, signature, watermark, border, frame, panel, margin, horizon, sky, perspective, landscape, photograph, photorealistic, 3d render, wood, woodgrain, planks, bark, knots, bricks, separate stones, boulders, rocks, blocks, masonry, mortar joints, gaps, white background, grid, tiles, courses, square frames, neon, bright pink, salmon, pastel, dark burgundy, purple, plum, maroon, brown, rust, multicolored stones, rainbow, cast shadow, deep fissure, wide crack, heavy black veins",
+    "checks": { "seam": 1.1, "repeat": 0.045, "gradient": 0.002, "mean": 0.401, "spread": 0.129, "saturation": 0.599, "perspective": 0.095 },
+    "review": "in use (smooth terracotta-vermilion trim, no baked masonry grid, #11021)",
+    "use": "kit textures.trim (2.8 m), RGBA albedo + RGBA normal (strength 2.0)",
+    "candidates": "authoring/assets/textures/stoneroad-direction-b-v2/runs.jsonl"
+  },
+  "floor-slate-flagstones": {
+    "role": "Floor (Rectilinear Cut Slate Flagstones)",
+    "target_hex": "#64697d",
+    "metres": 4.2,
+    "host": "den-nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless img2img (denoise 0.72 from wrapping running-bond flagstone guide)",
+    "seed": 21,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a worn dungeon floor laid in regular horizontal courses of large rectangular cut slate flagstones, uniform calm muted cool slate-indigo blue-grey stone across every slab, mostly quiet flat cel-shaded stone faces with crisp dark inked rectilinear mortar joints, subtle bevel hatching, small corner chips, tiny sparse pebbles and delicate short hairline cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "multicolored stones, rainbow, pastel pink, salmon, terracotta, red, patchwork, crazy paving, Voronoi cells, diagonal cracks, irregular polygons, river boulders, rubble pile, archway, window, doorway, hole, recess, tunnel, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, signature, watermark, border, frame, panel, margin",
+    "checks": { "gradient": 0.006, "mean": 0.399, "spread": 0.314, "saturation": 0.206, "perspective": 0.093, "note": "2x2 visual check confirms seamless mortar course wrap across tile boundaries" },
+    "review": "in use (rectilinear cut slate flagstones replacing Voronoi crazy-paving, #11021)",
+    "use": "kit textures.floor (4.2 m), RGBA albedo + RGBA normal (strength 2.4)",
+    "candidates": "authoring/assets/textures/stoneroad-direction-b-v2/runs.jsonl"
+  },
+  "runner-plum-runic": {
+    "role": "Floor Runner (Dusty Plum-Violet Carved Stone with Ochre-Orange Runic Inlay)",
+    "target_hex": "#6e5b76",
+    "metres": 2.5,
+    "host": "den-m5",
+    "route": "ComfyUI on den-m5: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless img2img (denoise 0.66 from vertically-wrapping bordered runner guide)",
+    "seed": 31,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a straight vertical carved stone floor runner strip, uniform muted dusty plum-violet mauve stone slab with straight parallel raised stone border curbs along the left and right edges, and crisp geometric alien-runic circuit lines inlaid in glowing warm ochre-orange down the center channel, clean hand-inked stone surface with fine hatching, small chips and subtle stone wear, filling the whole image edge to edge, even flat lighting, no shadows",
+    "negative": "bright red, crimson carpet, rug, fabric, cloth, tassels, fringe, crazy paving, Voronoi, diagonal mess, perspective, horizon, sky, 3d render, cast shadow, drop shadow, text, letters, english words, signature, watermark, top border, bottom border, oval frame, vignette, circular medallion",
+    "checks": { "v_seam": 0.32, "v_ratio": 0.12, "gradient": 0.001, "mean": 0.366, "spread": 0.549, "saturation": 0.297, "perspective": 0.08, "note": "strip tiles vertically only; u locked [0,1] across strip width" },
+    "review": "in use (bordered dusty plum-violet carved stone runner with ochre-orange runic inlay, #11021)",
+    "use": "kit textures.runner (2.5 m, u=[0,1] across strip), RGBA albedo + RGBA normal (strength 2.6)",
+    "candidates": "authoring/assets/textures/stoneroad-direction-b-v2/runs.jsonl"
   }
 }

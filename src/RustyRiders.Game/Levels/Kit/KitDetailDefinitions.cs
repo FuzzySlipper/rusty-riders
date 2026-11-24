@@ -141,14 +141,17 @@ internal sealed record ComicShadingDefinition(float Strength, float ShadowCutoff
 /// <summary>
 /// The kit's own columns (<see cref="KitColumns"/>), in place of old props: free-standing <see cref="Hall"/> columns where
 /// the HallColumns dressing rule would stand them (rooms whose family has columns), and <see cref="Corners"/> piers in
-/// each square room corner. Both run floor to ceiling and collide.
+/// each square room corner. Both run floor to ceiling and collide. Optional <see cref="Stonework"/> overrides the kit's
+/// wall stones for column shafts when their courses and relief differ from the walls.
 /// </summary>
-internal sealed record ColumnsDefinition(ColumnDefinition? Hall = null, ColumnDefinition? Corners = null)
+internal sealed record ColumnsDefinition(ColumnDefinition? Hall = null, ColumnDefinition? Corners = null,
+    WallStonesDefinition? Stonework = null)
 {
     internal void Validate(string path)
     {
         Hall?.Validate(path, "columns.hall");
         Corners?.Validate(path, "columns.corners");
+        Stonework?.Validate(path, "columns.stonework");
     }
 }
 
@@ -187,19 +190,19 @@ internal sealed record ColumnDefinition(float Width, float PlinthWidth, float Pl
 internal sealed record WallStonesDefinition(float MinCourse, float MaxCourse, StoneKind[] Stones, float Joint, float MinRelief, float MaxRelief,
     float PushedChance, float Pushed, float Bevel, KitSurface Surface = KitSurface.Wall, KitSurface Backing = KitSurface.Ceiling)
 {
-    internal void Validate(string path)
+    internal void Validate(string path, string field = "wallStones")
     {
-        Authored.Positive(path, "wallStones.minCourse", MinCourse);
-        Authored.AtLeast(path, "wallStones.maxCourse", MaxCourse, MinCourse);
-        Authored.Require(Stones.Length > 0, path, "wallStones.stones", "must name at least one kind of stone.");
-        for (int i = 0; i < Stones.Length; i++) Stones[i].Validate(path, $"wallStones.stones[{i}]");
-        Authored.Positive(path, "wallStones.joint", Joint);
-        Authored.Require(Joint < MinCourse / 2, path, "wallStones.joint", "must be well under a course's height.");
-        Authored.Positive(path, "wallStones.minRelief", MinRelief);
-        Authored.AtLeast(path, "wallStones.maxRelief", MaxRelief, MinRelief);
-        Authored.Within(path, "wallStones.pushedChance", PushedChance, 0, 1);
-        Authored.AtLeast(path, "wallStones.pushed", Pushed, 0);
-        Authored.AtLeast(path, "wallStones.bevel", Bevel, 0);
+        Authored.Positive(path, $"{field}.minCourse", MinCourse);
+        Authored.AtLeast(path, $"{field}.maxCourse", MaxCourse, MinCourse);
+        Authored.Require(Stones.Length > 0, path, $"{field}.stones", "must name at least one kind of stone.");
+        for (int i = 0; i < Stones.Length; i++) Stones[i].Validate(path, $"{field}.stones[{i}]");
+        Authored.Positive(path, $"{field}.joint", Joint);
+        Authored.Require(Joint < MinCourse / 2, path, $"{field}.joint", "must be well under a course's height.");
+        Authored.Positive(path, $"{field}.minRelief", MinRelief);
+        Authored.AtLeast(path, $"{field}.maxRelief", MaxRelief, MinRelief);
+        Authored.Within(path, $"{field}.pushedChance", PushedChance, 0, 1);
+        Authored.AtLeast(path, $"{field}.pushed", Pushed, 0);
+        Authored.AtLeast(path, $"{field}.bevel", Bevel, 0);
     }
 
     /// <summary>The furthest any stone stands out from its wall, which parts set on the wall stand clear of.</summary>

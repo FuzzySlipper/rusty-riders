@@ -33,7 +33,8 @@ import comfy  # noqa: E402
 
 
 def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str, lora: str | None, strength: float,
-           negative: str = "", seamless: bool = False, control: str | None = None, control_strength: float = .35) -> dict:
+           negative: str = "", seamless: bool = False, control: str | None = None, control_strength: float = .35,
+           init: str | None = None, denoise: float = 1.0) -> dict:
     g = {
         "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": unet, "weight_dtype": "default"}},
         "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}},
@@ -44,10 +45,14 @@ def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str,
         "latent": {"class_type": "EmptySD3LatentImage", "inputs": {"width": size, "height": size, "batch_size": 1}},
         "sample": {"class_type": "KSampler", "inputs": {"model": ["sampling", 0], "positive": ["text", 0], "negative": ["negative", 0],
                    "latent_image": ["latent", 0], "seed": seed, "steps": steps, "cfg": cfg, "sampler_name": "res_multistep",
-                   "scheduler": "simple", "denoise": 1}},
+                   "scheduler": "simple", "denoise": denoise}},
         "decode": {"class_type": "VAEDecode", "inputs": {"samples": ["sample", 0], "vae": ["vae", 0]}},
         "save": {"class_type": "SaveImage", "inputs": {"images": ["decode", 0], "filename_prefix": "riders-batch"}},
     }
+    if init:
+        g["init_img"] = {"class_type": "LoadImage", "inputs": {"image": init}}
+        g["encode"] = {"class_type": "VAEEncode", "inputs": {"pixels": ["init_img", 0], "vae": ["vae", 0]}}
+        g["sample"]["inputs"]["latent_image"] = ["encode", 0]
     if lora:
         g["lora"] = {"class_type": "LoraLoaderModelOnly", "inputs": {"model": ["unet", 0], "lora_name": lora, "strength_model": strength}}
         g["sampling"]["inputs"]["model"] = ["lora", 0]
@@ -62,6 +67,8 @@ def zimage(prompt: str, seed: int, size: int, steps: int, cfg: float, unet: str,
         g["sampling"]["inputs"]["model"] = ["seamless", 0]
         g["circular"] = {"class_type": "MakeCircularVAEDiT", "inputs": {"vae": ["vae", 0], "tiling": "enable", "copy_vae": "Make a copy"}}
         g["decode"]["inputs"]["vae"] = ["circular", 0]
+        if init:
+            g["encode"]["inputs"]["vae"] = ["circular", 0]
     return g
 
 
@@ -104,11 +111,15 @@ def main() -> None:
     parser.add_argument("--tag", default="gen")
     parser.add_argument("--control", help="layout image for the Z-Image ControlNet")
     parser.add_argument("--control-strength", type=float, default=.35)
+    parser.add_argument("--init", help="init image for img2img (Z-Image; composes cleanly with --seamless)")
+    parser.add_argument("--denoise", type=float, default=1.0, help="denoising strength with --init (e.g. 0.65-0.78)")
     parser.add_argument("--seamless", action="store_true", help="generate wrapping at the edges (Z-Image; needs the seamless nodes)")
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     if args.control:
         comfy.upload(args.control)
+    if args.init:
+        comfy.upload(args.init)
     if args.model == "qwen-edit":
         if not args.reference:
             parser.error("qwen-edit needs --reference")
@@ -118,17 +129,20 @@ def main() -> None:
             g = qwen_edit(args.prompt, seed, args.size, os.path.basename(args.reference))
         elif args.model == "zimage-turbo":
             g = zimage(args.prompt, seed, args.size, 8, 1, "z_image_turbo_bf16.safetensors", args.lora, args.lora_strength, seamless=args.seamless,
-                       control=os.path.basename(args.control) if args.control else None, control_strength=args.control_strength)
+                       control=os.path.basename(args.control) if args.control else None, control_strength=args.control_strength,
+                       init=os.path.basename(args.init) if args.init else None, denoise=args.denoise)
         else:
             g = zimage(args.prompt, seed, args.size, 25, 4, "z_image_bf16.safetensors", args.lora, args.lora_strength, args.negative, args.seamless,
-                       os.path.basename(args.control) if args.control else None, args.control_strength)
+                       os.path.basename(args.control) if args.control else None, args.control_strength,
+                       os.path.basename(args.init) if args.init else None, args.denoise)
         with tempfile.TemporaryDirectory() as work:
             out = comfy.run(g, os.path.join(work, "out"))
             path = os.path.join(args.out_dir, f"{args.tag}-{seed}.png")
             shutil.copy(out[0], path)
         record = {"image": path, "model": args.model, "lora": args.lora, "lora_strength": args.lora_strength if args.lora else None,
                   "reference": args.reference, "prompt": args.prompt, "negative": args.negative, "seed": seed, "size": args.size, "seamless": args.seamless,
-                  "control": args.control, "control_strength": args.control_strength if args.control else None}
+                  "control": args.control, "control_strength": args.control_strength if args.control else None,
+                  "init": args.init, "denoise": args.denoise if args.init else None}
         with open(os.path.join(args.out_dir, "runs.jsonl"), "a") as runs:
             runs.write(json.dumps(record) + "\n")
 

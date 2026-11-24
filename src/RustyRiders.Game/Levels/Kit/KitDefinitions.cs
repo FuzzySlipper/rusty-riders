@@ -135,12 +135,10 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
     /// <summary>The surfaces stones are laid in: walls (doorway heads too), stone columns, and the ribs and arch rings built of stones.</summary>
     internal IEnumerable<KitSurface> StoneSurfaces()
     {
-        if (WallStones is { } stones)
-        {
-            yield return stones.Surface;
+        if (WallStones is { } stones) yield return stones.Surface;
+        if ((Columns?.Stonework ?? WallStones) is not null)
             foreach (ColumnDefinition column in new[] { Columns?.Hall, Columns?.Corners }.OfType<ColumnDefinition>().Where(c => c.Stones))
                 yield return column.Surface;
-        }
         if (DoorArch?.Ring is { Stones: not null } ring) yield return ring.Surface;
         if (Ribs is { Stones: not null } ribs) yield return ribs.Surface;
         if (BlindArches is { Ring.Stones: not null } blind) yield return blind.Ring.Surface;
