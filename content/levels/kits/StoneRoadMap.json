@@ -35,15 +35,23 @@
   "pilasters": {
     "areas": ["Room"],
     "spacing": 7.5,
-    "width": 1.4,
-    "depth": 0.8,
-    "clearance": 2.5
+    "width": 1.15,
+    "depth": 0.65,
+    "clearance": 2.5,
+    "plinthHeight": 2.15,
+    "plinthWidth": 1.60,
+    "plinthDepth": 0.92,
+    "plinthBatter": 0.16,
+    "plinthSurface": "Wall",
+    "bracketReach": 1.15,
+    "bracketDrop": 2.1,
+    "bracketSegments": 6
   },
   "props": [],
   "textures": {
     "wall": { "id": "stone-calm-41", "albedo": "art/textures/stoneroad/stone-calm-41.png", "normal": "art/textures/stoneroad/stone-calm-41-normal.png", "metres": 3.8, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, calm cool lavender-slate dressed stone for megalithic wall slabs (#11020); see art/textures/stoneroad/sources.json", "colour": true },
     "floor": { "id": "floor-slate-flagstones", "albedo": "art/textures/stoneroad/floor-slate-flagstones.png", "normal": "art/textures/stoneroad/floor-slate-flagstones-normal.png", "metres": 4.2, "source": "Z-Image base + house LoRA rrink v5-3000, seamless img2img from rectilinear flagstone guide (#11021); see art/textures/stoneroad/sources.json", "colour": true },
-    "ceiling": { "id": "ceiling-obsidian-vault", "albedo": "art/textures/stoneroad/ceiling-obsidian-vault.png", "normal": "art/textures/stoneroad/ceiling-obsidian-vault-normal.png", "metres": 3, "source": "Direction B pack (grace, 2026-11-12): Z-Image base + house LoRA rrink v5-3000, seamless; see art/textures/stoneroad/sources.json", "colour": true },
+    "ceiling": { "id": "ceiling-slate-vault", "albedo": "art/textures/stoneroad/ceiling-slate-vault.png", "normal": "art/textures/stoneroad/ceiling-slate-vault-normal.png", "metres": 5.0, "source": "Z-Image base + house LoRA rrink v5-3000, seamless img2img sculpted dark slate-indigo coffered ceiling vault (#11022); see art/textures/stoneroad/sources.json", "colour": true },
     "trim": { "id": "trim-terracotta-smooth", "albedo": "art/textures/stoneroad/trim-terracotta-smooth.png", "normal": "art/textures/stoneroad/trim-terracotta-smooth-normal.png", "metres": 2.8, "source": "Z-Image base + house LoRA rrink v5-3000, seamless, smooth dressed terracotta-vermilion stone with no baked mortar grid (#11021); see art/textures/stoneroad/sources.json", "colour": true },
     "runner": { "id": "runner-plum-runic", "albedo": "art/textures/stoneroad/runner-plum-runic.png", "normal": "art/textures/stoneroad/runner-plum-runic-normal.png", "metres": 2.5, "source": "Z-Image base + house LoRA rrink v5-3000, seamless img2img bordered dusty plum-violet carved stone runner with ochre-orange runic inlay (#11021); see art/textures/stoneroad/sources.json", "colour": true }
   },
@@ -55,20 +63,10 @@
   ],
   "doorArch": {
     "rise": 2.2,
-    "segments": 12,
-    "surface": "Trim",
-    "ring": {
-      "width": 0.6,
-      "depth": 0.15,
-      "surface": "Trim",
-      "stones": {
-        "joint": 0.006, "minJut": -0.03, "maxJut": 0.07, "innerSag": 0, "outerSag": 0.07, "keystone": 0.1,
-        "stones": [
-          { "id": "bulged", "weight": 2, "minLength": 0.45, "maxLength": 0.7, "pillow": 0.05, "facet": 0.02 },
-          { "id": "hewn", "weight": 2, "minLength": 0.4, "maxLength": 0.65, "pillow": 0.03, "facet": 0.035, "hewn": true }
-        ]
-      }
-    }
+    "segments": 14,
+    "surface": "Wall",
+    "pointed": 0.28,
+    "steps": { "count": 2, "rise": 0.08, "tread": 0.28, "surface": "Wall" }
   },
   "dressing": [
     {
@@ -90,39 +88,24 @@
   ],
   "runners": { "width": 2.5, "lift": 0.02 },
   "ribs": {
-    "width": 0.6, "depth": 0.45, "haunch": 2.5, "segments": 16,
-    "stones": {
-      "joint": 0.04, "minJut": -0.03, "maxJut": 0.04, "innerSag": 0.04, "outerSag": 0.04, "keystone": 0.08,
-      "stones": [
-        { "id": "dressed", "weight": 3, "minLength": 0.5, "maxLength": 0.8, "chipChance": 0.5, "chip": 0.08, "pillow": 0.015, "facet": 0.008 },
-        { "id": "rough", "weight": 1, "minLength": 0.4, "maxLength": 0.6, "chipChance": 0.85, "chip": 0.12, "nicks": 0.2, "pillow": 0.02, "facet": 0.02, "hewn": true }
-      ]
-    }
+    "width": 0.50, "depth": 0.38, "haunch": 2.5, "segments": 14, "pointed": 0.30, "cofferDepth": 0.32, "cofferSurface": "Wall"
   },
   "blindArches": {
-    "sill": 1.6, "spring": 4.5, "margin": 0.4, "topClearance": 1.2, "segments": 12, "panel": "Ceiling",
-    "ring": {
-      "width": 0.45, "depth": 0.18, "surface": "Trim",
-      "stones": {
-        "joint": 0.006, "minJut": -0.02, "maxJut": 0.05, "innerSag": 0, "outerSag": 0.05, "keystone": 0.07,
-        "stones": [
-          { "id": "bulged", "weight": 2, "minLength": 0.4, "maxLength": 0.6, "pillow": 0.04, "facet": 0.015 },
-          { "id": "hewn", "weight": 2, "minLength": 0.35, "maxLength": 0.55, "pillow": 0.025, "facet": 0.03, "hewn": true }
-        ]
-      }
-    }
+    "sill": 1.6, "spring": 4.4, "margin": 0.35, "topClearance": 1.1, "segments": 14, "panel": "Ceiling",
+    "recess": 0.78, "shelfOut": 0.24, "shelfThickness": 0.22, "shelfSurface": "Wall", "pointed": 0.22,
+    "ring": { "width": 0.42, "depth": 0.16, "surface": "Trim" }
   },
   "sconces": {
-    "height": 2.15, "gap": 0.55, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.66, 0.16], "flameEmission": 2.5,
+    "height": 2.15, "gap": 0.75, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.66, 0.16], "flameEmission": 2.5,
     "lightColor": [1, 0.64, 0.26], "intensity": 19, "range": 10.5, "decay": 1.65, "shadows": true, "shadowResolution": 512, "shadowSoft": false,
     "pool": {
       "color": [1, 0.66, 0.26], "intensity": 36, "range": 12.5, "decay": 1.45, "height": 3.5, "forward": 0.65, "aimForward": 3.2,
-      "outerDegrees": 44, "penumbra": 0.14, "shadows": true, "shadowResolution": 512, "revealIntensity": 15, "revealRange": 6.5
+      "outerDegrees": 44, "penumbra": 0.14, "shadows": true, "shadowResolution": 512, "revealIntensity": 11, "revealRange": 6.5
     }
   },
   "columns": {
-    "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9, "stones": true },
-    "corners": { "width": 1.6, "plinthWidth": 2.0, "plinthHeight": 1.0, "capitalWidth": 2.0, "capitalHeight": 1.1, "stones": true },
+    "hall": { "width": 1.0, "plinthWidth": 1.45, "plinthHeight": 2.15, "capitalWidth": 1.65, "capitalHeight": 0.65, "stones": true, "plinthSurface": "Wall", "plinthBatter": 0.18, "bracketReach": 1.45, "bracketDrop": 2.2, "bracketSegments": 6 },
+    "corners": { "width": 1.45, "plinthWidth": 1.85, "plinthHeight": 2.15, "capitalWidth": 2.0, "capitalHeight": 0.70, "stones": true, "plinthSurface": "Wall", "plinthBatter": 0.18, "bracketReach": 1.1, "bracketDrop": 2.0, "bracketSegments": 6 },
     "stonework": {
       "minCourse": 0.52, "maxCourse": 0.88, "joint": 0.026, "minRelief": 0.026, "maxRelief": 0.058, "pushedChance": 0.25, "pushed": 0.032,
       "bevel": 0.024,
@@ -145,7 +128,7 @@
   "atmosphere": {
     "hemisphere": {
       "skyColor": [0.48, 0.47, 0.62],
-      "groundColor": [0.24, 0.23, 0.32],
+      "groundColor": [0.28, 0.27, 0.37],
       "intensity": 1.05
     },
     "toneMapping": { "operator": "Neutral", "exposure": 1.02 },

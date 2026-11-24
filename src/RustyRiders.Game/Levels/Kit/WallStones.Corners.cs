@@ -18,9 +18,9 @@ internal static partial class WallStones
 {
     private enum Turn { Square, Inside, Outside }
 
-    /// <summary>The stones on every outline run, between its area's floor trims and ceiling trims.</summary>
+    /// <summary>The stones on every outline run, between its area's floor trims and ceiling trims, skipping recessed alcoves.</summary>
     internal static int Outlines(MeshBuilder mesh, RoomPlan plan, KitRecipe recipe, WallStonesDefinition stones,
-        List<List<(Vector2 Point, float Height)>> loops, int seed)
+        List<List<(Vector2 Point, float Height)>> loops, int seed, IReadOnlyList<BlindArchBay>? bays = null)
     {
         int laid = 0;
         for (int l = 0; l < loops.Count; l++)
@@ -31,13 +31,14 @@ internal static partial class WallStones
                 PlanArea area = plan.Rules.Area(p.Height);
                 return new StoneRun(plan.Metres(p.Point), plan.Metres(loop[(i + 1) % loop.Count].Point), Bottom(recipe, area), p.Height - TopGap(recipe, area));
             }).ToArray();
-            laid += Loop(mesh, recipe, stones, stones.Surface, runs, unchecked(seed * 7919 + l * 104729));
+            laid += Loop(mesh, recipe, stones, stones.Surface, runs, unchecked(seed * 7919 + l * 104729), bays);
         }
         return laid;
     }
 
     /// <summary>Lays a closed loop of runs in shared courses with interlocking corners, in <paramref name="surface"/>.</summary>
-    internal static int Loop(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, KitSurface surface, IReadOnlyList<StoneRun> runs, int seed)
+    internal static int Loop(MeshBuilder mesh, KitRecipe recipe, WallStonesDefinition stones, KitSurface surface, IReadOnlyList<StoneRun> runs, int seed,
+        IReadOnlyList<BlindArchBay>? bays = null)
     {
         int n = runs.Count, laid = 0;
         Random heights = new(seed);
@@ -52,6 +53,9 @@ internal static partial class WallStones
             StoneRun run = runs[i];
             Vector2 along = Vector2.Normalize(run.B - run.A), inward = new(-along.Y, along.X);
             float length = Vector2.Distance(run.A, run.B);
+            Func<float, float, float, float, bool>? skip = bays is { Count: > 0 }
+                ? (rx0, rx1, ry0, ry1) => bays.Any(b => b.Overlaps(run.A, along, inward, rx0, rx1, ry0, ry1, stones.Joint))
+                : null;
             int before = i, after = (i + 1) % n; // this run's start and end corners
             Random random = new(unchecked(seed * 31 + i * 104729));
             List<float> below = [];
@@ -74,7 +78,7 @@ internal static partial class WallStones
                     else { if (mine) { x1 = length + lose; lastRelief = win; } else lastRelief = lose; }
                 }
                 if (x1 - x0 > stones.Joint * 2)
-                    laid += Row(mesh, recipe, stones, surface, random, run.A, along, inward, x0, x1, y0, y1, ref below, firstRelief, lastRelief);
+                    laid += Row(mesh, recipe, stones, surface, random, run.A, along, inward, x0, x1, y0, y1, ref below, firstRelief, lastRelief, skip);
             }
         }
         return laid;

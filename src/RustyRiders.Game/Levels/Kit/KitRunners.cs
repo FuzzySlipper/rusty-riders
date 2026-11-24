@@ -21,24 +21,28 @@ internal static class KitRunners
             .ToDictionary(room => room.Key, room => new Vector2((float)room.Average(p => p.Key.X), (float)room.Average(p => p.Key.Z)) * plan.CellSize);
         bool Open(Vector2 at) => plan.Open.TryGetValue(plan.Square(at), out PlanArea area) && area != PlanArea.Corridor;
         HashSet<int> hubs = [];
+        float startOffset = recipe.DoorArch?.Steps is { } steps ? plan.Rules.WallMetres + steps.Tread : 0;
         foreach (PlanDoorway doorway in plan.Doorways)
         {
             if (!plan.RoomOf.TryGetValue(plan.CellAt(doorway.Centre + doorway.IntoRoom * plan.CellSize / 2), out int node)) continue;
             Vector2 into = doorway.IntoRoom, across = new(-into.Y, into.X), middle = middles[node];
             float depth = Vector2.Dot(middle - doorway.Centre, into), side = Vector2.Dot(middle - doorway.Centre, across);
             bool meets = MathF.Abs(side) < half && Open(middle);
-            float end = meets ? depth - half : depth, reached = 0;
+            float end = meets ? depth - half : depth, reached = startOffset;
             while (reached < end && Open(doorway.Centre + into * (reached + step / 2))) reached += step;
             end = MathF.Min(end, reached);
-            if (end <= 0) continue;
+            float length = end - startOffset;
+            if (length <= 0) continue;
             float y = meets ? runner.Lift : runner.Lift + Rise * ++crossings;
-            Vector2 a = doorway.Centre - across * half, b = doorway.Centre + across * half;
-            Vector2 c = b + into * end, d = a + into * end;
-            float vEnd = end / metres;
+            Vector2 origin = doorway.Centre + into * startOffset;
+            Vector2 a = origin - across * half, b = origin + across * half;
+            Vector2 c = b + into * length, d = a + into * length;
+            float vEnd = length / metres;
             mesh.Face(slot, OpenGround.Gltf(a, y), OpenGround.Gltf(b, y), OpenGround.Gltf(c, y), OpenGround.Gltf(d, y),
                 Vector2.Zero, Vector2.UnitX, new Vector2(1, vEnd), new Vector2(0, vEnd), Vector3.UnitY);
             Skirt(mesh, slot, d, a, y, -across, 0, vEnd);
             Skirt(mesh, slot, b, c, y, across, 1, vEnd);
+            if (startOffset > 0) Skirt(mesh, slot, a, b, y, -into, 0, 1);
             if (!meets) Skirt(mesh, slot, c, d, y, into, 0, 1);
             strips++;
             if (meets) hubs.Add(node);

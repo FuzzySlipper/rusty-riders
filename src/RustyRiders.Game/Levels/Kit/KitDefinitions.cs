@@ -172,11 +172,16 @@ internal sealed record TrimDefinition(string Id, TrimAnchor Anchor, PlanArea[] A
 }
 
 /// <summary>
-/// Flat pilasters against the walls of the plan's <see cref="Areas"/>: <see cref="Width"/> wide, standing
+/// Flat or two-tone pilasters against the walls of the plan's <see cref="Areas"/>: <see cref="Width"/> wide, standing
 /// <see cref="Depth"/> out from the wall, floor to ceiling, about every <see cref="Spacing"/> metres along a wall and no
-/// nearer than <see cref="Clearance"/> to its ends; none stands in front of an opening.
+/// nearer than <see cref="Clearance"/> to its ends; none stands in front of an opening. With <see cref="PlinthHeight"/>
+/// above zero, the lower section is a battered stone base pier in <see cref="PlinthSurface"/> under the sleek upper
+/// terracotta shaft; with <see cref="BracketReach"/> and <see cref="BracketDrop"/> above zero, sweeping curved arch
+/// brackets flare out from the upper shaft to meet the ceiling and flanking bays.
 /// </summary>
-internal sealed record PilasterDefinition(PlanArea[] Areas, float Spacing, float Width, float Depth, float Clearance)
+internal sealed record PilasterDefinition(PlanArea[] Areas, float Spacing, float Width, float Depth, float Clearance,
+    float PlinthHeight = 0, float PlinthWidth = 0, float PlinthDepth = 0, float PlinthBatter = 0,
+    KitSurface PlinthSurface = KitSurface.Wall, float BracketReach = 0, float BracketDrop = 0, int BracketSegments = 6)
 {
     internal void Validate(string path)
     {
@@ -184,8 +189,18 @@ internal sealed record PilasterDefinition(PlanArea[] Areas, float Spacing, float
         Authored.Positive(path, "pilasters.spacing", Spacing);
         Authored.Positive(path, "pilasters.width", Width);
         Authored.Positive(path, "pilasters.depth", Depth);
-        Authored.AtLeast(path, "pilasters.clearance", Clearance, Width / 2);
+        Authored.AtLeast(path, "pilasters.clearance", Clearance, MathF.Max(Width, PlinthWidth) / 2);
+        Authored.AtLeast(path, "pilasters.plinthHeight", PlinthHeight, 0);
+        Authored.AtLeast(path, "pilasters.plinthWidth", PlinthWidth, 0);
+        Authored.AtLeast(path, "pilasters.plinthDepth", PlinthDepth, 0);
+        Authored.AtLeast(path, "pilasters.plinthBatter", PlinthBatter, 0);
+        Authored.AtLeast(path, "pilasters.bracketReach", BracketReach, 0);
+        Authored.AtLeast(path, "pilasters.bracketDrop", BracketDrop, 0);
+        Authored.Require(BracketSegments >= 2, path, "pilasters.bracketSegments", "must be at least 2.");
     }
+
+    internal float BaseWidth => PlinthWidth > 0 ? PlinthWidth : Width;
+    internal float BaseDepth => PlinthDepth > 0 ? PlinthDepth : Depth;
 }
 
 /// <summary>
@@ -207,16 +222,19 @@ internal sealed record KitTextures(SurfaceTexture? Wall = null, SurfaceTexture? 
 
 /// <summary>
 /// An arch over every doorway. The doorway's straight sides stand to the plan's door height, the springing line, and
-/// its head rises <see cref="Rise"/> above that in a half-ellipse across the door's width (a round arch when the rise is
-/// half the width), drawn with <see cref="Segments"/> straight pieces. The arched soffit through the wall takes
-/// <see cref="Surface"/>. An optional <see cref="Ring"/> of voussoirs stands out round the arch on the room side.
+/// its head rises <see cref="Rise"/> above that across the door's width, drawn with <see cref="Segments"/> straight
+/// pieces: a half-ellipse at <see cref="Pointed"/> 0, blending to a Gothic pointed arch toward 1. The arched soffit
+/// through the wall takes <see cref="Surface"/>. An optional <see cref="Ring"/> of voussoirs stands out round the arch
+/// on the room side; optional <see cref="Steps"/> lay carved threshold steps across the doorway opening.
 /// </summary>
-internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surface, ArchRingDefinition? Ring = null)
+internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surface, ArchRingDefinition? Ring = null,
+    float Pointed = 0, DoorThresholdDefinition? Steps = null)
 {
     internal void Validate(string path, PlanRules plan)
     {
         Authored.Positive(path, "doorArch.rise", Rise);
         Authored.Require(Segments >= 2, path, "doorArch.segments", "must be at least 2.");
+        Authored.Within(path, "doorArch.pointed", Pointed, 0, 1);
         Authored.Require(plan.DoorHeight + Rise + (Ring?.Width ?? 0) < plan.CorridorHeight, path, "doorArch.rise",
             $"the arch (from the plan's door height, {plan.DoorHeight} m, with its ring) must stay under the corridor ceiling, {plan.CorridorHeight} m.");
         if (Ring is { } ring)
@@ -225,6 +243,20 @@ internal sealed record ArchDefinition(float Rise, int Segments, KitSurface Surfa
             Authored.Positive(path, "doorArch.ring.depth", ring.Depth);
             ring.Stones?.Validate(path, "doorArch.ring.stones", ring.Depth);
         }
+        Steps?.Validate(path, plan);
+    }
+}
+
+/// <summary>Carved stone threshold steps across each doorway opening, stepping up into the wall band.</summary>
+internal sealed record DoorThresholdDefinition(int Count, float Rise, float Tread, KitSurface Surface = KitSurface.Wall)
+{
+    internal void Validate(string path, PlanRules plan)
+    {
+        Authored.Require(Count >= 1 && Count <= 4, path, "doorArch.steps.count", "must be 1 to 4.");
+        Authored.Positive(path, "doorArch.steps.rise", Rise);
+        Authored.Positive(path, "doorArch.steps.tread", Tread);
+        Authored.Require(Count * Rise <= .25f, path, "doorArch.steps.rise", "total threshold rise must stay walkable (at most 0.25 m).");
+        Authored.Require(Count * Tread < plan.WallMetres, path, "doorArch.steps.tread", "steps must fit within the doorway wall band.");
     }
 }
 

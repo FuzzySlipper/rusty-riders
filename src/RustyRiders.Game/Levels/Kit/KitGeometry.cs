@@ -43,8 +43,13 @@ internal sealed partial class KitGeometry
         MeshBuilder mesh = new(LevelKit.SlotCount), collision = new(1);
         Dictionary<(int X, int Z), float> ground = plan.Heights(AllAreas);
         List<List<(Vector2 Point, float Height)>> loops = OpenGround.Walls(ground);
-        foreach (List<(Vector2 Point, float Height)> loop in loops) Walls(mesh, collision, loop);
-        int stones = recipe.WallStones is { } wallStones ? WallStones.Outlines(mesh, plan, recipe, wallStones, loops, seed) : 0;
+        // Plan pilasters and recessed alcove bays before laying walls and wall stones so recessed alcoves cut cleanly into the wall.
+        List<PilasterPlace> places = recipe.Pilasters is { } pilaster ? Places(pilaster, ground) : [];
+        List<BlindArchBay> blindBays = recipe.BlindArches is { } blindArch
+            ? BlindArches.Plan(plan, blindArch, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground), ground)
+            : [];
+        foreach (List<(Vector2 Point, float Height)> loop in loops) Walls(mesh, collision, loop, blindBays);
+        int stones = recipe.WallStones is { } wallStones ? WallStones.Outlines(mesh, plan, recipe, wallStones, loops, seed, blindBays) : 0;
         // An arched doorway takes no flat lintel or ceiling: DoorArches builds its head.
         bool arched = recipe.DoorArch is not null;
         Steps(mesh, collision, ground, arched);
@@ -56,14 +61,13 @@ internal sealed partial class KitGeometry
             && p.Point.Y != loop[(i + 1) % loop.Count].Point.Y).Count());
         foreach (WalkRectangle r in WalkCells.Merge(ground.ToDictionary(p => p.Key, _ => 0f))) Flat(mesh, collision, LevelKit.FloorSlot, r, 0, recipe.Metres(KitSurface.Floor), Vector3.UnitY);
         foreach (TrimDefinition trim in recipe.Trims) Trim(mesh, collision, trim, ground, seed);
-        List<PilasterPlace> places = recipe.Pilasters is { } pilaster ? Places(pilaster, ground) : [];
         foreach (PilasterPlace place in places) Pilaster(mesh, collision, place, recipe.Pilasters!);
         List<string> details = recipe.WallStones is null ? [] : [$"{stones} wall stones"];
         if (recipe.Runners is { } runners) details.Add($"{KitRunners.Build(mesh, plan, recipe, runners)} runners");
         if (recipe.Ribs is { } ribs)
             details.Add($"{CeilingRibs.Build(mesh, plan, recipe, ribs, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), seed, ref voussoirs)} ribs");
         if (recipe.BlindArches is { } blind)
-            details.Add($"{BlindArches.Build(mesh, recipe, blind, recipe.Pilasters!, places.Where(p => plan.Rules.Area(p.Height) == PlanArea.Room), (l, r, i) => Behind(l, r, i, ground), seed, ref voussoirs)} blind arches");
+            details.Add($"{BlindArches.Build(mesh, recipe, blind, blindBays, seed, ref voussoirs)} blind arches");
         if (recipe.Ribs?.Stones is not null || recipe.DoorArch?.Ring?.Stones is not null || recipe.BlindArches?.Ring.Stones is not null) details.Add($"{voussoirs} voussoirs");
         if (recipe.Columns is { } columns)
         {
@@ -113,9 +117,10 @@ internal sealed partial class KitGeometry
 
     /// <summary>
     /// A wall face along each run of an outline, floor to the run's ceiling, U in metres along the outline. Behind wall
-    /// stones it is the stones' backing, seen in their joints.
+    /// stones it is the stones' backing, seen in their joints. Recessed alcove bays cut clean arched openings in the
+    /// drawn wall while keeping collision flat across the run.
     /// </summary>
-    private void Walls(MeshBuilder mesh, MeshBuilder collision, List<(Vector2 Point, float Height)> loop)
+    private void Walls(MeshBuilder mesh, MeshBuilder collision, List<(Vector2 Point, float Height)> loop, IReadOnlyList<BlindArchBay> bays)
     {
         KitSurface surface = recipe.WallStones?.Backing ?? KitSurface.Wall;
         int slot = LevelKit.Slot(surface);
@@ -125,12 +130,57 @@ internal sealed partial class KitGeometry
             (Vector2 a, float height) = (plan.Metres(loop[i].Point), loop[i].Height);
             Vector2 b = plan.Metres(loop[(i + 1) % loop.Count].Point);
             float length = Vector2.Distance(a, b);
-            Vector3 inward = OpenGround.Gltf(Inward(a, b), 0);
-            float u0 = along / metres, u1 = (along + length) / metres, v = height / metres;
-            mesh.Face(slot, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
-                new Vector2(u0, 0), new Vector2(u1, 0), new Vector2(u1, -v), new Vector2(u0, -v), inward);
+            Vector2 dir = Vector2.Normalize(b - a), in2 = Inward(a, b);
+            Vector3 inward = OpenGround.Gltf(in2, 0);
             collision.Face(0, OpenGround.Gltf(a, 0), OpenGround.Gltf(b, 0), OpenGround.Gltf(b, height), OpenGround.Gltf(a, height),
                 default, default, default, default, inward);
+
+            // Find any recessed alcove bays hosted on this wall run, ordered along the run.
+            List<(float Start, float End, BlindArchBay Bay)> cuts = [];
+            foreach (BlindArchBay bay in bays)
+            {
+                if (bay.Recess <= 0 || Vector2.Dot(bay.Inward, in2) < .95f) continue;
+                Vector2 rel = bay.Middle - a;
+                if (MathF.Abs(Vector2.Dot(rel, in2)) > .15f) continue;
+                float mid = Vector2.Dot(rel, dir);
+                if (mid - bay.Radius < -1e-2f || mid + bay.Radius > length + 1e-2f) continue;
+                cuts.Add((MathF.Max(0, mid - bay.Radius), MathF.Min(length, mid + bay.Radius), bay));
+            }
+            cuts.Sort((x, y) => x.Start.CompareTo(y.Start));
+
+            void Quad(float s0, float s1, float y0, float y1, int quadSlot = -1, float quadMetres = 0)
+            {
+                if (s1 - s0 <= 1e-3f || y1 - y0 <= 1e-3f) return;
+                int useSlot = quadSlot >= 0 ? quadSlot : slot;
+                float useMetres = quadMetres > 0 ? quadMetres : metres;
+                Vector2 p0 = a + dir * s0, p1 = a + dir * s1;
+                mesh.Face(useSlot, OpenGround.Gltf(p0, y0), OpenGround.Gltf(p1, y0), OpenGround.Gltf(p1, y1), OpenGround.Gltf(p0, y1),
+                    new Vector2((along + s0) / useMetres, -y0 / useMetres), new Vector2((along + s1) / useMetres, -y0 / useMetres),
+                    new Vector2((along + s1) / useMetres, -y1 / useMetres), new Vector2((along + s0) / useMetres, -y1 / useMetres), inward);
+            }
+
+            float cursor = 0;
+            int wallSlot = LevelKit.Slot(KitSurface.Wall);
+            float wm = recipe.Metres(KitSurface.Wall);
+            foreach ((float start, float end, BlindArchBay bay) in cuts)
+            {
+                Quad(cursor, start, 0, height);
+                // Below the alcove shelf, draw in Wall surface so there is no dark backing slit above the floor ledge.
+                Quad(start, end, 0, bay.Sill, wallSlot, wm);
+                // Spandrel wall above the arched alcove head up to the ceiling (drawn in Wall surface so curve meets stones cleanly).
+                (float S, float Y)[] head = DoorArches.Curve(bay.Radius, bay.Spring, bay.Radius, bay.Segments, bay.Pointed);
+                float mid = (start + end) / 2;
+                for (int k = 0; k < bay.Segments; k++)
+                {
+                    float s0 = mid + head[k].S, y0 = head[k].Y, s1 = mid + head[k + 1].S, y1 = head[k + 1].Y;
+                    Vector2 p0 = a + dir * s0, p1 = a + dir * s1;
+                    mesh.Face(wallSlot, OpenGround.Gltf(p0, y0), OpenGround.Gltf(p1, y1), OpenGround.Gltf(p1, height), OpenGround.Gltf(p0, height),
+                        new Vector2((along + s0) / wm, -y0 / wm), new Vector2((along + s1) / wm, -y1 / wm),
+                        new Vector2((along + s1) / wm, -height / wm), new Vector2((along + s0) / wm, -height / wm), inward);
+                }
+                cursor = end;
+            }
+            Quad(cursor, length, 0, height);
             along += length;
         }
     }
@@ -198,24 +248,69 @@ internal sealed partial class KitGeometry
         return places;
     }
 
-    /// <summary>A pilaster: a front and two sides, floor to the run's ceiling, colliding.</summary>
+    /// <summary>
+    /// A pilaster: optionally a battered stone base plinth (<see cref="PilasterDefinition.PlinthHeight"/>) under a sleek
+    /// upper terracotta shaft with sweeping curved arch brackets at the top, or a single flat pilaster floor to ceiling.
+    /// </summary>
     private void Pilaster(MeshBuilder mesh, MeshBuilder collision, PilasterPlace place, PilasterDefinition pilaster)
     {
         (Vector2 along, Vector2 inward, float height) = (place.Along, place.Inward, place.Height);
-        Vector2 left = place.Centre - along * pilaster.Width / 2, right = place.Centre + along * pilaster.Width / 2;
-        Vector2 leftFront = left + inward * pilaster.Depth, rightFront = right + inward * pilaster.Depth;
-        float u1 = pilaster.Width / recipe.Metres(KitSurface.Trim), d = pilaster.Depth / recipe.Metres(KitSurface.Trim), v = -height / recipe.Metres(KitSurface.Trim);
-        Side(leftFront, rightFront, OpenGround.Gltf(inward, 0), new Vector2(u1, v));
-        Side(left, leftFront, OpenGround.Gltf(-along, 0), new Vector2(d, v));
-        Side(rightFront, right, OpenGround.Gltf(along, 0), new Vector2(d, v));
+        float bw = pilaster.BaseWidth + 2 * pilaster.PlinthBatter, bd = pilaster.BaseDepth + pilaster.PlinthBatter;
+        Vector2 colLeft = place.Centre - along * bw / 2, colRight = place.Centre + along * bw / 2;
+        Vector2 colLeftF = colLeft + inward * bd, colRightF = colRight + inward * bd;
+        // Collision keeps a single clean upright box covering the pilaster's widest footprint.
+        collision.Face(0, OpenGround.Gltf(colLeftF, 0), OpenGround.Gltf(colRightF, 0), OpenGround.Gltf(colRightF, height), OpenGround.Gltf(colLeftF, height), default, default, default, default, OpenGround.Gltf(inward, 0));
+        collision.Face(0, OpenGround.Gltf(colLeft, 0), OpenGround.Gltf(colLeftF, 0), OpenGround.Gltf(colLeftF, height), OpenGround.Gltf(colLeft, height), default, default, default, default, OpenGround.Gltf(-along, 0));
+        collision.Face(0, OpenGround.Gltf(colRightF, 0), OpenGround.Gltf(colRight, 0), OpenGround.Gltf(colRight, height), OpenGround.Gltf(colRightF, height), default, default, default, default, OpenGround.Gltf(along, 0));
+
+        float shaftY0 = MathF.Min(pilaster.PlinthHeight, height * .45f);
+        if (shaftY0 > 0)
+        {
+            float collarH = pilaster.PlinthBatter > 0 ? MathF.Min(.22f, shaftY0 * .22f) : 0;
+            float bodyTop = shaftY0 - collarH;
+            PilasterBox(mesh, pilaster.PlinthSurface, 0, bodyTop, pilaster.BaseWidth + 2 * pilaster.PlinthBatter, pilaster.BaseDepth + pilaster.PlinthBatter,
+                pilaster.BaseWidth, pilaster.BaseDepth, topCap: collarH == 0);
+            if (collarH > 0)
+                PilasterBox(mesh, pilaster.PlinthSurface, bodyTop, shaftY0, pilaster.BaseWidth + .10f, pilaster.BaseDepth + .06f,
+                    pilaster.BaseWidth + .10f, pilaster.BaseDepth + .06f, topCap: true, bottomCap: true);
+        }
+        // Sleek upper terracotta shaft.
+        PilasterBox(mesh, KitSurface.Trim, shaftY0, height, pilaster.Width, pilaster.Depth, pilaster.Width, pilaster.Depth, topCap: false);
+
+        // Sweeping Gothic terracotta arch brackets flaring sideways along the wall and forward into the room.
+        if (pilaster.BracketReach > 0 && pilaster.BracketDrop > 0 && height - shaftY0 > 1.2f)
+        {
+            float drop = MathF.Min(pilaster.BracketDrop, (height - shaftY0) * .6f);
+            float sideHalf = MathF.Min(pilaster.Depth * .42f, .32f);
+            float fwdHalf = MathF.Min(pilaster.Width * .32f, .32f);
+            KitColumns.ArchBracket(mesh, recipe, KitSurface.Trim, place.Centre - along * (pilaster.Width / 2) + inward * (pilaster.Depth / 2), -along, inward, sideHalf, height, drop, pilaster.BracketReach, pilaster.BracketSegments);
+            KitColumns.ArchBracket(mesh, recipe, KitSurface.Trim, place.Centre + along * (pilaster.Width / 2) + inward * (pilaster.Depth / 2), along, inward, sideHalf, height, drop, pilaster.BracketReach, pilaster.BracketSegments);
+            KitColumns.ArchBracket(mesh, recipe, KitSurface.Trim, place.Centre + inward * pilaster.Depth, inward, along, fwdHalf, height, drop, pilaster.BracketReach * .9f, pilaster.BracketSegments);
+        }
         pilasters++;
 
-        void Side(Vector2 p, Vector2 q, Vector3 facing, Vector2 uvMax)
+        void PilasterBox(MeshBuilder m, KitSurface surface, float y0, float y1, float w0, float d0, float w1, float d1, bool topCap, bool bottomCap = false)
         {
-            mesh.Face(LevelKit.TrimSlot, OpenGround.Gltf(p, 0), OpenGround.Gltf(q, 0), OpenGround.Gltf(q, height), OpenGround.Gltf(p, height),
-                Vector2.Zero, new Vector2(uvMax.X, 0), uvMax, new Vector2(0, uvMax.Y), facing);
-            collision.Face(0, OpenGround.Gltf(p, 0), OpenGround.Gltf(q, 0), OpenGround.Gltf(q, height), OpenGround.Gltf(p, height),
-                default, default, default, default, facing);
+            if (y1 <= y0) return;
+            int slot = LevelKit.Slot(surface);
+            float sm = recipe.Metres(surface);
+            Vector2 l0 = place.Centre - along * (w0 / 2), r0 = place.Centre + along * (w0 / 2);
+            Vector2 lf0 = l0 + inward * d0, rf0 = r0 + inward * d0;
+            Vector2 l1 = place.Centre - along * (w1 / 2), r1 = place.Centre + along * (w1 / 2);
+            Vector2 lf1 = l1 + inward * d1, rf1 = r1 + inward * d1;
+            Vector3 frontF = OpenGround.Gltf(inward, 0), leftF = OpenGround.Gltf(-along, 0), rightF = OpenGround.Gltf(along, 0);
+            m.Face(slot, OpenGround.Gltf(lf0, y0), OpenGround.Gltf(rf0, y0), OpenGround.Gltf(rf1, y1), OpenGround.Gltf(lf1, y1),
+                new Vector2(0, -y0 / sm), new Vector2(w0 / sm, -y0 / sm), new Vector2(w1 / sm, -y1 / sm), new Vector2(0, -y1 / sm), frontF);
+            m.Face(slot, OpenGround.Gltf(l0, y0), OpenGround.Gltf(lf0, y0), OpenGround.Gltf(lf1, y1), OpenGround.Gltf(l1, y1),
+                new Vector2(0, -y0 / sm), new Vector2(d0 / sm, -y0 / sm), new Vector2(d1 / sm, -y1 / sm), new Vector2(0, -y1 / sm), leftF);
+            m.Face(slot, OpenGround.Gltf(rf0, y0), OpenGround.Gltf(r0, y0), OpenGround.Gltf(r1, y1), OpenGround.Gltf(rf1, y1),
+                new Vector2(0, -y0 / sm), new Vector2(d0 / sm, -y0 / sm), new Vector2(d1 / sm, -y1 / sm), new Vector2(0, -y1 / sm), rightF);
+            if (topCap)
+                m.Face(slot, OpenGround.Gltf(l1, y1), OpenGround.Gltf(r1, y1), OpenGround.Gltf(rf1, y1), OpenGround.Gltf(lf1, y1),
+                    Vector2.Zero, new Vector2(w1 / sm, 0), new Vector2(w1 / sm, d1 / sm), new Vector2(0, d1 / sm), Vector3.UnitY);
+            if (bottomCap)
+                m.Face(slot, OpenGround.Gltf(l0, y0), OpenGround.Gltf(r0, y0), OpenGround.Gltf(rf0, y0), OpenGround.Gltf(lf0, y0),
+                    Vector2.Zero, new Vector2(w0 / sm, 0), new Vector2(w0 / sm, d0 / sm), new Vector2(0, d0 / sm), -Vector3.UnitY);
         }
     }
 

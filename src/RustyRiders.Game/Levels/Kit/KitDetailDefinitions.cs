@@ -21,11 +21,12 @@ internal sealed record RunnerDefinition(float Width, float Lift)
 /// <summary>
 /// Ribs across room ceilings, springing from opposite pilasters (<see cref="CeilingRibs"/>): <see cref="Width"/> wide and
 /// <see cref="Depth"/> deep under the ceiling in the middle of their span, curving down <see cref="Haunch"/> more to the
-/// walls in a half-ellipse drawn with <see cref="Segments"/> pieces. They take <see cref="Surface"/>; with
-/// <see cref="Stones"/>, they are built of those voussoirs in it.
+/// walls, drawn with <see cref="Segments"/> pieces (round at <see cref="Pointed"/> 0, blending to a Gothic pointed rib
+/// toward 1). With <see cref="CofferDepth"/> above zero, sculpted stone ceiling beams flank each rib to frame recessed
+/// ceiling bays. They take <see cref="Surface"/>; with <see cref="Stones"/>, they are built of those voussoirs in it.
 /// </summary>
 internal sealed record RibDefinition(float Width, float Depth, float Haunch, int Segments, KitSurface Surface = KitSurface.Trim,
-    VoussoirDefinition? Stones = null)
+    VoussoirDefinition? Stones = null, float Pointed = 0, float CofferDepth = 0, KitSurface CofferSurface = KitSurface.Wall)
 {
     internal void Validate(string path, PilasterDefinition? pilasters)
     {
@@ -34,19 +35,23 @@ internal sealed record RibDefinition(float Width, float Depth, float Haunch, int
         Authored.Positive(path, "ribs.depth", Depth);
         Authored.AtLeast(path, "ribs.haunch", Haunch, 0);
         Authored.Require(Segments >= 2, path, "ribs.segments", "must be at least 2.");
+        Authored.Within(path, "ribs.pointed", Pointed, 0, 1);
+        Authored.AtLeast(path, "ribs.cofferDepth", CofferDepth, 0);
         Stones?.Validate(path, "ribs.stones", Width / 2);
     }
 }
 
 /// <summary>
-/// Blind arches on room walls between neighbouring pilasters (<see cref="BlindArches"/>): a panel of the
-/// <see cref="Panel"/> material from <see cref="Sill"/> up to a round head springing at <see cref="Spring"/>, the bay as
-/// wide as the gap between the pilasters less <see cref="Margin"/> each side, framed by a <see cref="Ring"/> standing out
-/// from the wall, with a sill under it. A room too low for the bay, keeping <see cref="TopClearance"/> under its ceiling,
-/// springs it lower; one too low for a bay a metre tall takes none. The head is drawn with <see cref="Segments"/> pieces.
+/// Blind arches or recessed alcoves on room walls between neighbouring pilasters (<see cref="BlindArches"/>): a bay from
+/// <see cref="Sill"/> up to an arched head springing at <see cref="Spring"/> (pointed by <see cref="Pointed"/>), as wide
+/// as the gap between the pilasters less <see cref="Margin"/> each side, framed by a <see cref="Ring"/> with a sill
+/// shelf under it. When <see cref="Recess"/> is above zero and solid wall lies behind the bay, the wall opens into a
+/// real recessed alcove <see cref="Recess"/> metres deep with thick reveal jambs, arched soffit, <see cref="Panel"/> back
+/// wall, and a deep stone interior shelf projecting <see cref="ShelfOut"/> into the room.
 /// </summary>
 internal sealed record BlindArchDefinition(float Sill, float Spring, float Margin, float TopClearance, int Segments, KitSurface Panel,
-    ArchRingDefinition Ring)
+    ArchRingDefinition Ring, float Recess = 0, float ShelfOut = 0, float ShelfThickness = .22f,
+    KitSurface ShelfSurface = KitSurface.Wall, float Pointed = 0)
 {
     internal void Validate(string path, PilasterDefinition? pilasters)
     {
@@ -56,6 +61,10 @@ internal sealed record BlindArchDefinition(float Sill, float Spring, float Margi
         Authored.AtLeast(path, "blindArches.margin", Margin, 0);
         Authored.AtLeast(path, "blindArches.topClearance", TopClearance, 0);
         Authored.Require(Segments >= 2, path, "blindArches.segments", "must be at least 2.");
+        Authored.AtLeast(path, "blindArches.recess", Recess, 0);
+        Authored.AtLeast(path, "blindArches.shelfOut", ShelfOut, 0);
+        Authored.Positive(path, "blindArches.shelfThickness", ShelfThickness);
+        Authored.Within(path, "blindArches.pointed", Pointed, 0, 1);
         Authored.Positive(path, "blindArches.ring.width", Ring.Width);
         Authored.Positive(path, "blindArches.ring.depth", Ring.Depth);
         Ring.Stones?.Validate(path, "blindArches.ring.stones", Ring.Depth);
@@ -158,11 +167,15 @@ internal sealed record ColumnsDefinition(ColumnDefinition? Hall = null, ColumnDe
 /// <summary>
 /// A square column: a shaft <see cref="Width"/> across on a plinth <see cref="PlinthWidth"/> across and
 /// <see cref="PlinthHeight"/> tall, under a capital <see cref="CapitalWidth"/> across and <see cref="CapitalHeight"/> tall
-/// that meets the ceiling, all of the kit's <see cref="Surface"/> material. With <see cref="Stones"/> and the kit's wall
-/// stones, the shaft is stacked of stones in its material round a core of the stones' backing, its corners interlocking.
+/// that meets the ceiling. The shaft and capital take <see cref="Surface"/>; the plinth takes <see cref="PlinthSurface"/>
+/// (defaulting to <see cref="Surface"/>) and batters inward by <see cref="PlinthBatter"/> from foot to collar. With
+/// <see cref="BracketReach"/> and <see cref="BracketDrop"/> above zero, sweeping curved arch brackets flare outward from
+/// the upper shaft beneath the capital. With <see cref="Stones"/> and stonework, the shaft is stacked of stones round a
+/// core of the stones' backing, its corners interlocking.
 /// </summary>
 internal sealed record ColumnDefinition(float Width, float PlinthWidth, float PlinthHeight, float CapitalWidth, float CapitalHeight,
-    KitSurface Surface = KitSurface.Trim, bool Stones = false)
+    KitSurface Surface = KitSurface.Trim, bool Stones = false, KitSurface? PlinthSurface = null, float PlinthBatter = 0,
+    float BracketReach = 0, float BracketDrop = 0, int BracketSegments = 6)
 {
     internal void Validate(string path, string field)
     {
@@ -171,10 +184,14 @@ internal sealed record ColumnDefinition(float Width, float PlinthWidth, float Pl
         Authored.AtLeast(path, $"{field}.capitalWidth", CapitalWidth, Width);
         Authored.AtLeast(path, $"{field}.plinthHeight", PlinthHeight, 0);
         Authored.AtLeast(path, $"{field}.capitalHeight", CapitalHeight, 0);
+        Authored.AtLeast(path, $"{field}.plinthBatter", PlinthBatter, 0);
+        Authored.AtLeast(path, $"{field}.bracketReach", BracketReach, 0);
+        Authored.AtLeast(path, $"{field}.bracketDrop", BracketDrop, 0);
+        Authored.Require(BracketSegments >= 2, path, $"{field}.bracketSegments", "must be at least 2.");
     }
 
-    /// <summary>The widest part, which sets how far a corner pier stands from its walls.</summary>
-    internal float Footprint => MathF.Max(PlinthWidth, CapitalWidth);
+    /// <summary>The widest part at foot/head, which sets how far a corner pier stands from its walls and its collision footprint.</summary>
+    internal float Footprint => MathF.Max(PlinthWidth + 2 * PlinthBatter, CapitalWidth);
 }
 
 /// <summary>

@@ -63,7 +63,7 @@
       "saturation": 0.564,
       "flags": []
     },
-    "review": "selected as primary for surface",
+    "review": "replaced by ceiling-slate-vault (#11022)",
     "picked_seed": "ceiling-obsidian-vault-12"
   },
   "runner-crimson-inlay": {
@@ -150,6 +150,20 @@
     "checks": { "v_seam": 0.32, "v_ratio": 0.12, "gradient": 0.001, "mean": 0.366, "spread": 0.549, "saturation": 0.297, "perspective": 0.08, "note": "strip tiles vertically only; u locked [0,1] across strip width" },
     "review": "in use (bordered dusty plum-violet carved stone runner with ochre-orange runic inlay, #11021)",
     "use": "kit textures.runner (2.5 m, u=[0,1] across strip), RGBA albedo + RGBA normal (strength 2.6)",
+    "candidates": "authoring/assets/textures/stoneroad-direction-b-v2/runs.jsonl"
+  },
+  "ceiling-slate-vault": {
+    "role": "Ceiling & Deep Alcove Recesses (Sculpted Dark Slate-Indigo Vault Coffers)",
+    "target_hex": "#37364e",
+    "metres": 5.0,
+    "host": "den-nimo",
+    "route": "ComfyUI on den-nimo: Z-Image base + LoRA rrink_zimage_v5_seg6_3000_steps_00001_.safetensors at 1.0, seamless img2img (denoise 0.72 from 4x4 dark coffered stone vault guide)",
+    "seed": 41,
+    "prompt": "rrink style, hand-inked in the manner of Moebius (Jean Giraud), 1970s European ligne claire science-fiction illustration, clean ink linework with fine hatching and painted cel tones, flat top-down view of a dark gothic cathedral stone ceiling of heavy cut coffered slate-indigo stone blocks with carved recessed square panels and crisp dark inked mortar joints, uniform dark dusky slate-indigo violet-charcoal colour across every block with subtle cel-shaded bevels and delicate stone cracks, filling the whole image, even flat lighting, no shadows",
+    "negative": "pitch black, pure black, void, branches, vines, organic roots, crazy paving, Voronoi, multicolored, bright, pastel, red, terracotta, perspective, horizon, sky, 3d render, cast shadow, text, letters, signature, watermark, border, frame",
+    "checks": { "gradient": 0.006, "mean": 0.214, "spread": 0.2, "saturation": 0.314, "perspective": 0.009, "note": "4x4 coffered stone panels wrap along mortar joints" },
+    "review": "in use (sculpted dark slate-indigo ceiling vault coffers and recessed alcove back wall, #11022)",
+    "use": "kit textures.ceiling (5.0 m), RGBA albedo + RGBA normal (strength 2.5)",
     "candidates": "authoring/assets/textures/stoneroad-direction-b-v2/runs.jsonl"
   }
 }
