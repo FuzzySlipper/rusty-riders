@@ -74,8 +74,10 @@ internal sealed partial class KitGeometry
             (int hall, int corners) = KitColumns.Build(mesh, collision, plan, recipe, columns, seed);
             details.Add($"{hall} columns, {corners} corner piers");
         }
-        Sconces = recipe.Sconces is { } sconce ? Kit.Sconces.Build(mesh, plan, recipe, sconce) : [];
-        if (recipe.Sconces is not null) details.Add($"{Sconces.Count} sconces");
+        (Sconces, Embers) = recipe.Sconces is { } sconce ? Kit.Sconces.Build(mesh, plan, recipe, sconce, seed) : ([], []);
+        if (recipe.Sconces is not null) details.Add($"{Sconces.Count} lights");
+        if (recipe.KitProps is { } kitProps)
+            details.Add($"{KitProps.Build(mesh, plan, recipe, kitProps, blindBays, Sconces, seed)} kit props");
 
         foreach (DressingPlacement prop in dressing)
             if (prop.Box is { } box) Box(collision, prop.Pose.Translation, box);
@@ -96,7 +98,8 @@ internal sealed partial class KitGeometry
     internal IReadOnlyList<MeshBuilder> Bands { get; }
     /// <summary>The collision mesh: the drawn geometry without the thin trims, and the props' boxes.</summary>
     internal MeshBuilder Solid { get; }
-    internal List<LightDescriptor> Sconces { get; }
+    internal List<KitLight> Sconces { get; }
+    internal List<PresentationParticleDescriptor> Embers { get; }
     /// <summary>The level's least corner in glTF space, where its section grid starts.</summary>
     internal Vector3 Min { get; }
     internal float CellSize { get; }

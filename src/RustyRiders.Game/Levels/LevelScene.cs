@@ -175,8 +175,12 @@ internal sealed partial class LevelScene : IWalkScene
     /// <summary>The rift the walker's feet stand in, if any.</summary>
     internal RiftPoint? RiftAt(Vector3 feet) => Portals.Entered(Points, portalLook, feet);
 
-    /// <summary>Moves the level's world-time presentation (the portals) to <paramref name="seconds"/>.</summary>
-    public void Animate(double seconds) => worldSeconds = seconds;
+    /// <summary>Moves the level's world-time presentation (portals and torchlight flicker) to <paramref name="seconds"/>.</summary>
+    public void Animate(double seconds)
+    {
+        worldSeconds = seconds;
+        if (shown) (generated as LevelKit)?.Animate(engine, seconds);
+    }
 
     /// <summary>The rift nearest a position, if one is close enough for its label to show.</summary>
     internal RiftPoint? RiftNear(Vector3 position) => Points.Rifts.Where(rift => Vector3.Distance(rift.Feet, position) <= RiftLabelMetres)

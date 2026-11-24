@@ -60,12 +60,16 @@ internal sealed partial class LevelScene
                 FormattableString.Invariant($"{faces.Shader}|{faces.Depth}|{faces.Steps}|{faces.Cavity}{celKey}"))
             : null;
         Material Slot(string material, KitSurface surface) => materials.Get(material, prefabs, look, kit.Textures?.For(surface)?.Replacement, Faces(surface));
-        // The runner is the floor's material under its own texture; the flame glows in the sconces' colour.
+        // The runner is the floor's material under its own texture; flames take two glowing tones and iron takes dark forged metal.
         Material flame = kit.Sconces is { } sconce ? materials.Glow(Content.Authored.Color(sconce.FlameColor), sconce.FlameEmission)
             : Slot(kit.TrimMaterial, KitSurface.Trim);
+        Material iron = materials.Solid(new Color(.055f, .052f, .078f, 1), .58f, Faces(KitSurface.Ceiling));
+        Material flameCore = kit.Sconces is { } sc
+            ? materials.Glow(Content.Authored.Color(sc.FlameCoreColor ?? [1f, .90f, .45f]), sc.FlameCoreEmission)
+            : flame;
         Material[] slots = [Slot(kit.WallMaterial, KitSurface.Wall), Slot(kit.FloorMaterial, KitSurface.Floor),
             Slot(kit.CeilingMaterial, KitSurface.Ceiling), Slot(kit.TrimMaterial, KitSurface.Trim),
-            kit.Runners is null ? Slot(kit.FloorMaterial, KitSurface.Floor) : Slot(kit.FloorMaterial, KitSurface.Runner), flame];
+            kit.Runners is null ? Slot(kit.FloorMaterial, KitSurface.Floor) : Slot(kit.FloorMaterial, KitSurface.Runner), flame, iron, flameCore];
         try
         {
             generated = new LevelKit(engine, geometry, slots, deferred);

@@ -75,6 +75,15 @@ internal sealed class HarvestedMaterials : IDisposable
             new Vector3(color.R, color.G, color.B), strength, false));
     }
 
+    /// <summary>A solid matte or forged-metal kit material (e.g. wrought iron), optionally taking a product comic shader.</summary>
+    internal Material Solid(Color color, float roughness, (MaterialShader Shader, string Key)? shaded = null)
+    {
+        string key = FormattableString.Invariant($"solid|{color.R}|{color.G}|{color.B}|{roughness}") + (shaded is { } s ? $"|{s.Key}" : "");
+        if (materials.TryGetValue(key, out Material? cached)) return cached;
+        MaterialRequest request = new(color, default, roughness, new Color(1, 1, 1, 1), Vector3.Zero, 0, false);
+        return materials[key] = engine.Graphics.CreateMaterial(shaded is { } sh ? request with { Shader = sh.Shader } : request);
+    }
+
     /// <summary>Releases the materials, then their textures; meshes drawn with them must already be released.</summary>
     public void Dispose()
     {

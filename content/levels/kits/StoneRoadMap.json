@@ -68,24 +68,12 @@
     "pointed": 0.28,
     "steps": { "count": 2, "rise": 0.08, "tread": 0.28, "surface": "Wall" }
   },
-  "dressing": [
-    {
-      "id": "rubble",
-      "rule": "Rubble",
-      "models": [
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall01/mdl_LOD0-d33e97f3.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall02/mdl_LOD0-b1da87c6.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall03/mdl_LOD0-b4f4cd3a.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blocksmall04/mdl_LOD0-81e44edc.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blockbig01/mdl_LOD0-4c52c512.glb",
-        "parts/Art/Models/GridMaps/StoneRoadMap/Model/blockbig02/mdl_LOD0-92465646.glb"
-      ],
-      "footprint": 0.5,
-      "height": 0.5,
-      "chance": 0.35,
-      "count": 5
-    }
-  ],
+  "dressing": [],
+  "kitProps": {
+    "rubble": { "chance": 0.55, "maxCluster": 4, "minSize": 0.18, "maxSize": 0.44 },
+    "alcoves": { "chance": 0.80, "candleLightIntensity": 7.0, "candleLightRange": 4.8 },
+    "thresholds": { "chance": 0.78 }
+  },
   "runners": { "width": 2.5, "lift": 0.02 },
   "ribs": {
     "width": 0.50, "depth": 0.38, "haunch": 2.5, "segments": 14, "pointed": 0.30, "cofferDepth": 0.32, "cofferSurface": "Wall"
@@ -96,7 +84,8 @@
     "ring": { "width": 0.42, "depth": 0.16, "surface": "Trim" }
   },
   "sconces": {
-    "height": 2.15, "gap": 0.75, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.66, 0.16], "flameEmission": 2.5,
+    "height": 2.05, "gap": 0.75, "bracketDepth": 0.42, "flameSize": 0.48, "flameColor": [1, 0.28, 0.03], "flameEmission": 1.45,
+    "flameCoreColor": [1, 0.88, 0.30], "flameCoreEmission": 2.8, "emberRate": 18, "emberMax": 28, "flicker": 0.08,
     "lightColor": [1, 0.64, 0.26], "intensity": 19, "range": 10.5, "decay": 1.65, "shadows": true, "shadowResolution": 512, "shadowSoft": false,
     "pool": {
       "color": [1, 0.66, 0.26], "intensity": 36, "range": 12.5, "decay": 1.45, "height": 3.5, "forward": 0.65, "aimForward": 3.2,

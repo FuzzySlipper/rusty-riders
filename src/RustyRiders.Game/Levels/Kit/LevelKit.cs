@@ -4,18 +4,22 @@ using Rusty.Engine;
 
 namespace RustyRiders.Game.Levels.Kit;
 
+/// <summary>A kit light with optional flicker amplitude and phase for animated sconces.</summary>
+internal readonly record struct KitLight(LightDescriptor Descriptor, float Flicker = 0, float Phase = 0);
+
 /// <summary>
-/// A kit level's Engine resources, made from its <see cref="KitGeometry"/>: the sconces' lights (created once the level
-/// is shown, <see cref="Light"/>: a light without a parent shows as soon as it exists), the collision mesh, and
-/// the drawn sections, each band made one mesh and cut by level cell. Made at once, or in the background: then
-/// <see cref="Prepare"/> creates and cuts the bands off the update a few at a time, takes the sections once every cut is
-/// ready, and reports them ready once the renderer has drawn them.
+/// A kit level's Engine resources, made from its <see cref="KitGeometry"/>: the sconces' lights and ember particle
+/// emitters (created once the level is shown, <see cref="Light"/>: a light without a parent shows as soon as it exists),
+/// the collision mesh, and the drawn sections, each band made one mesh and cut by level cell. Made at once, or in the
+/// background: then <see cref="Prepare"/> creates and cuts the bands off the update a few at a time, takes the sections
+/// once every cut is ready, and reports them ready once the renderer has drawn them.
 /// </summary>
 internal sealed class LevelKit : IGeneratedLevel
 {
-    internal const int WallSlot = 0, FloorSlot = 1, CeilingSlot = 2, TrimSlot = 3, RunnerSlot = 4, FlameSlot = 5, SlotCount = 6;
-    // Logical light ids, never reused while the process lives: the next level is built while the last still holds its lights.
-    private static ulong nextLightId = 1;
+    internal const int WallSlot = 0, FloorSlot = 1, CeilingSlot = 2, TrimSlot = 3, RunnerSlot = 4, FlameSlot = 5,
+        IronSlot = 6, FlameCoreSlot = 7, SlotCount = 8;
+    // Logical light and emitter ids, never reused while the process lives: the next level is built while the last still holds its own.
+    private static ulong nextLightId = 1, nextEmitterId = 1;
 
     // Only what making the meshes needs is kept from the geometry: its builders go once their meshes are made.
     private readonly Vector3 origin, cell;
@@ -25,8 +29,10 @@ internal sealed class LevelKit : IGeneratedLevel
     private readonly Queue<MeshBuilder> waiting;
     private readonly List<MeshPartition> cutting = [];
     private readonly List<(MeshResource Mesh, Appearance Appearance)> sections = [];
-    private readonly List<LightDescriptor> sconces;
-    private readonly List<Light> lights = [];
+    private readonly List<KitLight> sconces;
+    private readonly List<PresentationParticleDescriptor> embers;
+    private readonly List<(ulong Id, Light Light, KitLight Spec)> lights = [];
+    private readonly List<PresentationEmitter> emitters = [];
     private readonly MeshResource solid;
     private readonly int bands;
     private ulong? batch;
@@ -35,7 +41,7 @@ internal sealed class LevelKit : IGeneratedLevel
     private double makeSeconds, longestUpdate;
     private int updates;
 
-    /// <param name="materials">The wall, floor, ceiling, trim, runner and flame materials, in slot order.</param>
+    /// <param name="materials">The wall, floor, ceiling, trim, runner, flame, iron and flame-core materials, in slot order.</param>
     /// <param name="deferred">Whether the drawn sections are made later, by <see cref="Prepare"/>, rather than now.</param>
     internal LevelKit(IEngineContext engine, KitGeometry geometry, Material[] materials, bool deferred)
     {
@@ -44,6 +50,7 @@ internal sealed class LevelKit : IGeneratedLevel
         waiting = new Queue<MeshBuilder>(geometry.Bands);
         bands = waiting.Count;
         sconces = geometry.Sconces;
+        embers = geometry.Embers;
         solid = geometry.Solid.Create(engine, [materials[WallSlot]]);
         if (deferred) return;
         long started = Stopwatch.GetTimestamp();
@@ -105,18 +112,51 @@ internal sealed class LevelKit : IGeneratedLevel
         return ready;
     }
 
-    /// <summary>Creates the sconces' lights, as the level is shown.</summary>
+    /// <summary>Creates the sconces' lights and continuous ember emitters, as the level is shown.</summary>
     internal void Light(IEngineContext engine)
     {
-        if (lights.Count > 0) return;
-        foreach (LightDescriptor light in sconces) lights.Add(engine.Graphics.CreateLight(new LightRequest(nextLightId++, false, 0, light)));
+        if (lights.Count == 0)
+            foreach (KitLight spec in sconces)
+            {
+                ulong id = nextLightId++;
+                lights.Add((id, engine.Graphics.CreateLight(new LightRequest(id, false, 0, spec.Descriptor)), spec));
+            }
+        if (emitters.Count == 0)
+            foreach (PresentationParticleDescriptor ember in embers)
+            {
+                try
+                {
+                    emitters.Add(engine.Presentation.CreateEmitter(ember with { LogicalId = nextEmitterId++ }));
+                }
+                catch (EngineCallException)
+                {
+                    // Over the Engine's shared emitter budget on very large levels: skip remaining ember emitters.
+                    break;
+                }
+            }
+    }
+
+    /// <summary>Applies gentle organic torchlight flicker on Engine-admitted gameplay world time.</summary>
+    internal void Animate(IEngineContext engine, double worldSeconds)
+    {
+        if (lights.Count == 0) return;
+        float t = (float)worldSeconds;
+        foreach ((ulong id, Light light, KitLight spec) in lights)
+        {
+            if (spec.Flicker <= 0) continue;
+            float wave = .62f * MathF.Sin(t * 7.3f + spec.Phase) + .38f * MathF.Sin(t * 13.7f + spec.Phase * 2.1f);
+            float intensity = MathF.Max(.1f, spec.Descriptor.Intensity * (1 + wave * spec.Flicker));
+            engine.Graphics.UpdateLight(new LightUpdateRequest(light, new LightRequest(id, false, 0, spec.Descriptor with { Intensity = intensity })));
+        }
     }
 
     public void Dispose()
     {
         foreach (MeshPartition partition in cutting) partition.Dispose();
         cutting.Clear();
-        foreach (Light light in lights) light.Dispose();
+        foreach (PresentationEmitter emitter in emitters) emitter.Dispose();
+        emitters.Clear();
+        foreach ((_, Light light, _) in lights) light.Dispose();
         lights.Clear();
         foreach ((MeshResource mesh, Appearance appearance) in sections)
         {

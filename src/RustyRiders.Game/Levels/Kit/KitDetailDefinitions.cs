@@ -84,7 +84,8 @@ internal sealed record BlindArchDefinition(float Sill, float Spring, float Margi
 /// </summary>
 internal sealed record SconceDefinition(float Height, float Gap, float BracketDepth, float FlameSize, float[] FlameColor, float FlameEmission,
     float[] LightColor, float Intensity, float Range, KitSurface Bracket = KitSurface.Ceiling, float Decay = 2, bool Shadows = false,
-    uint ShadowResolution = 512, bool ShadowSoft = false, DoorPoolLightDefinition? Pool = null)
+    uint ShadowResolution = 512, bool ShadowSoft = false, DoorPoolLightDefinition? Pool = null,
+    float[]? FlameCoreColor = null, float FlameCoreEmission = 3.2f, float EmberRate = 10, uint EmberMax = 16, float Flicker = .08f)
 {
     internal void Validate(string path, PlanRules plan)
     {
@@ -94,12 +95,58 @@ internal sealed record SconceDefinition(float Height, float Gap, float BracketDe
         Authored.Positive(path, "sconces.flameSize", FlameSize);
         Authored.Colour(path, "sconces.flameColor", FlameColor);
         Authored.AtLeast(path, "sconces.flameEmission", FlameEmission, 0);
+        if (FlameCoreColor is not null) Authored.Colour(path, "sconces.flameCoreColor", FlameCoreColor);
+        Authored.AtLeast(path, "sconces.flameCoreEmission", FlameCoreEmission, 0);
+        Authored.AtLeast(path, "sconces.emberRate", EmberRate, 0);
+        Authored.Within(path, "sconces.flicker", Flicker, 0, .4f);
         Authored.Colour(path, "sconces.lightColor", LightColor);
         Authored.Positive(path, "sconces.intensity", Intensity);
         Authored.Positive(path, "sconces.range", Range);
         Authored.AtLeast(path, "sconces.decay", Decay, 0);
         Pool?.Validate(path, "sconces.pool");
     }
+}
+
+/// <summary>
+/// Procedural kit-native dressing (<see cref="KitProps"/>): palette-matched angular rubble chunks, recessed alcove
+/// storytelling vignettes (votive candles/vessels, draped banners with leaned spears, reliquaries), and sparse
+/// doorway threshold relics, built directly into the kit's banded meshes.
+/// </summary>
+internal sealed record KitPropsDefinition(RubblePropsDefinition? Rubble = null, AlcovePropsDefinition? Alcoves = null,
+    ThresholdPropsDefinition? Thresholds = null)
+{
+    internal void Validate(string path)
+    {
+        Rubble?.Validate(path);
+        Alcoves?.Validate(path);
+        Thresholds?.Validate(path);
+    }
+}
+
+internal sealed record RubblePropsDefinition(float Chance, int MaxCluster, float MinSize, float MaxSize)
+{
+    internal void Validate(string path)
+    {
+        Authored.Within(path, "kitProps.rubble.chance", Chance, 0, 1);
+        Authored.Require(MaxCluster >= 1, path, "kitProps.rubble.maxCluster", "must be at least 1.");
+        Authored.Positive(path, "kitProps.rubble.minSize", MinSize);
+        Authored.AtLeast(path, "kitProps.rubble.maxSize", MaxSize, MinSize);
+    }
+}
+
+internal sealed record AlcovePropsDefinition(float Chance, float CandleLightIntensity = 0, float CandleLightRange = 3.5f)
+{
+    internal void Validate(string path)
+    {
+        Authored.Within(path, "kitProps.alcoves.chance", Chance, 0, 1);
+        Authored.AtLeast(path, "kitProps.alcoves.candleLightIntensity", CandleLightIntensity, 0);
+        Authored.Positive(path, "kitProps.alcoves.candleLightRange", CandleLightRange);
+    }
+}
+
+internal sealed record ThresholdPropsDefinition(float Chance)
+{
+    internal void Validate(string path) => Authored.Within(path, "kitProps.thresholds.chance", Chance, 0, 1);
 }
 
 /// <summary>
