@@ -30,9 +30,25 @@ internal static class Sconces
                 Bracket(mesh, sconce, wall, into, across);
                 Vector3 flame = OpenGround.Gltf(wall + into * sconce.BracketDepth, sconce.Height + sconce.FlameSize * .6f);
                 Flame(mesh, flame, sconce.FlameSize);
-                Vector3 light = OpenGround.Gltf(wall + into * (sconce.BracketDepth + .3f), sconce.Height + sconce.FlameSize);
+                Vector3 light = OpenGround.Gltf(wall + into * (sconce.BracketDepth + .35f), sconce.Height + sconce.FlameSize * .8f);
                 lights.Add(new LightDescriptor(LightKind.Point, Authored.Vector(sconce.LightColor), sconce.Intensity, true, light, -Vector3.UnitY,
-                    true, sconce.Range, 2, 0, 0, LightShadowIntent.Disabled));
+                    true, sconce.Range, sconce.Decay, 0, 0, sconce.Shadows ? LightShadowIntent.Requested : LightShadowIntent.Disabled,
+                    sconce.ShadowResolution, 1, sconce.ShadowSoft));
+            }
+            if (sconce.Pool is { } pool)
+            {
+                Vector3 origin = OpenGround.Gltf(face + into * pool.Forward, pool.Height);
+                Vector3 target = OpenGround.Gltf(face + into * pool.AimForward, 0);
+                Vector3 dir = Vector3.Normalize(target - origin);
+                lights.Add(new LightDescriptor(LightKind.Spot, Authored.Vector(pool.Color), pool.Intensity, true, origin, dir,
+                    true, pool.Range, pool.Decay, pool.OuterDegrees * MathF.PI / 180f, pool.Penumbra,
+                    pool.Shadows ? LightShadowIntent.Requested : LightShadowIntent.Disabled, pool.ShadowResolution, 2, false));
+                if (pool.RevealIntensity > 0)
+                {
+                    Vector3 reveal = OpenGround.Gltf(doorway.Centre + into * (plan.Rules.WallMetres * .55f), plan.Rules.DoorHeight + .35f);
+                    lights.Add(new LightDescriptor(LightKind.Point, Authored.Vector(pool.Color), pool.RevealIntensity, true, reveal, -Vector3.UnitY,
+                        true, pool.RevealRange, pool.Decay, 0, 0, LightShadowIntent.Disabled));
+                }
             }
         }
         return lights;

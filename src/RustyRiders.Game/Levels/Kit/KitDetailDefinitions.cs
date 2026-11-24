@@ -69,10 +69,13 @@ internal sealed record BlindArchDefinition(float Sill, float Spring, float Margi
 /// <see cref="Bracket"/> material standing <see cref="BracketDepth"/> out from the wall at <see cref="Height"/>,
 /// <see cref="Gap"/> beyond the door arch's ring, holding a flame <see cref="FlameSize"/> across that glows
 /// <see cref="FlameColor"/> at <see cref="FlameEmission"/>, and a point light of <see cref="LightColor"/> (linear RGB) at
-/// <see cref="Intensity"/> reaching <see cref="Range"/> metres.
+/// <see cref="Intensity"/> reaching <see cref="Range"/> metres with falloff <see cref="Decay"/>. An optional
+/// <see cref="Pool"/> casts a crisp warm spotlight onto the floor and runner in front of the doorway and lights the
+/// doorway reveal.
 /// </summary>
 internal sealed record SconceDefinition(float Height, float Gap, float BracketDepth, float FlameSize, float[] FlameColor, float FlameEmission,
-    float[] LightColor, float Intensity, float Range, KitSurface Bracket = KitSurface.Ceiling)
+    float[] LightColor, float Intensity, float Range, KitSurface Bracket = KitSurface.Ceiling, float Decay = 2, bool Shadows = false,
+    uint ShadowResolution = 512, bool ShadowSoft = false, DoorPoolLightDefinition? Pool = null)
 {
     internal void Validate(string path, PlanRules plan)
     {
@@ -85,6 +88,53 @@ internal sealed record SconceDefinition(float Height, float Gap, float BracketDe
         Authored.Colour(path, "sconces.lightColor", LightColor);
         Authored.Positive(path, "sconces.intensity", Intensity);
         Authored.Positive(path, "sconces.range", Range);
+        Authored.AtLeast(path, "sconces.decay", Decay, 0);
+        Pool?.Validate(path, "sconces.pool");
+    }
+}
+
+/// <summary>
+/// A doorway's warm floor pool and reveal fill (<see cref="Sconces"/>): a downward-angled spot light throwing a crisp
+/// warm pool onto the floor and runner in front of the doorway, plus an optional warm fill inside the doorway's thick
+/// arch reveal.
+/// </summary>
+internal sealed record DoorPoolLightDefinition(float[] Color, float Intensity, float Range, float Decay, float Height, float Forward,
+    float AimForward, float OuterDegrees, float Penumbra, bool Shadows = true, uint ShadowResolution = 512, float RevealIntensity = 0,
+    float RevealRange = 7)
+{
+    internal void Validate(string path, string field)
+    {
+        Authored.Colour(path, $"{field}.color", Color);
+        Authored.Positive(path, $"{field}.intensity", Intensity);
+        Authored.Positive(path, $"{field}.range", Range);
+        Authored.AtLeast(path, $"{field}.decay", Decay, 0);
+        Authored.Positive(path, $"{field}.height", Height);
+        Authored.Within(path, $"{field}.outerDegrees", OuterDegrees, 5, 85);
+        Authored.Within(path, $"{field}.penumbra", Penumbra, 0, 1);
+        Authored.AtLeast(path, $"{field}.revealIntensity", RevealIntensity, 0);
+        Authored.Positive(path, $"{field}.revealRange", RevealRange);
+    }
+}
+
+/// <summary>
+/// Stylized three-band French-comic cel shading applied in <c>stone-faces.wgsl</c> across all lit kit surfaces: crushes
+/// deep hollows into dark shadow (<see cref="ShadowFloor"/>), holds unlit stone at a calm painted midtone
+/// (<see cref="MidLevel"/>), and steps cleanly into warm torchlight pools (<see cref="HighlightBoost"/>) across
+/// <see cref="Softness"/>, biasing shadows cool by <see cref="CoolShadowTint"/>.
+/// </summary>
+internal sealed record ComicShadingDefinition(float Strength, float ShadowCutoff, float HighlightCutoff, float Softness,
+    float ShadowFloor, float MidLevel, float HighlightBoost, float CoolShadowTint)
+{
+    internal void Validate(string path)
+    {
+        Authored.Within(path, "shading.strength", Strength, 0, 1);
+        Authored.AtLeast(path, "shading.shadowCutoff", ShadowCutoff, 0);
+        Authored.Require(HighlightCutoff > ShadowCutoff, path, "shading.highlightCutoff", "must be above shadowCutoff.");
+        Authored.Positive(path, "shading.softness", Softness);
+        Authored.AtLeast(path, "shading.shadowFloor", ShadowFloor, 0);
+        Authored.AtLeast(path, "shading.midLevel", MidLevel, ShadowFloor);
+        Authored.Positive(path, "shading.highlightBoost", HighlightBoost);
+        Authored.Within(path, "shading.coolShadowTint", CoolShadowTint, 0, 1);
     }
 }
 

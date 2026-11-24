@@ -112,8 +112,12 @@
     }
   },
   "sconces": {
-    "height": 3.2, "gap": 0.6, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.32, 0.05], "flameEmission": 2,
-    "lightColor": [1, 0.55, 0.2], "intensity": 25, "range": 12
+    "height": 2.15, "gap": 0.55, "bracketDepth": 0.45, "flameSize": 0.4, "flameColor": [1, 0.66, 0.16], "flameEmission": 2.5,
+    "lightColor": [1, 0.64, 0.26], "intensity": 19, "range": 10.5, "decay": 1.65, "shadows": true, "shadowResolution": 512, "shadowSoft": false,
+    "pool": {
+      "color": [1, 0.66, 0.26], "intensity": 36, "range": 12.5, "decay": 1.45, "height": 3.5, "forward": 0.65, "aimForward": 3.2,
+      "outerDegrees": 44, "penumbra": 0.14, "shadows": true, "shadowResolution": 512, "revealIntensity": 15, "revealRange": 6.5
+    }
   },
   "columns": {
     "hall": { "width": 1.0, "plinthWidth": 1.5, "plinthHeight": 0.9, "capitalWidth": 1.5, "capitalHeight": 0.9, "stones": true },
@@ -129,5 +133,36 @@
       { "id": "short", "weight": 1, "minLength": 0.5, "maxLength": 0.8, "chipChance": 0.6, "chip": 0.12, "nicks": 0.3, "pillow": 0.03, "facet": 0.03, "hewn": true }
     ]
   },
-  "stoneFaces": { "shader": "shaders/stone-faces.wgsl", "meshOutlines": true }
+  "stoneFaces": { "shader": "shaders/stone-faces.wgsl", "meshOutlines": true, "cavity": 0.52 },
+  "atmosphere": {
+    "hemisphere": {
+      "skyColor": [0.48, 0.47, 0.62],
+      "groundColor": [0.24, 0.23, 0.32],
+      "intensity": 1.05
+    },
+    "toneMapping": { "operator": "Neutral", "exposure": 1.02 },
+    "colorGrading": { "temperature": -0.01, "tint": 0.03, "contrast": 0.08, "saturation": -0.12 },
+    "bloom": { "threshold": 1.75, "intensity": 0.07 },
+    "fog": { "mode": "Linear", "color": [0.03, 0.028, 0.048], "start": 26, "end": 115 },
+    "ambientOcclusion": { "strength": 1.45, "radius": 1.05 },
+    "imageEffect": {
+      "shader": "shaders/comic-ink.wgsl",
+      "depthThreshold": 0.045,
+      "colorThreshold": 0.26,
+      "strength": 0.85,
+      "fadeEnd": 0.996,
+      "inkColor": [0.015, 0.012, 0.025]
+    },
+    "backgroundColor": [0.03, 0.028, 0.048]
+  },
+  "shading": {
+    "strength": 0.80,
+    "shadowCutoff": 0.068,
+    "highlightCutoff": 0.34,
+    "softness": 0.034,
+    "shadowFloor": 0.04,
+    "midLevel": 0.35,
+    "highlightBoost": 1.02,
+    "coolShadowTint": 0.16
+  }
 }

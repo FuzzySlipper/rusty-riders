@@ -91,7 +91,8 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
     TrimDefinition[] Trims, PilasterDefinition? Pilasters, string[] Props, ArchDefinition? DoorArch = null,
     DressingDefinition[]? Dressing = null, RoomFamily[]? Rooms = null, KitTextures? Textures = null, RunnerDefinition? Runners = null,
     RibDefinition? Ribs = null, BlindArchDefinition? BlindArches = null, SconceDefinition? Sconces = null, ColumnsDefinition? Columns = null,
-    WallStonesDefinition? WallStones = null, StoneFacesDefinition? StoneFaces = null)
+    WallStonesDefinition? WallStones = null, StoneFacesDefinition? StoneFaces = null, AtmosphereDefinition? Atmosphere = null,
+    ComicShadingDefinition? Shading = null)
 {
     internal static KitRecipe? Load(IEngineContext engine, string tileset, PlanRules plan, float cellSize)
     {
@@ -116,6 +117,8 @@ internal sealed record KitRecipe(string WallMaterial, string FloorMaterial, stri
         recipe.Columns?.Validate(path);
         recipe.WallStones?.Validate(path);
         recipe.StoneFaces?.Validate(path);
+        recipe.Atmosphere?.Validate(path, "atmosphere");
+        recipe.Shading?.Validate(path);
         return recipe;
     }
 

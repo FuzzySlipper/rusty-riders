@@ -137,6 +137,7 @@ internal sealed partial class LevelScene : IWalkScene
         ShowPlan = rules.Plan.Overlay.Show;
         TravelLayouts = data.Layouts.Where(l => !l.Special).Select(l => l.Id).ToArray();
         background = new Color(settings.BackgroundColor[0], settings.BackgroundColor[1], settings.BackgroundColor[2], 1);
+        Atmosphere = kit?.Atmosphere;
 
         SpawnYawDegrees = GltfYawDegrees(plan.SpawnFacing);
         level = $"Level: {data.Tileset.Id} · {layout.Id} · seed {seed} · {plan.Tiles.Count} tiles · {art.MeshCount} meshes · ";
@@ -148,6 +149,8 @@ internal sealed partial class LevelScene : IWalkScene
     public string Status => level + built() + found;
     public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. problems];
     internal LevelNavigation Navigation { get; }
+    /// <summary>The kit's authored world atmosphere, or null to take the product's default atmosphere.</summary>
+    internal AtmosphereDefinition? Atmosphere { get; }
     /// <summary>Whether the arrival can walk to at least the minimum number of rifts; a level that cannot is rejected.</summary>
     internal bool Playable { get; private set; }
     /// <summary>The gameplay points, placed on the navigation once it is installed (<see cref="Settle"/>).</summary>

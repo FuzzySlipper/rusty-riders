@@ -49,11 +49,15 @@ internal sealed partial class LevelScene
     {
         HarvestedLook look = new(0, kit.NormalScale, kit.Roughness);
         string[] prefabs = tileset.Tiles.Values.SelectMany(variants => variants).Distinct().ToArray();
-        // Slots that hold stones whose faces the shader draws take it; their other geometry is white and drawn as usual.
+        // Slots that hold stones whose faces the shader draws take it; when the kit authors comic shading, every lit kit
+        // surface shares the shader so stone and non-stone surfaces step their lighting identically.
         HashSet<int> faced = kit.StoneFaces is null ? [] : kit.StoneSurfaces().Select(LevelKit.Slot).ToHashSet();
-        (MaterialShader, string)? Faces(KitSurface surface) => kit.StoneFaces is { } faces && faced.Contains(LevelKit.Slot(surface))
-            ? (new MaterialShader(materials.Shader(faces.Shader), new Vector4(faces.Depth, faces.Steps, faces.Cavity, 0)),
-                FormattableString.Invariant($"{faces.Shader}|{faces.Depth}|{faces.Steps}|{faces.Cavity}"))
+        Vector4 p1 = kit.Shading is { } cel ? new(cel.Strength, cel.ShadowCutoff, cel.HighlightCutoff, cel.Softness) : Vector4.Zero;
+        Vector4 p2 = kit.Shading is { } lv ? new(lv.ShadowFloor, lv.MidLevel, lv.HighlightBoost, lv.CoolShadowTint) : Vector4.Zero;
+        string celKey = kit.Shading is null ? "" : FormattableString.Invariant($"|cel:{p1.X},{p1.Y},{p1.Z},{p1.W}|{p2.X},{p2.Y},{p2.Z},{p2.W}");
+        (MaterialShader, string)? Faces(KitSurface surface) => kit.StoneFaces is { } faces && (kit.Shading is not null || faced.Contains(LevelKit.Slot(surface)))
+            ? (new MaterialShader(materials.Shader(faces.Shader), new Vector4(faces.Depth, faces.Steps, faces.Cavity, 0), p1, p2, Vector4.Zero),
+                FormattableString.Invariant($"{faces.Shader}|{faces.Depth}|{faces.Steps}|{faces.Cavity}{celKey}"))
             : null;
         Material Slot(string material, KitSurface surface) => materials.Get(material, prefabs, look, kit.Textures?.For(surface)?.Replacement, Faces(surface));
         // The runner is the floor's material under its own texture; the flame glows in the sconces' colour.

@@ -22,6 +22,13 @@
     <!-- Turns on the Engine's occlusion culling of hidden opaque parts and splats; disabled is the off switch. -->
     <RustyEngineProductOcclusionCulling>enabled</RustyEngineProductOcclusionCulling>
     <RustyEngineProductInputCursorMode>pointer-lock</RustyEngineProductInputCursorMode>
+    <RustyEngineProductDefaultWorldLights>disabled</RustyEngineProductDefaultWorldLights>
+    <RustyEngineProductDefaultViewmodelLights>neutral</RustyEngineProductDefaultViewmodelLights>
+    <RustyEngineProductSceneShadows>enabled</RustyEngineProductSceneShadows>
+    <RustyEngineProductShadowBudget>24</RustyEngineProductShadowBudget>
+    <RustyEngineProductAmbientOcclusion>enabled</RustyEngineProductAmbientOcclusion>
+    <RustyEngineProductAmbientOcclusionStrength>1.0</RustyEngineProductAmbientOcclusionStrength>
+    <RustyEngineProductAmbientOcclusionRadius>0.75</RustyEngineProductAmbientOcclusionRadius>
     <RustyEngineWatchPaths>$(MSBuildProjectDirectory);$(RustyEngineProductUiRoot);$(RustyEngineProductContentRoot)</RustyEngineWatchPaths>
   </PropertyGroup>
 

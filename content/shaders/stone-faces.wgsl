@@ -9,12 +9,19 @@
 // first. Vertices without data (zero) are not stones and draw as usual.
 //
 // material.parameters[0]: x how deep the carving is, times the kind's; y parallax steps; z how dark the hollows go.
+// material.parameters[1]: comic cel shading: x strength (0..1; 0 = standard_shade), y shadow cutoff, z highlight cutoff, w band softness.
+// material.parameters[2]: comic cel levels: x shadow floor, y calm midtone level, z warm highlight scale, w cool shadow shift.
 
 #import rusty::types::Surface
 #import rusty::material::{material, albedo, albedo_sampler, normal_map, normal_sampler}
 #import rusty::surface::transform_uv
 #import rusty::view::frame
 #import rusty::shade::standard_shade
+#ifdef GUIDES
+#import rusty::shade::guided
+#endif
+#import rusty::lighting::standard_radiance
+#import rusty::finish::finish
 
 struct Stone {
     size: vec2<f32>, // metres along and up
@@ -189,6 +196,53 @@ fn mapped(relief: vec3<f32>, uv: vec2<f32>, dt_dx: vec2<f32>, dt_dy: vec2<f32>) 
 #endif
 }
 
+// Stylized French-comic cel shading over the Engine's own incident lighting (clustered lights, shadows, probes, AO).
+// Falls back to `standard_shade` when `material.parameters[1].x` is zero.
+fn comic_shade(surface: Surface) -> vec4<f32> {
+    let cel = material.parameters[1];
+    let strength = clamp(cel.x, 0.0, 1.0);
+    if strength <= 0.0 {
+        return standard_shade(surface);
+    }
+#ifdef GUIDES
+    guided = surface;
+#endif
+#ifdef UNLIT
+    return finish(surface.base, surface.world_position);
+#else
+    let incident = standard_radiance(vec3<f32>(1.0), surface.normal, surface.world_position,
+        1.0, 0.0, surface.occlusion);
+    let levels = material.parameters[2];
+    let shadow_cut = cel.y;
+    let high_cut = cel.z;
+    let soft = max(cel.w, 1e-3);
+    let shadow_floor = levels.x;
+    let mid_level = levels.y;
+    let high_boost = levels.z;
+    let cool_shift = levels.w;
+
+    let lum = dot(incident, vec3<f32>(0.2126, 0.7152, 0.0722));
+    // Three graphic tonal bands: deep crushed shadow, calm flat midtone, and crisp bright torchlight pool.
+    let to_mid = smoothstep(shadow_cut - soft, shadow_cut + soft, lum);
+    let to_high = smoothstep(high_cut - soft, high_cut + soft, lum);
+    let base_band = mix(shadow_floor, mid_level, to_mid);
+    let lit_pool = max(lum * high_boost, mid_level * 1.45);
+    let stepped_lum = mix(base_band, lit_pool, to_high);
+
+    let chroma = incident / max(lum, 1e-4);
+    // Cool indigo-violet bias in unlit shadow bands so warm amber torch pools pop against cool stone,
+    // and gentle warm-parchment lift on intense highlights so lit reds stay painted terracotta rather than neon.
+    let cool_tint = vec3<f32>(0.82, 0.84, 1.14);
+    let shadow_weight = (1.0 - to_high) * cool_shift;
+    var styled_chroma = mix(chroma, chroma * cool_tint, shadow_weight);
+    let peak_soften = smoothstep(0.55, 1.8, stepped_lum) * to_high * 0.26;
+    styled_chroma = mix(styled_chroma, vec3<f32>(1.05, 0.92, 0.78), peak_soften);
+    let styled_light = mix(incident, styled_chroma * stepped_lum, strength);
+    let radiance = surface.base.rgb * styled_light + surface.emission;
+    return finish(vec4<f32>(radiance, surface.base.a), surface.world_position);
+#endif
+}
+
 // Lights the stone's texture at `uv`, its normal `relief` in the frame (x, y, z), darkened by how far into a hollow it lies.
 fn lit_at(surface: Surface, uv: vec2<f32>, dt_dx: vec2<f32>, dt_dy: vec2<f32>, x: vec3<f32>, y: vec3<f32>, z: vec3<f32>,
     relief: vec3<f32>, hollow: f32) -> vec4<f32> {
@@ -200,7 +254,7 @@ fn lit_at(surface: Surface, uv: vec2<f32>, dt_dx: vec2<f32>, dt_dy: vec2<f32>, x
     let cavity = material.parameters[0].z;
     lit.base = vec4<f32>(color.rgb * (1.0 - 0.5 * cavity * hollow), 1.0);
     lit.occlusion *= 1.0 - cavity * hollow;
-    return standard_shade(lit);
+    return comic_shade(lit);
 }
 
 // The carved face's normal at `p`, in the stone's frame (along, up, out).
@@ -227,7 +281,7 @@ fn shade(surface: Surface) -> vec4<f32> {
     let det = dl_dx.x * dl_dy.y - dl_dy.x * dl_dx.y;
     let code = u32(round(data.z));
     if (code & STONE) == 0u || abs(det) <= 1e-14 {
-        return standard_shade(surface);
+        return comic_shade(surface);
     }
     // World and texture uv per unit of the data's x and y.
     let along_u = (dp_dx * dl_dy.y - dp_dy * dl_dx.y) / det;

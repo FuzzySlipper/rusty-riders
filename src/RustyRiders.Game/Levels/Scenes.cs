@@ -19,6 +19,7 @@ internal sealed class Scenes : IDisposable
     private readonly IEngineContext engine;
     private readonly PreparationJobs jobs;
     private readonly LevelRules rules;
+    private readonly SceneAtmosphere atmosphere;
     private LevelBuild? pending;
 
     internal Scenes(IEngineContext engine, PreparationJobs jobs, LevelRules rules)
@@ -26,11 +27,13 @@ internal sealed class Scenes : IDisposable
         this.engine = engine;
         this.jobs = jobs;
         this.rules = rules;
+        atmosphere = new SceneAtmosphere(engine);
         Settings = LevelSettings.Load(engine);
         int seed = Settings.Seed;
         Current = LevelBuild.Now(engine, rules, Settings, ref seed);
         Seed = seed;
         Level!.Show();
+        atmosphere.Apply(Level.Atmosphere ?? rules.Atmosphere);
     }
 
     internal IWalkScene Current { get; private set; }
@@ -113,6 +116,7 @@ internal sealed class Scenes : IDisposable
     {
         Cancel();
         Current.Dispose();
+        atmosphere.Dispose();
     }
 
     private void Begin(LevelSettings settings, int seed)
@@ -141,6 +145,7 @@ internal sealed class Scenes : IDisposable
         Current.Dispose();
         Current = next;
         (next as LevelScene)?.Show();
+        atmosphere.Apply((next as LevelScene)?.Atmosphere ?? rules.Atmosphere);
         // A level's build leaves its builders' arrays behind, up to a gigabyte for a large stone kit, which the collector
         // could keep committed long into play; it is collected here, inside the switch, while little else lives.
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
