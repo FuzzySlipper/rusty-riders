@@ -42,7 +42,7 @@ internal static class Sconces
                     true, sconce.Range, sconce.Decay, 0, 0, sconce.Shadows ? LightShadowIntent.Requested : LightShadowIntent.Disabled,
                     sconce.ShadowResolution, 1, sconce.ShadowSoft), sconce.Flicker, phase));
                 if (sconce.EmberRate > 0 && sconce.EmberMax > 0)
-                    embers.Add(EmberEmitter(cupTop + Vector3.UnitY * (sconce.FlameSize * .55f), sconce, (ulong)(seed * 997 + sconceIndex + 1)));
+                    embers.Add(EmberEmitter(cupTop + Vector3.UnitY * (sconce.FlameSize * .55f), sconce.EmberRate, sconce.EmberMax, (ulong)(seed * 997 + sconceIndex + 1)));
                 sconceIndex++;
             }
             if (sconce.Pool is { } pool)
@@ -61,10 +61,57 @@ internal static class Sconces
                 }
             }
         }
+        if (sconce.Corridors is { } corridors)
+            AddCorridorSconces(mesh, plan, sconce, corridors, seed, lights, embers, ref sconceIndex);
         return (lights, embers);
     }
 
-    private static PresentationParticleDescriptor EmberEmitter(Vector3 origin, SconceDefinition sconce, ulong seed) => new()
+    /// <summary>Staggered non-shadowed wall torches along straight corridor runs so passages carry warm/cool pools.</summary>
+    private static void AddCorridorSconces(MeshBuilder mesh, RoomPlan plan, SconceDefinition sconce, CorridorSconceDefinition corridors,
+        int seed, List<KitLight> lights, List<PresentationParticleDescriptor> embers, ref int sconceIndex)
+    {
+        float probe = plan.Rules.GridMetres / 2;
+        float doorClear = plan.Rules.DoorWidth / 2 + 2.5f;
+        Dictionary<(int X, int Z), float> ground = plan.Heights([PlanArea.Room, PlanArea.Corridor, PlanArea.Doorway]);
+        foreach (List<(Vector2 Point, float Height)> loop in OpenGround.Walls(ground))
+        {
+            for (int i = 0; i < loop.Count; i++)
+            {
+                if (plan.Rules.Area(loop[i].Height) != PlanArea.Corridor) continue;
+                Vector2 a = plan.Metres(loop[i].Point), b = plan.Metres(loop[(i + 1) % loop.Count].Point);
+                float length = Vector2.Distance(a, b);
+                Vector2 along = Vector2.Normalize(b - a), into = new(-along.Y, along.X);
+                // Stagger opposite corridor walls by half a spacing so short passages get one torch and long ones alternate sides.
+                bool staggered = into.X + into.Y < 0;
+                float lead = corridors.Clearance + (staggered ? corridors.Spacing * .5f : 0);
+                float span = length - lead - corridors.Clearance;
+                if (span < 0) continue;
+                int count = (int)MathF.Floor(span / corridors.Spacing) + 1;
+                float start = lead + (span - (count - 1) * corridors.Spacing) / 2;
+                for (int k = 0; k < count; k++)
+                {
+                    Vector2 wall = a + along * (start + k * corridors.Spacing);
+                    if (!plan.Open.TryGetValue(plan.Square(wall + into * probe), out PlanArea area) || area != PlanArea.Corridor) continue;
+                    if (plan.Open.ContainsKey(plan.Square(wall - into * probe))) continue;
+                    if (plan.Doorways.Any(d => Vector2.Distance(wall, d.Centre) < doorClear)) continue;
+                    Random random = new(unchecked(seed * 7919 + 6_500_023 + sconceIndex * 104729));
+                    IronTorch(mesh, sconce, wall, into, along);
+                    float flameSize = sconce.FlameSize * corridors.FlameScale;
+                    Vector3 cupTop = OpenGround.Gltf(wall + into * sconce.BracketDepth, sconce.Height + .06f);
+                    ComicFlame(mesh, cupTop, flameSize, random);
+                    Vector3 lightPos = OpenGround.Gltf(wall + into * (sconce.BracketDepth + .35f), sconce.Height + flameSize * .75f);
+                    float phase = (float)(random.NextDouble() * MathF.Tau);
+                    lights.Add(new KitLight(new LightDescriptor(LightKind.Point, Authored.Vector(sconce.LightColor), corridors.Intensity, true,
+                        lightPos, -Vector3.UnitY, true, corridors.Range, corridors.Decay, 0, 0, LightShadowIntent.Disabled), sconce.Flicker, phase));
+                    if (corridors.EmberRate > 0 && corridors.EmberMax > 0)
+                        embers.Add(EmberEmitter(cupTop + Vector3.UnitY * (flameSize * .55f), corridors.EmberRate, corridors.EmberMax, (ulong)(seed * 997 + sconceIndex + 1)));
+                    sconceIndex++;
+                }
+            }
+        }
+    }
+
+    private static PresentationParticleDescriptor EmberEmitter(Vector3 origin, float rate, uint maxParticles, ulong seed) => new()
     {
         SignalId = "torch-ember",
         Visible = true,
@@ -72,9 +119,9 @@ internal static class Sconces
         Visual = PresentationParticleVisual.Cube,
         Blend = PresentationParticleBlendMode.Additive,
         SizeMode = PresentationParticleSizeMode.World,
-        RatePerSecond = sconce.EmberRate,
+        RatePerSecond = rate,
         BurstCount = 0,
-        MaxParticles = sconce.EmberMax,
+        MaxParticles = maxParticles,
         LifetimeMinSeconds = .65f,
         LifetimeMaxSeconds = 1.45f,
         VelocityMin = new Vector3(-.24f, .55f, -.24f),

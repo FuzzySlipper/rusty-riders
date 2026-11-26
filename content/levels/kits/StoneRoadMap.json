@@ -90,6 +90,9 @@
     "pool": {
       "color": [1, 0.66, 0.26], "intensity": 36, "range": 12.5, "decay": 1.45, "height": 3.5, "forward": 0.65, "aimForward": 3.2,
       "outerDegrees": 44, "penumbra": 0.14, "shadows": true, "shadowResolution": 512, "revealIntensity": 11, "revealRange": 6.5
+    },
+    "corridors": {
+      "spacing": 14, "clearance": 3.5, "intensity": 13, "range": 8.5, "decay": 1.75, "flameScale": 0.85, "emberRate": 7, "emberMax": 10
     }
   },
   "columns": {

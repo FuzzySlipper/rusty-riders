@@ -37,6 +37,7 @@ internal sealed class LevelKit : IGeneratedLevel
     private readonly int bands;
     private ulong? batch;
     private bool ready;
+    private double lastAnimatedSeconds = double.NaN;
     // Load-cost evidence only, never simulation time: the seconds spent making meshes, the most in one update, and the updates.
     private double makeSeconds, longestUpdate;
     private int updates;
@@ -139,7 +140,8 @@ internal sealed class LevelKit : IGeneratedLevel
     /// <summary>Applies gentle organic torchlight flicker on Engine-admitted gameplay world time.</summary>
     internal void Animate(IEngineContext engine, double worldSeconds)
     {
-        if (lights.Count == 0) return;
+        if (lights.Count == 0 || worldSeconds == lastAnimatedSeconds) return;
+        lastAnimatedSeconds = worldSeconds;
         float t = (float)worldSeconds;
         foreach ((ulong id, Light light, KitLight spec) in lights)
         {

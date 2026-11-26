@@ -85,7 +85,8 @@ internal sealed record BlindArchDefinition(float Sill, float Spring, float Margi
 internal sealed record SconceDefinition(float Height, float Gap, float BracketDepth, float FlameSize, float[] FlameColor, float FlameEmission,
     float[] LightColor, float Intensity, float Range, KitSurface Bracket = KitSurface.Ceiling, float Decay = 2, bool Shadows = false,
     uint ShadowResolution = 512, bool ShadowSoft = false, DoorPoolLightDefinition? Pool = null,
-    float[]? FlameCoreColor = null, float FlameCoreEmission = 3.2f, float EmberRate = 10, uint EmberMax = 16, float Flicker = .08f)
+    float[]? FlameCoreColor = null, float FlameCoreEmission = 3.2f, float EmberRate = 10, uint EmberMax = 16, float Flicker = .08f,
+    CorridorSconceDefinition? Corridors = null)
 {
     internal void Validate(string path, PlanRules plan)
     {
@@ -104,6 +105,23 @@ internal sealed record SconceDefinition(float Height, float Gap, float BracketDe
         Authored.Positive(path, "sconces.range", Range);
         Authored.AtLeast(path, "sconces.decay", Decay, 0);
         Pool?.Validate(path, "sconces.pool");
+        Corridors?.Validate(path);
+    }
+}
+
+/// <summary>Sparse staggered non-shadowed wall sconces placed along straight corridor walls.</summary>
+internal sealed record CorridorSconceDefinition(float Spacing, float Clearance, float Intensity, float Range, float Decay = 1.8f,
+    float FlameScale = .85f, float EmberRate = 7, uint EmberMax = 10)
+{
+    internal void Validate(string path)
+    {
+        Authored.Positive(path, "sconces.corridors.spacing", Spacing);
+        Authored.AtLeast(path, "sconces.corridors.clearance", Clearance, 0);
+        Authored.Positive(path, "sconces.corridors.intensity", Intensity);
+        Authored.Positive(path, "sconces.corridors.range", Range);
+        Authored.AtLeast(path, "sconces.corridors.decay", Decay, 0);
+        Authored.Positive(path, "sconces.corridors.flameScale", FlameScale);
+        Authored.AtLeast(path, "sconces.corridors.emberRate", EmberRate, 0);
     }
 }
 
