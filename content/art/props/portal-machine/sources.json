@@ -1,0 +1,23 @@
+{
+  "asset": "portal-machine.glb",
+  "task": 11118,
+  "concept": "authoring/assets/props/portal-machine/concepts/concept-a-ring-machine.png",
+  "reconstruction": {
+    "tool": "../asset-pipeline/legacy/experiments/comfy-native-image-to-3d/run_native.py",
+    "model": "trellis2",
+    "weights": "bf16",
+    "faces": 10000,
+    "texRes": 2048,
+    "seedOffset": 1,
+    "sourceGlb": "authoring/assets/props/portal-machine/trellis2/concept-a/seed-1/textured_00001_.glb"
+  },
+  "normalization": {
+    "targetHeightMetres": 4.2,
+    "pivot": "bottom-center (y = 0, centered X and Z, aperture facing +/-Z)",
+    "boundsMin": [-2.1922, 0.0, -1.4682],
+    "boundsMax": [2.1922, 4.2, 1.4682],
+    "innerApertureCenterY": 2.226,
+    "innerApertureClearRadius": 1.255
+  },
+  "notes": "Astro-Relic Ring Portal Machine in house Moebius / Metal Hurlant ligne claire style. Hollow central opening houses the WGSL rift-portal shader disc."
+}

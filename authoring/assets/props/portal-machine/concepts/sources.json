@@ -1,0 +1,30 @@
+{
+  "task": 11118,
+  "purpose": "3D-ready concept art candidates for the Rift Riders portal machine (hollow central aperture, plain light-grey studio background, Moebius / Metal Hurlant ligne claire house style).",
+  "styleReference": [
+    "wiki/rift-riders/visual-direction.md",
+    "../asset-pipeline/live-evidence/comfy-5090-props-20261006/prompts/*.txt"
+  ],
+  "candidates": {
+    "concept-a-ring-machine.png": {
+      "label": "A \u2014 Astro-Relic Ring Machine",
+      "generator": "image-generator (Gemini image)",
+      "notes": "Circular dark-iron and terracotta ring with brass calipers, side coils, riveted struts, stepped octagonal slate plinth. Universal across all worlds."
+    },
+    "concept-b-gothic-arch-engine.png": {
+      "label": "B \u2014 Gothic Necro-Cathedral Arch",
+      "generator": "image-generator (Gemini image)",
+      "notes": "Battered lavender-slate stone pedestals on stepped threshold dais, terracotta pointed arch ribs with dark-iron emitter clamps and brass apex emitter. Tightest match to StoneRoadMap."
+    },
+    "concept-c-hex-monolith.png": {
+      "label": "C \u2014 Industrial-Arcane Hex Monolith",
+      "generator": "image-generator (Gemini image)",
+      "notes": "Heavy beveled octagonal/hexagonal iron-and-slate monolith frame with terracotta radiator fins, brass conduits, 3 inward emitter jaws, bolted buttress feet."
+    },
+    "concept-d-twin-pylon-gate.png": {
+      "label": "D \u2014 Twin-Pylon Obelisk Gate",
+      "generator": "image-generator (Gemini image)",
+      "notes": "Two tall tapered slate-grey obelisk pylons on stepped trapezoidal plinth, dark-iron top yoke with twin brass emitter clamps, terracotta top fins, bolted ribbed conduits."
+    }
+  }
+}

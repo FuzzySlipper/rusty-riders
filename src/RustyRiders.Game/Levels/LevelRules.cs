@@ -58,22 +58,27 @@ internal sealed record PointRules(string[] RiftTags, int MinimumRifts, int Maxim
     }
 }
 
-/// <summary>A portal's placeholder look in metres and hertz: a pulsing disc with cubes orbiting its rim.</summary>
-internal sealed record PortalLook(float Width, float Height, float Depth, float Lift, float Pulse, float PulseHz, int Orbiters,
-    float OrbiterSize, float OrbitHz, float TriggerRadius)
+/// <summary>A portal machine's authored model, shader, aperture placement, rift shader tuning, light, and trigger radius.</summary>
+internal sealed record PortalLook(string Model, string Shader, float Height, float ApertureCenterY, float ApertureRadius,
+    float SwirlSpeed, float Pulse, float PulseHz, float Glow, float InkStrength,
+    float LightIntensity, float LightRange, float LightDecay, float TriggerRadius)
 {
     internal void Validate()
     {
         const string path = PointRules.Path;
-        Authored.Positive(path, "portal.width", Width);
+        Authored.Require(!string.IsNullOrWhiteSpace(Model), path, "portal.model", "must name a portal machine GLB.");
+        Authored.Require(!string.IsNullOrWhiteSpace(Shader), path, "portal.shader", "must name a portal WGSL shader.");
         Authored.Positive(path, "portal.height", Height);
-        Authored.Positive(path, "portal.depth", Depth);
-        Authored.AtLeast(path, "portal.lift", Lift, 0);
+        Authored.Positive(path, "portal.apertureCenterY", ApertureCenterY);
+        Authored.Positive(path, "portal.apertureRadius", ApertureRadius);
+        Authored.AtLeast(path, "portal.swirlSpeed", SwirlSpeed, 0);
         Authored.Within(path, "portal.pulse", Pulse, 0, 1);
         Authored.AtLeast(path, "portal.pulseHz", PulseHz, 0);
-        Authored.Require(Orbiters >= 0, path, "portal.orbiters", "must not be negative.");
-        Authored.Positive(path, "portal.orbiterSize", OrbiterSize);
-        Authored.AtLeast(path, "portal.orbitHz", OrbitHz, 0);
+        Authored.Positive(path, "portal.glow", Glow);
+        Authored.Within(path, "portal.inkStrength", InkStrength, 0, 1);
+        Authored.AtLeast(path, "portal.lightIntensity", LightIntensity, 0);
+        Authored.Positive(path, "portal.lightRange", LightRange);
+        Authored.Positive(path, "portal.lightDecay", LightDecay);
         Authored.Positive(path, "portal.triggerRadius", TriggerRadius);
     }
 }

@@ -38,7 +38,6 @@ internal sealed partial class LevelScene : IWalkScene
     private Portals? portals; // with the points, once navigation is installed
     private readonly PortalLook portalLook;
     private Action? placePoints; // until navigation is installed (Settle)
-    private double worldSeconds;
     private readonly List<AppearanceFact> facts = [];
     private readonly List<string> problems = [];
     private readonly Dictionary<(int X, int Z), (PlannedTile Tile, string Prefab)> tiles = [];
@@ -147,7 +146,7 @@ internal sealed partial class LevelScene : IWalkScene
     public Vector3 SpawnFeet { get; private set; }
     public float SpawnYawDegrees { get; }
     public string Status => level + built() + found;
-    public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. problems];
+    public IReadOnlyList<string> Problems => [.. art.Problems, .. materials.Problems, .. portals?.Problems ?? [], .. problems];
     internal LevelNavigation Navigation { get; }
     /// <summary>The kit's authored world atmosphere, or null to take the product's default atmosphere.</summary>
     internal AtmosphereDefinition? Atmosphere { get; }
@@ -178,8 +177,11 @@ internal sealed partial class LevelScene : IWalkScene
     /// <summary>Moves the level's world-time presentation (portals and torchlight flicker) to <paramref name="seconds"/>.</summary>
     public void Animate(double seconds)
     {
-        worldSeconds = seconds;
-        if (shown) (generated as LevelKit)?.Animate(engine, seconds);
+        if (shown)
+        {
+            (generated as LevelKit)?.Animate(engine, seconds);
+            portals?.Animate(engine, seconds);
+        }
     }
 
     /// <summary>The rift nearest a position, if one is close enough for its label to show.</summary>
@@ -195,8 +197,8 @@ internal sealed partial class LevelScene : IWalkScene
     }
 
     public IEnumerable<AppearanceFact> Facts => ShowPlan
-        ? [.. facts, .. SectionFacts, .. portals?.Facts(worldSeconds) ?? [], .. overlay!.Facts]
-        : [.. facts, .. SectionFacts, .. portals?.Facts(worldSeconds) ?? []];
+        ? [.. facts, .. SectionFacts, .. portals?.Facts ?? [], .. overlay!.Facts]
+        : [.. facts, .. SectionFacts, .. portals?.Facts ?? []];
 
     /// <summary>
     /// Places the level's points once its navigation is installed (a level built in the background derives it on the
@@ -226,6 +228,7 @@ internal sealed partial class LevelScene : IWalkScene
         shown = true;
         engine.CameraView.SetBackgroundColor(new SetBackgroundColorRequest(background));
         (generated as LevelKit)?.Light(engine);
+        portals?.Light(engine);
     }
 
     public void Dispose()
