@@ -1,6 +1,11 @@
 {
   "rigs": {
     "painted": {
+      "carry": [
+        0.08,
+        -0.09,
+        0.10
+      ],
       "digits": "Look",
       "motions": {
         "sns": {

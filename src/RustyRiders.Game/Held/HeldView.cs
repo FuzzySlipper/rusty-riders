@@ -53,6 +53,13 @@ internal sealed class HeldView : IDisposable
     private (ActionDefinition? Action, float Elapsed, float Scale) riddenAt;
     // Whether the clip leading the arms now moves the left hand too (an empty left hand then plays it).
     private bool leftLed;
+    // Active recoil/impact punches and smooth dip-and-raise swap carried onto clip-led arms via Carry / CarryTurn.
+    private readonly List<ClipPunch> clipPunches = [];
+    private const float ClipSwapDownSeconds = 0.09f, ClipSwapUpSeconds = 0.14f, ClipSwapDropMetres = 0.22f, ClipSwapPitchDegrees = -18f;
+    private float clipSwapElapsed;
+    private float clipSwapWorldStep;
+    private bool clipSwapActive;
+    private string clipSwapNext = "";
 
     /// <param name="firstObject">The published object id of the main hand's look; the off hand's and the arms' two are the next three.</param>
     internal HeldView(IEngineContext engine, HeldCatalog held, ulong firstObject)
@@ -139,18 +146,38 @@ internal sealed class HeldView : IDisposable
         if (arms.Retired is { } retired) yield return retired;
     }
 
-    /// <summary>World seconds admitted, on which clip-led arms play and fade.</summary>
-    internal void Step(float seconds) => lead.Step(seconds);
+    /// <summary>World seconds admitted, on which clip-led arms play, fade and recoil.</summary>
+    internal void Step(float seconds)
+    {
+        lead.Step(seconds);
+        clipSwapWorldStep += seconds;
+        for (int i = clipPunches.Count - 1; i >= 0; i--)
+        {
+            clipPunches[i].Elapsed += seconds;
+            if (clipPunches[i].Elapsed >= clipPunches[i].Punch.Seconds) clipPunches.RemoveAt(i);
+        }
+    }
 
     // Clip-led arms (Engine FirstPersonArms.Lead): the main hand's action clip, or its look's idle loop, where the drawing
     // rig has clips for the look's motion; then where the look rides the hand. The arms are carried to the rig's clip
-    // framing, and by the hand's sway while clip-led.
+    // framing, and by the hand's sway, recoil/impact punches and weapon-swap dip while clip-led.
     private void Lead(ActionUser user)
     {
         ArmClipFrame? frame = lead.Frame(MainClips(), user);
         leftLed = MainClips() is { } clips && user.Current is { } action && clips.MovesLeft(action.Id);
         arms.Drawn.Lead(frame, lead.Take());
-        arms.Drawn.Carry = held.Clips.Carry(Rig) + (frame is null ? Vector3.Zero : hands[MainHand].Sway.Position);
+        if (frame is null)
+        {
+            arms.Drawn.Carry = held.Clips.Carry(Rig);
+            arms.Drawn.CarryTurn = Quaternion.Identity;
+        }
+        else
+        {
+            (Vector3 punchMove, Vector3 punchTurn) = SampleClipPunches();
+            (Vector3 swapMove, Vector3 swapTurn) = SampleClipSwap();
+            arms.Drawn.Carry = held.Clips.Carry(Rig) + hands[MainHand].Sway.Position + punchMove + swapMove;
+            arms.Drawn.CarryTurn = HeldFrames.Turn(hands[MainHand].Sway.Rotation + punchTurn + swapTurn);
+        }
         ridden = null;
         riddenAt = (user.Current, user.Elapsed, user.Scale);
         if (arms.Drawn.Clip.Led > 0) ridden = arms.Drawn.Ride(Aim(MainHand));
@@ -181,11 +208,26 @@ internal sealed class HeldView : IDisposable
                 else if (cutShort && hand.Running) hand.Begin(held.Motion.Settle(hand.Offset()), TweenClock.World);
             }
             if (viewing is not null) continue;
-            // A clip-led main hand's look rides the hand: no tween moves it, and it swaps what it holds at once.
+            // A clip-led main hand's look rides the hand: no weapon tween moves it; swapping dips and raises the arms smoothly.
             if (h == MainHand && MainClips() is { } clips && (user.Current is not { } current || ArmsLead.Plays(clips, current)))
             {
                 hand.Cancel();
-                (hand.Look, hand.Swap, hand.StartedSeen) = (hand.Wanted, Swap.None, user.Started);
+                hand.Swap = Swap.None;
+                hand.StartedSeen = user.Started;
+                if (user.Current is not null || hand.Wanted == "")
+                {
+                    hand.Look = hand.Wanted;
+                    clipSwapActive = false;
+                }
+                else if (hand.Look != hand.Wanted)
+                {
+                    if (!clipSwapActive)
+                    {
+                        clipSwapActive = true;
+                        clipSwapElapsed = 0;
+                    }
+                    clipSwapNext = hand.Wanted;
+                }
                 continue;
             }
             if (user.Started == hand.StartedSeen || user.Current is not { } action)
@@ -217,6 +259,20 @@ internal sealed class HeldView : IDisposable
             hands[MainHand].Action is not null && hands[MainHand].Running, hands[OffHand].Action is not null && hands[OffHand].Running);
         for (int h = 0; h < hands.Length; h++)
             hands[h].Sway = sway.Pose(hands[h].Look == "" ? null : held.Motion.Motions[held.Look(hands[h].Look)!.Motion].Loops, h == OffHand);
+        if (clipSwapActive && viewing is null)
+        {
+            float dt = MathF.Max((float)hostSeconds, clipSwapWorldStep);
+            float prev = clipSwapElapsed;
+            clipSwapElapsed += dt;
+            if (prev < ClipSwapDownSeconds && clipSwapElapsed >= ClipSwapDownSeconds && clipSwapNext != "")
+                hands[MainHand].Look = clipSwapNext;
+            if (clipSwapElapsed >= ClipSwapDownSeconds + ClipSwapUpSeconds)
+            {
+                if (clipSwapNext != "") hands[MainHand].Look = clipSwapNext;
+                clipSwapActive = false;
+            }
+        }
+        clipSwapWorldStep = 0;
     }
 
     // A hand swapping what it holds: puts the look it shows away (its motion's unequip, in real time), shows the one it
@@ -329,6 +385,8 @@ internal sealed class HeldView : IDisposable
     internal void Reset()
     {
         sway.Moved();
+        clipPunches.Clear();
+        clipSwapActive = false;
         foreach (HeldHand hand in hands)
         {
             hand.Cancel();
@@ -519,13 +577,64 @@ internal sealed class HeldView : IDisposable
         return (hold.Grip - Vector3.Transform(look.Grips.Main - fit.Translation, hold.Look), Quaternion.Normalize(hold.Look * fit.Rotation));
     }
 
-    // Starts the punches felt since the last update over each hand's motion as now drawn.
+    // Starts the punches felt since the last update over each hand's motion as now drawn (and on clip-led arms via Carry/CarryTurn).
     private void Punch()
     {
         foreach (var (hand, kind) in felt)
-            hands[hand].Layers.Start(hands[hand].Object, held.Feedback.Punch(kind), Now(hand).Turn, hand == OffHand,
-                viewing is null ? TweenClock.World : TweenClock.Realtime);
+        {
+            HeldPunch punch = held.Feedback.Punch(kind);
+            if (hand == MainHand && arms.Drawn.Clip.Led > 0)
+                clipPunches.Add(new ClipPunch(punch));
+            else
+                hands[hand].Layers.Start(hands[hand].Object, punch, Now(hand).Turn, hand == OffHand,
+                    viewing is null ? TweenClock.World : TweenClock.Realtime);
+        }
         felt.Clear();
+    }
+
+    private (Vector3 Move, Vector3 Turn) SampleClipPunches()
+    {
+        Vector3 move = Vector3.Zero, turn = Vector3.Zero;
+        foreach (ClipPunch active in clipPunches)
+        {
+            HeldPunch p = active.Punch;
+            float u = Math.Clamp(active.Elapsed / MathF.Max(p.Seconds, 1e-4f), 0, 1);
+            float decay = p.Decay switch
+            {
+                TweenEasingKind.CubicOut => MathF.Pow(1 - u, 3),
+                TweenEasingKind.Linear => 1 - u,
+                _ => (1 - u) * (1 - u),
+            };
+            // Fast kick peaking early (~22% into duration) and easing smoothly back to rest.
+            float wave = MathF.Sin(u * MathF.PI * p.Frequency) * decay * 1.9f;
+            move += p.Move * wave;
+            turn += p.Turn * wave;
+        }
+        return (move, turn);
+    }
+
+    private (Vector3 Move, Vector3 Turn) SampleClipSwap()
+    {
+        if (!clipSwapActive) return (Vector3.Zero, Vector3.Zero);
+        float drop;
+        if (clipSwapElapsed < ClipSwapDownSeconds)
+        {
+            float t = Math.Clamp(clipSwapElapsed / ClipSwapDownSeconds, 0, 1);
+            drop = t * t;
+        }
+        else
+        {
+            float t = Math.Clamp((clipSwapElapsed - ClipSwapDownSeconds) / ClipSwapUpSeconds, 0, 1);
+            float inv = 1 - t;
+            drop = inv * inv * inv;
+        }
+        return (new Vector3(0, -ClipSwapDropMetres * drop, 0), new Vector3(ClipSwapPitchDegrees * drop, 0, 0));
+    }
+
+    private sealed class ClipPunch(HeldPunch punch)
+    {
+        internal HeldPunch Punch { get; } = punch;
+        internal float Elapsed;
     }
 
     // How a look is drawn inside look space: its converted model centred on its bounds, scaled so its longest side is

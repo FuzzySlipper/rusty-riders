@@ -41,7 +41,7 @@ from rig import Rig, q2m
 ap = argparse.ArgumentParser()
 ap.add_argument("track"); ap.add_argument("rig"); ap.add_argument("pack_out"); ap.add_argument("clip")
 ap.add_argument("--base"); ap.add_argument("--start", type=int, default=0); ap.add_argument("--end", type=int, default=-1)
-ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera"); ap.add_argument("--band"); ap.add_argument("--gain", type=float, default=1); ap.add_argument("--push", default="0,0,2")
+ap.add_argument("--sigma", type=float, default=1.2); ap.add_argument("--facing", default="0:8"); ap.add_argument("--pitch", type=float, default=0); ap.add_argument("--forward", type=float, default=0); ap.add_argument("--report"); ap.add_argument("--sides", default="R,L"); ap.add_argument("--cone", type=float, default=0); ap.add_argument("--aim", default="0,0"); ap.add_argument("--reach", type=float, default=0); ap.add_argument("--clear", type=float, default=0); ap.add_argument("--camera"); ap.add_argument("--band"); ap.add_argument("--band-l"); ap.add_argument("--gain", type=float, default=1); ap.add_argument("--push", default="0,0,2")
 a = ap.parse_args()
 
 
@@ -119,22 +119,29 @@ def bearing_basis(c):
     right = unit(np.cross(c, [0, 1.0, 0])); return right, np.cross(right, c)
 
 
-if a.band:
-    by, bp, hy, hp = (np.radians(float(v)) for v in a.band.split(","))
-    BAND = np.array([-np.sin(by) * np.cos(bp), np.sin(bp), np.cos(by) * np.cos(bp)])
+def parse_band(spec):
+    if not spec: return None
+    by, bp, hy, hp = (np.radians(float(v)) for v in spec.split(","))
+    return (np.array([-np.sin(by) * np.cos(bp), np.sin(bp), np.cos(by) * np.cos(bp)]), hy, hp)
 
 
-def into_band(shoulder, w):
-    """The rotation about the shoulder putting the wrist (shoulder + w) on its bearing pulled into --band."""
-    if not a.band: return np.eye(3)
-    d = unit(shoulder + w - CAMERA); theta = np.arccos(np.clip(np.dot(d, BAND), -1, 1))
-    tangent = d - BAND * np.cos(theta)
+BAND_R = parse_band(a.band)
+BAND_L = parse_band(a.band_l) if a.band_l else BAND_R
+
+
+def into_band(shoulder, w, side="R"):
+    """The rotation about the shoulder putting the wrist (shoulder + w) on its bearing pulled into --band (or --band-l)."""
+    spec = BAND_L if side == "L" else BAND_R
+    if not spec: return np.eye(3)
+    band_dir, hy, hp = spec
+    d = unit(shoulder + w - CAMERA); theta = np.arccos(np.clip(np.dot(d, band_dir), -1, 1))
+    tangent = d - band_dir * np.cos(theta)
     if np.linalg.norm(tangent) < 1e-9: return np.eye(3)
-    tangent = unit(tangent); right, up = bearing_basis(BAND)
+    tangent = unit(tangent); right, up = bearing_basis(band_dir)
     phi = np.arctan2(np.dot(tangent, up), np.dot(tangent, right))
     limit = 1 / np.sqrt((np.cos(phi) / hy) ** 2 + (np.sin(phi) / hp) ** 2)  # the ellipse's half-width that way
     theta2 = limit * np.tanh(a.gain * theta / limit)
-    b = BAND * np.cos(theta2) + tangent * np.sin(theta2)
+    b = band_dir * np.cos(theta2) + tangent * np.sin(theta2)
     # The wrist stays its distance from the shoulder: the far point on that bearing at that distance (the camera is
     # inside the arm's reach), or the bearing's nearest point to the shoulder when the arm is folded short of it.
     oc = CAMERA - shoulder; r = np.linalg.norm(w); half = np.dot(oc, b); disc = half * half - (np.dot(oc, oc) - r * r)
@@ -218,7 +225,7 @@ for p in P:
         if np.linalg.norm(u + f) < want and np.linalg.norm(hinge) > 1e-9:
             inner = lambda d: np.arccos(np.clip((lu * lu + lf * lf - d * d) / (2 * lu * lf), -1, 1))
             f = rotation(hinge, -(inner(want) - inner(np.linalg.norm(u + f)))) @ f  # opening the elbow in its own plane
-        C = into_cone(u + f); C = into_band(r["shoulder"], C @ (u + f)) @ C
+        C = into_cone(u + f); C = into_band(r["shoulder"], C @ (u + f), s) @ C
         C = clear_of_view(r["shoulder"], C @ u, C @ f) @ C; u = C @ u; f = C @ f
         elbow = r["shoulder"] + u
         gap = np.linalg.norm(nearest(elbow, elbow + f, CAMERA) - CAMERA)
